@@ -20,9 +20,12 @@ repos:
         stages: [manual]
         args: [--maxkb=500, --enforce-all]
       - id: detect-private-key
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: 91ab4bf57e58b32adf1a122681f6ebe164d081c8 # v4.4.0
+  - repo: local
     hooks:
-      - id: conventional-pre-commit
+      - id: commitlint
+        name: Validate Conventional Commit message
+        entry: commitlint --strict --edit
+        language: node
+        language_version: '24.21.0'
+        additional_dependencies: ['@commitlint/cli@21.2.3', '@commitlint/config-conventional@21.2.3']
         stages: [commit-msg]
-        args: [--strict, feat, fix, refactor, perf, test, docs, build, ci, chore, style, revert]

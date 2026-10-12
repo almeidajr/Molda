@@ -22,13 +22,15 @@ On macOS/Linux, use `./gradlew`. Configure Android SDK 37; devices require API 3
 
 Use Spotless + ktlint with `.editorconfig`. Run `.\gradlew.bat spotlessApply` before validation. Use PascalCase for classes, files, and UI composables (`GreetingPreview`); use camelCase for ordinary functions and properties. Keep packages under `com.almeidajr.molda` and use lowercase underscore names for Android resources. See `README.md` for quality checks, CI, and dependency-update conventions.
 
+Prefer existing tools and their configuration over custom code; add scripts only when available tools cannot complete the task.
+
 ## Testing Guidelines
 
 Use JUnit 4 for local tests and AndroidJUnit4 for instrumented tests. Espresso and Compose UI testing dependencies are available. Name test classes with a `Test` suffix and methods descriptively, following examples such as `addition_isCorrect`. Add behavior-focused tests for changed logic and UI interactions. No coverage threshold is configured.
 
 ## Commit & Pull Request Guidelines
 
-Use concise imperative subjects, such as `Add greeting screen tests`. Keep changes focused. Pull requests should explain the change, link relevant issues, report validation commands and results, and include screenshots for visible UI changes.
+Use Conventional Commit subjects for every new commit and PR title, such as `test(ui): check greeting on launch`. Scope is optional with no allowlist; use `!` and explain impact/migration for breaking PRs. Keep changes focused. Before creating commits, opening PRs, rebasing published history, or pushing, read [CONTRIBUTING.md](CONTRIBUTING.md) for types, examples, validation, and workflow guidance. Commit or push only when the user explicitly requests it.
 
 ## Configuration Hygiene
 
