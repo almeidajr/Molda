@@ -147,12 +147,11 @@ Do not change its checkout to a PR head or merge ref.
 Deployment requires an explicit Actions event-policy allowance for this
 metadata-only `pull_request_target` workflow. GitHub's public-repository default
 may block it: see [the event policy](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target).
-Authenticated inspection of `repos/almeidajr/Molda/actions/policies` returned zero
-policies on 2026-10-12; an explicit allowance was not verified. Repository files
-alone do not enable this policy or register required checks. After an authorized
-merge/deployment, verify the allowance, observe successful **PR title**/**PR
-commits** runs, and add those exact names to main protection in #4. Exercise
+The scoped [metadata event policy](https://github.com/almeidajr/Molda/settings/actions/rules/7293)
+was configured and verified active on 2026-10-12. Repository files alone do not
+enable this policy or register required checks. After changing the workflow,
+verify the allowance, observe successful **PR title**/**PR commits** runs,
+and add those exact names to main protection in #4. Exercise
 invalid/corrected title edits and intermediate commits on normal, fork, and
-Dependabot PRs; verify read-only permissions and merge blocking. These live runs
-remain blocked until deployment; no workflow or settings were published as part
-of the local implementation.
+Dependabot PRs; verify read-only permissions and merge blocking. Record live
+validation evidence and any access limitations in the implementation issue.
