@@ -151,7 +151,67 @@ The scoped [metadata event policy](https://github.com/almeidajr/Molda/settings/a
 was configured and verified active on 2026-10-12. Repository files alone do not
 enable this policy or register required checks. After changing the workflow,
 verify the allowance, observe successful **PR title**/**PR commits** runs,
-and add those exact names to main protection in #4. Exercise
+and register those exact names in main protection. Exercise
 invalid/corrected title edits and intermediate commits on normal, fork, and
 Dependabot PRs; verify read-only permissions and merge blocking. Record live
 validation evidence and any access limitations in the implementation issue.
+
+## Repository governance
+
+Repository files provide CI, message validation, hooks, ignore rules, and weekly
+Gradle/Actions Dependabot updates. Main protection, merge options, Actions defaults,
+the metadata event allowance, and security features are live GitHub settings;
+cloning or updating these files does not configure them. Hook pins have their own
+[maintenance procedure](#update-hook-tooling).
+
+Submit changes through a PR with conventional messages for every new commit and
+its title. Rebase onto current main when the branch is outdated, rerun local checks,
+and wait for all required checks on the updated PR. Agents require an explicit
+user request before committing or pushing, including `--force-with-lease` after a
+rebase. Passing, up-to-date PRs need no reviewer approval. Use squash merge and
+retain the validated PR title as the final subject; GitHub still lets a maintainer
+edit that subject, so title validation cannot guarantee the final commit message.
+The default squash body is the PR description.
+
+### Manual GitHub setup and verification
+
+Use an account with repository administration access and credentials permitted
+to read and update rulesets, repository/Actions settings, and security features.
+Organization or enterprise policies can limit these options. Record any denied
+setting or unavailable feature in the implementation issue instead of treating
+documentation as deployment evidence.
+
+1. Inspect authenticated settings and existing rulesets/branch protection first.
+   Observe successful **Quality**, **Device tests (API 36)**, **PR title**, and
+   **PR commits** check runs before registering their exact names. Verify the
+   trusted metadata workflow's scoped
+   [event allowance](https://github.com/almeidajr/Molda/settings/actions/rules/7293)
+   permits `pull_request_target`; #3 recorded that allowance active on 2026-10-12.
+2. In Settings → Rules → Rulesets, reconcile protection into one active ruleset
+   targeting `main`. Require a PR with zero approvals, all four checks from the
+   GitHub Actions source, and branches up to date before merging. Block deletion
+   and force pushes, and leave the bypass list empty so routine administrator
+   actions also require a passing PR. Remove redundant overlapping protection
+   and omit a separate commit-metadata ruleset.
+3. In Settings → General → Pull Requests, enable only squash merging. Set the
+   default squash subject to the PR title and body to the PR description.
+4. In Settings → Actions → General, set default workflow permissions to read
+   repository contents and packages; disable Actions creating or approving PRs.
+   Workflows request only the additional permissions they need. Preserve trusted
+   checkout behavior and full-SHA action pins when maintaining workflows.
+5. In Settings → Security, enable Dependabot alerts and security updates, secret
+   scanning, and push protection. Retain the existing Gradle/Actions update
+   configuration and ignore rules. Private-key hooks and supported secret
+   patterns cannot detect every credential; keep credentials and signing keys
+   out of Git even when these checks pass.
+6. Re-read authenticated settings after saving. On disposable PRs, verify failed
+   and missing required checks block merging, an outdated branch must be updated,
+   and a valid up-to-date PR can squash with no approval. Inspect the merge dialog
+   for the title/body defaults. Confirm the main ruleset applies to administrator
+   actions without a bypass; use read-only rule inspection and disposable PRs,
+   never force-push or delete main to test protection. Record PR/check links,
+   settings evidence, and any untested scenarios in #4.
+
+Configuration readback and merge-behavior tests are separate evidence. A configured
+ruleset alone does not establish that every scenario in step 6 passed; governance
+verification remains pending for any scenario without live evidence in #4.
