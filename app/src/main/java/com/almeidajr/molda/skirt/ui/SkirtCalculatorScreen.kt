@@ -53,8 +53,9 @@ fun SkirtCalculatorScreen(
         Text("Saia godê inteira", style = MaterialTheme.typography.headlineMedium)
         Text("Medidas em centímetros. Informe folga e margens explicitamente; zero é válido.")
         Text(
-            "Meça a cintura na posição do cós. O comprimento começa na linha de costura " +
-                "da cintura e exclui a altura do cós.",
+            "Meça a circunferência da cintura na posição desejada do cós, sem acrescentar folga " +
+                "ou margens. Meça o comprimento até a barra acabada, a partir da linha de " +
+                "costura da cintura; exclua a altura do cós.",
         )
         MeasurementField.entries.forEach { field ->
             val error = state.errors[field]
@@ -90,7 +91,10 @@ fun SkirtCalculatorScreen(
             onCalculate()
         }) { Text("Calcular") }
         state.calculationError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        state.radii?.let { SkirtResults(it) }
+        state.radii?.let {
+            SkirtResults(it)
+            DraftingExplanation(state.inputs, it)
+        }
     }
 }
 
@@ -102,16 +106,11 @@ private fun SkirtResults(radii: SkirtRadii) {
     Text("Raio de corte da cintura: ${formatRadius(radii.waistCutting)}")
     Text("Raio de corte da barra: ${formatRadius(radii.hemCutting)}")
     Text(
-        "r = (cintura + folga) / (2π). Barra acabada = r + comprimento. " +
-            "Corte da cintura = r − margem de costura. " +
-            "Corte da barra = r + comprimento + margem de barra.",
-    )
-    Text(
         "Para saia godê inteira em tecido plano, com cós e fechamento. " +
             "Não inclui divisão em painéis, margens do fechamento, molde do cós " +
             "ou metragem de tecido. O comprimento acabado exclui a altura do cós.",
     )
 }
 
-private fun formatRadius(value: Double): String =
+internal fun formatRadius(value: Double): String =
     String.format(Locale.forLanguageTag("pt-BR"), "%.2f cm", value)
