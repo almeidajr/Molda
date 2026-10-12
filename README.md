@@ -48,5 +48,5 @@ Keep the wrapper distribution checksum updated when upgrading Gradle.
 
 Keep IDE state, SDK paths, build output, credentials, and signing keys out of Git.
 Git normalizes source files to LF and Windows batch files to CRLF.
-Use imperative commit subjects and describe validation in PRs; include screenshots
-when changing the UI.
+Follow [the contributor workflow](CONTRIBUTING.md) for hook setup, Conventional
+Commits, and validation. Describe validation in PRs; include screenshots for UI changes.

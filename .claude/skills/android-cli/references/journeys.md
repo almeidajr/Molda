@@ -25,15 +25,15 @@ Additionally, if the app exits, crashes, or freezes, journey evaluation stops an
 you MUST find the search results and tap the first one. Do this even if you believe you know the intent behind the action.
 
 ## Taking Actions
-Some `<action>` elements specify UI interactions to perform on the running Android app. Perform the interaction and verify that the app does 
+Some `<action>` elements specify UI interactions to perform on the running Android app. Perform the interaction and verify that the app does
 not crash or behave in an unexpected manner. This is the *only* verification you should perform for an `<action>`.
 
-If the interaction cannot be performed as specified, the journey fails. 
-Example: 
+If the interaction cannot be performed as specified, the journey fails.
+Example:
 ```<action>Click the red button</action>```
-If you determine a red button is not present in the UI, the journey fails. 
+If you determine a red button is not present in the UI, the journey fails.
 
-If the text of an `<action>` specifies a list of actions, break it into sub-actions and evaluate them individually: 
+If the text of an `<action>` specifies a list of actions, break it into sub-actions and evaluate them individually:
 Example:
 ```<action>Search for soda and add the first result to the cart</action>```
 This should be evaluated as:
@@ -63,11 +63,11 @@ This `<action>` fails if ANY of the following are false:
 - There is a Home icon, and it is blue
 - A temperature is displayed
 
-## Handling failure 
+## Handling failure
 When running a journey, evaluate it as a test. Failure is acceptable, and often expected. Proper reporting of failures is the priority.
 
-Keep debugging and troubleshooting to a minimum; assume that tools are showing you the correct output every time. The goal is to determine 
-if the *current* Android app can correctly handle the *current* steps outlined in the journey. Suggestions for bug fixes, clarification, or 
+Keep debugging and troubleshooting to a minimum; assume that tools are showing you the correct output every time. The goal is to determine
+if the *current* Android app can correctly handle the *current* steps outlined in the journey. Suggestions for bug fixes, clarification, or
 other improvements should be kept to journey evaluation summary at the end.
 
 ## Summarizing

@@ -22,6 +22,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Check repository hygiene and hook behavior
+        run: |
+          pipx install pre-commit==4.6.2 --python python3
+          pre-commit run --all-files --show-diff-on-failure
+          pre-commit run check-all-large-files --hook-stage manual --all-files
+          python3 scripts/test_hooks.py
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin

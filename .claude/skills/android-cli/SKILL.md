@@ -125,10 +125,10 @@ Commands:
 auth
           Usage: android auth [-h] [COMMAND]
           Authentication commands. Log in/out of Google services for Android CLI
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
@@ -142,15 +142,15 @@ completion
           Usage: android completion [-h] [<shell>]
           Installs shell autocomplete configuration for Android CLI in the
           current user profile
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
             -V, --version    Print version information and exit
-          
+
           Positional Parameters:
             <shell>  If provided, prints the completion configuration script for
                      the specified shell without installing it. Supports Bash
@@ -163,7 +163,7 @@ create
           Creates a new Android project from available templates. You can
           specify the project name, output directory, `minSdk` value, and
           dry-run execution
-          
+
           Options:
                 --application-id=PARAM  The app ID for the app, for example
                                         `com.example.myapp`
@@ -182,13 +182,13 @@ create
                                         name for Kotlin source files
             -o, --output=PARAM          The destination project directory path
                                         (the default value is `.`)
-          
+
           android options:
                 --sdk=PARAM             Path to the Android SDK
             -v, --verbose               Enable verbose output for
                                         troubleshooting
             -V, --version               Print version information and exit
-          
+
           Positional Parameters:
             <template-name>  The template name
 
@@ -199,12 +199,12 @@ describe
           project's structure, including build targets and their corresponding
           output artifact locations (such as APKs). This information enables
           other tools and commands to locate build artifacts efficiently
-          
+
           Options:
             -h, --help               Shows the help message for the specified
                                      command
                 --project_dir=PARAM  The project directory to describe
-          
+
           android options:
                 --sdk=PARAM          Path to the Android SDK
             -v, --verbose            Enable verbose output for troubleshooting
@@ -214,10 +214,10 @@ device
           Usage: android device [-h] [COMMAND]
           Manage physical Android devices. Create remote physical device
           reservations
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
@@ -230,10 +230,10 @@ docs
           Usage: android docs [-h] [COMMAND]
           Searches and fetches developer documentation from the official Android
           Knowledge Base
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
@@ -247,10 +247,10 @@ emulator
           Usage: android emulator [-h] [COMMAND]
           Manages Android Virtual Devices (AVDs). Includes commands to start,
           stop, list, and view details about emulators
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
@@ -266,15 +266,15 @@ emulator
 help
           Usage: android help [-h] [COMMAND]
           Shows the help information for a specified command
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
             -V, --version    Print version information and exit
-          
+
           Positional Parameters:
             COMMAND  The command to show help for
 
@@ -282,15 +282,15 @@ info
           Usage: android info [-h] [<field>]
           Prints environment information including SDK location, connected
           devices, and configuration variables
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
             -V, --version    Print version information and exit
-          
+
           Positional Parameters:
             <field>  The specific field to print the value of. If omitted,
                      prints all fields
@@ -299,10 +299,10 @@ init
           Usage: android init [-h]
           Initializes the environment for Android CLI. Sets up required
           configurations, directories, and default skills
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
@@ -314,7 +314,7 @@ install
           Installs an Android app (one or more APKs) on a connected device or
           emulator without activating any components, using incremental
           optimizations for faster deployment than `adb`
-          
+
           Options:
                 --apks=PARAM             The paths to the APKs, comma separated
                 --device=PARAM           The device serial number
@@ -327,7 +327,7 @@ install
                                          incremental updates by transferring
                                          only modified code and resources;
                                          default: `true`)
-          
+
           android options:
                 --sdk=PARAM              Path to the Android SDK
             -v, --verbose                Enable verbose output for
@@ -338,7 +338,7 @@ layout
           Usage: android layout [-dhp] [--device=PARAM] [--flat] [--full] [--no-idle]
                                 [--output=PARAM]
           Returns the layout tree of an app
-          
+
           Options:
                 --device=PARAM  The device serial number
             -d, --diff          Deprecated; no-op flag. Will be removed in a
@@ -352,7 +352,7 @@ layout
             -o, --output=PARAM  Writes the layout to the specified file or
                                 directory. If omitted, prints to standard output
             -p, --pretty        Pretty-prints the returned JSON
-          
+
           android options:
                 --sdk=PARAM     Path to the Android SDK
             -v, --verbose       Enable verbose output for troubleshooting
@@ -363,7 +363,7 @@ run
                              [--install-options=PARAM] [--type=PARAM] [--use-delta-install]
           Builds, deploys, and launches an Android app on a connected device or
           emulator
-          
+
           Options:
                 --activity=PARAM         The activity name
                 --apks=PARAM             The paths to the APKs, comma separated
@@ -382,7 +382,7 @@ run
                                          incremental updates by transferring
                                          only modified code and resources;
                                          default: `true`)
-          
+
           android options:
                 --sdk=PARAM              Path to the Android SDK
             -v, --verbose                Enable verbose output for
@@ -393,10 +393,10 @@ screen
           Usage: android screen [-h] [COMMAND]
           Captures and inspects the screen of a connected Android device or
           emulator
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
@@ -413,7 +413,7 @@ sdk
                              [COMMAND]
           Manages the Android SDK installation. Includes commands to install,
           update, remove, and list available and installed SDK packages
-          
+
           Options:
             -h, --help                  Shows the help message for the specified
                                         command
@@ -423,7 +423,7 @@ sdk
                                         example, `linux_x86_64`, `mac_arm64`, or
                                         `windows_x86`); defaults to the current
                                         host
-          
+
           android options:
                 --sdk=PARAM             Path to the Android SDK
             -v, --verbose               Enable verbose output for
@@ -439,10 +439,10 @@ skills
           Usage: android skills [-h] [COMMAND]
           Manages Android CLI skills. Includes commands to install, remove,
           list, and search for skills by keyword
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
@@ -460,10 +460,10 @@ studio
           Connects Android CLI to a running Android Studio instance to analyze
           files, find declarations and usages, render Compose previews, and look
           up library versions
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
@@ -483,13 +483,12 @@ studio
 update
           Usage: android update [-h] [--url=PARAM]
           Updates Android CLI to the latest version
-          
+
           Options:
             -h, --help       Shows the help message for the specified command
                 --url=PARAM  The URL to download the update from
-          
+
           android options:
                 --sdk=PARAM  Path to the Android SDK
             -v, --verbose    Enable verbose output for troubleshooting
             -V, --version    Print version information and exit
-

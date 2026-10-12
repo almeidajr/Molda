@@ -157,7 +157,7 @@ The following example allocates at least `100.dp` to the first row:
 Grid(
     config = {
         column(1f)
-        // The first row has a minimum height of 100.dp and can expand to 
+        // The first row has a minimum height of 100.dp and can expand to
         // the half of the remaining space.
         row(GridTrackSize.MinMax(100.dp, 1.fr))
         // The second row takes the half of the remaining space.
