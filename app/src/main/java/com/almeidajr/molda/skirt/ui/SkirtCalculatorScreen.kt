@@ -24,6 +24,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.almeidajr.molda.profile.ui.ProfilesRoute
+import com.almeidajr.molda.profile.ui.profileWaistText
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import java.util.Locale
 
@@ -33,7 +35,9 @@ fun SkirtCalculatorRoute(
     viewModel: SkirtCalculatorViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SkirtCalculatorScreen(state, viewModel::edit, viewModel::calculate, modifier)
+    SkirtCalculatorScreen(state, viewModel::edit, viewModel::calculate, modifier) {
+        ProfilesRoute(onSelect = { viewModel.edit(MeasurementField.Waist, profileWaistText(it)) })
+    }
 }
 
 @Composable
@@ -42,6 +46,7 @@ fun SkirtCalculatorScreen(
     onEdit: (MeasurementField, String) -> Unit,
     onCalculate: () -> Unit,
     modifier: Modifier = Modifier,
+    profiles: @Composable () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
     Column(
@@ -90,6 +95,7 @@ fun SkirtCalculatorScreen(
             focusManager.clearFocus()
             onCalculate()
         }) { Text("Calcular") }
+        profiles()
         state.calculationError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         state.radii?.let {
             SkirtResults(it)
