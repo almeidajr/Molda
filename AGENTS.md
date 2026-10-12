@@ -24,9 +24,13 @@ Use Spotless + ktlint with `.editorconfig`. Run `.\gradlew.bat spotlessApply` be
 
 Prefer existing tools and their configuration over custom code; add scripts only when available tools cannot complete the task.
 
+When writing or changing Kotlin code, read and follow [Kotlin style](.agents/rules/kotlin-style.md) for functional design, immutability, idiomatic syntax, and library selection.
+
 ## Testing Guidelines
 
 Use JUnit 4 for local tests and AndroidJUnit4 for instrumented tests. Espresso and Compose UI testing dependencies are available. Name test classes with a `Test` suffix and methods descriptively, following examples such as `addition_isCorrect`. Add behavior-focused tests for changed logic and UI interactions. No coverage threshold is configured.
+
+When adding or changing tests, read and follow [Kotlin tests](.agents/rules/kotlin-unit-tests.md) for test selection, behavior assertions, and deterministic execution.
 
 ## Commit & Pull Request Guidelines
 
