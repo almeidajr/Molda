@@ -1,1 +1,2 @@
 Disposable governance verification fixture; never merge.
+CI-enabled phase; keep this fixture out of main.
