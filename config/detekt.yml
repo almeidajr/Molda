@@ -1,0 +1,18 @@
+config:
+  validation: true
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable', 'Test']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9]*'
+
+complexity:
+  LongParameterList:
+    ignoreDefaultParameters: true
+
+style:
+  MagicNumber:
+    ignorePropertyDeclaration: true
+  UnusedPrivateFunction:
+    ignoreAnnotated: ['Preview']

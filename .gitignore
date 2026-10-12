@@ -13,4 +13,11 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+/.idea/
+.kotlin/
+**/build/
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example

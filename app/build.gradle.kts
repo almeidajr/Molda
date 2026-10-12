@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.detekt)
 }
 
 android {
@@ -34,6 +35,20 @@ android {
     buildFeatures {
         compose = true
     }
+    lint {
+        warningsAsErrors = true
+        abortOnError = true
+        checkDependencies = true
+        // Dependabot owns update notices; available releases must not change CI results.
+        disable += setOf("GradleDependency", "NewerVersionAvailable")
+    }
+}
+
+detekt {
+    toolVersion = libs.versions.detekt.get()
+    buildUponDefaultConfig = true
+    config.setFrom(rootProject.file("config/detekt.yml"))
+    source.setFrom("src/main/java", "src/test/java", "src/androidTest/java")
 }
 
 dependencies {

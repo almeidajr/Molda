@@ -20,7 +20,7 @@ On macOS/Linux, use `./gradlew`. Configure Android SDK 37; devices require API 3
 
 ## Coding Style & Naming Conventions
 
-Follow official Kotlin style, configured in `gradle.properties`, with four-space indentation. Use PascalCase for classes, files, and UI composables (`GreetingPreview`); use camelCase for ordinary functions and properties. Keep packages under `com.almeidajr.molda` and use lowercase underscore names for Android resources. Format code with Android Studio. No standalone formatter or Kotlin lint plugin is configured.
+Use Spotless + ktlint with `.editorconfig`. Run `.\gradlew.bat spotlessApply` before validation. Use PascalCase for classes, files, and UI composables (`GreetingPreview`); use camelCase for ordinary functions and properties. Keep packages under `com.almeidajr.molda` and use lowercase underscore names for Android resources. See `README.md` for quality checks, CI, and dependency-update conventions.
 
 ## Testing Guidelines
 
@@ -28,7 +28,7 @@ Use JUnit 4 for local tests and AndroidJUnit4 for instrumented tests. Espresso a
 
 ## Commit & Pull Request Guidelines
 
-This checkout contains no Git metadata, so historical commit conventions cannot be verified. Use concise imperative subjects, such as `Add greeting screen tests`. Keep changes focused. Pull requests should explain the change, link relevant issues, report validation commands and results, and include screenshots for visible UI changes.
+Use concise imperative subjects, such as `Add greeting screen tests`. Keep changes focused. Pull requests should explain the change, link relevant issues, report validation commands and results, and include screenshots for visible UI changes.
 
 ## Configuration Hygiene
 

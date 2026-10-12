@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      android-build-tools:
+        patterns:
+          - com.android.*
+          - org.jetbrains.kotlin*
+        update-types: [minor, patch]
+      androidx:
+        patterns: ['androidx.*']
+        update-types: [minor, patch]
+      quality-tools:
+        patterns: ['com.diffplug.spotless*', 'dev.detekt*', 'com.pinterest.ktlint*']
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+        update-types: [minor, patch]
