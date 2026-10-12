@@ -2,7 +2,8 @@
 
 ## Install fast local hooks
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and Git.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), Git, and
+[Node.js](https://nodejs.org/) 22.12 or newer for manual CLI use.
 uv manages the Python runtime and CLI outside this Android project; no Python
 project or lockfile is needed. On Windows/PowerShell:
 
@@ -27,13 +28,13 @@ either platform:
 pre-commit install --install-hooks
 pre-commit run --all-files --show-diff-on-failure
 pre-commit run check-all-large-files --hook-stage manual --all-files
-uv run --no-project --python 3.12 python scripts/test_hooks.py
 ```
 
 Installation enables both `pre-commit` and `commit-msg` by default. The first run
 downloads isolated hook environments; later runs check staged files quickly.
-Hooks do not run Gradle or devices. Quality runs hygiene over all tracked files
-and exercises the fixtures on Linux; use the same fixture command on Windows.
+Hooks do not run Gradle or devices. Quality runs hygiene over all tracked files.
+CI uses pinned uv 0.13.0 and `uvx --python 3.12 pre-commit@4.6.2`;
+local Git hooks use the persistent `uv tool install` executable.
 Run the [existing Gradle checks](README.md#development) before submitting work.
 
 The hygiene hooks trim trailing whitespace (preserving Markdown hard breaks),
@@ -78,21 +79,80 @@ BREAKING CHANGE: old saved routes are discarded; reopen the desired screen.
 Strict validation rejects missing/unsupported types, empty subjects, and
 nonconventional `Merge`, `fixup!`, `squash!`, and `amend!` messages. Finish autosquash
 before submitting commits. Rebase onto main instead of making default merge
-commits. Existing main history is left untouched. Hook fixtures demonstrate all
-eleven types, unrestricted scopes, breaking syntax, dependency subjects, and failures.
+commits. Existing main history is left untouched. Types must be lowercase;
+subjects may use capitals and punctuation. There are no scope or message-length
+allowlists. Local hooks and both PR checks share `commitlint.config.cjs`.
 
 ## Update hook tooling
 
 Verified pins: [pre-commit 4.6.2](https://github.com/pre-commit/pre-commit/releases/tag/v4.6.2),
 [pre-commit-hooks 6.0.0](https://github.com/pre-commit/pre-commit-hooks/releases/tag/v6.0.0),
-and [conventional-pre-commit 4.4.0](https://github.com/compilerla/conventional-pre-commit/releases/tag/v4.4.0).
-Python 3.12 satisfies these tools' runtime requirements.
+and [commitlint 21.2.3](https://github.com/conventional-changelog/commitlint/releases/tag/v21.2.3).
+Python 3.12 satisfies pre-commit; commitlint requires Node 22.12 or newer.
 
 Dependabot's Gradle/Actions coverage does not update these pins. Review upstream
 release notes and compatibility, use `pre-commit autoupdate --freeze`, and verify
 each resulting SHA against its release (`git ls-remote <repo> refs/tags/<tag>
 refs/tags/<tag>^{}`; annotated tags use the peeled commit). Keep release comments.
 Update the CLI version together in this document, `.pre-commit-config.yaml`, and
-Quality's install command. Reinstall the CLI with uv, rerun fixtures on Windows
-and Linux, all-file hygiene, and the existing Gradle/device checks. Review changes
+Quality's install command. Update both exact commitlint package versions together
+in `.pre-commit-config.yaml` and the PR workflow. Reinstall the CLI with uv,
+verify accepted/rejected messages on Windows and Linux, run all-file hygiene,
+and the existing Gradle/device checks. Review changes
 before committing; keep Actions pinned to full SHAs when updating them.
+
+## PR message checks
+
+Use the same Conventional Commit policy for PR titles and every PR commit,
+including Dependabot and fork contributions. Breaking PRs require `!` in the
+title and an impact/migration explanation in the description; commits may also
+use a `BREAKING CHANGE:` footer. Fill in the short PR template with the change,
+related issues, validation results, and UI evidence when applicable.
+
+The stable required checks are **PR title** and **PR commits**. Opening,
+reopening, editing, and pushing/rebasing a PR reruns both checks, including drafts.
+An invalid intermediate commit fails even when the title and last commit pass.
+Edit a rejected title; amend/rebase rejected commits locally and rerun hooks,
+then push the corrected history. Agents need an explicit user request before
+any commit or push, including `--force-with-lease`. Existing main history is
+excluded using the complete `base..head` Git range. Its count must agree with
+GitHub's PR commit count; retrieval errors, shallow history, mismatches, and
+base/head changes fail closed. Git retrieval avoids the 250-commit REST list limit.
+
+Both checks and the local hook use `@commitlint/cli` and
+`@commitlint/config-conventional` 21.2.3 with default message exemptions disabled.
+No custom parser or runner is needed. The config retains eleven conventional
+types and rejects whitespace-only subjects, merge/fixup/squash/amend messages;
+scope, subject case/punctuation, and message-length restrictions are disabled.
+Hook environments install Node 24.21.0 and the two pinned packages without a
+Node project or lockfile. CI uses the same Node version and installs packages
+into a temporary directory.
+
+After changing the policy, verify all eleven types, optional Unicode/compound
+scopes, `!`, breaking footers, and Dependabot subjects through the local
+`commit-msg` hook. Verify malformed/empty subjects and an invalid intermediate
+commit fail; repeat the same cases through PR checks after deployment. Policy
+migration changes uppercase types and editor-comment headers to rejected input;
+use lowercase types and clean submitted messages.
+
+The metadata workflow uses `pull_request_target` so its workflow and config come
+from the trusted default branch, including for forks and Dependabot. It checks
+out only trusted `github.sha`, never PR code, persists no Git credentials, grants
+only contents/PR read access, and passes metadata through JSON/files rather than
+shell interpolation. PR Git objects are fetched only to read their messages;
+the PR tree is never checked out or executed. GitHub workflow commands are
+disabled while commitlint displays contributor text. It requests no secrets.
+Do not change its checkout to a PR head or merge ref.
+
+Deployment requires an explicit Actions event-policy allowance for this
+metadata-only `pull_request_target` workflow. GitHub's public-repository default
+may block it: see [the event policy](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target).
+Authenticated inspection of `repos/almeidajr/Molda/actions/policies` returned zero
+policies on 2026-10-12; an explicit allowance was not verified. Repository files
+alone do not enable this policy or register required checks. After an authorized
+merge/deployment, verify the allowance, observe successful **PR title**/**PR
+commits** runs, and add those exact names to main protection in #4. Exercise
+invalid/corrected title edits and intermediate commits on normal, fork, and
+Dependabot PRs; verify read-only permissions and merge blocking. These live runs
+remain blocked until deployment; no workflow or settings were published as part
+of the local implementation.
