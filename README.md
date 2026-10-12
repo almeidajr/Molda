@@ -18,8 +18,9 @@ Run from the repository root in PowerShell:
 
 On macOS/Linux use `bash ./gradlew`. Device tests require a running emulator or
 connected device. CI runs quality checks and one API 36 emulator on every PR
-and push to main; reports are retained for seven days. Configure branch protection
-to require `Quality` and `Device tests (API 36)` after their first CI run.
+and push to main; reports are retained for seven days. Main protection also requires
+`PR title` and `PR commits`; see [repository governance](CONTRIBUTING.md#repository-governance)
+for GitHub setup and verification.
 
 ## Conventions
 
