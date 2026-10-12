@@ -14,6 +14,39 @@ import org.junit.Test
 
 class ProfileStorageTest {
     @Test
+    fun updateAndDelete_reopenKeepsIdentityAndOtherProfilesWithDuplicateNames() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val databaseName = "profiles-mutations-test.db"
+        context.deleteDatabase(databaseName)
+        try {
+            val original = ProfileMeasurements("Ana", 80.5, LocalDate.of(2026, 10, 12), "Antes")
+            val profiles = LocalProfileRepository(context, databaseName).use { storage ->
+                listOf(storage.create(original), storage.create(original))
+            }
+            val edited = profiles[0].copy(
+                measurements = ProfileMeasurements(
+                    "Ana atualizada",
+                    81.123456789,
+                    LocalDate.of(2026, 10, 13),
+                    "Depois",
+                ),
+            )
+            LocalProfileRepository(context, databaseName).use { storage ->
+                storage.update(edited)
+            }
+            LocalProfileRepository(context, databaseName).use { storage ->
+                assertEquals(listOf(edited, profiles[1]), storage.list())
+                storage.delete(edited.id)
+            }
+            LocalProfileRepository(context, databaseName).use { storage ->
+                assertEquals(listOf(profiles[1]), storage.list())
+            }
+        } finally {
+            context.deleteDatabase(databaseName)
+        }
+    }
+
+    @Test
     fun corruptDatabase_loadFailsWithoutDeletingOrReplacingTheFile() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val databaseName = "profiles-corrupt-test.db"

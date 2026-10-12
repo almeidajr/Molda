@@ -53,19 +53,39 @@ class LocalProfileRepository(context: Context, databaseName: String = "profiles.
     override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile =
         withContext(Dispatchers.IO) {
             val checked = measurements.copy()
-            val values = ContentValues().apply {
-                put("name", checked.name)
-                put("waist", checked.waist)
-                put("measurement_date", checked.measurementDate.toString())
-                put("notes", checked.notes)
-            }
             MeasurementProfile(
-                database.writableDatabase.insertOrThrow("profiles", null, values),
+                database.writableDatabase.insertOrThrow("profiles", null, checked.toValues()),
                 checked,
             )
         }
 
+    override suspend fun update(profile: MeasurementProfile): Unit = withContext(Dispatchers.IO) {
+        val checked = profile.copy(measurements = profile.measurements.copy())
+        check(
+            database.writableDatabase.update(
+                "profiles",
+                checked.measurements.toValues(),
+                "id = ?",
+                arrayOf(checked.id.toString()),
+            ) == 1,
+        ) { "Profile no longer exists" }
+    }
+
+    override suspend fun delete(id: Long): Unit = withContext(Dispatchers.IO) {
+        require(id > 0) { "Profile identity must be positive" }
+        check(
+            database.writableDatabase.delete("profiles", "id = ?", arrayOf(id.toString())) == 1,
+        ) { "Profile no longer exists" }
+    }
+
     override fun close() = database.close()
+}
+
+private fun ProfileMeasurements.toValues(): ContentValues = ContentValues().apply {
+    put("name", name)
+    put("waist", waist)
+    put("measurement_date", measurementDate.toString())
+    put("notes", notes)
 }
 
 private class ProfileDatabase(context: Context, name: String) :
