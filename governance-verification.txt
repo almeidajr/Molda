@@ -1,0 +1,1 @@
+Disposable governance verification fixture; never merge.
