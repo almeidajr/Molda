@@ -1,0 +1,2 @@
+Temporary PR message-validation fixture; never merge.
+Valid final commit does not excuse invalid history.
