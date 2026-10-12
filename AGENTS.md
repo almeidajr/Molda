@@ -33,3 +33,17 @@ This checkout contains no Git metadata, so historical commit conventions cannot 
 ## Configuration Hygiene
 
 Keep SDK paths in ignored `local.properties`. Do not commit credentials, signing keys, generated build output, or local IDE state.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues for `almeidajr/Molda`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five default triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
