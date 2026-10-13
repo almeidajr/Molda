@@ -77,6 +77,8 @@ class MeasurementProfilesTest {
                                 profiles::save,
                                 profiles::load,
                                 { calculator.edit(MeasurementField.Waist, profileWaistText(it)) },
+                                profiles::startEditing,
+                                profiles::delete,
                             )
                         }
                     }
@@ -90,6 +92,69 @@ class MeasurementProfilesTest {
         composeRule.activityRule.scenario.close()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
             .targetContext.deleteDatabase(databaseName)
+    }
+
+    @Test
+    fun explicitEdit_invalidFieldsPreserveSavedMeasurements() {
+        click("Novo perfil")
+        edit("Nome ou apelido", "Ana")
+        edit("Cintura do perfil (cm)", "80")
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        click("Salvar perfil")
+        click("Editar perfil: Ana (perfil 1)")
+        edit("Nome ou apelido", "")
+        edit("Cintura do perfil (cm)", "Infinity")
+        edit("Data da medida (dd/mm/aaaa)", "31/02/2026")
+        click("Salvar alterações")
+        composeRule.onNodeWithText("Informe um nome ou apelido.")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Informe uma cintura positiva e finita, como 80,5.")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
+            .performScrollTo().assertIsDisplayed()
+        runBlocking {
+            val saved = storage.list().single().measurements
+            assertEquals("Ana", saved.name)
+            assertEquals(80.0, saved.waist, 0.0)
+        }
+    }
+
+    @Test
+    fun explicitEditAndDelete_preserveCalculationUntilNextSelectionAndOtherProfile() {
+        repeat(2) {
+            click("Novo perfil")
+            edit("Nome ou apelido", "Ana")
+            edit("Cintura do perfil (cm)", "80,123456789")
+            edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+            click("Salvar perfil")
+        }
+        click("Usar perfil: Ana — 80,123456789 cm — 12/10/2026 (perfil 1)")
+        edit("Circunferência da cintura (cm)", "90")
+        click("Editar perfil: Ana (perfil 1)")
+        composeRule.onNodeWithText("Cintura do perfil (cm)")
+            .performScrollTo().assertTextContains("80,123456789")
+        edit("Nome ou apelido", "Ana atualizada")
+        edit("Cintura do perfil (cm)", "82,25")
+        edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
+        edit("Observações (opcional)", "Nova medida")
+        composeRule.activityRule.scenario.recreate()
+        showContent()
+        composeRule.onNodeWithText("Nome ou apelido")
+            .performScrollTo().assertTextContains("Ana atualizada")
+        click("Salvar alterações")
+        composeRule.onNodeWithText("Circunferência da cintura (cm)")
+            .performScrollTo().assertTextContains("90")
+        click("Usar perfil: Ana atualizada — 82,25 cm — 13/10/2026 (perfil 1)")
+        composeRule.onNodeWithText("Circunferência da cintura (cm)")
+            .performScrollTo().assertTextContains("82,25")
+        click("Excluir perfil: Ana atualizada (perfil 1)")
+        composeRule.onNodeWithText(
+            "Usar perfil: Ana atualizada — 82,25 cm — 13/10/2026 (perfil 1)",
+        ).assertDoesNotExist()
+        composeRule.onNodeWithText("Circunferência da cintura (cm)")
+            .performScrollTo().assertTextContains("82,25")
+        click("Usar perfil: Ana — 80,123456789 cm — 12/10/2026 (perfil 2)")
+        runBlocking { assertEquals(2L, storage.list().single().id) }
     }
 
     @Test
@@ -198,6 +263,16 @@ class MeasurementProfilesTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Usar perfil: Ana — 80,5 cm — 12/10/2026 (perfil 1)")
+            .performScrollTo().assertIsDisplayed()
+        click("Editar perfil: Ana (perfil 1)")
+        edit("Cintura do perfil (cm)", "82,5")
+        composeRule.onNodeWithText("Observações (opcional)")
+            .performScrollTo().performClick().assertIsDisplayed()
+        click("Salvar alterações")
+        composeRule.onNodeWithText("Usar perfil: Ana — 82,5 cm — 12/10/2026 (perfil 1)")
+            .performScrollTo().assertIsDisplayed()
+        click("Excluir perfil: Ana (perfil 1)")
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.")
             .performScrollTo().assertIsDisplayed()
     }
     private fun edit(label: String, value: String) {

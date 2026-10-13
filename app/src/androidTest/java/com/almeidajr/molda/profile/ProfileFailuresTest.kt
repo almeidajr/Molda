@@ -4,6 +4,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -17,16 +18,51 @@ import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesContent
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
+import com.almeidajr.molda.profile.ui.profileWaistText
+import com.almeidajr.molda.skirt.ui.MeasurementField
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.LocalDate
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 class ProfileFailuresTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun updateAndDeleteFailures_keepSavedRecordsDraftAndCalculationWithoutSuccess() {
+        val storage = FailingProfiles()
+        val original = runBlocking { storage.list() }
+        showProfiles(storage)
+        edit("Circunferência da cintura (cm)", "95")
+        edit("Comprimento acabado (cm)", "60")
+        click("Editar perfil: Existente (perfil 1)")
+        edit("Nome ou apelido", "Alterado")
+        edit("Cintura do perfil (cm)", "82")
+        click("Salvar alterações")
+        composeRule.onNodeWithText("Não foi possível salvar o perfil.", substring = true)
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
+        composeRule.onNodeWithText("Nome ou apelido")
+            .performScrollTo().assertTextContains("Alterado")
+        click("Excluir perfil: Existente (perfil 1)")
+        composeRule.onNodeWithText("Não foi possível excluir o perfil.", substring = true)
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
+        composeRule.onNodeWithText("Usar perfil: Existente — 80 cm — 12/10/2026 (perfil 1)")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Cintura do perfil (cm)")
+            .performScrollTo().assertTextContains("82")
+        composeRule.onNodeWithText("Circunferência da cintura (cm)")
+            .performScrollTo().assertTextContains("95")
+        composeRule.onNodeWithText("Comprimento acabado (cm)")
+            .performScrollTo().assertTextContains("60")
+        runBlocking { assertEquals(original, storage.list()) }
+    }
 
     @Test
     fun loadFailure_blocksSavingAndRetryShowsExistingRecords() {
@@ -84,7 +120,9 @@ class ProfileFailuresTest {
                             profiles::edit,
                             profiles::save,
                             profiles::load,
-                            {},
+                            { calculator.edit(MeasurementField.Waist, profileWaistText(it)) },
+                            profiles::startEditing,
+                            profiles::delete,
                         )
                     }
                 }
@@ -109,6 +147,10 @@ private class FailingProfiles(var failLoad: Boolean = false, val failSave: Boole
                 1,
                 ProfileMeasurements("Existente", 80.0, LocalDate.of(2026, 10, 12)),
             ),
+            MeasurementProfile(
+                2,
+                ProfileMeasurements("Outra pessoa", 95.0, LocalDate.of(2026, 10, 11)),
+            ),
         )
     override suspend fun list(): List<MeasurementProfile> {
         if (failLoad) error("Controlled load failure")
@@ -116,6 +158,8 @@ private class FailingProfiles(var failLoad: Boolean = false, val failSave: Boole
     }
     override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile {
         if (failSave) error("Controlled save failure")
-        return MeasurementProfile(2, measurements)
+        return MeasurementProfile(3, measurements)
     }
+    override suspend fun update(profile: MeasurementProfile) = error("Controlled update failure")
+    override suspend fun delete(id: Long) = error("Controlled delete failure")
 }

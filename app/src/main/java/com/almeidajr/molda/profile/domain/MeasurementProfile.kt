@@ -23,4 +23,6 @@ data class MeasurementProfile(val id: Long, val measurements: ProfileMeasurement
 interface ProfileRepository {
     suspend fun list(): List<MeasurementProfile>
     suspend fun create(measurements: ProfileMeasurements): MeasurementProfile
+    suspend fun update(profile: MeasurementProfile)
+    suspend fun delete(id: Long)
 }

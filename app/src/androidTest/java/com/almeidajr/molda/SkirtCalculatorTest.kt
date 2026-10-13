@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.ui.MeasurementField
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorRoute
@@ -105,7 +106,7 @@ class SkirtCalculatorTest {
         fillInputs(listOf("80", "2", "60", "1", "2"))
         composeRule.onNodeWithText(MeasurementField.HemAllowance.label)
             .performScrollTo().performClick().assertIsDisplayed()
-        calculate()
+        composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
         composeRule.onNodeWithText("Raio de corte da barra: 75,05 cm")
             .performScrollTo().assertIsDisplayed()
     }
@@ -208,6 +209,7 @@ class SkirtCalculatorTest {
     }
 
     private fun calculate() {
+        closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
     }
 }

@@ -41,6 +41,8 @@ fun ProfilesRoute(onSelect: (Double) -> Unit, modifier: Modifier = Modifier) {
         viewModel::save,
         viewModel::load,
         onSelect,
+        viewModel::startEditing,
+        viewModel::delete,
         modifier,
     )
 }
@@ -53,8 +55,11 @@ fun ProfilesContent(
     onSave: () -> Unit,
     onRetry: () -> Unit,
     onSelect: (Double) -> Unit,
+    onStartEdit: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val canMutate = !state.isLoading && state.loadError == null && !state.isSaving
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Perfis de medidas (opcional)", style = MaterialTheme.typography.titleLarge)
         Text(
@@ -69,26 +74,36 @@ fun ProfilesContent(
             }
         }
         state.savedMessage?.let { Text(it) }
+        state.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         state.profiles.forEach { profile ->
             Button(onClick = {
                 onSelect(profile.measurements.waist)
             }) { Text(profileLabel(profile)) }
             if (profile.measurements.notes.isNotBlank()) Text(profile.measurements.notes)
+            Button(onClick = { onStartEdit(profile.id) }, enabled = canMutate) {
+                Text("Editar perfil: ${profile.measurements.name} (perfil ${profile.id})")
+            }
+            Button(onClick = { onDelete(profile.id) }, enabled = canMutate) {
+                Text("Excluir perfil: ${profile.measurements.name} (perfil ${profile.id})")
+            }
         }
         Button(
             onClick = onCreate,
-            enabled =
-                !state.isLoading && state.loadError == null && !state.isSaving,
+            enabled = canMutate,
         ) { Text("Novo perfil") }
         if (state.isCreating) {
             ProfileForm(state, onEdit)
-            state.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             Button(
                 onClick = onSave,
-                enabled =
-                    !state.isLoading && state.loadError == null && !state.isSaving,
+                enabled = canMutate,
             ) {
-                Text(if (state.isSaving) "Salvando…" else "Salvar perfil")
+                Text(
+                    when {
+                        state.isSaving -> "Salvando…"
+                        state.editingId != null -> "Salvar alterações"
+                        else -> "Salvar perfil"
+                    },
+                )
             }
         }
     }
