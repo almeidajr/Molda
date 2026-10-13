@@ -18,7 +18,10 @@ import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -27,6 +30,28 @@ import org.junit.Test
 class ProfileFailuresTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun saving_pendingStorageKeepsEditorAndDisablesDuplicateMutation() {
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        showProfiles(FailingProfiles(saveGate = gate))
+        click("Perfis de medidas")
+        click("Novo perfil")
+        edit("Nome ou apelido", "Nova")
+        edit("Cintura do perfil (cm)", "90")
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        click("Salvar perfil")
+        composeRule.onNodeWithText("Salvando…").assertIsNotEnabled()
+        composeRule.onNodeWithText("Cancelar").assertIsNotEnabled()
+        composeRule.onNodeWithText("Nome ou apelido").assertIsNotEnabled()
+        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+        composeRule.onNodeWithText("Novo perfil de medidas").performScrollTo().assertIsDisplayed()
+        gate.complete(Unit)
+        composeRule.onNodeWithText("Nova").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
+    }
 
     @Test
     fun deleting_pendingStorageDisablesMutationsAndFailureKeepsRecords() {
@@ -50,6 +75,26 @@ class ProfileFailuresTest {
     }
 
     @Test
+    fun legacyFutureDate_staysReadableAndRequiresCorrectionOnExplicitSave() {
+        val storage = FailingProfiles(measurementDate = LocalDate.of(2026, 10, 14))
+        showProfiles(storage)
+        click("Usar perfil")
+        composeRule.onNodeWithText(
+            "Usar perfil: Existente — 80 cm — 14/10/2026",
+        ).assertIsDisplayed()
+        click("Cancelar seleção")
+        click("Perfis de medidas")
+        click("Existente")
+        click("Salvar alterações")
+        composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("14/10/2026")
+        click("Cancelar")
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Existente").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun updateAndDeleteFailures_keepSavedRecordsDraftAndCalculationWithoutSuccess() {
         val storage = FailingProfiles()
         val original = runBlocking { storage.list() }
@@ -66,6 +111,10 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
         composeRule.onNodeWithText("Nome ou apelido")
             .performScrollTo().assertTextContains("Alterado")
+        composeRule.onNodeWithText("Cintura do perfil (cm)")
+            .performScrollTo().assertTextContains("82")
+        click("Cancelar")
+        click("Descartar")
         click("Ações: Existente")
         click("Excluir perfil")
         click("Confirmar exclusão")
@@ -74,8 +123,6 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
         composeRule.onNodeWithText("Existente")
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Cintura do perfil (cm)")
-            .performScrollTo().assertTextContains("82")
         click("Voltar ao cálculo")
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("95")
@@ -139,13 +186,20 @@ class ProfileFailuresTest {
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
         composeRule.onNodeWithText("Nome ou apelido").performScrollTo()
+            .assertTextContains("Nova")
+        click("Cancelar")
+        click("Descartar")
         composeRule.onNodeWithText("Existente")
             .performScrollTo().assertIsDisplayed()
     }
 
     private fun showProfiles(storage: ProfileRepository) {
         composeRule.runOnUiThread {
-            val profiles = ProfilesViewModel(storage, SavedStateHandle())
+            val profiles = ProfilesViewModel(
+                storage,
+                SavedStateHandle(),
+                Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC),
+            )
             val calculator = SkirtCalculatorViewModel(androidx.lifecycle.SavedStateHandle())
             composeRule.activity.setContent {
                 MoldaTheme {
@@ -171,12 +225,14 @@ private class FailingProfiles(
     val failSave: Boolean = false,
     val loadGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
     val deleteGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
+    val saveGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
+    val measurementDate: LocalDate = LocalDate.of(2026, 10, 12),
 ) : ProfileRepository {
     private val records =
         listOf(
             MeasurementProfile(
                 1,
-                ProfileMeasurements("Existente", 80.0, LocalDate.of(2026, 10, 12)),
+                ProfileMeasurements("Existente", 80.0, measurementDate),
             ),
             MeasurementProfile(
                 2,
@@ -189,6 +245,7 @@ private class FailingProfiles(
         return records
     }
     override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile {
+        saveGate?.await()
         if (failSave) error("Controlled save failure")
         return MeasurementProfile(3, measurements)
     }

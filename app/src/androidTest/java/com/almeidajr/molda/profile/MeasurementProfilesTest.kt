@@ -4,8 +4,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -20,6 +24,12 @@ import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -51,6 +61,7 @@ class MeasurementProfilesTest {
                             ProfilesViewModel(
                                 storage,
                                 createSavedStateHandle(),
+                                Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC),
                             )
                         }
                     },
@@ -85,9 +96,15 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Excluir perfil Ana?").assertIsDisplayed()
         runBlocking { assertEquals(1, storage.list().size) }
         click("Cancelar")
+        composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
         click("Ações: Ana")
         click("Excluir perfil")
-        androidx.test.espresso.Espresso.pressBack()
+        waitForDialogFocus()
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(hasText("Excluir perfil Ana?")).fetchSemanticsNodes().isEmpty()
+        }
         composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
         composeRule.onNodeWithText("Ana").assertIsDisplayed()
         runBlocking { assertEquals(1, storage.list().size) }
@@ -125,6 +142,115 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun saveFeedback_keepsCalculateTouchableWhenReturningToDraft() {
+        edit("Circunferência da cintura (cm)", "80")
+        edit("Folga de cintura (cm)", "0")
+        edit("Comprimento acabado (cm)", "60")
+        edit("Margem de costura da cintura (cm)", "0")
+        edit("Margem de barra (cm)", "0")
+        manage()
+        click("Novo perfil")
+        edit("Nome ou apelido", "Ana")
+        edit("Cintura do perfil (cm)", "80")
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        click("Salvar perfil")
+        click("Voltar ao cálculo")
+        composeRule.onNodeWithText("Calcular").performScrollTo()
+        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
+        composeRule.onNodeWithText("Calcular").performClick()
+        composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun back_dismissesCalendarThenConfirmsDirtyEditor() {
+        manage()
+        click("Novo perfil")
+        edit("Nome ou apelido", "Rascunho")
+        click("Escolher data no calendário")
+        waitForDialogFocus()
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(hasText("Cancelar calendário")).fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
+        composeRule.waitUntil(5_000) { composeRule.activity.hasWindowFocus() }
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+        click("Descartar")
+        composeRule.onNodeWithText("Perfis de medidas (opcional)").assertIsDisplayed()
+    }
+
+    @Test
+    fun dateBoundary_futureRejectedTodaySavedAndCalendarMatchesText() {
+        manage()
+        click("Novo perfil")
+        edit("Nome ou apelido", "Data limite")
+        edit("Cintura do perfil (cm)", "80")
+        click("Salvar perfil")
+        composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
+            .performScrollTo().assertIsDisplayed()
+        edit("Data da medida (dd/mm/aaaa)", "14/10/2026")
+        click("Salvar perfil")
+        composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
+            .performScrollTo().assertIsDisplayed()
+        edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
+        click("Escolher data no calendário")
+        val calendarFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
+            .withLocale(composeRule.activity.resources.configuration.locales[0])
+        composeRule.onNodeWithText(LocalDate.of(2026, 10, 14).format(calendarFormat))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithText(LocalDate.of(2026, 10, 12).format(calendarFormat)).performClick()
+        click("Confirmar data")
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("12/10/2026")
+        edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
+        click("Salvar perfil")
+        composeRule.onNodeWithText("Data limite").performScrollTo().assertIsDisplayed()
+        click("Data limite")
+        click("Cancelar")
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+    }
+
+    @Test
+    fun pickerCreation_returnsWithoutSelectingAndRestoresDirtyEditor() {
+        edit("Circunferência da cintura (cm)", "95")
+        click("Usar perfil")
+        click("Novo perfil")
+        edit("Nome ou apelido", "Nova no seletor")
+        edit("Cintura do perfil (cm)", "80")
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        composeRule.activityRule.scenario.recreate()
+        showContent()
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Nova no seletor")
+        click("Cancelar")
+        click("Continuar editando")
+        click("Salvar perfil")
+        composeRule.onNodeWithText("Usar perfil: Nova no seletor — 80 cm — 12/10/2026")
+            .assertIsDisplayed()
+        click("Cancelar seleção")
+        composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("95")
+    }
+
+    @Test
+    fun cancelDirtyCreation_confirmsDiscardAndLeavesCalculatorUntouched() {
+        edit("Circunferência da cintura (cm)", "95")
+        manage()
+        click("Novo perfil")
+        composeRule.onNodeWithText("Nenhum perfil salvo.", substring = true).assertDoesNotExist()
+        edit("Nome ou apelido", "Rascunho")
+        click("Cancelar")
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+        click("Continuar editando")
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
+        click("Cancelar")
+        click("Descartar")
+        click("Voltar ao cálculo")
+        composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("95")
+    }
+
+    @Test
     fun explicitEdit_invalidFieldsPreserveSavedMeasurements() {
         manage()
         click("Novo perfil")
@@ -159,6 +285,11 @@ class MeasurementProfilesTest {
             edit("Cintura do perfil (cm)", "80,123456789")
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
             click("Salvar perfil")
+            composeRule.waitUntil(5_000) {
+                composeRule.onAllNodes(hasText("Perfil salvo neste aparelho."))
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
         }
         pick("Usar perfil: Ana — 80,123456789 cm — 12/10/2026")
         edit("Circunferência da cintura (cm)", "90")
@@ -351,6 +482,16 @@ class MeasurementProfilesTest {
         click("Confirmar exclusão")
         composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertIsDisplayed()
     }
+    private fun waitForDialogFocus() {
+        // Dialog semantics appear before the exiting menu releases native window focus.
+        composeRule.waitUntil(5_000) {
+            android.view.inspector.WindowInspector.getGlobalWindowViews().any {
+                it.hasWindowFocus() &&
+                    (it.layoutParams as android.view.WindowManager.LayoutParams).type ==
+                    android.view.WindowManager.LayoutParams.TYPE_APPLICATION
+            }
+        }
+    }
     private fun edit(label: String, value: String) {
         composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)
     }
@@ -376,6 +517,11 @@ class MeasurementProfilesTest {
     }
 
     private fun click(label: String) {
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(
+                hasText(label) and isEnabled() and !hasAnyAncestor(!isEnabled()),
+            ).fetchSemanticsNodes().isNotEmpty()
+        }
         val node = composeRule.onNodeWithText(label)
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()

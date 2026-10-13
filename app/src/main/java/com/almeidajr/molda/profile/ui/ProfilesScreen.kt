@@ -43,64 +43,57 @@ import java.math.BigDecimal
 @Composable
 fun ProfilesContent(
     state: ProfilesState,
-    onCreate: () -> Unit,
-    onEdit: (ProfileField, String) -> Unit,
-    onSave: () -> Unit,
     onRetry: () -> Unit,
     onStartEdit: (Long) -> Unit,
     onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val canMutate = !state.isLoading && state.loadError == null && !state.isSaving
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { if (canMutate) onCreate() },
-                modifier = Modifier.semantics { if (!canMutate) disabled() },
-            ) { Text("Novo perfil") }
-        },
-    ) { padding ->
-        Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-                .padding(padding).padding(bottom = 88.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text("Perfis de medidas (opcional)", style = MaterialTheme.typography.titleLarge)
+    Column(
+        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 88.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text("Perfis de medidas (opcional)", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "Os perfis ficam só neste aparelho, sem backup ou sincronização. " +
+                "Você pode perdê-los ao limpar os dados do app ou trocar de aparelho.",
+        )
+        if (state.isLoading) {
+            CircularProgressIndicator()
+            Text("Carregando perfis…")
+        }
+        state.loadError?.let {
+            Text(it, color = MaterialTheme.colorScheme.error)
+            Button(onClick = onRetry, enabled = !state.isLoading) {
+                Text("Tentar carregar novamente")
+            }
+        }
+        if (!state.isLoading && state.loadError == null && state.profiles.isEmpty()) {
             Text(
-                "Os perfis ficam só neste aparelho, sem backup ou sincronização. " +
-                    "Você pode perdê-los ao limpar os dados do app ou trocar de aparelho.",
+                "Nenhum perfil salvo. Os perfis são opcionais; " +
+                    "você pode calcular com uma medida manual.",
             )
-            if (state.isLoading) {
-                CircularProgressIndicator()
-                Text("Carregando perfis…")
-            }
-            state.loadError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
-                Button(onClick = onRetry, enabled = !state.isLoading) {
-                    Text("Tentar carregar novamente")
-                }
-            }
-            if (!state.isLoading && state.loadError == null && state.profiles.isEmpty()) {
-                Text(
-                    "Nenhum perfil salvo. Os perfis são opcionais; " +
-                        "você pode calcular com uma medida manual.",
-                )
-            }
-            state.profiles.forEach { profile ->
-                ProfileManagementRow(
-                    profile,
-                    canMutate,
-                    onStartEdit,
-                    onDelete,
-                    isDeleting = state.isSaving && state.deleteId == profile.id,
-                    deleteError = state.saveError.takeIf { state.deleteId == profile.id },
-                )
-            }
-            ProfileFormActions(state, onEdit, onSave, canMutate)
+        }
+        state.profiles.forEach { profile ->
+            ProfileManagementRow(
+                profile,
+                canMutate,
+                onStartEdit,
+                onDelete,
+                isDeleting = state.isSaving && state.deleteId == profile.id,
+                deleteError = state.saveError.takeIf { state.deleteId == profile.id },
+            )
         }
     }
+}
+
+@Composable
+fun ProfileCreateAction(state: ProfilesState, onCreate: () -> Unit, modifier: Modifier = Modifier) {
+    val canMutate = !state.isLoading && state.loadError == null && !state.isSaving
+    ExtendedFloatingActionButton(
+        onClick = { if (canMutate) onCreate() },
+        modifier = modifier.semantics { if (!canMutate) disabled() },
+    ) { Text("Novo perfil") }
 }
 
 internal fun profileWaistText(value: Double): String =
@@ -110,28 +103,6 @@ internal fun profileLabel(profile: MeasurementProfile): String =
     "Usar perfil: ${profile.measurements.name} — " +
         "${profileWaistText(profile.measurements.waist)} cm — " +
         profile.measurements.measurementDate.format(ProfileDateFormat)
-
-@Composable
-private fun ProfileForm(state: ProfilesState, onEdit: (ProfileField, String) -> Unit) {
-    ProfileField.entries.forEach { field ->
-        val error = state.errors[field]
-        OutlinedTextField(
-            value = state.inputs.getValue(field), onValueChange = { onEdit(field, it) },
-            label = { Text(field.label) }, isError = error != null,
-            supportingText = error?.let { { Text(it) } },
-            enabled = !state.isSaving,
-            singleLine = field != ProfileField.Notes,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = if (field == ProfileField.Waist) {
-                    KeyboardType.Decimal
-                } else {
-                    KeyboardType.Text
-                },
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
 
 @Composable
 private fun ProfileManagementRow(
@@ -269,33 +240,6 @@ fun ProfilePicker(
                 onClick = onCreate,
                 enabled = !state.isLoading && state.loadError == null && !state.isSaving,
             ) { Text("Novo perfil") }
-        }
-    }
-}
-
-@Composable
-private fun ProfileFormActions(
-    state: ProfilesState,
-    onEdit: (ProfileField, String) -> Unit,
-    onSave: () -> Unit,
-    canMutate: Boolean,
-) {
-    if (state.isCreating) {
-        if (state.deleteId == null) {
-            state.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        }
-        ProfileForm(state, onEdit)
-        Button(
-            onClick = onSave,
-            enabled = canMutate,
-        ) {
-            Text(
-                when {
-                    state.isSaving -> "Salvando…"
-                    state.editingId != null -> "Salvar alterações"
-                    else -> "Salvar perfil"
-                },
-            )
         }
     }
 }
