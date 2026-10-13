@@ -1,16 +1,21 @@
 package com.almeidajr.molda
 
 import androidx.activity.compose.setContent
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.pressKey
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.ui.MeasurementField
@@ -24,6 +29,91 @@ import org.junit.runner.RunWith
 class SkirtCalculatorTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun validation_firstSubmitFocusesWaist_thenRevalidatesOnBlur() {
+        composeRule.onNodeWithText("Informe um valor", substring = true).assertDoesNotExist()
+        calculate()
+        composeRule.onNodeWithText(
+            MeasurementField.Waist.label,
+        ).assertIsFocused().assertIsDisplayed()
+        edit(MeasurementField.Waist, "-1")
+        composeRule.onNodeWithText(MeasurementField.Waist.label).performImeAction()
+        composeRule.onNodeWithText("Informe um valor maior que zero.").assertExists()
+        edit(MeasurementField.Waist, "80,5")
+        composeRule.onNodeWithText(MeasurementField.Waist.label).performImeAction()
+        composeRule.onNodeWithText("Informe um valor maior que zero.").assertDoesNotExist()
+        composeRule.onNodeWithText(MeasurementField.Ease.label).assertIsFocused()
+    }
+
+    @Test
+    fun keyboard_nextAndDone_acceptDecimalCommaAndExplicitZeros() {
+        val values = listOf("80,5", "0", "60", "0", "0")
+        MeasurementField.entries.zip(values).forEach { (field, value) ->
+            edit(field, value)
+            composeRule.onNodeWithText(field.label).performClick().performImeAction()
+            if (field != MeasurementField.HemAllowance) {
+                composeRule.onNodeWithText(MeasurementField.entries[field.ordinal + 1].label)
+                    .assertIsFocused().assertIsDisplayed()
+            }
+        }
+        composeRule.onNodeWithText("Raio de corte da barra: 72,81 cm")
+            .performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun untouchedFields_blurWithoutShowingErrors_andEveryEditWithdrawsResults() {
+        edit(MeasurementField.Waist, "-1")
+        composeRule.onNodeWithText(MeasurementField.Waist.label).performClick().performImeAction()
+        composeRule.onNodeWithText("Informe um valor maior que zero.").assertDoesNotExist()
+        fillInputs(listOf("80", "0", "60", "0", "0"))
+        MeasurementField.entries.forEach { field ->
+            calculate()
+            composeRule.onNodeWithText("Raios para o molde").assertExists()
+            edit(field, "1")
+            composeRule.onNodeWithText("Raios para o molde").assertDoesNotExist()
+            edit(
+                field,
+                if (field ==
+                    MeasurementField.Waist
+                ) {
+                    "80"
+                } else if (field ==
+                    MeasurementField.Length
+                ) {
+                    "60"
+                } else {
+                    "0"
+                },
+            )
+        }
+    }
+
+    @Test
+    fun validation_blurRetainsImpossibleCuttingMarginErrorUntilCorrected() {
+        fillInputs(listOf("80", "0", "60", "100", "0"))
+        calculate()
+        edit(MeasurementField.WaistSeamAllowance, "90")
+        composeRule.onNodeWithText(
+            MeasurementField.WaistSeamAllowance.label,
+        ).performClick().performImeAction()
+        composeRule.onNodeWithText("A margem deve ser menor", substring = true).assertExists()
+        edit(MeasurementField.WaistSeamAllowance, "1")
+        composeRule.onNodeWithText(
+            MeasurementField.WaistSeamAllowance.label,
+        ).performClick().performImeAction()
+        composeRule.onNodeWithText("A margem deve ser menor", substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText("Raios para o molde").assertDoesNotExist()
+    }
+
+    @Test
+    fun keyboard_hardwareTabFollowsMeasurementOrder() {
+        composeRule.onNodeWithText(MeasurementField.Ease.label).performScrollTo().performClick()
+            .performKeyInput { pressKey(Key.Tab) }
+        composeRule.onNodeWithText(
+            MeasurementField.Length.label,
+        ).assertIsFocused().assertIsDisplayed()
+    }
 
     @Test
     fun calculate_withoutProfile_displaysFourLabelledReferenceRadiiAndBoundaries() {
@@ -124,7 +214,7 @@ class SkirtCalculatorTest {
         composeRule.onNodeWithText(
             "a partir da linha de costura da cintura; exclua a altura do cós.",
             substring = true,
-        ).assertIsDisplayed()
+        ).performScrollTo().assertIsDisplayed()
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
         composeRule.onNodeWithText(

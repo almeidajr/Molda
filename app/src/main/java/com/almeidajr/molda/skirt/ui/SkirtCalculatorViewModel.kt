@@ -23,6 +23,8 @@ data class CalculatorState(
     val errors: Map<MeasurementField, String> = emptyMap(),
     val calculationError: String? = null,
     val radii: SkirtRadii? = null,
+    val hasAttemptedCalculation: Boolean = false,
+    val calculationAttempt: Int = 0,
 )
 
 /** Accepts a decimal comma or point, without grouping, exponents or partial parsing. */
@@ -42,45 +44,45 @@ class SkirtCalculatorViewModel : ViewModel() {
         mutableState.update {
             it.copy(
                 inputs = it.inputs + (field to text),
-                errors = it.errors - field,
                 calculationError = null,
                 radii = null,
             )
         }
     }
 
+    fun blur(field: MeasurementField) {
+        mutableState.update { current ->
+            if (!current.hasAttemptedCalculation) return@update current
+            val error =
+                measurementError(field, current.inputs.getValue(field))
+                    ?: cuttingMarginError(field, current.inputs)
+            current.copy(
+                errors = if (error ==
+                    null
+                ) {
+                    current.errors - field
+                } else {
+                    current.errors + (field to error)
+                },
+            )
+        }
+    }
+
     fun calculate() {
-        val current = mutableState.value
+        val current = mutableState.value.copy(
+            hasAttemptedCalculation = true,
+            calculationAttempt = mutableState.value.calculationAttempt + 1,
+        )
         val values = current.inputs.mapValues { parseMeasurement(it.value) }
         val errors = MeasurementField.entries.mapNotNull { field ->
-            val value = values[field]
-            val error = when {
-                current.inputs.getValue(
-                    field,
-                ).isBlank() -> "Informe um valor, inclusive zero para folgas e margens."
-
-                value == null -> "Informe um número finito, como 80,5, sem separador de milhar."
-
-                field.requiresPositive && value <= 0.0 -> "Informe um valor maior que zero."
-
-                value < 0.0 -> "Informe zero ou um valor positivo."
-
-                else -> null
-            }
-            error?.let { field to it }
+            measurementError(field, current.inputs.getValue(field))?.let { field to it }
         }.toMap()
         if (errors.isNotEmpty()) {
             mutableState.value =
                 current.copy(errors = errors, radii = null, calculationError = null)
             return
         }
-        val measurements = SkirtMeasurements(
-            waist = requireNotNull(values[MeasurementField.Waist]),
-            ease = requireNotNull(values[MeasurementField.Ease]),
-            length = requireNotNull(values[MeasurementField.Length]),
-            waistSeamAllowance = requireNotNull(values[MeasurementField.WaistSeamAllowance]),
-            hemAllowance = requireNotNull(values[MeasurementField.HemAllowance]),
-        )
+        val measurements = skirtMeasurements(values)
         mutableState.value = when (val result = calculateSkirtRadii(measurements)) {
             is SkirtCalculation.Success -> current.copy(
                 errors = emptyMap(),
@@ -105,3 +107,42 @@ class SkirtCalculatorViewModel : ViewModel() {
         }
     }
 }
+
+private fun measurementError(field: MeasurementField, text: String): String? {
+    val value = parseMeasurement(text)
+    return when {
+        text.isBlank() -> "Informe um valor, inclusive zero para folgas e margens."
+        value == null -> "Informe um número finito, como 80,5, sem separador de milhar."
+        field.requiresPositive && value <= 0.0 -> "Informe um valor maior que zero."
+        value < 0.0 -> "Informe zero ou um valor positivo."
+        else -> null
+    }
+}
+
+private fun cuttingMarginError(
+    field: MeasurementField,
+    inputs: Map<MeasurementField, String>,
+): String? {
+    if (field != MeasurementField.WaistSeamAllowance ||
+        inputs.any { (inputField, text) -> measurementError(inputField, text) != null }
+    ) {
+        return null
+    }
+    val values = inputs.mapValues { parseMeasurement(it.value) }
+    return if (calculateSkirtRadii(skirtMeasurements(values)) ==
+        SkirtCalculation.NonpositiveWaistCutting
+    ) {
+        "A margem deve ser menor que o raio de costura da cintura."
+    } else {
+        null
+    }
+}
+
+private fun skirtMeasurements(values: Map<MeasurementField, Double?>): SkirtMeasurements =
+    SkirtMeasurements(
+        waist = requireNotNull(values[MeasurementField.Waist]),
+        ease = requireNotNull(values[MeasurementField.Ease]),
+        length = requireNotNull(values[MeasurementField.Length]),
+        waistSeamAllowance = requireNotNull(values[MeasurementField.WaistSeamAllowance]),
+        hemAllowance = requireNotNull(values[MeasurementField.HemAllowance]),
+    )
