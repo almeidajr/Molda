@@ -36,6 +36,7 @@ data class ProfilesState(
     val loadError: String? = null,
     val saveError: String? = null,
     val savedMessage: String? = null,
+    val deleteId: Long? = null,
 )
 
 class ProfilesViewModel(
@@ -91,7 +92,13 @@ class ProfilesViewModel(
         savedState["isCreating"] = true
         savedState["editingId"] = null
         mutableState.update {
-            it.copy(isCreating = true, editingId = null, savedMessage = null, saveError = null)
+            it.copy(
+                isCreating = true,
+                editingId = null,
+                savedMessage = null,
+                saveError = null,
+                deleteId = null,
+            )
         }
     }
 
@@ -116,6 +123,7 @@ class ProfilesViewModel(
                 errors = emptyMap(),
                 savedMessage = null,
                 saveError = null,
+                deleteId = null,
             )
         }
     }
@@ -194,7 +202,9 @@ class ProfilesViewModel(
 
     fun delete(id: Long) {
         if (!canMutate() || mutableState.value.profiles.none { it.id == id }) return
-        mutableState.update { it.copy(isSaving = true, saveError = null, savedMessage = null) }
+        mutableState.update {
+            it.copy(isSaving = true, saveError = null, savedMessage = null, deleteId = id)
+        }
         viewModelScope.launch {
             try {
                 repository.delete(id)
@@ -214,6 +224,7 @@ class ProfilesViewModel(
                         profiles = it.profiles.filterNot { profile -> profile.id == id },
                         isSaving = false,
                         savedMessage = "Perfil excluído deste aparelho.",
+                        deleteId = null,
                     )
                 }
             } catch (cancelled: CancellationException) {

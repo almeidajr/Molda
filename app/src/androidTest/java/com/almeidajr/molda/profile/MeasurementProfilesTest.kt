@@ -73,6 +73,58 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun deleteConfirmation_cancelAndBackPreserveSavedProfile() {
+        manage()
+        click("Novo perfil")
+        edit("Nome ou apelido", "Ana")
+        edit("Cintura do perfil (cm)", "80")
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        click("Salvar perfil")
+        click("Ações: Ana")
+        click("Excluir perfil")
+        composeRule.onNodeWithText("Excluir perfil Ana?").assertIsDisplayed()
+        runBlocking { assertEquals(1, storage.list().size) }
+        click("Cancelar")
+        click("Ações: Ana")
+        click("Excluir perfil")
+        androidx.test.espresso.Espresso.pressBack()
+        composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
+        composeRule.onNodeWithText("Ana").assertIsDisplayed()
+        runBlocking { assertEquals(1, storage.list().size) }
+    }
+
+    @Test
+    fun confirmedDelete_matchingNamesKeepsOtherIdentityAndCopiedCalculation() {
+        repeat(2) {
+            manage()
+            click("Novo perfil")
+            edit("Nome ou apelido", "Ana")
+            edit("Cintura do perfil (cm)", "80")
+            edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+            click("Salvar perfil")
+        }
+        pick("Usar perfil: Ana — 80 cm — 12/10/2026")
+        edit("Folga de cintura (cm)", "0")
+        edit("Comprimento acabado (cm)", "60")
+        edit("Margem de costura da cintura (cm)", "0")
+        edit("Margem de barra (cm)", "0")
+        click("Calcular")
+        manage()
+        composeRule.onAllNodes(androidx.compose.ui.test.hasText("Ações: Ana"))[0]
+            .performScrollTo().performClick()
+        click("Excluir perfil")
+        composeRule.onNodeWithText("Excluir perfil Ana?").assertIsDisplayed()
+        click("Confirmar exclusão")
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertIsDisplayed()
+        click("Voltar ao cálculo")
+        composeRule.onNodeWithText("Circunferência da cintura (cm)")
+            .performScrollTo().assertTextContains("80")
+        composeRule.onNodeWithText("Medida do perfil: Ana").assertIsDisplayed()
+        composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
+        runBlocking { assertEquals(2L, storage.list().single().id) }
+    }
+
+    @Test
     fun explicitEdit_invalidFieldsPreserveSavedMeasurements() {
         manage()
         click("Novo perfil")
@@ -135,6 +187,7 @@ class MeasurementProfilesTest {
         manage()
         click("Ações: Ana atualizada")
         click("Excluir perfil")
+        click("Confirmar exclusão")
         composeRule.onNodeWithText(
             "Usar perfil: Ana atualizada — 82,25 cm — 13/10/2026",
         ).assertDoesNotExist()
@@ -295,8 +348,8 @@ class MeasurementProfilesTest {
             .performScrollTo().assertIsDisplayed()
         click("Ações: Ana")
         click("Excluir perfil")
-        composeRule.onNodeWithText("Perfil excluído deste aparelho.")
-            .performScrollTo().assertIsDisplayed()
+        click("Confirmar exclusão")
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertIsDisplayed()
     }
     private fun edit(label: String, value: String) {
         composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)

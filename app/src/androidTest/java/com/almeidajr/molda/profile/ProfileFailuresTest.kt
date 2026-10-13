@@ -2,6 +2,7 @@ package com.almeidajr.molda.profile
 
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -28,6 +29,27 @@ class ProfileFailuresTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
+    fun deleting_pendingStorageDisablesMutationsAndFailureKeepsRecords() {
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val storage = FailingProfiles(deleteGate = gate)
+        showProfiles(storage)
+        click("Perfis de medidas")
+        click("Ações: Existente")
+        click("Excluir perfil")
+        click("Confirmar exclusão")
+        composeRule.onNodeWithText("Excluindo Existente…").assertIsDisplayed()
+        composeRule.onNodeWithText("Ações: Existente").assertIsNotEnabled()
+        composeRule.onNodeWithText("Ações: Outra pessoa").assertIsNotEnabled()
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
+        gate.complete(Unit)
+        composeRule.onNodeWithText("Não foi possível excluir o perfil.", substring = true)
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
+        composeRule.onNodeWithText("Existente").assertIsDisplayed()
+        runBlocking { assertEquals(2, storage.list().size) }
+    }
+
+    @Test
     fun updateAndDeleteFailures_keepSavedRecordsDraftAndCalculationWithoutSuccess() {
         val storage = FailingProfiles()
         val original = runBlocking { storage.list() }
@@ -46,6 +68,7 @@ class ProfileFailuresTest {
             .performScrollTo().assertTextContains("Alterado")
         click("Ações: Existente")
         click("Excluir perfil")
+        click("Confirmar exclusão")
         composeRule.onNodeWithText("Não foi possível excluir o perfil.", substring = true)
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
@@ -147,6 +170,7 @@ private class FailingProfiles(
     var failLoad: Boolean = false,
     val failSave: Boolean = false,
     val loadGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
+    val deleteGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
 ) : ProfileRepository {
     private val records =
         listOf(
@@ -169,5 +193,8 @@ private class FailingProfiles(
         return MeasurementProfile(3, measurements)
     }
     override suspend fun update(profile: MeasurementProfile) = error("Controlled update failure")
-    override suspend fun delete(id: Long) = error("Controlled delete failure")
+    override suspend fun delete(id: Long) {
+        deleteGate?.await()
+        error("Controlled delete failure")
+    }
 }

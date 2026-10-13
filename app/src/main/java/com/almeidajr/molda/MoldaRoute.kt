@@ -9,11 +9,15 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -42,6 +46,7 @@ fun MoldaRoute(
 ) {
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
     val profileState by profiles.state.collectAsStateWithLifecycle()
+    val snackbar = profileSnackbar(profileState.savedMessage)
     var showManagement by rememberSaveable { mutableStateOf(false) }
     var showPicker by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = showManagement && !showPicker && !WindowInsets.isImeVisible) {
@@ -52,6 +57,7 @@ fun MoldaRoute(
         Column(
             modifier.fillMaxSize().imePadding().padding(16.dp),
         ) {
+            SnackbarHost(snackbar)
             TextButton(onClick = { showManagement = false }) { Text("Voltar ao cálculo") }
             ProfilesContent(
                 profileState,
@@ -106,4 +112,11 @@ private fun profileViewModel(): ProfilesViewModel {
             }
         },
     )
+}
+
+@Composable
+private fun profileSnackbar(message: String?): SnackbarHostState {
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it) } }
+    return snackbar
 }

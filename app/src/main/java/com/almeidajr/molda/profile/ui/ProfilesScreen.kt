@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -30,7 +31,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -79,8 +82,6 @@ fun ProfilesContent(
                     Text("Tentar carregar novamente")
                 }
             }
-            state.savedMessage?.let { Text(it) }
-            state.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (!state.isLoading && state.loadError == null && state.profiles.isEmpty()) {
                 Text(
                     "Nenhum perfil salvo. Os perfis são opcionais; " +
@@ -88,7 +89,14 @@ fun ProfilesContent(
                 )
             }
             state.profiles.forEach { profile ->
-                ProfileManagementRow(profile, canMutate, onStartEdit, onDelete)
+                ProfileManagementRow(
+                    profile,
+                    canMutate,
+                    onStartEdit,
+                    onDelete,
+                    isDeleting = state.isSaving && state.deleteId == profile.id,
+                    deleteError = state.saveError.takeIf { state.deleteId == profile.id },
+                )
             }
             ProfileFormActions(state, onEdit, onSave, canMutate)
         }
@@ -131,8 +139,17 @@ private fun ProfileManagementRow(
     enabled: Boolean,
     onStartEdit: (Long) -> Unit,
     onDelete: (Long) -> Unit,
+    isDeleting: Boolean,
+    deleteError: String?,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var confirmDelete by remember(profile.id) { mutableStateOf(false) }
+    if (confirmDelete) {
+        ConfirmProfileDeletion(profile, enabled, { confirmDelete = false }) {
+            confirmDelete = false
+            onDelete(profile.id)
+        }
+    }
     ListItem(
         headlineContent = { Text(profile.measurements.name) },
         supportingContent = {
@@ -159,11 +176,41 @@ private fun ProfileManagementRow(
                         text = { Text("Excluir perfil") },
                         onClick = {
                             expanded = false
-                            onDelete(profile.id)
+                            confirmDelete = true
                         },
                     )
                 }
             }
+        },
+    )
+    if (isDeleting) Text("Excluindo ${profile.measurements.name}…")
+    deleteError?.let {
+        Text(
+            it,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        )
+    }
+}
+
+@Composable
+private fun ConfirmProfileDeletion(
+    profile: MeasurementProfile,
+    enabled: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Excluir perfil ${profile.measurements.name}?") },
+        text = {
+            Text("A medida salva será excluída deste aparelho. O cálculo atual será mantido.")
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = enabled) { Text("Confirmar exclusão") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
         },
     )
 }
@@ -234,6 +281,9 @@ private fun ProfileFormActions(
     canMutate: Boolean,
 ) {
     if (state.isCreating) {
+        if (state.deleteId == null) {
+            state.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        }
         ProfileForm(state, onEdit)
         Button(
             onClick = onSave,
