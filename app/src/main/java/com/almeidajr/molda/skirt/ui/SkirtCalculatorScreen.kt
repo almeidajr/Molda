@@ -15,7 +15,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,7 +65,9 @@ fun SkirtCalculatorScreen(
     val bringRequesters =
         remember { MeasurementField.entries.associateWith { BringIntoViewRequester() } }
     val scope = rememberCoroutineScope()
+    val resultRequester = remember { BringIntoViewRequester() }
     LaunchedEffect(state.calculationAttempt) {
+        if (state.radii != null) resultRequester.bringIntoView()
         MeasurementField.entries.firstOrNull { it in state.errors }?.let { field ->
             focusRequesters.getValue(field).requestFocus()
             bringRequesters.getValue(field).bringIntoView()
@@ -75,6 +79,7 @@ fun SkirtCalculatorScreen(
         ).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        profiles()
         Text("Saia godê inteira", style = MaterialTheme.typography.headlineMedium)
         Text("Medidas em centímetros. Informe folga e margens explicitamente; zero é válido.")
         MeasurementField.entries.forEach { field ->
@@ -103,18 +108,29 @@ fun SkirtCalculatorScreen(
             focusManager.clearFocus()
             onCalculate()
         }) { Text("Calcular") }
-        profiles()
-        state.calculationError?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
-            )
+        CalculationOutcome(state, Modifier.bringIntoViewRequester(resultRequester)) {
+            focusRequesters.getValue(MeasurementField.Waist).requestFocus()
+            scope.launch { bringRequesters.getValue(MeasurementField.Waist).bringIntoView() }
         }
-        state.radii?.let {
-            SkirtResults(it)
-            DraftingExplanation(state.inputs, it)
-        }
+    }
+}
+
+@Composable
+private fun CalculationOutcome(
+    state: CalculatorState,
+    modifier: Modifier = Modifier,
+    onEditMeasurements: () -> Unit,
+) {
+    state.calculationError?.let {
+        Text(
+            it,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
+        )
+    }
+    state.radii?.let {
+        SkirtResults(it, state.inputs, onEditMeasurements, modifier)
+        DraftingExplanation(state.inputs, it)
     }
 }
 
@@ -202,12 +218,39 @@ private fun MeasurementInput(
 }
 
 @Composable
-private fun SkirtResults(radii: SkirtRadii) {
-    Text("Raios para o molde", style = MaterialTheme.typography.titleLarge)
-    Text("Raio da linha de costura da cintura: ${formatRadius(radii.waistStitching)}")
-    Text("Raio da barra acabada: ${formatRadius(radii.finishedHem)}")
-    Text("Raio de corte da cintura: ${formatRadius(radii.waistCutting)}")
-    Text("Raio de corte da barra: ${formatRadius(radii.hemCutting)}")
+private fun SkirtResults(
+    radii: SkirtRadii,
+    inputs: Map<MeasurementField, String>,
+    onEditMeasurements: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        "Raios para o molde",
+        style = MaterialTheme.typography.titleLarge,
+        modifier = modifier.semantics {
+            heading()
+            liveRegion = LiveRegionMode.Polite
+        },
+    )
+    RadiusGroup(
+        "Linhas de referência",
+        "Raio da linha de costura da cintura: ${formatRadius(radii.waistStitching)}",
+        "Raio da barra acabada: ${formatRadius(radii.finishedHem)}",
+    )
+    RadiusGroup(
+        "Linhas de corte",
+        "Raio de corte da cintura: ${formatRadius(radii.waistCutting)}",
+        "Raio de corte da barra: ${formatRadius(radii.hemCutting)}",
+    )
+    TextButton(onClick = onEditMeasurements) { Text("Editar medidas") }
+    Text(
+        "Medidas utilizadas",
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics { heading() },
+    )
+    MeasurementField.entries.forEach { field ->
+        Text("${field.label}: ${inputs.getValue(field).trim().replace('.', ',')}")
+    }
     Text(
         "Para saia godê inteira em tecido plano, com cós e fechamento. " +
             "Não inclui divisão em painéis, margens do fechamento, molde do cós " +
@@ -215,5 +258,23 @@ private fun SkirtResults(radii: SkirtRadii) {
     )
 }
 
+@Composable
+private fun RadiusGroup(title: String, first: String, second: String) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(first, style = MaterialTheme.typography.bodyLarge)
+            Text(second, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
 internal fun formatRadius(value: Double): String =
     String.format(Locale.forLanguageTag("pt-BR"), "%.2f cm", value)

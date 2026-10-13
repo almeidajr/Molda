@@ -31,6 +31,31 @@ class SkirtCalculatorTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
+    fun calculate_revealsGroupedResultsAndInputSummary_withCollapsedFormulasAndEdit() {
+        fillInputs(listOf("80", "2", "60", "1", "2"))
+        calculate()
+        composeRule.onNodeWithText("Raios para o molde").assertIsDisplayed()
+        listOf("Linhas de referência", "Linhas de corte", "Medidas utilizadas").forEach {
+            composeRule.onNodeWithText(it).performScrollTo().assertIsDisplayed()
+        }
+        MeasurementField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
+            composeRule.onNodeWithText(
+                "${field.label}: $value",
+            ).performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNodeWithText("r = (80 + 2) / (2π) = 13,05 cm").assertDoesNotExist()
+        composeRule.onNodeWithText("Mostrar fórmulas").performScrollTo().performClick()
+        composeRule.onNodeWithText("r = (80 + 2) / (2π) = 13,05 cm")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Ocultar fórmulas").performScrollTo().performClick()
+        composeRule.onNodeWithText("r = (80 + 2) / (2π) = 13,05 cm").assertDoesNotExist()
+        composeRule.onNodeWithText("Editar medidas").performScrollTo().performClick()
+        composeRule.onNodeWithText(
+            MeasurementField.Waist.label,
+        ).assertIsFocused().assertIsDisplayed()
+    }
+
+    @Test
     fun validation_firstSubmitFocusesWaist_thenRevalidatesOnBlur() {
         composeRule.onNodeWithText("Informe um valor", substring = true).assertDoesNotExist()
         calculate()
@@ -217,6 +242,7 @@ class SkirtCalculatorTest {
         ).performScrollTo().assertIsDisplayed()
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
+        composeRule.onNodeWithText("Mostrar fórmulas").performScrollTo().performClick()
         composeRule.onNodeWithText(
             "r = (80 + 2) / (2π) = 13,05 cm",
         ).performScrollTo().assertIsDisplayed()
@@ -249,6 +275,7 @@ class SkirtCalculatorTest {
     fun drafting_edit_withdrawsExplanationAndUsesNewLength() {
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
+        composeRule.onNodeWithText("Mostrar fórmulas").performScrollTo().performClick()
         listOf(
             "Barra acabada = r + comprimento = r + 60 = 73,05 cm",
             "Corte da cintura = r − margem de costura = r − 1 = 12,05 cm",
@@ -265,6 +292,7 @@ class SkirtCalculatorTest {
             substring = true,
         ).assertDoesNotExist()
         calculate()
+        composeRule.onNodeWithText("Mostrar fórmulas").performScrollTo().performClick()
         composeRule.onNodeWithText("Barra acabada = r + comprimento = r + 70 = 83,05 cm")
             .performScrollTo().assertIsDisplayed()
     }
