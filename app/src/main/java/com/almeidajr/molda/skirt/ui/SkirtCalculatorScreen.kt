@@ -35,10 +35,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.almeidajr.molda.profile.ui.ProfilesRoute
-import com.almeidajr.molda.profile.ui.profileWaistText
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import java.util.Locale
 import kotlinx.coroutines.launch
@@ -48,10 +45,7 @@ fun SkirtCalculatorRoute(
     modifier: Modifier = Modifier,
     viewModel: SkirtCalculatorViewModel = viewModel(),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    SkirtCalculatorScreen(state, viewModel::edit, viewModel::calculate, modifier, viewModel::blur) {
-        ProfilesRoute(onSelect = { viewModel.edit(MeasurementField.Waist, profileWaistText(it)) })
-    }
+    com.almeidajr.molda.MoldaRoute(modifier = modifier, calculator = viewModel)
 }
 
 @Composable
@@ -61,6 +55,7 @@ fun SkirtCalculatorScreen(
     onCalculate: () -> Unit,
     modifier: Modifier = Modifier,
     onBlur: (MeasurementField) -> Unit = {},
+    onUseProfile: () -> Unit = {},
     profiles: @Composable () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
@@ -89,6 +84,7 @@ fun SkirtCalculatorScreen(
                 state = state,
                 onEdit = onEdit,
                 onBlur = onBlur,
+                onUseProfile = onUseProfile,
                 onNext = {
                     focusRequesters.getValue(
                         MeasurementField.entries[field.ordinal + 1],
@@ -150,6 +146,7 @@ private fun MeasurementInput(
     onNext: () -> Unit,
     onDone: () -> Unit,
     onFocused: () -> Unit,
+    onUseProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val guidance = when (field) {
@@ -198,6 +195,10 @@ private fun MeasurementInput(
             if (focus.isFocused) onFocused()
         },
     )
+    if (field == MeasurementField.Waist) {
+        androidx.compose.material3.TextButton(onClick = onUseProfile) { Text("Usar perfil") }
+        Text(state.sourceProfileName?.let { "Medida do perfil: $it" } ?: "Medida manual")
+    }
 }
 
 @Composable

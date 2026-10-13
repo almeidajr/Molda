@@ -1,28 +1,23 @@
 package com.almeidajr.molda.profile
 
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.profile.data.LocalProfileRepository
-import com.almeidajr.molda.profile.ui.ProfilesContent
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
-import com.almeidajr.molda.profile.ui.profileWaistText
-import com.almeidajr.molda.skirt.ui.MeasurementField
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import kotlinx.coroutines.runBlocking
@@ -61,26 +56,9 @@ class MeasurementProfilesTest {
                     },
                 )
                 val calculator: SkirtCalculatorViewModel = viewModel()
-                val state by profiles.state.collectAsStateWithLifecycle()
-                val calculatorState by calculator.state.collectAsStateWithLifecycle()
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                     MoldaTheme {
-                        SkirtCalculatorScreen(
-                            calculatorState,
-                            calculator::edit,
-                            calculator::calculate,
-                        ) {
-                            ProfilesContent(
-                                state,
-                                profiles::startCreating,
-                                profiles::edit,
-                                profiles::save,
-                                profiles::load,
-                                { calculator.edit(MeasurementField.Waist, profileWaistText(it)) },
-                                profiles::startEditing,
-                                profiles::delete,
-                            )
-                        }
+                        com.almeidajr.molda.MoldaRoute(calculator = calculator, profiles = profiles)
                     }
                 }
             }
@@ -96,12 +74,13 @@ class MeasurementProfilesTest {
 
     @Test
     fun explicitEdit_invalidFieldsPreserveSavedMeasurements() {
+        manage()
         click("Novo perfil")
         edit("Nome ou apelido", "Ana")
         edit("Cintura do perfil (cm)", "80")
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
         click("Salvar perfil")
-        click("Editar perfil: Ana (perfil 1)")
+        click("Ana")
         edit("Nome ou apelido", "")
         edit("Cintura do perfil (cm)", "Infinity")
         edit("Data da medida (dd/mm/aaaa)", "31/02/2026")
@@ -122,15 +101,19 @@ class MeasurementProfilesTest {
     @Test
     fun explicitEditAndDelete_preserveCalculationUntilNextSelectionAndOtherProfile() {
         repeat(2) {
+            manage()
             click("Novo perfil")
             edit("Nome ou apelido", "Ana")
             edit("Cintura do perfil (cm)", "80,123456789")
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
             click("Salvar perfil")
         }
-        click("Usar perfil: Ana — 80,123456789 cm — 12/10/2026 (perfil 1)")
+        pick("Usar perfil: Ana — 80,123456789 cm — 12/10/2026")
         edit("Circunferência da cintura (cm)", "90")
-        click("Editar perfil: Ana (perfil 1)")
+        manage()
+        composeRule.onAllNodes(
+            androidx.compose.ui.test.hasText("Ana"),
+        )[0].performScrollTo().performClick()
         composeRule.onNodeWithText("Cintura do perfil (cm)")
             .performScrollTo().assertTextContains("80,123456789")
         edit("Nome ou apelido", "Ana atualizada")
@@ -139,21 +122,26 @@ class MeasurementProfilesTest {
         edit("Observações (opcional)", "Nova medida")
         composeRule.activityRule.scenario.recreate()
         showContent()
+        manage()
         composeRule.onNodeWithText("Nome ou apelido")
             .performScrollTo().assertTextContains("Ana atualizada")
         click("Salvar alterações")
+        click("Voltar ao cálculo")
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("90")
-        click("Usar perfil: Ana atualizada — 82,25 cm — 13/10/2026 (perfil 1)")
+        pick("Usar perfil: Ana atualizada — 82,25 cm — 13/10/2026")
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("82,25")
-        click("Excluir perfil: Ana atualizada (perfil 1)")
+        manage()
+        click("Ações: Ana atualizada")
+        click("Excluir perfil")
         composeRule.onNodeWithText(
-            "Usar perfil: Ana atualizada — 82,25 cm — 13/10/2026 (perfil 1)",
+            "Usar perfil: Ana atualizada — 82,25 cm — 13/10/2026",
         ).assertDoesNotExist()
+        click("Voltar ao cálculo")
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("82,25")
-        click("Usar perfil: Ana — 80,123456789 cm — 12/10/2026 (perfil 2)")
+        pick("Usar perfil: Ana — 80,123456789 cm — 12/10/2026")
         runBlocking { assertEquals(2L, storage.list().single().id) }
     }
 
@@ -163,6 +151,7 @@ class MeasurementProfilesTest {
         edit("Folga de cintura (cm)", "2")
         edit("Margem de costura da cintura (cm)", "1")
         edit("Margem de barra (cm)", "2")
+        manage()
         click("Novo perfil")
         edit("Nome ou apelido", "Teste reutilização")
         edit("Cintura do perfil (cm)", "80,5")
@@ -172,16 +161,26 @@ class MeasurementProfilesTest {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
                 androidx.compose.ui.test.hasText(
-                    "Usar perfil: Teste reutilização — 80,5 cm — 12/10/2026 (perfil 1)",
+                    "Teste reutilização",
                 ),
             ).fetchSemanticsNodes().isNotEmpty()
         }
-        click("Usar perfil: Teste reutilização — 80,5 cm — 12/10/2026 (perfil 1)")
+        pick("Usar perfil: Teste reutilização — 80,5 cm — 12/10/2026")
+        composeRule.onNodeWithText("Medida do perfil: Teste reutilização").assertIsDisplayed()
         composeRule.onNodeWithText(
             "Circunferência da cintura (cm)",
         ).performScrollTo().assertTextContains("80,5")
+        composeRule.activityRule.scenario.recreate()
+        showContent()
+        composeRule.onNodeWithText("Medida do perfil: Teste reutilização")
+            .performScrollTo().assertIsDisplayed()
+        click("Calcular")
+        composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
+        pick("Usar perfil: Teste reutilização — 80,5 cm — 12/10/2026")
+        composeRule.onNodeWithText("Raios para o molde").assertDoesNotExist()
         edit("Circunferência da cintura (cm)", "90")
-        click("Usar perfil: Teste reutilização — 80,5 cm — 12/10/2026 (perfil 1)")
+        composeRule.onNodeWithText("Medida manual").assertIsDisplayed()
+        pick("Usar perfil: Teste reutilização — 80,5 cm — 12/10/2026")
         composeRule.onNodeWithText(
             "Circunferência da cintura (cm)",
         ).performScrollTo().assertTextContains("80,5")
@@ -204,7 +203,27 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun pickerDismissalAndActivityRecreation_keepManualDraft() {
+        edit("Circunferência da cintura (cm)", "91,5")
+        edit("Comprimento acabado (cm)", "65")
+        click("Usar perfil")
+        composeRule.onNodeWithText("Cancelar seleção").performClick()
+        composeRule.onNodeWithText("Circunferência da cintura (cm)")
+            .performScrollTo().assertTextContains("91,5")
+        manage()
+        click("Voltar ao cálculo")
+        composeRule.activityRule.scenario.recreate()
+        showContent()
+        composeRule.onNodeWithText("Circunferência da cintura (cm)")
+            .performScrollTo().assertTextContains("91,5")
+        composeRule.onNodeWithText("Comprimento acabado (cm)")
+            .performScrollTo().assertTextContains("65")
+        composeRule.onNodeWithText("Medida manual").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun create_invalidFieldsShowsErrorsAndRecreationKeepsForm() {
+        manage()
         click("Novo perfil")
         click("Salvar perfil")
         composeRule.onNodeWithText(
@@ -223,6 +242,7 @@ class MeasurementProfilesTest {
         edit("Observações (opcional)", "Conferir antes de cortar")
         composeRule.activityRule.scenario.recreate()
         showContent()
+        manage()
         composeRule.onNodeWithText("Nome ou apelido").performScrollTo().assertTextContains("Ana")
         composeRule.onNodeWithText(
             "Cintura do perfil (cm)",
@@ -236,14 +256,15 @@ class MeasurementProfilesTest {
     @Test
     fun create_identicalNamesAndMeasurementsRemainSelectableAsSeparateProfiles() {
         repeat(2) {
+            manage()
             click("Novo perfil")
             edit("Nome ou apelido", "Ana")
             edit("Cintura do perfil (cm)", "80")
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
             click("Salvar perfil")
         }
-        click("Usar perfil: Ana — 80 cm — 12/10/2026 (perfil 1)")
-        click("Usar perfil: Ana — 80 cm — 12/10/2026 (perfil 2)")
+        pick("Usar perfil: Ana — 80 cm — 12/10/2026")
+        pick("Usar perfil: Ana — 80 cm — 12/10/2026")
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("80")
     }
@@ -251,6 +272,7 @@ class MeasurementProfilesTest {
     @Test
     fun enlargedText_keyboardKeepsProfileFormAndSaveReachable() {
         showContent(fontScale = 2f)
+        manage()
         click("Novo perfil")
         edit("Nome ou apelido", "Ana")
         edit("Cintura do perfil (cm)", "80,5")
@@ -262,16 +284,17 @@ class MeasurementProfilesTest {
             composeRule.onAllNodes(androidx.compose.ui.test.hasText("Perfil salvo neste aparelho."))
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Usar perfil: Ana — 80,5 cm — 12/10/2026 (perfil 1)")
+        composeRule.onNodeWithText("Ana")
             .performScrollTo().assertIsDisplayed()
-        click("Editar perfil: Ana (perfil 1)")
+        click("Ana")
         edit("Cintura do perfil (cm)", "82,5")
         composeRule.onNodeWithText("Observações (opcional)")
             .performScrollTo().performClick().assertIsDisplayed()
         click("Salvar alterações")
-        composeRule.onNodeWithText("Usar perfil: Ana — 82,5 cm — 12/10/2026 (perfil 1)")
+        composeRule.onNodeWithText("Ana")
             .performScrollTo().assertIsDisplayed()
-        click("Excluir perfil: Ana (perfil 1)")
+        click("Ações: Ana")
+        click("Excluir perfil")
         composeRule.onNodeWithText("Perfil excluído deste aparelho.")
             .performScrollTo().assertIsDisplayed()
     }
@@ -279,7 +302,29 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)
     }
 
+    private fun manage() {
+        if (composeRule.onAllNodes(
+                androidx.compose.ui.test.hasText("Perfis de medidas"),
+            ).fetchSemanticsNodes().isNotEmpty()
+        ) {
+            click("Perfis de medidas")
+        }
+    }
+
+    private fun pick(label: String) {
+        if (composeRule.onAllNodes(
+                androidx.compose.ui.test.hasText("Voltar ao cálculo"),
+            ).fetchSemanticsNodes().isNotEmpty()
+        ) {
+            click("Voltar ao cálculo")
+        }
+        click("Usar perfil")
+        composeRule.onAllNodes(androidx.compose.ui.test.hasText(label))[0].performClick()
+    }
+
     private fun click(label: String) {
-        composeRule.onNodeWithText(label).performScrollTo().performClick()
+        val node = composeRule.onNodeWithText(label)
+        if (!node.isDisplayed()) node.performScrollTo()
+        node.performClick()
     }
 }

@@ -1,51 +1,41 @@
 package com.almeidajr.molda.profile.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import java.math.BigDecimal
-
-@Composable
-fun ProfilesRoute(onSelect: (Double) -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current.applicationContext
-    val viewModel: ProfilesViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer {
-                ProfilesViewModel(LocalProfileRepository(context), createSavedStateHandle())
-            }
-        },
-    )
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    ProfilesContent(
-        state,
-        viewModel::startCreating,
-        viewModel::edit,
-        viewModel::save,
-        viewModel::load,
-        onSelect,
-        viewModel::startEditing,
-        viewModel::delete,
-        modifier,
-    )
-}
 
 @Composable
 fun ProfilesContent(
@@ -54,57 +44,53 @@ fun ProfilesContent(
     onEdit: (ProfileField, String) -> Unit,
     onSave: () -> Unit,
     onRetry: () -> Unit,
-    onSelect: (Double) -> Unit,
     onStartEdit: (Long) -> Unit,
     onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val canMutate = !state.isLoading && state.loadError == null && !state.isSaving
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Perfis de medidas (opcional)", style = MaterialTheme.typography.titleLarge)
-        Text(
-            "Os perfis ficam só neste aparelho, sem backup ou sincronização. " +
-                "Você pode perdê-los ao limpar os dados do app ou trocar de aparelho.",
-        )
-        if (state.isLoading) Text("Carregando perfis…")
-        state.loadError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error)
-            Button(onClick = onRetry, enabled = !state.isLoading) {
-                Text("Tentar carregar novamente")
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { if (canMutate) onCreate() },
+                modifier = Modifier.semantics { if (!canMutate) disabled() },
+            ) { Text("Novo perfil") }
+        },
+    ) { padding ->
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                .padding(padding).padding(bottom = 88.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text("Perfis de medidas (opcional)", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Os perfis ficam só neste aparelho, sem backup ou sincronização. " +
+                    "Você pode perdê-los ao limpar os dados do app ou trocar de aparelho.",
+            )
+            if (state.isLoading) {
+                CircularProgressIndicator()
+                Text("Carregando perfis…")
             }
-        }
-        state.savedMessage?.let { Text(it) }
-        state.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        state.profiles.forEach { profile ->
-            Button(onClick = {
-                onSelect(profile.measurements.waist)
-            }) { Text(profileLabel(profile)) }
-            if (profile.measurements.notes.isNotBlank()) Text(profile.measurements.notes)
-            Button(onClick = { onStartEdit(profile.id) }, enabled = canMutate) {
-                Text("Editar perfil: ${profile.measurements.name} (perfil ${profile.id})")
+            state.loadError?.let {
+                Text(it, color = MaterialTheme.colorScheme.error)
+                Button(onClick = onRetry, enabled = !state.isLoading) {
+                    Text("Tentar carregar novamente")
+                }
             }
-            Button(onClick = { onDelete(profile.id) }, enabled = canMutate) {
-                Text("Excluir perfil: ${profile.measurements.name} (perfil ${profile.id})")
-            }
-        }
-        Button(
-            onClick = onCreate,
-            enabled = canMutate,
-        ) { Text("Novo perfil") }
-        if (state.isCreating) {
-            ProfileForm(state, onEdit)
-            Button(
-                onClick = onSave,
-                enabled = canMutate,
-            ) {
+            state.savedMessage?.let { Text(it) }
+            state.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            if (!state.isLoading && state.loadError == null && state.profiles.isEmpty()) {
                 Text(
-                    when {
-                        state.isSaving -> "Salvando…"
-                        state.editingId != null -> "Salvar alterações"
-                        else -> "Salvar perfil"
-                    },
+                    "Nenhum perfil salvo. Os perfis são opcionais; " +
+                        "você pode calcular com uma medida manual.",
                 )
             }
+            state.profiles.forEach { profile ->
+                ProfileManagementRow(profile, canMutate, onStartEdit, onDelete)
+            }
+            ProfileFormActions(state, onEdit, onSave, canMutate)
         }
     }
 }
@@ -112,10 +98,10 @@ fun ProfilesContent(
 internal fun profileWaistText(value: Double): String =
     BigDecimal.valueOf(value).stripTrailingZeros().toPlainString().replace('.', ',')
 
-private fun profileLabel(profile: MeasurementProfile): String =
+internal fun profileLabel(profile: MeasurementProfile): String =
     "Usar perfil: ${profile.measurements.name} — " +
         "${profileWaistText(profile.measurements.waist)} cm — " +
-        profile.measurements.measurementDate.format(ProfileDateFormat) + " (perfil ${profile.id})"
+        profile.measurements.measurementDate.format(ProfileDateFormat)
 
 @Composable
 private fun ProfileForm(state: ProfilesState, onEdit: (ProfileField, String) -> Unit) {
@@ -136,5 +122,130 @@ private fun ProfileForm(state: ProfilesState, onEdit: (ProfileField, String) -> 
             ),
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+@Composable
+private fun ProfileManagementRow(
+    profile: MeasurementProfile,
+    enabled: Boolean,
+    onStartEdit: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ListItem(
+        headlineContent = { Text(profile.measurements.name) },
+        supportingContent = {
+            Text(
+                "${profileWaistText(profile.measurements.waist)} cm — " +
+                    profile.measurements.measurementDate.format(ProfileDateFormat),
+            )
+        },
+        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) { onStartEdit(profile.id) },
+        trailingContent = {
+            Box {
+                TextButton(onClick = { expanded = true }, enabled = enabled) {
+                    Text("Ações: ${profile.measurements.name}")
+                }
+                DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Editar perfil") },
+                        onClick = {
+                            expanded = false
+                            onStartEdit(profile.id)
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Excluir perfil") },
+                        onClick = {
+                            expanded = false
+                            onDelete(profile.id)
+                        },
+                    )
+                }
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfilePicker(
+    state: ProfilesState,
+    onDismiss: () -> Unit,
+    onRetry: () -> Unit,
+    onSelect: (MeasurementProfile) -> Unit,
+    onCreate: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text("Usar perfil", style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = onDismiss) { Text("Cancelar seleção") }
+            when {
+                state.isLoading -> {
+                    CircularProgressIndicator()
+                    Text("Carregando perfis…")
+                }
+
+                state.loadError != null -> {
+                    Text(state.loadError, color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = onRetry) { Text("Tentar carregar novamente") }
+                }
+
+                state.profiles.isEmpty() -> Text(
+                    "Nenhum perfil salvo. Você pode calcular com uma medida manual.",
+                )
+
+                else -> state.profiles.forEach { profile ->
+                    val hasDuplicate = state.profiles.count {
+                        it.measurements.name == profile.measurements.name &&
+                            it.measurements.waist == profile.measurements.waist &&
+                            it.measurements.measurementDate == profile.measurements.measurementDate
+                    } > 1
+                    ListItem(
+                        headlineContent = { Text(profileLabel(profile)) },
+                        supportingContent = if (hasDuplicate &&
+                            profile.measurements.notes.isNotBlank()
+                        ) {
+                            { Text(profile.measurements.notes) }
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.fillMaxWidth().clickable { onSelect(profile) },
+                    )
+                }
+            }
+            TextButton(
+                onClick = onCreate,
+                enabled = !state.isLoading && state.loadError == null && !state.isSaving,
+            ) { Text("Novo perfil") }
+        }
+    }
+}
+
+@Composable
+private fun ProfileFormActions(
+    state: ProfilesState,
+    onEdit: (ProfileField, String) -> Unit,
+    onSave: () -> Unit,
+    canMutate: Boolean,
+) {
+    if (state.isCreating) {
+        ProfileForm(state, onEdit)
+        Button(
+            onClick = onSave,
+            enabled = canMutate,
+        ) {
+            Text(
+                when {
+                    state.isSaving -> "Salvando…"
+                    state.editingId != null -> "Salvar alterações"
+                    else -> "Salvar perfil"
+                },
+            )
+        }
     }
 }

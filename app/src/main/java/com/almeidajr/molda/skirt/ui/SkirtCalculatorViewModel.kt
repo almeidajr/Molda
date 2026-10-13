@@ -1,5 +1,6 @@
 package com.almeidajr.molda.skirt.ui
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtMeasurements
@@ -23,6 +24,7 @@ data class CalculatorState(
     val errors: Map<MeasurementField, String> = emptyMap(),
     val calculationError: String? = null,
     val radii: SkirtRadii? = null,
+    val sourceProfileName: String? = null,
     val hasAttemptedCalculation: Boolean = false,
     val calculationAttempt: Int = 0,
 )
@@ -36,14 +38,35 @@ internal fun parseMeasurement(text: String): Double? {
 
 private val DecimalMeasurement = Regex("[+-]?[0-9]+([,.][0-9]+)?")
 
-class SkirtCalculatorViewModel : ViewModel() {
-    private val mutableState = MutableStateFlow(CalculatorState())
+class SkirtCalculatorViewModel(private val savedState: SavedStateHandle) : ViewModel() {
+    private val mutableState = MutableStateFlow(
+        CalculatorState(
+            inputs = MeasurementField.entries.associateWith { savedState[it.name] ?: "" },
+            sourceProfileName = savedState["sourceProfileName"],
+            hasAttemptedCalculation = savedState["hasAttemptedCalculation"] ?: false,
+        ),
+    )
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
 
+    fun selectProfile(waist: String, name: String) {
+        edit(MeasurementField.Waist, waist)
+        savedState["sourceProfileName"] = name
+        mutableState.update { it.copy(sourceProfileName = name) }
+    }
+
     fun edit(field: MeasurementField, text: String) {
+        savedState[field.name] = text
+        if (field == MeasurementField.Waist) savedState["sourceProfileName"] = null
         mutableState.update {
             it.copy(
                 inputs = it.inputs + (field to text),
+                sourceProfileName = if (field ==
+                    MeasurementField.Waist
+                ) {
+                    null
+                } else {
+                    it.sourceProfileName
+                },
                 calculationError = null,
                 radii = null,
             )
@@ -69,6 +92,7 @@ class SkirtCalculatorViewModel : ViewModel() {
     }
 
     fun calculate() {
+        savedState["hasAttemptedCalculation"] = true
         val current = mutableState.value.copy(
             hasAttemptedCalculation = true,
             calculationAttempt = mutableState.value.calculationAttempt + 1,
