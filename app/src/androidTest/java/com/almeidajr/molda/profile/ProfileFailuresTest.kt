@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -45,6 +46,8 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Salvando…").assertIsNotEnabled()
         composeRule.onNodeWithText("Cancelar").assertIsNotEnabled()
         composeRule.onNodeWithText("Nome ou apelido").assertIsNotEnabled()
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Escolher data no calendário").assertIsNotEnabled()
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
             .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
@@ -214,7 +217,11 @@ class ProfileFailuresTest {
     }
 
     private fun edit(label: String, value: String) {
-        composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)
+        if (label == "Data da medida (dd/mm/aaaa)") {
+            composeRule.enterProfileDate(value)
+        } else {
+            composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)
+        }
     }
 
     private fun click(label: String, useUnmergedTree: Boolean = false) {
