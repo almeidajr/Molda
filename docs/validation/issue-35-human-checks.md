@@ -6,9 +6,11 @@ below; leave unavailable checks pending.
 
 ## Build and device
 
-- Production commit: `548efa72f4b08073d8cbddc9f3a675314550d357`.
-- Debug APK: `C:/Users/jralm/AndroidStudioProjects/Molda-issue38-evidence/Molda-issue35-human-check.apk`.
-- SHA-256: `ED5747DA6C896BA75B5CBDC4B4D8856D5B8B3507BEA58F857C3D52B81D190A3C`.
+- Production commit: `822fd0112b706ff7b1a8f34dc9ab776d4321bebe`.
+- Debug APK: `C:/Users/jralm/AndroidStudioProjects/Molda-issue38-evidence/Molda-issue35-human-check-reviewed.apk`.
+- SHA-256: `49BF0B147CF5A27BA25E86CE6852E5EBD19B0F1E751348BFD16934E1C4011B48`.
+- This final reviewed build supersedes both earlier APK hashes; human outcomes must identify
+  this hash because profile typography changed after review.
 - Requires Android 16 / API 36 or newer. Confirm before installation.
 - Tester/date, physical device/model, Android/API, screen size: **pending**.
 - TalkBack version, keyboard/switch equipment, text scale, appearance and

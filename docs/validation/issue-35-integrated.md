@@ -112,3 +112,38 @@ seamstress drafting session is inferred from semantics, emulation or screenshots
 resolved and the final build is validated. The existing journey supplied the
 meaningful red → green signal for the native keyboard precondition correction;
 no new test or production abstraction was needed.
+
+## Final code-review corrections
+
+Review found that profile field guidance/errors inherited Material's 12/16sp
+supporting default rather than the agreed 14/20sp, and both management/picker
+names inherited regular body text rather than 16/24sp Medium. Production commit
+`822fd0112b706ff7b1a8f34dc9ab776d4321bebe` applies the existing bodyMedium and
+titleMedium roles explicitly. No calculation, storage or navigation contract
+changed. The optional standards finding was addressed by sharing the identical
+rendered-text contrast assertion between calculator and profile journeys;
+foreground/background sampling and the 4.5:1 threshold are unchanged.
+
+The existing Compose journey seam provided red → green evidence: displayed
+guidance first failed at 12sp versus 14sp; after correcting guidance, the displayed
+management name failed its Medium weight assertion. The retained journey checks
+supporting guidance, invalid-date feedback and both management/picker row names
+against independently specified typography, through public text-layout semantics.
+It passed after applying the existing theme roles. The initial test also assumed
+an explicit Normal weight for body text; that unnecessary assertion was removed
+because an unspecified weight renders normally. No production workaround was
+introduced for that test assumption.
+
+Final local API 37 validation: all 5 profile presentation journeys and all 19
+calculator journeys passed, including
+four-radii contrast under fallback/dynamic light/dark at 200% text. Spotless,
+Detekt, lint, JVM tests, debug build, all-file hygiene and manual size checks
+passed. The picker keeps its existing role in a local value to remain within the
+repository's method-length rule, without suppression or new production helpers.
+Review logs are preserved outside Git in
+`C:/Users/jralm/AndroidStudioProjects/Molda-issue38-evidence/review/`.
+
+The reviewed APK supersedes the earlier human-check build. Its production commit
+and SHA-256 are recorded in the [build-specific checklist](issue-35-human-checks.md).
+Human TalkBack, switch-access and physical drafting outcomes remain pending;
+these code changes and automated checks do not complete #38.
