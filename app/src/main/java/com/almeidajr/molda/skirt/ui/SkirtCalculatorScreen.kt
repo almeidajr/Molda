@@ -76,8 +76,7 @@ fun SkirtCalculatorScreen(
     val form: @Composable () -> Unit = {
         profiles()
         CalculatorHeading()
-        MeasurementField.entries.forEach { field ->
-            MeasurementGroupHeading(field)
+        MeasurementGroups { field ->
             MeasurementInput(
                 field = field,
                 state = state,
@@ -115,6 +114,50 @@ fun SkirtCalculatorScreen(
 }
 
 @Composable
+private fun MeasurementGroups(input: @Composable (MeasurementField) -> Unit) {
+    listOf(
+        "Medida do corpo" to listOf(MeasurementField.Waist),
+        "Escolhas da peça" to listOf(MeasurementField.Ease, MeasurementField.Length),
+        "Margens de corte" to
+            listOf(MeasurementField.WaistSeamAllowance, MeasurementField.HemAllowance),
+    ).forEach { (title, fields) ->
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.semantics { heading() },
+                )
+                fields.forEach { input(it) }
+            }
+        }
+    }
+}
+
+private fun measurementGuidance(field: MeasurementField): String = when (field) {
+    MeasurementField.Waist ->
+        "Meça a circunferência da cintura na posição desejada do cós, " +
+            "sem acrescentar folga ou margens."
+
+    MeasurementField.Length ->
+        "Meça o comprimento até a barra acabada, " +
+            "a partir da linha de costura da cintura; exclua a altura do cós. As margens são informadas separadamente."
+
+    MeasurementField.Ease ->
+        "Folga é o acréscimo à cintura para vestir; informe zero se não desejar folga."
+
+    MeasurementField.WaistSeamAllowance ->
+        "Tecido reservado para costurar a cintura; informe zero se não houver margem."
+
+    MeasurementField.HemAllowance ->
+        "Tecido reservado para acabar a barra; informe zero se não houver margem."
+}
+
+@Composable
 private fun CalculatorHeading() {
     Text(
         "Saia godê inteira",
@@ -147,25 +190,6 @@ private fun CalculationOutcome(
 }
 
 @Composable
-private fun MeasurementGroupHeading(field: MeasurementField) {
-    val group = when (field) {
-        MeasurementField.Waist -> "Medida do corpo"
-        MeasurementField.Ease -> "Escolhas da peça"
-        MeasurementField.WaistSeamAllowance -> "Margens de corte"
-        else -> null
-    }
-    group?.let {
-        Text(
-            it,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics {
-                heading()
-            },
-        )
-    }
-}
-
-@Composable
 private fun MeasurementInput(
     field: MeasurementField,
     state: CalculatorState,
@@ -177,17 +201,6 @@ private fun MeasurementInput(
     onUseProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val guidance = when (field) {
-        MeasurementField.Waist ->
-            "Meça a circunferência da cintura na posição desejada do cós, " +
-                "sem acrescentar folga ou margens."
-
-        MeasurementField.Length ->
-            "Meça o comprimento até a barra acabada, " +
-                "a partir da linha de costura da cintura; exclua a altura do cós. As margens são informadas separadamente."
-
-        else -> null
-    }
     val error = state.errors[field]
     var wasFocused by remember { mutableStateOf(false) }
     OutlinedTextField(
@@ -195,15 +208,14 @@ private fun MeasurementInput(
         onValueChange = { onEdit(field, it) },
         label = { Text(field.label) },
         isError = error != null,
-        supportingText = (error ?: guidance)?.let { message ->
-            {
-                Text(
-                    message,
-                    modifier = Modifier.semantics {
-                        if (error != null) liveRegion = LiveRegionMode.Polite
-                    },
-                )
-            }
+        supportingText = {
+            Text(
+                error ?: measurementGuidance(field),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics {
+                    if (error != null) liveRegion = LiveRegionMode.Polite
+                },
+            )
         },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
@@ -225,7 +237,11 @@ private fun MeasurementInput(
     )
     if (field == MeasurementField.Waist) {
         androidx.compose.material3.TextButton(onClick = onUseProfile) { Text("Usar perfil") }
-        Text(state.sourceProfileName?.let { "Cintura copiada do perfil: $it" } ?: "Medida manual")
+        Text(
+            state.sourceProfileName?.let { "Cintura copiada do perfil: $it" } ?: "Medida manual",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -257,11 +273,15 @@ private fun SkirtResults(
     TextButton(onClick = onEditMeasurements) { Text("Editar medidas") }
     Text(
         "Medidas utilizadas",
-        style = MaterialTheme.typography.titleMedium,
+        style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.semantics { heading() },
     )
     MeasurementField.entries.forEach { field ->
-        Text("${field.label}: ${inputs.getValue(field).trim().replace('.', ',')}")
+        Text(
+            "${field.label}: ${formatRadius(
+                requireNotNull(parseMeasurement(inputs.getValue(field))),
+            )}",
+        )
     }
     Text(
         "Para saia godê inteira em tecido plano, com cós e fechamento. " +
@@ -280,11 +300,11 @@ private fun RadiusGroup(title: String, first: String, second: String) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(first, style = MaterialTheme.typography.bodyLarge)
-            Text(second, style = MaterialTheme.typography.bodyLarge)
+            Text(first, style = MaterialTheme.typography.headlineSmall)
+            Text(second, style = MaterialTheme.typography.headlineSmall)
         }
     }
 }
