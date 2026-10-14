@@ -75,11 +75,7 @@ fun SkirtCalculatorScreen(
     }
     val form: @Composable () -> Unit = {
         profiles()
-        Text("Saia godê inteira", style = MaterialTheme.typography.headlineMedium)
-        Text(
-            "Medidas em centímetros. Informe folga e margens explicitamente; " +
-                "zero é válido.",
-        )
+        CalculatorHeading()
         MeasurementField.entries.forEach { field ->
             MeasurementGroupHeading(field)
             MeasurementInput(
@@ -116,6 +112,19 @@ fun SkirtCalculatorScreen(
         }
     }
     AdaptiveCalculator(state, modifier, form, outcome)
+}
+
+@Composable
+private fun CalculatorHeading() {
+    Text(
+        "Saia godê inteira",
+        style = MaterialTheme.typography.headlineMedium,
+        modifier = Modifier.semantics { heading() },
+    )
+    Text(
+        "Medidas em centímetros. Informe folga e margens explicitamente; " +
+            "zero é válido.",
+    )
 }
 
 @Composable
@@ -216,7 +225,7 @@ private fun MeasurementInput(
     )
     if (field == MeasurementField.Waist) {
         androidx.compose.material3.TextButton(onClick = onUseProfile) { Text("Usar perfil") }
-        Text(state.sourceProfileName?.let { "Medida do perfil: $it" } ?: "Medida manual")
+        Text(state.sourceProfileName?.let { "Cintura copiada do perfil: $it" } ?: "Medida manual")
     }
 }
 

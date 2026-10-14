@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,7 +54,11 @@ fun ProfilesContent(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Perfis de medidas (opcional)", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "Perfis de medidas (opcional)",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.semantics { heading() },
+        )
         Text(
             "Os perfis ficam só neste aparelho, sem backup ou sincronização. " +
                 "Você pode perdê-los ao limpar os dados do app ou trocar de aparelho.",
@@ -200,7 +205,11 @@ fun ProfilePicker(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Usar perfil", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Usar perfil",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.semantics { heading() },
+            )
             TextButton(onClick = onDismiss) { Text("Cancelar seleção") }
             when {
                 state.isLoading -> {

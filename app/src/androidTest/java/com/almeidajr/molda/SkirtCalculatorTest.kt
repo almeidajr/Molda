@@ -2,6 +2,7 @@ package com.almeidajr.molda
 
 import androidx.activity.compose.setContent
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ForcedSize
@@ -326,8 +327,10 @@ class SkirtCalculatorTest {
     fun wideCalculator_placeholderAndResultsStayBesideInputs_andEditsWithdrawDimensions() {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
+                val window = LocalWindowInfo.current.containerSize
+                val height = maxOf(900f, 1200 * window.height.toFloat() / window.width)
                 DeviceConfigurationOverride(
-                    DeviceConfigurationOverride.ForcedSize(DpSize(1200.dp, 900.dp)),
+                    DeviceConfigurationOverride.ForcedSize(DpSize(1200.dp, height.dp)),
                 ) {
                     MoldaTheme { SkirtCalculatorRoute() }
                 }
@@ -349,9 +352,11 @@ class SkirtCalculatorTest {
         val font = androidx.compose.runtime.mutableStateOf(1f)
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
+                val window = LocalWindowInfo.current.containerSize
+                val height = maxOf(900f, width.value * window.height.toFloat() / window.width)
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(font.value)) {
                     DeviceConfigurationOverride(
-                        DeviceConfigurationOverride.ForcedSize(DpSize(width.value.dp, 900.dp)),
+                        DeviceConfigurationOverride.ForcedSize(DpSize(width.value.dp, height.dp)),
                     ) { MoldaTheme { SkirtCalculatorRoute() } }
                 }
             }

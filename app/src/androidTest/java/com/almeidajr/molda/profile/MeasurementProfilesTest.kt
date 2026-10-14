@@ -1,6 +1,7 @@
 package com.almeidajr.molda.profile
 
 import androidx.activity.compose.setContent
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ForcedSize
@@ -57,6 +58,9 @@ class MeasurementProfilesTest {
     private fun showContent(fontScale: Float = 1f, width: Int = 400) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
+                val window = LocalWindowInfo.current.containerSize
+                // Forced density does not scale native IME insets; retain the physical viewport height.
+                val height = maxOf(900f, width * window.height.toFloat() / window.width)
                 val profiles: ProfilesViewModel = viewModel(
                     key = "isolatedProfiles",
                     factory = viewModelFactory {
@@ -72,7 +76,7 @@ class MeasurementProfilesTest {
                 val calculator: SkirtCalculatorViewModel = viewModel()
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                     DeviceConfigurationOverride(
-                        DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, 900.dp)),
+                        DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, height.dp)),
                     ) {
                         MoldaTheme {
                             com.almeidajr.molda.MoldaRoute(
@@ -146,7 +150,7 @@ class MeasurementProfilesTest {
         click("Voltar ao cálculo")
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("80")
-        composeRule.onNodeWithText("Medida do perfil: Ana").assertIsDisplayed()
+        composeRule.onNodeWithText("Cintura copiada do perfil: Ana").assertIsDisplayed()
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
         runBlocking { assertEquals(2L, storage.list().single().id) }
     }
@@ -363,13 +367,15 @@ class MeasurementProfilesTest {
             ).fetchSemanticsNodes().isNotEmpty()
         }
         pick("Usar perfil: Teste reutilização — 80,5 cm — 12/10/2026")
-        composeRule.onNodeWithText("Medida do perfil: Teste reutilização").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Cintura copiada do perfil: Teste reutilização",
+        ).assertIsDisplayed()
         composeRule.onNodeWithText(
             "Circunferência da cintura (cm)",
         ).performScrollTo().assertTextContains("80,5")
         composeRule.activityRule.scenario.recreate()
         showContent()
-        composeRule.onNodeWithText("Medida do perfil: Teste reutilização")
+        composeRule.onNodeWithText("Cintura copiada do perfil: Teste reutilização")
             .performScrollTo().assertIsDisplayed()
         click("Calcular")
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
@@ -562,10 +568,12 @@ class MeasurementProfilesTest {
         click("Cancelar")
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")
         showContent(width = 400)
-        composeRule.onNodeWithText("Medida do perfil: Ana").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Cintura copiada do perfil: Ana",
+        ).performScrollTo().assertIsDisplayed()
         showContent(width = 1200)
         composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("80")
-        composeRule.onNodeWithText("Medida do perfil: Ana").assertIsDisplayed()
+        composeRule.onNodeWithText("Cintura copiada do perfil: Ana").assertIsDisplayed()
     }
     private fun waitForDialogFocus() {
         // Wait for native dialog focus and keyboard dismissal before delivering Back.

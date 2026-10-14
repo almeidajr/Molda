@@ -84,7 +84,7 @@ class ProfileFailuresTest {
         ).assertIsDisplayed()
         click("Cancelar seleção")
         click("Perfis de medidas")
-        click("Existente")
+        click("Existente", useUnmergedTree = true)
         click("Salvar alterações")
         composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
             .performScrollTo().assertIsDisplayed()
@@ -102,7 +102,7 @@ class ProfileFailuresTest {
         edit("Circunferência da cintura (cm)", "95")
         edit("Comprimento acabado (cm)", "60")
         click("Perfis de medidas")
-        click("Existente")
+        click("Existente", useUnmergedTree = true)
         edit("Nome ou apelido", "Alterado")
         edit("Cintura do perfil (cm)", "82")
         click("Salvar alterações")
@@ -213,14 +213,14 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)
     }
 
-    private fun click(label: String) {
+    private fun click(label: String, useUnmergedTree: Boolean = false) {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
                 androidx.compose.ui.test.hasText(label) and androidx.compose.ui.test.isEnabled() and
                     !androidx.compose.ui.test.hasAnyAncestor(!androidx.compose.ui.test.isEnabled()),
             ).fetchSemanticsNodes().isNotEmpty()
         }
-        val node = composeRule.onNodeWithText(label)
+        val node = composeRule.onNodeWithText(label, useUnmergedTree = useUnmergedTree)
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()
     }
