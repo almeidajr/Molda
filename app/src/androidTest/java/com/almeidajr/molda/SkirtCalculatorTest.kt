@@ -4,6 +4,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
+import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextContains
@@ -16,6 +17,8 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.ui.MeasurementField
@@ -208,6 +211,7 @@ class SkirtCalculatorTest {
     @Test
     fun recreate_keepsInProgressMeasurements() {
         fillInputs(listOf("80,5", "0", "60", "1", "2"))
+        composeRule.onNodeWithText(MeasurementField.HemAllowance.label).assertTextContains("2")
         composeRule.activityRule.scenario.recreate()
         MeasurementField.entries.zip(
             listOf("80,5", "0", "60", "1", "2"),
@@ -318,6 +322,62 @@ class SkirtCalculatorTest {
             .performScrollTo().assertIsDisplayed()
     }
 
+    @Test
+    fun wideCalculator_placeholderAndResultsStayBesideInputs_andEditsWithdrawDimensions() {
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent {
+                DeviceConfigurationOverride(
+                    DeviceConfigurationOverride.ForcedSize(DpSize(1200.dp, 900.dp)),
+                ) {
+                    MoldaTheme { SkirtCalculatorRoute() }
+                }
+            }
+        }
+        composeRule.onNodeWithText("Preencha as medidas e toque em Calcular.").assertIsDisplayed()
+        fillInputs(listOf("80", "2", "60", "1", "2"))
+        calculate()
+        composeRule.onNodeWithText("Raios para o molde").assertIsDisplayed()
+        composeRule.onNodeWithText(MeasurementField.Waist.label).assertIsDisplayed()
+        edit(MeasurementField.Waist, "90")
+        composeRule.onNodeWithText("Raios para o molde").assertDoesNotExist()
+        composeRule.onNodeWithText("Preencha as medidas e toque em Calcular.").assertIsDisplayed()
+    }
+
+    @Test
+    fun resizingAndLargeText_keepCalculatorDraftAndSameScreenResults() {
+        val width = androidx.compose.runtime.mutableStateOf(1200)
+        val font = androidx.compose.runtime.mutableStateOf(1f)
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent {
+                DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(font.value)) {
+                    DeviceConfigurationOverride(
+                        DeviceConfigurationOverride.ForcedSize(DpSize(width.value.dp, 900.dp)),
+                    ) { MoldaTheme { SkirtCalculatorRoute() } }
+                }
+            }
+        }
+        fillInputs(listOf("80", "2", "60", "1", "2"))
+        calculate()
+        composeRule.runOnUiThread { width.value = 400 }
+        composeRule.onNodeWithText("Raio de corte da barra: 75,05 cm")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.runOnUiThread {
+            width.value = 1000
+            font.value = 2f
+        }
+        composeRule.onNodeWithText("Editar medidas").performScrollTo().performClick()
+        composeRule.onNodeWithText(MeasurementField.Waist.label)
+            .assertIsFocused().assertTextContains("80")
+        composeRule.onNodeWithText("Calcular").performScrollTo().assertIsDisplayed()
+        composeRule.runOnUiThread {
+            width.value = 1200
+            font.value = 1f
+        }
+        composeRule.onNodeWithText("Raios para o molde").assertIsDisplayed()
+        edit(MeasurementField.Length, "70")
+        composeRule.onNodeWithText("Preencha as medidas e toque em Calcular.").assertIsDisplayed()
+        composeRule.onNodeWithText("Raios para o molde").assertDoesNotExist()
+    }
     private fun fillInputs(values: List<String>) {
         MeasurementField.entries.zip(values).forEach { (field, value) -> edit(field, value) }
     }

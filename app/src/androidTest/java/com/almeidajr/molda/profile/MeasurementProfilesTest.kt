@@ -3,6 +3,7 @@ package com.almeidajr.molda.profile
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
+import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -15,6 +16,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -51,7 +54,7 @@ class MeasurementProfilesTest {
         showContent()
     }
 
-    private fun showContent(fontScale: Float = 1f) {
+    private fun showContent(fontScale: Float = 1f, width: Int = 400) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 val profiles: ProfilesViewModel = viewModel(
@@ -68,8 +71,15 @@ class MeasurementProfilesTest {
                 )
                 val calculator: SkirtCalculatorViewModel = viewModel()
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
-                    MoldaTheme {
-                        com.almeidajr.molda.MoldaRoute(calculator = calculator, profiles = profiles)
+                    DeviceConfigurationOverride(
+                        DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, 900.dp)),
+                    ) {
+                        MoldaTheme {
+                            com.almeidajr.molda.MoldaRoute(
+                                calculator = calculator,
+                                profiles = profiles,
+                            )
+                        }
                     }
                 }
             }
@@ -200,7 +210,10 @@ class MeasurementProfilesTest {
         click("Escolher data no calendário")
         val calendarFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
             .withLocale(composeRule.activity.resources.configuration.locales[0])
-        composeRule.onNodeWithText(LocalDate.of(2026, 10, 14).format(calendarFormat))
+        composeRule.onNodeWithText(
+            LocalDate.of(2026, 10, 14).format(calendarFormat),
+            substring = true,
+        )
             .assertIsNotEnabled()
         composeRule.onNodeWithText(LocalDate.of(2026, 10, 12).format(calendarFormat)).performClick()
         click("Confirmar data")
@@ -482,11 +495,84 @@ class MeasurementProfilesTest {
         click("Confirmar exclusão")
         composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertIsDisplayed()
     }
+
+    @Test
+    fun wideEditor_keepsListVisible_andNewProfileConfirmsBeforeReplacingDirtyDraft() {
+        showContent(width = 1200)
+        manage()
+        click("Novo perfil")
+        composeRule.onNodeWithText("Perfis de medidas (opcional)").assertIsDisplayed()
+        edit("Nome ou apelido", "Rascunho")
+        click("Novo perfil")
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+        click("Continuar editando")
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
+        click("Novo perfil")
+        click("Descartar")
+        composeRule.onNodeWithText("Rascunho").assertDoesNotExist()
+        composeRule.onNodeWithText("Perfis de medidas (opcional)").assertIsDisplayed()
+    }
+
+    @Test
+    fun resizingAndLargeText_preserveDirtyEditor_andBackReturnsToVisibleList() {
+        showContent(width = 1200)
+        manage()
+        click("Novo perfil")
+        edit("Nome ou apelido", "Rascunho")
+        showContent(fontScale = 2f, width = 1000)
+        composeRule.onNodeWithText("Perfis de medidas (opcional)").assertDoesNotExist()
+        composeRule.onNodeWithText("Nome ou apelido").performScrollTo()
+            .assertTextContains("Rascunho")
+        composeRule.onNodeWithText("Salvar perfil").performScrollTo().assertIsDisplayed()
+        showContent(width = 1200)
+        composeRule.onNodeWithText("Perfis de medidas (opcional)").assertIsDisplayed()
+        click("Cancelar")
+        click("Continuar editando")
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+        click("Descartar")
+        composeRule.onNodeWithText("Perfis de medidas (opcional)").assertIsDisplayed()
+        composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
+        composeRule.onNodeWithText("Voltar ao cálculo").assertIsDisplayed()
+    }
+
+    @Test
+    fun wideRows_confirmDiscardBeforeSwitching_andPreserveCopiedCalculatorSourceOnResize() {
+        showContent(width = 1200)
+        manage()
+        listOf("Ana", "Bia").forEach { name ->
+            click("Novo perfil")
+            edit("Nome ou apelido", name)
+            edit("Cintura do perfil (cm)", "80")
+            edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+            click("Salvar perfil")
+        }
+        click("Ana")
+        edit("Nome ou apelido", "Rascunho")
+        click("Bia")
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+        click("Continuar editando")
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
+        click("Bia")
+        click("Descartar")
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+        click("Cancelar")
+        pick("Usar perfil: Ana — 80 cm — 12/10/2026")
+        showContent(width = 400)
+        composeRule.onNodeWithText("Medida do perfil: Ana").performScrollTo().assertIsDisplayed()
+        showContent(width = 1200)
+        composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("80")
+        composeRule.onNodeWithText("Medida do perfil: Ana").assertIsDisplayed()
+    }
     private fun waitForDialogFocus() {
-        // Dialog semantics appear before the exiting menu releases native window focus.
+        // Wait for native dialog focus and keyboard dismissal before delivering Back.
         composeRule.waitUntil(5_000) {
             android.view.inspector.WindowInspector.getGlobalWindowViews().any {
                 it.hasWindowFocus() &&
+                    !it.rootWindowInsets.isVisible(android.view.WindowInsets.Type.ime()) &&
                     (it.layoutParams as android.view.WindowManager.LayoutParams).type ==
                     android.view.WindowManager.LayoutParams.TYPE_APPLICATION
             }

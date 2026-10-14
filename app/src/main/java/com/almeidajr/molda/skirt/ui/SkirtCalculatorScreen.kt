@@ -73,15 +73,13 @@ fun SkirtCalculatorScreen(
             bringRequesters.getValue(field).bringIntoView()
         }
     }
-    Column(
-        modifier = modifier.fillMaxSize().imePadding().verticalScroll(
-            rememberScrollState(),
-        ).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    val form: @Composable () -> Unit = {
         profiles()
         Text("Saia godê inteira", style = MaterialTheme.typography.headlineMedium)
-        Text("Medidas em centímetros. Informe folga e margens explicitamente; zero é válido.")
+        Text(
+            "Medidas em centímetros. Informe folga e margens explicitamente; " +
+                "zero é válido.",
+        )
         MeasurementField.entries.forEach { field ->
             MeasurementGroupHeading(field)
             MeasurementInput(
@@ -101,18 +99,23 @@ fun SkirtCalculatorScreen(
                 },
                 modifier = Modifier.focusRequester(focusRequesters.getValue(field))
                     .bringIntoViewRequester(bringRequesters.getValue(field)),
-                onFocused = { scope.launch { bringRequesters.getValue(field).bringIntoView() } },
+                onFocused = {
+                    scope.launch { bringRequesters.getValue(field).bringIntoView() }
+                },
             )
         }
         Button(onClick = {
             focusManager.clearFocus()
             onCalculate()
         }) { Text("Calcular") }
+    }
+    val outcome: @Composable () -> Unit = {
         CalculationOutcome(state, Modifier.bringIntoViewRequester(resultRequester)) {
             focusRequesters.getValue(MeasurementField.Waist).requestFocus()
             scope.launch { bringRequesters.getValue(MeasurementField.Waist).bringIntoView() }
         }
     }
+    AdaptiveCalculator(state, modifier, form, outcome)
 }
 
 @Composable
@@ -278,3 +281,40 @@ private fun RadiusGroup(title: String, first: String, second: String) {
 }
 internal fun formatRadius(value: Double): String =
     String.format(Locale.forLanguageTag("pt-BR"), "%.2f cm", value)
+
+@Composable
+private fun AdaptiveCalculator(
+    state: CalculatorState,
+    modifier: Modifier,
+    form: @Composable () -> Unit,
+    outcome: @Composable () -> Unit,
+) {
+    com.almeidajr.molda.AdaptiveContent(
+        modifier = modifier.imePadding(),
+        detailOpen = false,
+        primary = {
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) { form() }
+        },
+        detail = {
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                if (state.radii == null) Text("Preencha as medidas e toque em Calcular.")
+                outcome()
+            }
+        },
+        compact = {
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                form()
+                outcome()
+            }
+        },
+    )
+}

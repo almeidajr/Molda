@@ -1,6 +1,7 @@
 package com.almeidajr.molda
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -58,6 +60,13 @@ fun MoldaRoute(
     var showPicker by rememberSaveable { mutableStateOf(false) }
     var editorFromPicker by rememberSaveable { mutableStateOf(false) }
     var showDiscard by rememberSaveable { mutableStateOf(false) }
+    var pendingEditor by rememberSaveable { mutableStateOf<Long?>(null) }
+    val requestEditor: (Long) -> Unit = { id ->
+        requestProfileEditor(profileState, profiles, id) {
+            pendingEditor = id
+            showDiscard = true
+        }
+    }
     val snackbar = remember { SnackbarHostState() }
     var snackbarHeight by remember { mutableIntStateOf(0) }
     val snackbarInset = with(LocalDensity.current) { snackbarHeight.toDp() }
@@ -81,47 +90,61 @@ fun MoldaRoute(
         showManagement =
             false
     }
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = {
-            SnackbarHost(snackbar, Modifier.onSizeChanged { snackbarHeight = it.height })
-        },
-        floatingActionButton = {
-            if (showManagement && !profileState.isCreating) {
-                ProfileCreateAction(profileState, profiles::startCreating)
-            }
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { padding ->
-        // Keep bottom actions reachable while storage feedback is visible.
-        val contentModifier = Modifier.padding(padding).padding(bottom = snackbarInset)
-        Destination(
-            calculator,
-            profiles,
-            showManagement,
-            { showManagement = it },
-            { showPicker = true },
-            cancelEditor,
-            contentModifier,
-        )
-        if (showPicker) {
-            AppProfilePicker(
-                profiles,
-                calculator,
-                onDismiss = { showPicker = false },
-                onCreate = {
-                    showPicker = false
-                    showManagement = true
-                    editorFromPicker = true
-                    profiles.startCreating()
+    HingeSafeContent(modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val wide = maxWidth >= 720.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) + 24.dp
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                snackbarHost = {
+                    SnackbarHost(snackbar, Modifier.onSizeChanged { snackbarHeight = it.height })
                 },
-            )
+                floatingActionButtonPosition = if (wide) FabPosition.Start else FabPosition.End,
+                floatingActionButton = {
+                    if (showManagement && (!profileState.isCreating || wide)) {
+                        ProfileCreateAction(profileState, { requestEditor(0L) })
+                    }
+                },
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            ) { padding ->
+                // Keep bottom actions reachable while storage feedback is visible.
+                val contentModifier = Modifier.padding(padding).padding(bottom = snackbarInset)
+                Destination(
+                    calculator,
+                    profiles,
+                    showManagement,
+                    { showManagement = it },
+                    { showPicker = true },
+                    cancelEditor,
+                    requestEditor,
+                    contentModifier,
+                )
+                if (showPicker) {
+                    AppProfilePicker(
+                        profiles,
+                        calculator,
+                        onDismiss = { showPicker = false },
+                        onCreate = {
+                            showPicker = false
+                            showManagement = true
+                            editorFromPicker = true
+                            profiles.startCreating()
+                        },
+                    )
+                }
+            }
         }
     }
     if (showDiscard) {
-        DiscardDialog(onDismiss = { showDiscard = false }, onDiscard = {
+        DiscardDialog(onDismiss = {
             showDiscard = false
-            finishEditor()
+            pendingEditor = null
+        }, onDiscard = {
+            showDiscard = false
+            if (pendingEditor == null) finishEditor() else profiles.cancel()
+            pendingEditor?.let { id ->
+                pendingEditor = null
+                if (id == 0L) profiles.startCreating() else profiles.startEditing(id)
+            }
         })
     }
 }
@@ -146,32 +169,45 @@ private fun Destination(
     onManage: (Boolean) -> Unit,
     onUseProfile: () -> Unit,
     cancelEditor: () -> Unit,
+    requestEditor: (Long) -> Unit,
     modifier: Modifier,
 ) {
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
     val profileState by profiles.state.collectAsStateWithLifecycle()
-    if (showManagement && profileState.isCreating) {
-        ProfileEditor(
-            profileState,
-            profiles::edit,
-            profiles::save,
-            cancelEditor,
-            modifier.imePadding(),
-            profiles.today,
-            onRetry = profiles::load,
-        )
-    } else if (showManagement) {
-        Column(
-            modifier.fillMaxSize().imePadding().padding(16.dp),
-        ) {
-            TextButton(onClick = { onManage(false) }) { Text("Voltar ao cálculo") }
-            ProfilesContent(
+    if (showManagement) {
+        val editor: @Composable () -> Unit = {
+            ProfileEditor(
                 profileState,
-                profiles::load,
-                profiles::startEditing,
-                profiles::delete,
+                profiles::edit,
+                profiles::save,
+                cancelEditor,
+                Modifier,
+                profiles.today,
+                onRetry = profiles::load,
             )
         }
+        val list: @Composable () -> Unit = {
+            Column(Modifier.fillMaxSize().padding(16.dp)) {
+                if (!profileState.isCreating) {
+                    TextButton(onClick = { onManage(false) }) { Text("Voltar ao cálculo") }
+                }
+                ProfilesContent(profileState, profiles::load, requestEditor, profiles::delete)
+            }
+        }
+        AdaptiveContent(
+            modifier = modifier.imePadding(),
+            detailOpen = profileState.isCreating,
+            onBack = { if (!profileState.isSaving) cancelEditor() },
+            primary = list,
+            detail = {
+                if (profileState.isCreating) {
+                    editor()
+                } else {
+                    Text("Selecione um perfil ou toque em Novo perfil.", Modifier.padding(16.dp))
+                }
+            },
+            compact = { if (profileState.isCreating) editor() else list() },
+        )
     } else {
         SkirtCalculatorScreen(
             calculatorState,
@@ -194,7 +230,6 @@ private fun DiscardDialog(onDismiss: () -> Unit, onDiscard: () -> Unit) {
         text = { Text("As alterações deste perfil ainda não foram salvas.") },
         confirmButton = {
             TextButton(onClick = {
-                onDismiss()
                 onDiscard()
             }) { Text("Descartar") }
         },
@@ -250,5 +285,21 @@ private fun ProfileBackHandler(
         } else {
             onLeave()
         }
+    }
+}
+
+private fun requestProfileEditor(
+    state: com.almeidajr.molda.profile.ui.ProfilesState,
+    profiles: ProfilesViewModel,
+    id: Long,
+    onDiscard: () -> Unit,
+) {
+    if (state.isSaving || state.isLoading || state.loadError != null) return
+    if (state.isCreating && state.isDirty) {
+        onDiscard()
+    } else if (id == 0L) {
+        profiles.startCreating()
+    } else {
+        profiles.startEditing(id)
     }
 }

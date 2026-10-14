@@ -214,6 +214,12 @@ class ProfileFailuresTest {
     }
 
     private fun click(label: String) {
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(
+                androidx.compose.ui.test.hasText(label) and androidx.compose.ui.test.isEnabled() and
+                    !androidx.compose.ui.test.hasAnyAncestor(!androidx.compose.ui.test.isEnabled()),
+            ).fetchSemanticsNodes().isNotEmpty()
+        }
         val node = composeRule.onNodeWithText(label)
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()
