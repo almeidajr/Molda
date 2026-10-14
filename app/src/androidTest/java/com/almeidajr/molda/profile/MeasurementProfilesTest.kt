@@ -6,17 +6,21 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
@@ -176,11 +180,30 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun dateFieldAndCalendarIcon_openPickerAndCancelPreservesDate() {
+        manage()
+        click("Novo perfil")
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
+        composeRule.onNodeWithContentDescription("Escolher data no calendário").assertIsDisplayed()
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)")
+            .performTouchInput { click() }
+        waitForDialogFocus()
+        composeRule.onNodeWithText("Confirmar data").assertIsDisplayed().assertIsNotEnabled()
+        click("Cancelar calendário")
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
+        waitForDialogFocus()
+        composeRule.onNodeWithText("Confirmar data").assertIsDisplayed().assertIsEnabled()
+        click("Cancelar calendário")
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("12/10/2026")
+    }
+
+    @Test
     fun back_dismissesCalendarThenConfirmsDirtyEditor() {
         manage()
         click("Novo perfil")
         edit("Nome ou apelido", "Rascunho")
-        click("Escolher data no calendário")
+        click("Data da medida (dd/mm/aaaa)")
         waitForDialogFocus()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
             .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
@@ -198,7 +221,7 @@ class MeasurementProfilesTest {
     }
 
     @Test
-    fun dateBoundary_futureRejectedTodaySavedAndCalendarMatchesText() {
+    fun dateBoundary_futureRejectedTodaySavedAndCalendarMatchesInput() {
         manage()
         click("Novo perfil")
         edit("Nome ou apelido", "Data limite")
@@ -206,20 +229,23 @@ class MeasurementProfilesTest {
         click("Salvar perfil")
         composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
             .performScrollTo().assertIsDisplayed()
-        edit("Data da medida (dd/mm/aaaa)", "14/10/2026")
-        click("Salvar perfil")
-        composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
-            .performScrollTo().assertIsDisplayed()
+        composeRule.openProfileDateInput("14/10/2026")
+        composeRule.onNodeWithText("Confirmar data").assertIsNotEnabled()
+        click("Cancelar calendário")
         edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
-        click("Escolher data no calendário")
+        click("Data da medida (dd/mm/aaaa)")
         val calendarFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
             .withLocale(composeRule.activity.resources.configuration.locales[0])
         composeRule.onNodeWithText(
             LocalDate.of(2026, 10, 14).format(calendarFormat),
             substring = true,
+            ignoreCase = true,
         )
             .assertIsNotEnabled()
-        composeRule.onNodeWithText(LocalDate.of(2026, 10, 12).format(calendarFormat)).performClick()
+        composeRule.onNodeWithText(
+            LocalDate.of(2026, 10, 12).format(calendarFormat),
+            ignoreCase = true,
+        ).performClick()
         click("Confirmar data")
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("12/10/2026")
         edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
@@ -281,18 +307,19 @@ class MeasurementProfilesTest {
         click("Ana")
         edit("Nome ou apelido", "")
         edit("Cintura do perfil (cm)", "Infinity")
-        edit("Data da medida (dd/mm/aaaa)", "31/02/2026")
+        composeRule.openProfileDateInput("32/02/2026")
+        composeRule.onNodeWithText("Confirmar data").assertIsNotEnabled()
+        click("Cancelar calendário")
         click("Salvar alterações")
         composeRule.onNodeWithText("Informe um nome ou apelido.")
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Informe uma cintura positiva e finita, como 80,5.")
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
-            .performScrollTo().assertIsDisplayed()
         runBlocking {
             val saved = storage.list().single().measurements
             assertEquals("Ana", saved.name)
             assertEquals(80.0, saved.waist, 0.0)
+            assertEquals(LocalDate.of(2026, 10, 12), saved.measurementDate)
         }
     }
 
@@ -437,7 +464,9 @@ class MeasurementProfilesTest {
         ).performScrollTo().assertIsDisplayed()
         edit("Nome ou apelido", "Ana")
         edit("Cintura do perfil (cm)", "NaN")
-        edit("Data da medida (dd/mm/aaaa)", "31/02/2026")
+        composeRule.openProfileDateInput("32/02/2026")
+        composeRule.onNodeWithText("Confirmar data").assertIsNotEnabled()
+        click("Cancelar calendário")
         click("Salvar perfil")
         composeRule.onNodeWithText("Informe uma cintura positiva e finita, como 80,5.")
             .performScrollTo().assertIsDisplayed()
@@ -590,7 +619,11 @@ class MeasurementProfilesTest {
         }
     }
     private fun edit(label: String, value: String) {
-        composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)
+        if (label == "Data da medida (dd/mm/aaaa)") {
+            composeRule.enterProfileDate(value)
+        } else {
+            composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)
+        }
     }
 
     private fun manage() {

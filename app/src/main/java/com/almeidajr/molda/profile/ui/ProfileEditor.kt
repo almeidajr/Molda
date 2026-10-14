@@ -1,5 +1,8 @@
 package com.almeidajr.molda.profile.ui
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +16,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
@@ -26,14 +31,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.almeidajr.molda.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -56,14 +66,13 @@ fun ProfileEditor(
     ) {
         ProfileEditorHeading(state.editingId == null)
         ProfileField.entries.forEach { field ->
-            ProfileInput(state, field, onEdit)
             if (field == ProfileField.Date) {
-                TextButton(onClick = {
+                ProfileDateField(state, onClick = {
                     focus.clearFocus()
                     showCalendar = true
-                }, enabled = !state.isSaving) {
-                    Text("Escolher data no calendário")
-                }
+                })
+            } else {
+                ProfileInput(state, field, onEdit)
             }
         }
         ProfileMutationError(state.saveError)
@@ -154,7 +163,48 @@ private fun ProfileDatePicker(
             }, enabled = picker.selectedDateMillis != null) { Text("Confirmar data") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar calendário") } },
-    ) { DatePicker(state = picker, showModeToggle = false) }
+    ) { DatePicker(state = picker) }
+}
+
+@Composable
+private fun ProfileDateField(state: ProfilesState, onClick: () -> Unit) {
+    val error = state.errors[ProfileField.Date]
+    val enabled = !state.isSaving
+    OutlinedTextField(
+        value = state.inputs.getValue(ProfileField.Date),
+        onValueChange = {},
+        label = { Text(ProfileField.Date.label) },
+        readOnly = true,
+        enabled = enabled,
+        singleLine = true,
+        isError = error != null,
+        supportingText = error?.let { { Text(it) } },
+        trailingIcon = {
+            IconButton(onClick = onClick, enabled = enabled) {
+                Icon(painterResource(R.drawable.ic_calendar), "Escolher data no calendário")
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+            .semantics {
+                if (enabled) {
+                    onClick("Escolher data no calendário") {
+                        onClick()
+                        true
+                    }
+                }
+            }
+            .pointerInput(enabled) {
+                if (enabled) {
+                    awaitEachGesture {
+                        // Observe taps before the text field consumes them.
+                        awaitFirstDown(pass = PointerEventPass.Initial)
+                        if (waitForUpOrCancellation(pass = PointerEventPass.Initial) != null) {
+                            onClick()
+                        }
+                    }
+                }
+            },
+    )
 }
 
 @Composable
