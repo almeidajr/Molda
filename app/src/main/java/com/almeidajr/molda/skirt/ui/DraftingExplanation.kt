@@ -5,7 +5,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -20,9 +25,6 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 
 @Composable
 internal fun DraftingExplanation(inputs: Map<MeasurementField, String>, radii: SkirtRadii) {
-    val waist = inputs.getValue(MeasurementField.Waist).trim().replace('.', ',')
-    val ease = inputs.getValue(MeasurementField.Ease).trim().replace('.', ',')
-    val length = inputs.getValue(MeasurementField.Length).trim().replace('.', ',')
     val seam = inputs.getValue(MeasurementField.WaistSeamAllowance).trim().replace('.', ',')
     val hem = inputs.getValue(MeasurementField.HemAllowance).trim().replace('.', ',')
     Text("Como levar os raios ao papel", style = MaterialTheme.typography.titleLarge)
@@ -31,22 +33,7 @@ internal fun DraftingExplanation(inputs: Map<MeasurementField, String>, radii: S
             "Margens são tecido reservado para costura e acabamento, não folga. " +
             "Todos os valores abaixo estão em centímetros.",
     )
-    Text("Costura da cintura: r = (cintura + folga) / (2π)")
-    Text("r = ($waist + $ease) / (2π) = ${formatRadius(radii.waistStitching)}")
-    Text("Barra acabada = r + comprimento = r + $length = ${formatRadius(radii.finishedHem)}")
-    Text(
-        "Corte da cintura = r − margem de costura = r − $seam = ${formatRadius(
-            radii.waistCutting,
-        )}",
-    )
-    Text(
-        "Corte da barra = r + comprimento + margem de barra = r + $length + $hem = ${formatRadius(
-            radii.hemCutting,
-        )}",
-    )
-    Text(
-        "Use r sem arredondamento nos cálculos; apenas os resultados exibidos têm duas casas decimais.",
-    )
+    DraftingFormulas(inputs, radii)
     val direction = "A margem de cintura de $seam cm avança para dentro; " +
         "a margem de barra de $hem cm avança para fora."
     val labels = listOf(
@@ -71,6 +58,41 @@ internal fun DraftingExplanation(inputs: Map<MeasurementField, String>, radii: S
             "Não é um molde completo, calibrado ou para impressão. Transfira os raios " +
             "ao papel a partir de um mesmo centro. O cálculo não garante o caimento.",
     )
+}
+
+@Composable
+private fun DraftingFormulas(inputs: Map<MeasurementField, String>, radii: SkirtRadii) {
+    val waist = inputs.getValue(MeasurementField.Waist).trim().replace('.', ',')
+    val ease = inputs.getValue(MeasurementField.Ease).trim().replace('.', ',')
+    val length = inputs.getValue(MeasurementField.Length).trim().replace('.', ',')
+    val seam = inputs.getValue(MeasurementField.WaistSeamAllowance).trim().replace('.', ',')
+    val hem = inputs.getValue(MeasurementField.HemAllowance).trim().replace('.', ',')
+    var formulasExpanded by rememberSaveable(inputs) { mutableStateOf(false) }
+    TextButton(onClick = { formulasExpanded = !formulasExpanded }) {
+        Text(if (formulasExpanded) "Ocultar fórmulas" else "Mostrar fórmulas")
+    }
+    if (formulasExpanded) {
+        Text("Costura da cintura: r = (cintura + folga) / (2π)")
+        Text("r = ($waist + $ease) / (2π) = ${formatRadius(radii.waistStitching)}")
+        Text(
+            "Barra acabada = r + comprimento = r + $length = ${formatRadius(radii.finishedHem)}",
+        )
+        Text(
+            "Corte da cintura = r − margem de costura = r − $seam = ${formatRadius(
+                radii.waistCutting,
+            )}",
+        )
+        Text(
+            "Corte da barra = r + comprimento + margem de barra = " +
+                "r + $length + $hem = ${formatRadius(
+                    radii.hemCutting,
+                )}",
+        )
+        Text(
+            "Use r sem arredondamento nos cálculos; " +
+                "apenas os resultados exibidos têm duas casas decimais.",
+        )
+    }
 }
 
 @Composable
