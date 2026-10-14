@@ -1,8 +1,6 @@
 package com.almeidajr.molda.profile
 
 import androidx.activity.compose.setContent
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -15,7 +13,6 @@ import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
@@ -28,13 +25,16 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
@@ -43,7 +43,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import org.junit.After
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -142,6 +142,48 @@ class ProfilePresentationTest {
     }
 
     @Test
+    fun profileGuidanceErrorsAndRowNames_useReadableAgreedTypography() {
+        manage()
+        click("Novo perfil")
+        listOf(
+            "Nomes repetidos são permitidos.",
+            "Escolha a data em que a medida foi tomada, sem usar uma data futura.",
+        ).forEach { assertTypography(it, 14, 20) }
+        edit("Nome ou apelido", "Ana")
+        edit("Cintura do perfil (cm)", "80")
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)")
+            .performScrollTo().performTextReplacement("32/02/2026")
+        click("Salvar perfil")
+        assertTypography(
+            "Informe uma data válida no formato dd/mm/aaaa.",
+            14,
+            20,
+        )
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        saveProfile()
+        assertTypography("Ana", 16, 24, FontWeight.Medium)
+        click("Voltar ao cálculo")
+        click("Usar perfil")
+        assertTypography("Usar perfil: Ana — 80 cm — 12/10/2026", 16, 24, FontWeight.Medium)
+    }
+
+    private fun assertTypography(
+        label: String,
+        size: Int,
+        height: Int,
+        weight: FontWeight? = null,
+    ) {
+        val text = composeRule.onNodeWithText(label, useUnmergedTree = true)
+            .performScrollTo().assertIsDisplayed()
+        val layouts = mutableListOf<TextLayoutResult>()
+        text.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        val style = layouts.single().layoutInput.style
+        assertEquals("$label size", size.sp, style.fontSize)
+        assertEquals("$label line height", height.sp, style.lineHeight)
+        if (weight != null) assertEquals("$label weight", weight, style.fontWeight)
+    }
+
+    @Test
     fun enlargedText_themeVariants_keepProfileRowsAndSeparateActionsReachable() {
         manage()
         click("Novo perfil")
@@ -163,16 +205,7 @@ class ProfilePresentationTest {
             composeRule.onNodeWithText("Conferida antes do corte").assertIsDisplayed()
             listOf(name, "Conferida antes do corte").forEach { label ->
                 val text = composeRule.onNodeWithText(label, useUnmergedTree = true)
-                val layouts = mutableListOf<TextLayoutResult>()
-                text.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
-                val foreground = layouts.single().layoutInput.style.color.luminance()
-                val background = text.captureToImage().toPixelMap()[0, 0].luminance()
-                val contrast = (maxOf(foreground, background) + 0.05f) /
-                    (minOf(foreground, background) + 0.05f)
-                assertTrue(
-                    "$label contrast=$contrast dark=$dark dynamic=$dynamic",
-                    contrast >= 4.5f,
-                )
+                text.assertReadableTextContrast("$label dark=$dark dynamic=$dynamic")
             }
             composeRule.onNodeWithText("Ações: $name").performScrollTo().assertIsDisplayed()
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)

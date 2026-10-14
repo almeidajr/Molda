@@ -131,7 +131,9 @@ private fun ProfileManagementRow(
                 colors = ListItemDefaults.colors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
-                headlineContent = { Text(profile.measurements.name) },
+                headlineContent = {
+                    Text(profile.measurements.name, style = MaterialTheme.typography.titleMedium)
+                },
                 supportingContent = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
@@ -223,6 +225,7 @@ fun ProfilePicker(
     onCreate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val rowStyle = MaterialTheme.typography.titleMedium
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -263,7 +266,7 @@ fun ProfilePicker(
                             colors = ListItemDefaults.colors(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ),
-                            headlineContent = { Text(profileLabel(profile)) },
+                            headlineContent = { Text(profileLabel(profile), style = rowStyle) },
                             supportingContent = if (hasDuplicate &&
                                 profile.measurements.notes.isNotBlank()
                             ) {

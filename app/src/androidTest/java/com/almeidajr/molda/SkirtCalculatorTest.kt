@@ -1,8 +1,6 @@
 package com.almeidajr.molda
 
 import androidx.activity.compose.setContent
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.SemanticsActions
@@ -14,7 +12,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -35,7 +32,6 @@ import com.almeidajr.molda.skirt.ui.MeasurementField
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorRoute
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -90,14 +86,7 @@ class SkirtCalculatorTest {
                 val style = layouts.single().layoutInput.style
                 assertEquals(24.sp, style.fontSize)
                 assertEquals(32.sp, style.lineHeight)
-                val foreground = style.color.luminance()
-                val background = node.captureToImage().toPixelMap()[0, 0].luminance()
-                val contrast = (maxOf(foreground, background) + 0.05f) /
-                    (minOf(foreground, background) + 0.05f)
-                assertTrue(
-                    "$radius contrast $contrast; dark=$dark dynamic=$dynamic",
-                    contrast >= 4.5f,
-                )
+                node.assertReadableTextContrast("$radius dark=$dark dynamic=$dynamic")
             }
             composeRule.onNodeWithText("Editar medidas").performScrollTo()
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()

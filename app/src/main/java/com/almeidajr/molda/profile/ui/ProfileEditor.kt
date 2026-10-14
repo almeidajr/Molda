@@ -198,7 +198,10 @@ private fun ProfileDateField(
         singleLine = true,
         isError = error != null,
         supportingText = {
-            Text(error ?: "Escolha a data em que a medida foi tomada, sem usar uma data futura.")
+            Text(
+                error ?: "Escolha a data em que a medida foi tomada, sem usar uma data futura.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
         },
         trailingIcon = {
             IconButton(onClick = onClick, enabled = enabled) {
@@ -234,6 +237,7 @@ private fun ProfileInput(
                     ProfileField.Notes -> "Use observações para distinguir perfis com o mesmo nome."
                     ProfileField.Date -> ""
                 },
+                style = MaterialTheme.typography.bodyMedium,
             )
         },
         enabled = !state.isSaving,
