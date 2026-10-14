@@ -4,6 +4,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -49,6 +50,9 @@ class ProfileFailuresTest {
             .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Novo perfil de medidas").performScrollTo().assertIsDisplayed()
         gate.complete(Unit)
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(hasText("Nome ou apelido")).fetchSemanticsNodes().isEmpty()
+        }
         composeRule.onNodeWithText("Nova").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
     }
