@@ -202,6 +202,8 @@ class MeasurementProfilesTest {
         manage()
         click("Novo perfil")
         edit("Nome ou apelido", "Rascunho")
+        // Settle native IME dismissal before testing the calendar's own Back handling.
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
         composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
         waitForDialogFocus()
