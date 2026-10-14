@@ -14,11 +14,14 @@ repos:
         args: [--assume-in-merge]
       - id: check-added-large-files
         args: [--maxkb=500]
+        # Bundled upstream font/icon catalogs exceed the default size limit.
+        exclude: '^\.(agents|claude)/skills/ui-ux-pro-max/data/(google-fonts\.csv|phosphor-icons-upstream\.json)$'
       # CI has no staged additions: inspect committed files after checkout too.
       - id: check-added-large-files
         alias: check-all-large-files
         stages: [manual]
         args: [--maxkb=500, --enforce-all]
+        exclude: '^\.(agents|claude)/skills/ui-ux-pro-max/data/(google-fonts\.csv|phosphor-icons-upstream\.json)$'
       - id: detect-private-key
   - repo: local
     hooks:
