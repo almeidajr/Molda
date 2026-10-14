@@ -104,7 +104,7 @@ class MeasurementProfilesTest {
         edit("Nome ou apelido", "Ana")
         edit("Cintura do perfil (cm)", "80")
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-        click("Salvar perfil")
+        saveProfile()
         click("Ações: Ana")
         click("Excluir perfil")
         composeRule.onNodeWithText("Excluir perfil Ana?").assertIsDisplayed()
@@ -132,7 +132,7 @@ class MeasurementProfilesTest {
             edit("Nome ou apelido", "Ana")
             edit("Cintura do perfil (cm)", "80")
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-            click("Salvar perfil")
+            saveProfile()
         }
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")
         edit("Folga de cintura (cm)", "0")
@@ -167,7 +167,7 @@ class MeasurementProfilesTest {
         edit("Nome ou apelido", "Ana")
         edit("Cintura do perfil (cm)", "80")
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-        click("Salvar perfil")
+        saveProfile()
         click("Voltar ao cálculo")
         composeRule.onNodeWithText("Calcular").performScrollTo()
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
@@ -223,7 +223,7 @@ class MeasurementProfilesTest {
         click("Confirmar data")
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("12/10/2026")
         edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
-        click("Salvar perfil")
+        saveProfile()
         composeRule.onNodeWithText("Data limite").performScrollTo().assertIsDisplayed()
         click("Data limite")
         click("Cancelar")
@@ -243,9 +243,12 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Nova no seletor")
         click("Cancelar")
         click("Continuar editando")
-        click("Salvar perfil")
-        composeRule.onNodeWithText("Usar perfil: Nova no seletor — 80 cm — 12/10/2026")
-            .assertIsDisplayed()
+        saveProfile()
+        val profile = composeRule.onNodeWithText(
+            "Usar perfil: Nova no seletor — 80 cm — 12/10/2026",
+        )
+        composeRule.waitUntil(5_000) { profile.isDisplayed() }
+        profile.assertIsDisplayed()
         click("Cancelar seleção")
         composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("95")
     }
@@ -274,7 +277,7 @@ class MeasurementProfilesTest {
         edit("Nome ou apelido", "Ana")
         edit("Cintura do perfil (cm)", "80")
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-        click("Salvar perfil")
+        saveProfile()
         click("Ana")
         edit("Nome ou apelido", "")
         edit("Cintura do perfil (cm)", "Infinity")
@@ -301,7 +304,7 @@ class MeasurementProfilesTest {
             edit("Nome ou apelido", "Ana")
             edit("Cintura do perfil (cm)", "80,123456789")
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-            click("Salvar perfil")
+            saveProfile()
             composeRule.waitUntil(5_000) {
                 composeRule.onAllNodes(hasText("Perfil salvo neste aparelho."))
                     .fetchSemanticsNodes().isNotEmpty()
@@ -325,7 +328,7 @@ class MeasurementProfilesTest {
         manage()
         composeRule.onNodeWithText("Nome ou apelido")
             .performScrollTo().assertTextContains("Ana atualizada")
-        click("Salvar alterações")
+        saveProfile("Salvar alterações")
         click("Voltar ao cálculo")
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("90")
@@ -358,7 +361,7 @@ class MeasurementProfilesTest {
         edit("Cintura do perfil (cm)", "80,5")
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
         edit("Observações (opcional)", "Medida no cós")
-        click("Salvar perfil")
+        saveProfile()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
                 androidx.compose.ui.test.hasText(
@@ -464,7 +467,7 @@ class MeasurementProfilesTest {
             edit("Nome ou apelido", "Ana")
             edit("Cintura do perfil (cm)", "80")
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-            click("Salvar perfil")
+            saveProfile()
         }
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")
@@ -482,7 +485,7 @@ class MeasurementProfilesTest {
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
         composeRule.onNodeWithText("Observações (opcional)")
             .performScrollTo().performClick().assertIsDisplayed()
-        click("Salvar perfil")
+        saveProfile()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(androidx.compose.ui.test.hasText("Perfil salvo neste aparelho."))
                 .fetchSemanticsNodes().isNotEmpty()
@@ -493,7 +496,7 @@ class MeasurementProfilesTest {
         edit("Cintura do perfil (cm)", "82,5")
         composeRule.onNodeWithText("Observações (opcional)")
             .performScrollTo().performClick().assertIsDisplayed()
-        click("Salvar alterações")
+        saveProfile("Salvar alterações")
         composeRule.onNodeWithText("Ana")
             .performScrollTo().assertIsDisplayed()
         click("Ações: Ana")
@@ -554,7 +557,7 @@ class MeasurementProfilesTest {
             edit("Nome ou apelido", name)
             edit("Cintura do perfil (cm)", "80")
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-            click("Salvar perfil")
+            saveProfile()
         }
         click("Ana")
         edit("Nome ou apelido", "Rascunho")
@@ -608,6 +611,14 @@ class MeasurementProfilesTest {
         }
         click("Usar perfil")
         composeRule.onAllNodes(androidx.compose.ui.test.hasText(label))[0].performClick()
+    }
+
+    private fun saveProfile(label: String = "Salvar perfil") {
+        click(label)
+        // A profile name also matches its draft field while storage is still pending.
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(hasText("Nome ou apelido")).fetchSemanticsNodes().isEmpty()
+        }
     }
 
     private fun click(label: String) {
