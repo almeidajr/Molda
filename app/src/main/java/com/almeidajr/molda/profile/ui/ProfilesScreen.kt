@@ -4,12 +4,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -19,10 +17,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,7 +34,6 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import java.math.BigDecimal
@@ -56,7 +53,7 @@ fun ProfilesContent(
     ) {
         Text(
             "Perfis de medidas (opcional)",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.semantics { heading() },
         )
         Text(
@@ -118,7 +115,6 @@ private fun ProfileManagementRow(
     isDeleting: Boolean,
     deleteError: String?,
 ) {
-    var expanded by remember { mutableStateOf(false) }
     var confirmDelete by remember(profile.id) { mutableStateOf(false) }
     if (confirmDelete) {
         ConfirmProfileDeletion(profile, enabled, { confirmDelete = false }) {
@@ -126,39 +122,36 @@ private fun ProfileManagementRow(
             onDelete(profile.id)
         }
     }
-    ListItem(
-        headlineContent = { Text(profile.measurements.name) },
-        supportingContent = {
-            Text(
-                "${profileWaistText(profile.measurements.waist)} cm — " +
-                    profile.measurements.measurementDate.format(ProfileDateFormat),
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column {
+            ListItem(
+                colors = ListItemDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
+                headlineContent = {
+                    Text(profile.measurements.name, style = MaterialTheme.typography.titleMedium)
+                },
+                supportingContent = {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            "${profileWaistText(profile.measurements.waist)} cm — " +
+                                profile.measurements.measurementDate.format(ProfileDateFormat),
+                        )
+                        if (profile.measurements.notes.isNotBlank()) {
+                            Text(profile.measurements.notes)
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) {
+                    onStartEdit(profile.id)
+                },
             )
-        },
-        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) { onStartEdit(profile.id) },
-        trailingContent = {
-            Box {
-                TextButton(onClick = { expanded = true }, enabled = enabled) {
-                    Text("Ações: ${profile.measurements.name}")
-                }
-                DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Editar perfil") },
-                        onClick = {
-                            expanded = false
-                            onStartEdit(profile.id)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Excluir perfil") },
-                        onClick = {
-                            expanded = false
-                            confirmDelete = true
-                        },
-                    )
-                }
-            }
-        },
-    )
+            ProfileRowActions(profile, enabled, onStartEdit) { confirmDelete = true }
+        }
+    }
     if (isDeleting) Text("Excluindo ${profile.measurements.name}…")
     deleteError?.let {
         Text(
@@ -166,6 +159,37 @@ private fun ProfileManagementRow(
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
+    }
+}
+
+@Composable
+private fun ProfileRowActions(
+    profile: MeasurementProfile,
+    enabled: Boolean,
+    onStartEdit: (Long) -> Unit,
+    onDelete: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        TextButton(onClick = { expanded = true }, enabled = enabled) {
+            Text("Ações: ${profile.measurements.name}")
+        }
+        DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text("Editar perfil") },
+                onClick = {
+                    expanded = false
+                    onStartEdit(profile.id)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Excluir perfil") },
+                onClick = {
+                    expanded = false
+                    onDelete()
+                },
+            )
+        }
     }
 }
 
@@ -201,6 +225,7 @@ fun ProfilePicker(
     onCreate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val rowStyle = MaterialTheme.typography.titleMedium
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -208,7 +233,7 @@ fun ProfilePicker(
         ) {
             Text(
                 "Usar perfil",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.semantics { heading() },
             )
             TextButton(onClick = onDismiss) { Text("Cancelar seleção") }
@@ -233,20 +258,28 @@ fun ProfilePicker(
                             it.measurements.waist == profile.measurements.waist &&
                             it.measurements.measurementDate == profile.measurements.measurementDate
                     } > 1
-                    ListItem(
-                        headlineContent = { Text(profileLabel(profile)) },
-                        supportingContent = if (hasDuplicate &&
-                            profile.measurements.notes.isNotBlank()
-                        ) {
-                            { Text(profile.measurements.notes) }
-                        } else {
-                            null
-                        },
-                        modifier = Modifier.fillMaxWidth().clickable { onSelect(profile) },
-                    )
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ) {
+                        ListItem(
+                            colors = ListItemDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
+                            headlineContent = { Text(profileLabel(profile), style = rowStyle) },
+                            supportingContent = if (hasDuplicate &&
+                                profile.measurements.notes.isNotBlank()
+                            ) {
+                                { Text(profile.measurements.notes) }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.fillMaxWidth().clickable { onSelect(profile) },
+                        )
+                    }
                 }
             }
-            TextButton(
+            Button(
                 onClick = onCreate,
                 enabled = !state.isLoading && state.loadError == null && !state.isSaving,
             ) { Text("Novo perfil") }

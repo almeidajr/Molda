@@ -312,7 +312,7 @@ private fun profileErrors(
     if (waist == null || waist <= 0) {
         put(ProfileField.Waist, "Informe uma cintura positiva e finita, como 80,5.")
     }
-    if (date == null) {
+    if (date == null || date.year < 1) {
         put(ProfileField.Date, "Informe uma data válida no formato dd/mm/aaaa.")
     } else if (date.isAfter(today)) {
         put(ProfileField.Date, "A medida já deve ter sido tomada. Corrija a data futura.")

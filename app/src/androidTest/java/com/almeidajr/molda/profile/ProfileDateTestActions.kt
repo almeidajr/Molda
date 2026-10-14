@@ -13,7 +13,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 
 internal fun ComposeTestRule.openProfileDateInput(value: String) {
-    onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo().performClick()
+    onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
+    onNodeWithContentDescription("Escolher data no calendário").performClick()
     val context = InstrumentationRegistry.getInstrumentation().targetContext
     onNodeWithContentDescription(
         context.getString(androidx.compose.material3.R.string.m3c_date_picker_switch_to_input_mode),
@@ -25,6 +26,5 @@ internal fun ComposeTestRule.openProfileDateInput(value: String) {
 }
 
 internal fun ComposeTestRule.enterProfileDate(value: String) {
-    openProfileDateInput(value)
-    onNodeWithText("Confirmar data").performClick()
+    onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo().performTextReplacement(value)
 }

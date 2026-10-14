@@ -1,5 +1,12 @@
 # Molda UI/UX design
 
+The confirmed [UI design system](ui-design-system.md) extends this record with
+Material 3 Expressive typography, spacing, shape, motion and component contracts.
+It supersedes the standard-visual-system-only and no-custom-branding decisions
+below with a branded fallback palette while preserving dynamic color and the
+existing interaction, navigation and data-safety requirements. Screen
+implementation remains outside that design-system phase.
+
 Status: confirmed design, implemented in
 [PR #30](https://github.com/almeidajr/Molda/pull/30). This record preserves the
 design interview and decisions agreed by the product owner. It supplements the

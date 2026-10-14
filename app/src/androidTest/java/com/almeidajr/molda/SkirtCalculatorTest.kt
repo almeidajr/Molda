@@ -3,12 +3,15 @@ package com.almeidajr.molda
 import androidx.activity.compose.setContent
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -16,15 +19,19 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.ui.MeasurementField
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorRoute
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,6 +40,59 @@ import org.junit.runner.RunWith
 class SkirtCalculatorTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun garmentChoicesAndAllowances_explainExplicitZeroBeforeCalculation() {
+        listOf(
+            "Folga é o acréscimo à cintura para vestir; informe zero se não desejar folga.",
+            "Tecido reservado para costurar a cintura; informe zero se não houver margem.",
+            "Tecido reservado para acabar a barra; informe zero se não houver margem.",
+        ).forEach { composeRule.onNodeWithText(it).performScrollTo().assertIsDisplayed() }
+        composeRule.onNodeWithText("Calcular").performScrollTo().assertIsDisplayed()
+        calculate()
+        composeRule.onNodeWithText(MeasurementField.Waist.label).assertIsFocused()
+    }
+
+    @Test
+    fun appearanceSchemes_atDoubleText_keepAllFourRadiiAndSeparatedActionsReachable() {
+        listOf(
+            false to false,
+            true to false,
+            false to true,
+            true to true,
+        ).forEach { (dark, dynamic) ->
+            composeRule.runOnUiThread {
+                composeRule.activity.setContent {
+                    DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
+                        MoldaTheme(darkTheme = dark, dynamicColor = dynamic) {
+                            SkirtCalculatorRoute()
+                        }
+                    }
+                }
+            }
+            fillInputs(listOf("80", "2", "60", "1", "2"))
+            composeRule.onNodeWithText("Calcular").performScrollTo()
+                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
+            calculate()
+            listOf(
+                "Raio da linha de costura da cintura: 13,05 cm",
+                "Raio da barra acabada: 73,05 cm",
+                "Raio de corte da cintura: 12,05 cm",
+                "Raio de corte da barra: 75,05 cm",
+            ).forEach { radius ->
+                val node = composeRule.onNodeWithText(radius).performScrollTo().assertIsDisplayed()
+                val layouts = mutableListOf<TextLayoutResult>()
+                node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+                val style = layouts.single().layoutInput.style
+                assertEquals(24.sp, style.fontSize)
+                assertEquals(32.sp, style.lineHeight)
+                node.assertReadableTextContrast("$radius dark=$dark dynamic=$dynamic")
+            }
+            composeRule.onNodeWithText("Editar medidas").performScrollTo()
+                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
+            composeRule.onNodeWithText(MeasurementField.Waist.label).assertIsFocused()
+        }
+    }
 
     @Test
     fun calculate_revealsGroupedResultsAndInputSummary_withCollapsedFormulasAndEdit() {
@@ -44,7 +104,7 @@ class SkirtCalculatorTest {
         }
         MeasurementField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
             composeRule.onNodeWithText(
-                "${field.label}: $value",
+                "${field.label}: $value,00 cm",
             ).performScrollTo().assertIsDisplayed()
         }
         composeRule.onNodeWithText("r = (80 + 2) / (2π) = 13,05 cm").assertDoesNotExist()

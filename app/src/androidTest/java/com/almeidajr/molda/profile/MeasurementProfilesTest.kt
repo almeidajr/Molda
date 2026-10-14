@@ -180,13 +180,12 @@ class MeasurementProfilesTest {
     }
 
     @Test
-    fun dateFieldAndCalendarIcon_openPickerAndCancelPreservesDate() {
+    fun dateEntryAndCalendarIcon_openPickerAndCancelPreservesDate() {
         manage()
         click("Novo perfil")
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
         composeRule.onNodeWithContentDescription("Escolher data no calendário").assertIsDisplayed()
-        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)")
-            .performTouchInput { click() }
+        composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
         waitForDialogFocus()
         composeRule.onNodeWithText("Confirmar data").assertIsDisplayed().assertIsNotEnabled()
         click("Cancelar calendário")
@@ -203,7 +202,10 @@ class MeasurementProfilesTest {
         manage()
         click("Novo perfil")
         edit("Nome ou apelido", "Rascunho")
-        click("Data da medida (dd/mm/aaaa)")
+        // Settle native IME dismissal before testing the calendar's own Back handling.
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
+        composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
         waitForDialogFocus()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
             .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
@@ -233,7 +235,8 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Confirmar data").assertIsNotEnabled()
         click("Cancelar calendário")
         edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
-        click("Data da medida (dd/mm/aaaa)")
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
+        composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
         val calendarFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
             .withLocale(composeRule.activity.resources.configuration.locales[0])
         composeRule.onNodeWithText(

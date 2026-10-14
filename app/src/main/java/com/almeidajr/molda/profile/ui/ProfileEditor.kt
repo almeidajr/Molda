@@ -1,8 +1,5 @@
 package com.almeidajr.molda.profile.ui
 
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -31,14 +29,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -65,17 +60,11 @@ fun ProfileEditor(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ProfileEditorHeading(state.editingId == null)
-        ProfileField.entries.forEach { field ->
-            if (field == ProfileField.Date) {
-                ProfileDateField(state, onClick = {
-                    focus.clearFocus()
-                    showCalendar = true
-                })
-            } else {
-                ProfileInput(state, field, onEdit)
-            }
+        ProfileMeasurementFields(state, onEdit) {
+            focus.clearFocus()
+            showCalendar = true
         }
-        ProfileMutationError(state.saveError)
+        ProfileMutationError(state.saveError.takeIf { state.deleteId == null })
         state.loadError?.let {
             ProfileMutationError(it)
             TextButton(onClick = onRetry) { Text("Tentar carregar novamente") }
@@ -107,6 +96,33 @@ fun ProfileEditor(
             },
             onDismiss = { showCalendar = false },
         )
+    }
+}
+
+@Composable
+private fun ProfileMeasurementFields(
+    state: ProfilesState,
+    onEdit: (ProfileField, String) -> Unit,
+    onCalendar: () -> Unit,
+) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(
+                "Identificação e medidas",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.semantics { heading() },
+            )
+            ProfileField.entries.forEach { field ->
+                if (field == ProfileField.Date) {
+                    ProfileDateField(state, onEdit, onClick = onCalendar)
+                } else {
+                    ProfileInput(state, field, onEdit)
+                }
+            }
+        }
     }
 }
 
@@ -167,43 +183,36 @@ private fun ProfileDatePicker(
 }
 
 @Composable
-private fun ProfileDateField(state: ProfilesState, onClick: () -> Unit) {
+private fun ProfileDateField(
+    state: ProfilesState,
+    onEdit: (ProfileField, String) -> Unit,
+    onClick: () -> Unit,
+) {
     val error = state.errors[ProfileField.Date]
     val enabled = !state.isSaving
     OutlinedTextField(
         value = state.inputs.getValue(ProfileField.Date),
-        onValueChange = {},
+        onValueChange = { onEdit(ProfileField.Date, it) },
         label = { Text(ProfileField.Date.label) },
-        readOnly = true,
         enabled = enabled,
         singleLine = true,
         isError = error != null,
-        supportingText = error?.let { { Text(it) } },
+        supportingText = {
+            Text(
+                error ?: "Escolha a data em que a medida foi tomada, sem usar uma data futura.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
         trailingIcon = {
             IconButton(onClick = onClick, enabled = enabled) {
                 Icon(painterResource(R.drawable.ic_calendar), "Escolher data no calendário")
             }
         },
-        modifier = Modifier.fillMaxWidth()
-            .semantics {
-                if (enabled) {
-                    onClick("Escolher data no calendário") {
-                        onClick()
-                        true
-                    }
-                }
-            }
-            .pointerInput(enabled) {
-                if (enabled) {
-                    awaitEachGesture {
-                        // Observe taps before the text field consumes them.
-                        awaitFirstDown(pass = PointerEventPass.Initial)
-                        if (waitForUpOrCancellation(pass = PointerEventPass.Initial) != null) {
-                            onClick()
-                        }
-                    }
-                }
-            },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Ascii,
+            imeAction = ImeAction.Next,
+        ),
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
@@ -220,7 +229,17 @@ private fun ProfileInput(
         onValueChange = { onEdit(field, it) },
         label = { Text(field.label) },
         isError = error != null,
-        supportingText = error?.let { { Text(it) } },
+        supportingText = {
+            Text(
+                error ?: when (field) {
+                    ProfileField.Name -> "Nomes repetidos são permitidos."
+                    ProfileField.Waist -> "Registre a circunferência da cintura em centímetros."
+                    ProfileField.Notes -> "Use observações para distinguir perfis com o mesmo nome."
+                    ProfileField.Date -> ""
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
         enabled = !state.isSaving,
         singleLine = field != ProfileField.Notes,
         keyboardOptions = KeyboardOptions(

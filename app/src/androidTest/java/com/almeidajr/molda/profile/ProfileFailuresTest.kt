@@ -1,17 +1,27 @@
 package com.almeidajr.molda.profile
 
 import androidx.activity.compose.setContent
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -200,7 +210,31 @@ class ProfileFailuresTest {
             .performScrollTo().assertIsDisplayed()
     }
 
-    private fun showProfiles(storage: ProfileRepository) {
+    @Test
+    fun wideDeleteFailure_announcesOnce_andKeepsOtherEditorDraft() {
+        showProfiles(FailingProfiles(), wide = true)
+        click("Perfis de medidas")
+        click("Existente", useUnmergedTree = true)
+        edit("Nome ou apelido", "Rascunho")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        click("Ações: Outra pessoa")
+        click("Excluir perfil")
+        click("Confirmar exclusão")
+        composeRule.onAllNodesWithText("Não foi possível excluir o perfil.", substring = true)
+            .assertCountEquals(1)
+        composeRule.onNodeWithText("Não foi possível excluir o perfil.", substring = true)
+            .performScrollTo().assertIsDisplayed()
+            .assert(
+                SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite),
+            )
+        composeRule.onNodeWithText(
+            "Nome ou apelido",
+        ).performScrollTo().assertTextContains("Rascunho")
+        composeRule.onNodeWithText("Outra pessoa").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
+    }
+
+    private fun showProfiles(storage: ProfileRepository, wide: Boolean = false) {
         composeRule.runOnUiThread {
             val profiles = ProfilesViewModel(
                 storage,
@@ -210,7 +244,18 @@ class ProfileFailuresTest {
             val calculator = SkirtCalculatorViewModel(androidx.lifecycle.SavedStateHandle())
             composeRule.activity.setContent {
                 MoldaTheme {
-                    com.almeidajr.molda.MoldaRoute(calculator = calculator, profiles = profiles)
+                    if (wide) {
+                        DeviceConfigurationOverride(
+                            DeviceConfigurationOverride.ForcedSize(DpSize(1200.dp, 2700.dp)),
+                        ) {
+                            com.almeidajr.molda.MoldaRoute(
+                                calculator = calculator,
+                                profiles = profiles,
+                            )
+                        }
+                    } else {
+                        com.almeidajr.molda.MoldaRoute(calculator = calculator, profiles = profiles)
+                    }
                 }
             }
         }
