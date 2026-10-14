@@ -92,7 +92,7 @@ fun MoldaRoute(
     }
     HingeSafeContent(modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val wide = maxWidth >= 720.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) + 24.dp
+            val wide = maxWidth >= minimumTwoPaneWidth(LocalDensity.current.fontScale)
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 snackbarHost = {

@@ -26,9 +26,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+
+internal fun minimumTwoPaneWidth(fontScale: Float): Dp =
+    360.dp * fontScale.coerceAtLeast(1f) * 2 + 24.dp
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -41,11 +45,10 @@ internal fun AdaptiveContent(
     compact: @Composable () -> Unit,
 ) {
     val info = currentWindowAdaptiveInfoV2()
-    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val fontScale = LocalDensity.current.fontScale
     BoxWithConstraints(modifier.fillMaxSize()) {
-        val minimumPaneWidth = 360.dp * fontScale
         val base = calculatePaneScaffoldDirective(info, HingePolicy.AlwaysAvoid)
-        val wide = maxWidth >= minimumPaneWidth * 2 + 24.dp
+        val wide = maxWidth >= minimumTwoPaneWidth(fontScale)
         val directive = base.copy(
             maxHorizontalPartitions = if (wide) 2 else 1,
             maxVerticalPartitions = 1,

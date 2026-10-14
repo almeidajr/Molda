@@ -199,8 +199,9 @@ fun ProfilePicker(
     onRetry: () -> Unit,
     onSelect: (MeasurementProfile) -> Unit,
     onCreate: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),

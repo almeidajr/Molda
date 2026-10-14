@@ -21,6 +21,25 @@ technical verification, not evidence of garment fit or usefulness to a sewist.
   APK, and repository hygiene checks passed. Final logs: `final-narrow-suite2`,
   `headings-final-green`, and `final-quality4` in the evidence directory.
 
+### Final review corrections
+
+The two low-priority standards findings were corrected after the integrated
+`57b838d` review: the profile picker accepts a root modifier, and the root FAB
+and adaptive panes share the existing width/font-scale breakpoint.
+
+- Before and after this refactor, the same **6 tests passed, 0 failures/errors**
+  on API 36 Fold `emulator-5554`: both navigation/heading tests, picker dismissal
+  and recreation, wide-editor creation/discard, resizing with large text, and
+  wide-calculator results/invalidation. Logs: `review-baseline-targeted.log`
+  and `review-final-targeted.log`. The earlier 46-test phone run and 2-test
+  heading run above remain evidence for their earlier production trees.
+- Spotless, Detekt, lintDebug, JVM (**8 tests, 0 failures/errors/skips**), debug
+  APK and test APK builds, all-file hygiene and manual large-file checks passed.
+  Logs: `review-quality.log`, `review-hygiene.log`, `review-hygiene-large.log`.
+- The feedback APK below was regenerated from this corrected production tree.
+  The full device suite and earlier manual journeys were not repeated for this
+  refactor; all participant, TalkBack, and hardware-input gaps remain pending.
+
 ## Integration corrections
 
 - The source caption now says **Cintura copiada do perfil**, making the copied
@@ -96,7 +115,7 @@ successful paper transfer, or usefulness before the session.
 
 Use [the short session checklist](drafting-feedback.md). The debug feedback APK
 is `Molda-feedback-api36.apk` in the evidence directory, SHA-256:
-`C9AC036A0C31689A3FF37FF6D51ED3CC3D6CD56EF66C8DD8755B0DC138C5D1BA`.
+`5B1CC9469170921AAFD157EBD4A770D883F859D4F7F46B5D6872C9BB4BDF7A7C`.
 Large APKs, screenshots, native trees, XML test results and logs stay outside Git in
 `C:/Users/jralm/AndroidStudioProjects/Molda-worktrees/ticket29-evidence/`;
 #28 native evidence is in the adjacent `ticket28-evidence/` directory.
