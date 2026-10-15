@@ -1,22 +1,134 @@
 <Rive version="1" kind="fragment">
-    <Artboard defaultStateMachineId="0:7" styleId="0:5" width="500" height="500" name="Artboard" id="0:2">
-        <LayoutComponentStyle name="Artboard Style" id="0:5"/>
-
-        <Fill name="Background">
-            <SolidColor colorValue="FF282828" name="Color"/>
-        </Fill>
-
-        <StateMachine name="State Machine 1" id="0:7">
-            <StateMachineLayer name="Layer 1" id="0:8">
-                <AnyState x="200" y="-120"/>
-                <ExitState x="400" y="-120"/>
-                <EntryState>
-                    <StateTransition stateToId="0:12"/>
-                </EntryState>
-                <AnimationState x="200" animationId="0:6" id="0:12"/>
-            </StateMachineLayer>
-        </StateMachine>
-
-        <LinearAnimation duration="60" name="Animation 1" id="0:6"/>
-    </Artboard>
+  <Artboard defaultStateMachineId="0:7" viewModelId="0:40" viewModelInstanceId="0:49" width="448" height="448" name="Marking" id="0:2" styleId="0:5">
+    <LayoutComponentStyle id="0:5" />
+    <Shape x="24" y="24" name="Common marking origin">
+      <Ellipse width="8" height="8" />
+      <Fill>
+        <SolidColor colorValue="FF202020" />
+      </Fill>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="waistStitching">
+      <Ellipse width="139" height="139">
+        <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF202020" />
+        <TrimPath start="0" end="0.25" id="0:61" />
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="waistCutting">
+      <Ellipse width="128" height="128">
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF202020" />
+        <TrimPath start="0" end="0.25" id="0:62" />
+        <DashPath>
+          <Dash length="10" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="finishedHem">
+      <Ellipse width="778" height="778">
+        <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF202020" />
+        <TrimPath start="0" end="0.25" id="0:63" />
+        <DashPath>
+          <Dash length="2" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="hemCutting">
+      <Ellipse width="800" height="800">
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF202020" />
+        <TrimPath start="0" end="0.25" id="0:64" />
+        <DashPath>
+          <Dash length="12" />
+          <Dash length="4" />
+          <Dash length="2" />
+          <Dash length="4" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" name="Folded fabric">
+      <Rectangle width="408" height="408" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFF6EDD9" />
+      </Fill>
+    </Shape>
+    <StateMachine name="Marking" id="0:7">
+      <StateMachineLayer name="Reveal">
+        <AnyState x="200" y="-120" />
+        <ExitState x="400" y="-120" />
+        <EntryState>
+          <StateTransition stateToId="0:13" />
+        </EntryState>
+        <AnimationState x="200" animationId="0:9" id="0:13">
+          <StateTransition stateToId="0:12">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="true" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="400" animationId="0:6" id="0:12" />
+      </StateMachineLayer>
+    </StateMachine>
+    <LinearAnimation duration="1" name="Ready" id="0:9" />
+    <LinearAnimation duration="120" name="Mark radii" id="0:6">
+      <KeyedObject objectId="0:61">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0" interpolationType="linear" />
+          <KeyFrameDouble value="0.25" frame="120" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:62">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0" interpolationType="linear" />
+          <KeyFrameDouble value="0.25" frame="120" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:63">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0" interpolationType="linear" />
+          <KeyFrameDouble value="0.25" frame="120" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:64">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0" interpolationType="linear" />
+          <KeyFrameDouble value="0.25" frame="120" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+  </Artboard>
+  <ViewModel defaultInstanceId="0:49" name="Marking" id="0:40">
+    <ViewModelPropertyBoolean name="play" id="0:45" />
+    <ViewModelPropertyNumber name="waistStitching" id="0:41" />
+    <ViewModelPropertyNumber name="waistCutting" id="0:42" />
+    <ViewModelPropertyNumber name="finishedHem" id="0:43" />
+    <ViewModelPropertyNumber name="hemCutting" id="0:44" />
+    <ViewModelInstance exports="true" name="Default" id="0:49">
+      <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="0:45" />
+      <ViewModelInstanceNumber propertyValue="139" viewModelPropertyId="0:41" />
+      <ViewModelInstanceNumber propertyValue="128" viewModelPropertyId="0:42" />
+      <ViewModelInstanceNumber propertyValue="778" viewModelPropertyId="0:43" />
+      <ViewModelInstanceNumber propertyValue="800" viewModelPropertyId="0:44" />
+    </ViewModelInstance>
+  </ViewModel>
 </Rive>

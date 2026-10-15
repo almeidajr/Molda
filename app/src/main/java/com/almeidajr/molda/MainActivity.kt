@@ -15,6 +15,7 @@ import com.almeidajr.molda.ui.theme.MoldaTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        app.rive.runtime.kotlin.core.Rive.init(this)
         enableEdgeToEdge()
         setContent {
             MoldaTheme {
