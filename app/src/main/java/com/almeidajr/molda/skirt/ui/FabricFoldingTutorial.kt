@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import app.rive.Fit
+import app.rive.RenderBackend
 import app.rive.Result
 import app.rive.Rive
 import app.rive.RiveFile
@@ -113,7 +114,8 @@ private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
         motionEnabled = ValueAnimator.areAnimatorsEnabled()
         onDispose { ValueAnimator.unregisterDurationScaleChangeListener(listener) }
     }
-    val worker = rememberRiveWorkerOrNull()
+    // Vulkan avoids blank frames on software GLES drivers; Rive falls back when unavailable.
+    val worker = rememberRiveWorkerOrNull(renderBackend = RenderBackend.Vulkan)
     if (worker == null) {
         Text("Não foi possível iniciar a animação. As instruções escritas continuam disponíveis.")
         return

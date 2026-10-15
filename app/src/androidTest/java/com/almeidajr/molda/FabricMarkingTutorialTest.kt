@@ -1,6 +1,7 @@
 package com.almeidajr.molda
 
 import android.animation.ValueAnimator
+import android.graphics.Color
 import android.os.SystemClock
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
@@ -69,7 +70,10 @@ class FabricMarkingTutorialTest {
                         (0 until pixels.width step 4).map { x -> pixels[x, y].toArgb() }
                     }
                 }
-                composeRule.waitUntil(10_000) { frame().count { it == 0xff202020.toInt() } > 10 }
+                composeRule.waitUntil(10_000) {
+                    frame().count { maxOf(Color.red(it), Color.green(it), Color.blue(it)) < 128 } >
+                        10
+                }
                 val completed = frame()
                 val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
                 composeRule.onNodeWithText(playLabel).performScrollTo().performClick()
@@ -126,7 +130,7 @@ class FabricMarkingTutorialTest {
                                 color.red,
                                 color.green,
                                 color.blue,
-                            ) < 0.25f
+                            ) < 0.5f
                         ) {
                             visibleRadii += hypot(x - origin, y - origin) / (400 * scale)
                         }
@@ -284,6 +288,7 @@ class FabricMarkingTutorialTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         val drawing = composeRule.onNodeWithContentDescription(description).performScrollTo()
+        // Include partially covered stroke pixels when software MSAA downsamples thin lines.
         composeRule.waitUntil(10_000) {
             val pixels = drawing.captureToImage().toPixelMap()
             val scale = pixels.width / 448.0
@@ -302,7 +307,7 @@ class FabricMarkingTutorialTest {
                         val dy = (y - origin) * vertical
                         val color = pixels[x, y]
                         if (atan2(dy, dx) in 0.2..1.35 &&
-                            maxOf(color.red, color.green, color.blue) < 0.25f
+                            maxOf(color.red, color.green, color.blue) < 0.5f
                         ) {
                             visibleRadii += hypot(dx, dy) / outerRadius
                         }
