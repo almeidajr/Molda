@@ -134,7 +134,9 @@ private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
             if (!motionEnabled) {
                 Text("Movimento desativado no sistema. O desenho mostra o resultado da etapa.")
             }
-            TextButton(onClick = { replay++ }, modifier = Modifier.heightIn(min = 48.dp)) {
+            TextButton(onClick = {
+                if (motionEnabled) replay++
+            }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(
                     if (step == FoldingStep.Marking) {
                         if (replay == 0) "Reproduzir marcação" else "Repetir marcação"
