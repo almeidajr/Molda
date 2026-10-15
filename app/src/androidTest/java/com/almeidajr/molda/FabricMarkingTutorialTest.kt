@@ -2,6 +2,7 @@ package com.almeidajr.molda
 
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -106,12 +107,44 @@ class FabricMarkingTutorialTest {
         composeRule.onNodeWithText("Tutorial de dobra do tecido").assertDoesNotExist()
     }
 
-    private fun openTutorial(inputs: List<String>) {
+    @Test
+    fun foldingSteps_canBeReadReplayedAndRevisited_beforeMarkingCurrentRadii() {
+        openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+        composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
+        composeRule.onNodeWithText("Anterior").performScrollTo().assertIsNotEnabled()
+        composeRule.onNodeWithText(
+            "Comece com papel ou retalho. Alise o tecido sem esticar e respeite o fio.",
+        )
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+        composeRule.onNodeWithText("Primeira dobra").assertIsDisplayed()
+        composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().performClick()
+        composeRule.onNodeWithText("Repetir etapa").performScrollTo().performClick()
+        composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+        composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
+        composeRule.onNodeWithText("Anterior").performScrollTo().performClick()
+        composeRule.onNodeWithText("Primeira dobra").assertIsDisplayed()
+        composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().assertIsDisplayed()
+        repeat(2) { composeRule.onNodeWithText("Próximo").performScrollTo().performClick() }
+        composeRule.onNodeWithText("Marcar os raios").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "1. Costura da cintura: 13,05 cm",
+        ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Anterior").performScrollTo().performClick()
+        composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
+    }
+
+    private fun openTutorial(inputs: List<String>, advanceToMarking: Boolean = true) {
         MeasurementField.entries.zip(inputs).forEach { (field, value) ->
             composeRule.onNodeWithText(field.label).performScrollTo().performTextReplacement(value)
         }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
         composeRule.onNodeWithText("Tutorial de dobra do tecido").performScrollTo().performClick()
+        if (advanceToMarking) {
+            repeat(3) {
+                composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+            }
+        }
     }
 }

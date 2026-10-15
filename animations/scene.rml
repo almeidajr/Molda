@@ -116,6 +116,12 @@
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
+    <Shape name="Drawing background">
+      <Rectangle width="448" height="448" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFFFFFFF" />
+      </Fill>
+    </Shape>
   </Artboard>
   <ViewModel defaultInstanceId="0:49" name="Marking" id="0:40">
     <ViewModelPropertyBoolean name="play" id="0:45" />
@@ -131,4 +137,397 @@
       <ViewModelInstanceNumber propertyValue="800" viewModelPropertyId="0:44" />
     </ViewModelInstance>
   </ViewModel>
+  <Artboard name="Preparation" id="0:101" width="448" height="448" defaultStateMachineId="0:102" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:103" x="500">
+    <LayoutComponentStyle id="0:103" />
+    <Node id="0:110" name="Grain guide" opacity="1">
+      <Shape x="220" y="40" name="Lengthwise grain">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="0" y="368" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF202020" />
+          <DashPath>
+            <Dash length="2" />
+            <Dash length="5" />
+          </DashPath>
+        </Stroke>
+      </Shape>
+    </Node>
+    <Shape x="24" y="24" name="Raw ends outline">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="400" y="0" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="10" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="424.0" name="Raw ends outline">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="400" y="0" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="10" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" name="Left selvage">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="0" y="400" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="2" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="424" y="24" name="Right selvage">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="0" y="400" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="2" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" name="Flat fabric">
+      <Rectangle width="400" height="400" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFF6EDD9" />
+      </Fill>
+    </Shape>
+    <StateMachine name="Preparation" id="0:102">
+      <StateMachineLayer name="Reveal">
+        <AnyState x="200" y="-120" />
+        <ExitState x="400" y="-120" />
+        <EntryState>
+          <StateTransition stateToId="0:104" />
+        </EntryState>
+        <AnimationState x="200" animationId="0:106" id="0:104">
+          <StateTransition stateToId="0:105">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="true" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="400" animationId="0:107" id="0:105" />
+      </StateMachineLayer>
+    </StateMachine>
+    <LinearAnimation duration="1" name="Ready" id="0:106" />
+    <LinearAnimation duration="120" name="Preparation" id="0:107">
+      <KeyedObject objectId="0:110">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="120" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <Shape name="Drawing background">
+      <Rectangle width="448" height="448" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFFFFFFF" />
+      </Fill>
+    </Shape>
+  </Artboard>
+  <Artboard name="First fold" id="0:201" width="448" height="448" defaultStateMachineId="0:202" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:203" x="1000">
+    <LayoutComponentStyle id="0:203" />
+    <Shape x="224" y="24" name="Closed lengthwise fold">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="0" y="400" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+      </Stroke>
+    </Shape>
+    <Node x="224" y="24" id="0:210" name="Left half brought right" scaleX="1">
+      <Shape x="200" y="0" name="Moving selvage">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="0" y="400" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF202020" />
+          <DashPath>
+            <Dash length="2" />
+            <Dash length="5" />
+          </DashPath>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="0" name="Moving raw ends">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="200" y="0" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF202020" />
+          <DashPath>
+            <Dash length="10" />
+            <Dash length="5" />
+          </DashPath>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="400.0" name="Moving raw ends">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="200" y="0" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF202020" />
+          <DashPath>
+            <Dash length="10" />
+            <Dash length="5" />
+          </DashPath>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="0" name="Moving layer">
+        <Rectangle width="200" height="400" originX="0" originY="0" />
+        <Fill>
+          <SolidColor colorValue="FFE4D3AE" />
+        </Fill>
+      </Shape>
+    </Node>
+    <Shape x="424" y="24" name="Right selvage">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="0" y="400" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="2" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="224" y="24" name="Raw ends">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="200" y="0" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="10" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="224" y="424.0" name="Raw ends">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="200" y="0" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="10" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="224" y="24" name="Retained half">
+      <Rectangle width="200" height="400" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFF6EDD9" />
+      </Fill>
+    </Shape>
+    <StateMachine name="First fold" id="0:202">
+      <StateMachineLayer name="Reveal">
+        <AnyState x="200" y="-120" />
+        <ExitState x="400" y="-120" />
+        <EntryState>
+          <StateTransition stateToId="0:204" />
+        </EntryState>
+        <AnimationState x="200" animationId="0:206" id="0:204">
+          <StateTransition stateToId="0:205">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="true" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="400" animationId="0:207" id="0:205" />
+      </StateMachineLayer>
+    </StateMachine>
+    <LinearAnimation duration="1" name="Ready" id="0:206" />
+    <LinearAnimation duration="120" name="First fold" id="0:207">
+      <KeyedObject objectId="0:210">
+        <KeyedProperty property="scaleX">
+          <KeyFrameDouble value="-1" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="120" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <Shape name="Drawing background">
+      <Rectangle width="448" height="448" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFFFFFFF" />
+      </Fill>
+    </Shape>
+  </Artboard>
+  <Artboard name="Second fold" id="0:301" width="448" height="448" defaultStateMachineId="0:302" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:303" x="1500">
+    <LayoutComponentStyle id="0:303" />
+    <Shape x="224" y="224" name="Closed lengthwise fold">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="0" y="200" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+      </Stroke>
+    </Shape>
+    <Shape x="224" y="224" name="Closed crosswise fold">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="200" y="0" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+      </Stroke>
+    </Shape>
+    <Shape x="224" y="224" name="Common closed corner">
+      <Ellipse width="10" height="10" />
+      <Fill>
+        <SolidColor colorValue="FF202020" />
+      </Fill>
+    </Shape>
+    <Node x="224" y="224" id="0:310" name="Top half brought down" scaleY="1">
+      <Shape x="0" y="0" name="Moving closed fold">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="0" y="200" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF202020" />
+        </Stroke>
+      </Shape>
+      <Shape x="200" y="0" name="Moving selvages">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="0" y="200" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF202020" />
+          <DashPath>
+            <Dash length="2" />
+            <Dash length="5" />
+          </DashPath>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="200" name="Moving raw ends">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="200" y="0" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF202020" />
+          <DashPath>
+            <Dash length="10" />
+            <Dash length="5" />
+          </DashPath>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="0" name="Moving two layers">
+        <Rectangle width="200" height="200" originX="0" originY="0" />
+        <Fill>
+          <SolidColor colorValue="FFE4D3AE" />
+        </Fill>
+      </Shape>
+    </Node>
+    <Shape x="424" y="224" name="Matched selvages">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="0" y="200" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="2" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="224" y="424" name="Matched raw ends">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="200" y="0" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF202020" />
+        <DashPath>
+          <Dash length="10" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="224" y="224" name="Retained two layers">
+      <Rectangle width="200" height="200" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFF6EDD9" />
+      </Fill>
+    </Shape>
+    <StateMachine name="Second fold" id="0:302">
+      <StateMachineLayer name="Reveal">
+        <AnyState x="200" y="-120" />
+        <ExitState x="400" y="-120" />
+        <EntryState>
+          <StateTransition stateToId="0:304" />
+        </EntryState>
+        <AnimationState x="200" animationId="0:306" id="0:304">
+          <StateTransition stateToId="0:305">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="true" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="400" animationId="0:307" id="0:305" />
+      </StateMachineLayer>
+    </StateMachine>
+    <LinearAnimation duration="1" name="Ready" id="0:306" />
+    <LinearAnimation duration="120" name="Second fold" id="0:307">
+      <KeyedObject objectId="0:310">
+        <KeyedProperty property="scaleY">
+          <KeyFrameDouble value="-1" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="120" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <Shape name="Drawing background">
+      <Rectangle width="448" height="448" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFFFFFFF" />
+      </Fill>
+    </Shape>
+  </Artboard>
 </Rive>

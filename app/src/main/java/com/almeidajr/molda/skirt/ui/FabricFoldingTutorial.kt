@@ -30,30 +30,55 @@ import app.rive.Result
 import app.rive.Rive
 import app.rive.RiveFile
 import app.rive.RiveFileSource
+import app.rive.rememberArtboardResult
 import app.rive.rememberRiveFile
 import app.rive.rememberRiveWorkerOrNull
 import app.rive.rememberViewModelInstanceResult
 import com.almeidajr.molda.R
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
+private enum class FoldingStep(val title: String, val artboard: String) {
+    Preparation("Preparar o tecido", "Preparation"),
+    FirstFold("Primeira dobra", "First fold"),
+    SecondFold("Segunda dobra", "Second fold"),
+    Marking("Marcar os raios", "Marking"),
+}
+
 @Composable
 internal fun FabricFoldingTutorial(radii: SkirtRadii) {
     var open by rememberSaveable(radii) { mutableStateOf(false) }
     TextButton(onClick = { open = true }) { Text("Tutorial de dobra do tecido") }
     if (open) {
+        var step by rememberSaveable(radii) { mutableStateOf(FoldingStep.Preparation) }
+        val scrollState = key(step) { rememberScrollState() }
         Dialog(onDismissRequest = { open = false }) {
             Surface(shape = MaterialTheme.shapes.large) {
                 Column(
-                    Modifier.verticalScroll(rememberScrollState()).padding(16.dp),
+                    Modifier.verticalScroll(scrollState).padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    Text("Etapa ${step.ordinal + 1} de ${FoldingStep.entries.size}")
                     Text(
-                        "Marcar os raios",
+                        step.title,
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.semantics { heading() },
                     )
-                    MarkingAnimation(radii)
-                    MarkingInstructions(radii)
+                    key(step) {
+                        TutorialAnimation(radii, step)
+                        if (step == FoldingStep.Marking) {
+                            MarkingInstructions(radii)
+                        } else {
+                            FoldingInstructions(step)
+                        }
+                    }
+                    TextButton(
+                        onClick = { step = FoldingStep.entries[step.ordinal - 1] },
+                        enabled = step != FoldingStep.Preparation,
+                    ) { Text("Anterior") }
+                    TextButton(
+                        onClick = { step = FoldingStep.entries[step.ordinal + 1] },
+                        enabled = step != FoldingStep.Marking,
+                    ) { Text("Próximo") }
                     TextButton(onClick = { open = false }) { Text("Fechar tutorial") }
                 }
             }
@@ -62,7 +87,7 @@ internal fun FabricFoldingTutorial(radii: SkirtRadii) {
 }
 
 @Composable
-private fun MarkingAnimation(radii: SkirtRadii) {
+private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
     val worker = rememberRiveWorkerOrNull()
     if (worker == null) {
         Text("Não foi possível iniciar a animação. As instruções escritas continuam disponíveis.")
@@ -76,16 +101,31 @@ private fun MarkingAnimation(radii: SkirtRadii) {
 
         is Result.Success -> {
             var replay by remember { mutableStateOf(0) }
-            key(replay) { MarkingDrawing(result.value, radii, replay > 0) }
+            key(replay) { TutorialDrawing(result.value, radii, step, replay > 0) }
             TextButton(onClick = { replay++ }) {
-                Text(if (replay == 0) "Reproduzir marcação" else "Repetir marcação")
+                Text(
+                    if (step == FoldingStep.Marking) {
+                        if (replay == 0) "Reproduzir marcação" else "Repetir marcação"
+                    } else {
+                        if (replay == 0) "Reproduzir etapa" else "Repetir etapa"
+                    },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun MarkingDrawing(file: RiveFile, radii: SkirtRadii, play: Boolean) {
+private fun TutorialDrawing(file: RiveFile, radii: SkirtRadii, step: FoldingStep, play: Boolean) {
+    val artboard =
+        rememberArtboardResult(
+            file,
+            step.artboard,
+        )
+    if (artboard !is Result.Success) {
+        Text("Preparando desenho. As instruções escritas continuam disponíveis.")
+        return
+    }
     val result = rememberViewModelInstanceResult(file)
     when (result) {
         is Result.Loading -> Text("Preparando medidas…")
@@ -100,13 +140,9 @@ private fun MarkingDrawing(file: RiveFile, radii: SkirtRadii, play: Boolean) {
             LaunchedEffect(instance, radii, play) {
                 val markingDiameter = 800f
                 // Normalize before converting to Float; large valid centimetre values stay finite.
-                instance.setNumber(
-                    "waistStitching",
-                    (
-                        markingDiameter *
-                            (radii.waistStitching / radii.hemCutting)
-                        ).toFloat(),
-                )
+                val waistDiameter =
+                    (markingDiameter * (radii.waistStitching / radii.hemCutting)).toFloat()
+                instance.setNumber("waistStitching", waistDiameter)
                 instance.setNumber(
                     "waistCutting",
                     (markingDiameter * (radii.waistCutting / radii.hemCutting)).toFloat(),
@@ -122,11 +158,17 @@ private fun MarkingDrawing(file: RiveFile, radii: SkirtRadii, play: Boolean) {
             if (ready) {
                 Rive(
                     file = file,
+                    artboard = artboard.value,
                     viewModelInstance = instance,
                     playing = play,
                     fit = Fit.Contain(),
                     modifier = Modifier.fillMaxWidth().aspectRatio(1f).semantics {
-                        contentDescription = "Marcação proporcional em Rive"
+                        contentDescription =
+                            if (step == FoldingStep.Marking) {
+                                "Marcação proporcional em Rive"
+                            } else {
+                                "Dobra do tecido em Rive: etapa ${step.ordinal + 1}"
+                            }
                     },
                 )
             }
@@ -138,12 +180,13 @@ private fun MarkingDrawing(file: RiveFile, radii: SkirtRadii, play: Boolean) {
 private fun MarkingInstructions(radii: SkirtRadii) {
     Text("Proporções calculadas; desenho não está em tamanho real.")
     Text(
-        "Tamanho do tecido ilustrativo. Pressupõe tecido suficiente; " +
-            "a largura e o comprimento reais do tecido não foram verificados.",
+        "Tamanho do tecido ilustrativo. Pressupõe tecido suficiente; a largura " +
+            "e o comprimento reais do tecido não foram verificados.",
     )
     Text(
-        "Origem comum: ponto no canto superior esquerdo, encontro das duas dobras fechadas. " +
-            "Com fita ou régua presa nesse ponto, marque cada arco mantendo seu raio constante.",
+        "Origem comum: ponto no canto superior esquerdo, encontro das duas " +
+            "dobras fechadas. Com fita ou régua presa nesse ponto, marque cada arco " +
+            "mantendo seu raio constante.",
     )
     Text("1. Costura da cintura: ${formatRadius(radii.waistStitching)}")
     Text("Linha contínua: referência de costura, não de corte.")
@@ -160,7 +203,71 @@ private fun MarkingInstructions(radii: SkirtRadii) {
     }
     if (radii.hemCutting == radii.finishedHem) Text("Margem de barra zero: linhas 3 e 4 coincidem.")
     Text(
-        "Antes de cortar tecido da peça, obtenha instruções separadas para abertura, " +
-            "margens do fechamento e cós. Esta demonstração não é um molde completo.",
+        "Antes de cortar tecido da peça, obtenha instruções separadas para " +
+            "abertura, margens do fechamento e cós. Esta demonstração não é um " +
+            "molde completo.",
+    )
+}
+
+@Composable
+private fun FoldingInstructions(step: FoldingStep) {
+    Text(
+        "Tecido ilustrativo, sem tamanho real. Pressupõe tecido suficiente; " +
+            "largura e comprimento reais não foram verificados.",
+    )
+    when (step) {
+        FoldingStep.Preparation -> FabricPreparationInstructions()
+
+        FoldingStep.FirstFold -> {
+            Text(
+                "Dobre no sentido do comprimento: leve a ourela esquerda até a direita. " +
+                    "Alinhe sem esticar e alise as duas camadas.",
+            )
+            Text(
+                "Resultado: dobra fechada à esquerda (linha contínua); ourelas juntas à " +
+                    "direita (pontilhadas); bordas cortadas em cima e embaixo (tracejadas).",
+            )
+        }
+
+        FoldingStep.SecondFold -> {
+            Text(
+                "Dobre transversalmente: leve as bordas cortadas de cima até as de " +
+                    "baixo. Alinhe e alise as quatro camadas.",
+            )
+            Text(
+                "Resultado: dobras fechadas em cima e à esquerda (linhas contínuas); " +
+                    "bordas cortadas embaixo (tracejadas); ourelas à direita (pontilhadas).",
+            )
+            Text(
+                "O ponto no canto superior esquerdo é o encontro das duas dobras " +
+                    "fechadas: origem de todos os raios. Não use um canto com bordas " +
+                    "abertas.",
+            )
+            Text(
+                "Na próxima etapa, ampliamos esse mesmo quadrado, sem girá-lo. A origem " +
+                    "continua no canto superior esquerdo.",
+            )
+        }
+
+        FoldingStep.Marking -> Unit
+    }
+    Text(
+        "A imagem parada mostra o resultado da etapa. Reproduza para acompanhar " +
+            "o movimento; o texto permite seguir sem animação ou cores.",
+    )
+}
+
+@Composable
+private fun FabricPreparationInstructions() {
+    Text("Comece com papel ou retalho. Alise o tecido sem esticar e respeite o fio.")
+    Text(
+        "No desenho plano, as ourelas estão à esquerda e à direita (bordas " +
+            "pontilhadas); o fio é paralelo a elas. As bordas cortadas estão em " +
+            "cima e embaixo (tracejadas).",
+    )
+    Text(
+        "Prepare o tecido conforme seus cuidados e passe os vincos. Não force " +
+            "um tecido torcido para alinhar as bordas. Estampas direcionais e " +
+            "tecidos com pelo exigem outro estudo de disposição.",
     )
 }
