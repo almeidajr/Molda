@@ -128,14 +128,14 @@ private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
 
         is Result.Success -> {
             var replay by remember(motionEnabled) { mutableStateOf(0) }
-            key(replay, motionEnabled) {
+            key(if (motionEnabled) replay else 0, motionEnabled) {
                 TutorialDrawing(result.value, radii, step, motionEnabled && replay > 0)
             }
             if (!motionEnabled) {
                 Text("Movimento desativado no sistema. O desenho mostra o resultado da etapa.")
             }
             TextButton(onClick = {
-                if (motionEnabled) replay++
+                replay++
             }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(
                     if (step == FoldingStep.Marking) {
