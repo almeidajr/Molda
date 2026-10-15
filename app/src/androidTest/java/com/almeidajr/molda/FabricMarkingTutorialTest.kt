@@ -53,12 +53,20 @@ class FabricMarkingTutorialTest {
                     composeRule.onAllNodes(androidx.compose.ui.test.hasText(label))
                         .fetchSemanticsNodes().isNotEmpty()
                 }
-                // Rive uses Compose's frame clock; an infinite loop never becomes idle.
-                composeRule.mainClock.autoAdvance = false
-                composeRule.onNodeWithText(label).performScrollTo().performClick()
                 val drawing = composeRule.onNodeWithContentDescription(
                     description,
                 ).performScrollTo()
+                // Native rendering starts after Compose exposes the drawing's semantics.
+                composeRule.waitUntil(10_000) {
+                    val image = drawing.captureToImage()
+                    val frame = IntArray(image.width * image.height)
+                    image.readPixels(frame)
+                    frame.count { Color.blue(it) in 150..239 && Color.red(it) > 200 } > 20
+                }
+                // Keep the rendered drawing onscreen while starting the infinite loop.
+                composeRule.mainClock.autoAdvance = false
+                composeRule.onNodeWithText(label)
+                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
                 assertContinuousPlayback(description, index == 3)
                 composeRule.onNodeWithText("Pausar animação")
                     .performSemanticsAction(SemanticsActions.OnClick) { it() }
@@ -81,7 +89,6 @@ class FabricMarkingTutorialTest {
                 composeRule.onNodeWithText("Próximo").performScrollTo().let {
                     if (index == 5) it.assertIsNotEnabled() else it.performClick()
                 }
-                composeRule.mainClock.autoAdvance = true
             }
         } finally {
             shell("settings put global animator_duration_scale 0")
@@ -342,7 +349,8 @@ class FabricMarkingTutorialTest {
             val frame = IntArray(image.width * image.height)
             image.readPixels(frame)
             assertTrue(
-                "$description: fabric must remain visible throughout playback",
+                "$description: fabric must remain visible throughout playback " +
+                    "at ${elapsed}ms (${image.width}x${image.height})",
                 frame.count { Color.blue(it) in 150..239 && Color.red(it) > 200 } > 20,
             )
             // Even the longest step has completed two full cycles by 18 seconds.
