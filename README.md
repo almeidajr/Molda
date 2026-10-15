@@ -24,6 +24,11 @@ for GitHub setup and verification.
 
 ## Conventions
 
+Product rationale and design decisions live in [docs](docs/). Specifications,
+issue-specific validation reports and screenshots live in
+[GitHub Issues](https://github.com/almeidajr/Molda/issues), alongside acceptance
+results and any checks that remain unverified.
+
 Spotless + ktlint and `.editorconfig` define formatting, including Kotlin build
 scripts. Apply formatting locally; CI only checks it. Detekt handles Kotlin
 analysis without its optional formatting rules, and Android Lint treats warnings

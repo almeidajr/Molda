@@ -12,9 +12,8 @@ Status: confirmed design, implemented in
 design interview and decisions agreed by the product owner. It supplements the
 existing MVP discovery and baseline specification in GitHub issue #13.
 The canonical UI/UX specification is
-[issue #22](https://github.com/almeidajr/Molda/issues/22), with a
-[repository snapshot](ui-ux-spec.md). See the
-[validation report](validation/ui-ux-22.md) for completed checks and pending
+[issue #22](https://github.com/almeidajr/Molda/issues/22). See the
+[archived validation report](https://github.com/almeidajr/Molda/issues/29#issuecomment-6192570236) for completed checks and pending
 accessibility and human-feedback verification.
 
 ## Confirmed direction
@@ -197,8 +196,8 @@ observations, not findings from a usability session.
 ## References
 
 - [Existing product discovery](product-discovery.md)
-- [Archived UI/UX specification](ui-ux-spec.md)
-- [Implementation validation](validation/ui-ux-22.md)
+- [Canonical UI/UX specification](https://github.com/almeidajr/Molda/issues/22)
+- [Implementation validation](https://github.com/almeidajr/Molda/issues/29#issuecomment-6192570236)
 - [Shared domain vocabulary](../GLOSSARY.md)
 - [Material 3 for Jetpack Compose](https://m3.material.io/develop/android/jetpack-compose)
 - [Android Compose documentation](https://developer.android.com/develop/ui/compose/documentation)

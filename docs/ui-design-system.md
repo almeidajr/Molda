@@ -5,8 +5,7 @@ this document. Accepted decisions below extend the existing
 [UI/UX design](ui-ux-design.md); existing behavior and data-safety requirements
 remain in force.
 
-Implementation is specified in [GitHub issue #35](https://github.com/almeidajr/Molda/issues/35),
-with a [repository snapshot](ui-design-system-spec.md).
+Implementation is specified in [GitHub issue #35](https://github.com/almeidajr/Molda/issues/35).
 
 ## Accepted direction
 
