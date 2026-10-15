@@ -86,11 +86,75 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:6" id="0:12" />
+        <AnimationState x="400" animationId="0:6" id="0:12" reset="true">
+          <StateTransition stateToId="0:13">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:901">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="600" animationId="0:6" id="0:901" reset="true">
+          <StateTransition stateToId="0:13">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:12">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:9" />
-    <LinearAnimation duration="120" name="Mark radii" id="0:6">
+    <LinearAnimation duration="1" name="Ready" id="0:9">
+      <KeyedObject objectId="0:61">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0.25" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:62">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0.25" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:63">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0.25" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:64">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0.25" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation duration="180" name="Mark radii" id="0:6" loopValue="pingPong">
       <KeyedObject objectId="0:61">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0" interpolationType="linear" />
@@ -125,12 +189,14 @@
   </Artboard>
   <ViewModel defaultInstanceId="0:49" name="Marking" id="0:40">
     <ViewModelPropertyBoolean name="play" id="0:45" />
+    <ViewModelPropertyTrigger name="restart" id="0:46" />
     <ViewModelPropertyNumber name="waistStitching" id="0:41" />
     <ViewModelPropertyNumber name="waistCutting" id="0:42" />
     <ViewModelPropertyNumber name="finishedHem" id="0:43" />
     <ViewModelPropertyNumber name="hemCutting" id="0:44" />
     <ViewModelInstance exports="true" name="Default" id="0:49">
       <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="0:45" />
+      <ViewModelInstanceTrigger viewModelPropertyId="0:46" />
       <ViewModelInstanceNumber propertyValue="139" viewModelPropertyId="0:41" />
       <ViewModelInstanceNumber propertyValue="128" viewModelPropertyId="0:42" />
       <ViewModelInstanceNumber propertyValue="778" viewModelPropertyId="0:43" />
@@ -231,11 +297,60 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:107" id="0:105" />
+        <AnimationState x="400" animationId="0:107" id="0:105" reset="true">
+          <StateTransition stateToId="0:104">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:902">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="600" animationId="0:107" id="0:902" reset="true">
+          <StateTransition stateToId="0:104">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:105">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:106" />
-    <LinearAnimation duration="120" name="Preparation" id="0:107">
+    <LinearAnimation duration="1" name="Ready" id="0:106">
+      <KeyedObject objectId="0:110">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation duration="180" name="Preparation" id="0:107" loopValue="pingPong">
       <KeyedObject objectId="0:110">
         <KeyedProperty property="opacity">
           <KeyFrameDouble value="0" interpolationType="linear" />
@@ -372,11 +487,60 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:207" id="0:205" />
+        <AnimationState x="400" animationId="0:207" id="0:205" reset="true">
+          <StateTransition stateToId="0:204">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:903">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="600" animationId="0:207" id="0:903" reset="true">
+          <StateTransition stateToId="0:204">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:205">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:206" />
-    <LinearAnimation duration="120" name="First fold" id="0:207">
+    <LinearAnimation duration="1" name="Ready" id="0:206">
+      <KeyedObject objectId="0:210">
+        <KeyedProperty property="scaleX">
+          <KeyFrameDouble value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation duration="180" name="First fold" id="0:207" loopValue="pingPong">
       <KeyedObject objectId="0:210">
         <KeyedProperty property="scaleX">
           <KeyFrameDouble value="-1" interpolationType="linear" />
@@ -511,11 +675,60 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:307" id="0:305" />
+        <AnimationState x="400" animationId="0:307" id="0:305" reset="true">
+          <StateTransition stateToId="0:304">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:904">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="600" animationId="0:307" id="0:904" reset="true">
+          <StateTransition stateToId="0:304">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:305">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:306" />
-    <LinearAnimation duration="120" name="Second fold" id="0:307">
+    <LinearAnimation duration="1" name="Ready" id="0:306">
+      <KeyedObject objectId="0:310">
+        <KeyedProperty property="scaleY">
+          <KeyFrameDouble value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation duration="180" name="Second fold" id="0:307" loopValue="pingPong">
       <KeyedObject objectId="0:310">
         <KeyedProperty property="scaleY">
           <KeyFrameDouble value="-1" interpolationType="linear" />
@@ -656,11 +869,70 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:511" id="0:509" />
+        <AnimationState x="400" animationId="0:511" id="0:509" reset="true">
+          <StateTransition stateToId="0:508">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:905">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="600" animationId="0:511" id="0:905" reset="true">
+          <StateTransition stateToId="0:508">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:509">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:510" />
-    <LinearAnimation id="0:511" name="Cut waist then hem" duration="150">
+    <LinearAnimation duration="1" name="Ready" id="0:510">
+      <KeyedObject objectId="0:512">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0.25" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:513">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0.25" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:514">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:511" name="Cut waist then hem" duration="210" loopValue="pingPong">
       <KeyedObject objectId="0:512">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
@@ -1008,11 +1280,70 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:530" id="0:528" />
+        <AnimationState x="400" animationId="0:530" id="0:528" reset="true">
+          <StateTransition stateToId="0:527">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:906">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="600" animationId="0:530" id="0:906" reset="true">
+          <StateTransition stateToId="0:527">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:528">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyTrigger>
+                  <DataBindContext sourcePathIds="0:40-0:46" propertyKey="686" />
+                </BindablePropertyTrigger>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueTriggerComparator />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:529" />
-    <LinearAnimation id="0:530" name="Reverse the two folds" duration="180">
+    <LinearAnimation duration="1" name="Ready" id="0:529">
+      <KeyedObject objectId="0:542">
+        <KeyedProperty property="scaleY">
+          <KeyFrameDouble value="-1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:553">
+        <KeyedProperty property="scaleY">
+          <KeyFrameDouble value="-1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:531">
+        <KeyedProperty property="scaleX">
+          <KeyFrameDouble value="-1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:530" name="Reverse the two folds" duration="240" loopValue="pingPong">
       <KeyedObject objectId="0:542">
         <KeyedProperty property="scaleY">
           <KeyFrameDouble value="1" frame="0" interpolationType="linear" />

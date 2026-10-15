@@ -128,14 +128,14 @@ private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
 
         is Result.Success -> {
             var replay by remember(motionEnabled) { mutableStateOf(0) }
-            key(if (motionEnabled) replay else 0, motionEnabled) {
-                TutorialDrawing(result.value, radii, step, motionEnabled && replay > 0)
-            }
+            var paused by remember(motionEnabled) { mutableStateOf(false) }
+            TutorialDrawing(result.value, radii, step, motionEnabled && replay > 0, replay, paused)
             if (!motionEnabled) {
                 Text("Movimento desativado no sistema. O desenho mostra o resultado da etapa.")
             }
             TextButton(onClick = {
                 replay++
+                paused = false
             }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(
                     if (step == FoldingStep.Marking) {
@@ -145,12 +145,25 @@ private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
                     },
                 )
             }
+            if (motionEnabled && replay > 0) {
+                TextButton(
+                    onClick = { paused = !paused },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) { Text(if (paused) "Continuar animação" else "Pausar animação") }
+            }
         }
     }
 }
 
 @Composable
-private fun TutorialDrawing(file: RiveFile, radii: SkirtRadii, step: FoldingStep, play: Boolean) {
+private fun TutorialDrawing(
+    file: RiveFile,
+    radii: SkirtRadii,
+    step: FoldingStep,
+    play: Boolean,
+    replay: Int,
+    paused: Boolean,
+) {
     val artboard =
         rememberArtboardResult(
             file,
@@ -170,8 +183,8 @@ private fun TutorialDrawing(file: RiveFile, radii: SkirtRadii, step: FoldingStep
 
         is Result.Success -> {
             val instance = result.value
-            var ready by remember { mutableStateOf(false) }
-            LaunchedEffect(instance, radii, play) {
+            var ready by remember(instance, radii) { mutableStateOf(false) }
+            LaunchedEffect(instance, radii) {
                 val markingDiameter = 800f
                 // Normalize before converting to Float; large valid centimetre values stay finite.
                 val waistDiameter =
@@ -186,15 +199,18 @@ private fun TutorialDrawing(file: RiveFile, radii: SkirtRadii, step: FoldingStep
                     (markingDiameter * (radii.finishedHem / radii.hemCutting)).toFloat(),
                 )
                 instance.setNumber("hemCutting", markingDiameter)
-                instance.setBoolean("play", play)
                 ready = true
+            }
+            LaunchedEffect(instance, play, replay) {
+                instance.setBoolean("play", play)
+                if (play) instance.fireTrigger("restart")
             }
             if (ready) {
                 Rive(
                     file = file,
                     artboard = artboard.value,
                     viewModelInstance = instance,
-                    playing = play,
+                    playing = play && !paused,
                     fit = Fit.Contain(),
                     modifier = Modifier.fillMaxWidth().aspectRatio(1f).semantics {
                         contentDescription =
@@ -294,7 +310,8 @@ private fun FoldingInstructions(step: FoldingStep) {
     }
     Text(
         "A imagem parada mostra o resultado da etapa. Reproduza para acompanhar " +
-            "o movimento; o texto permite seguir sem animação ou cores.",
+            "o movimento em repetição contínua. Pause para observar; o texto permite " +
+            "seguir sem animação ou cores.",
     )
 }
 
@@ -328,6 +345,9 @@ private fun CuttingInstructions(step: FoldingStep) {
             "Não corte as linhas 1 e 3: são referências de costura e barra acabada. " +
                 "Não corte em linha reta pelas dobras; elas mantêm o círculo inteiro.",
         )
+        Text(
+            "A animação volta ao início apenas para repetir a demonstração; não desfaça os cortes.",
+        )
     } else {
         Text(
             "O desenho foi reduzido uniformemente para caber o círculo, sem mudar " +
@@ -343,6 +363,7 @@ private fun CuttingInstructions(step: FoldingStep) {
     }
     Text(
         "A imagem parada mostra o resultado. Reproduza ou repita a etapa para " +
-            "acompanhar o movimento; todas as instruções também estão escritas.",
+            "acompanhar o movimento em repetição contínua. Pause para observar; " +
+            "todas as instruções também estão escritas.",
     )
 }

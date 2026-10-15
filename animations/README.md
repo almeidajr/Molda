@@ -9,8 +9,15 @@ uses contain fitting. Normalize the unrounded Double ratios before converting
 to Float. Do not enlarge allowance spacing.
 
 The default `play=false` state shows the completed diagram without motion.
-Setting `play=true` reveals the arcs over 120 frames at 60 fps. Android creates a
-fresh instance and state machine on replay. Line patterns distinguish reference
+Setting `play=true` starts continuous ping-pong playback: the arcs reveal over
+120 frames at 60 fps, hold for 60 frames, then reverse smoothly to repeat without
+a discontinuous wrap. Android keeps the same artboard, view model, state machine,
+and rendering surface for play, replay, pause, and system-motion changes. The
+`restart` view-model trigger alternates between two active states sharing the
+same timeline, with `reset="true"`. Rive ignores self-transitions, so distinct
+states restart the timeline without replacing the surface.
+Setting `play=false` returns to an explicitly keyed completed pose, including
+when system motion is disabled during playback. Line patterns distinguish reference
 and cutting lines even in monochrome; zero allowances retain coincident paths.
 
 From this directory, run the verification and inspection commands in AGENTS.md.
@@ -27,17 +34,25 @@ This project contains no scripts and requires no signing or account upload.
 
 The Android calculator UI tests render the real asset and check radius locations
 in captured pixels for normal, longer-skirt, and zero-allowance calculations.
-Sewing validation of the complete sequence remains the separate release gate.
+The motion-enabled Android regression samples every step through more than two
+complete cycles, including Replay, and rejects a blank fabric viewport. It also
+checks Pause/Continue while retaining the existing reduced-motion and calculated
+geometry checks. Its frame clock is controlled explicitly because looping motion
+never becomes idle. Sewing validation remains the separate release gate.
 
 ## Preparation and folding
 
 `Preparation`, `First fold`, and `Second fold` share the `Marking` view model.
 Each has its own state machine: `play=false` presents the completed static step,
-while `play=true` plays its 120-frame demonstration once. The preparation
+while `play=true` loops its 120-frame demonstration with a one-second completed
+hold and a smooth reverse. Playback remains on demand: press Play once to loop,
+use Pause/Continue to study a frame, or Replay to restart. Changing steps returns
+to the completed static drawing and waits for Play. The preparation
 animation reveals the lengthwise grain guide. The folding animations pivot a
 half about the crease by mirroring its horizontal/vertical scale. The Android
-controls recreate the artboard and state machine for every replay and reset
-playback on step changes. Written instructions remain available independently.
+controls change playback properties without recreating the viewport. Written
+instructions remain available independently; system-disabled motion always shows
+the completed step even after Replay.
 
 Flat cloth has selvages left/right and raw ends top/bottom. Move the LEFT
 selvage to the RIGHT, then the TOP raw end to the BOTTOM. The retained quarter
@@ -65,14 +80,17 @@ checks. Practical sewist validation remains outstanding.
 follows the waist cutting arc first, then the hem cutting arc, **behind** the
 patterned reference lines. The central and outer scraps disappear after both
 cuts. Static playback shows the cut quarter; it never draws a straight closure
-cut. The same exact paths coincide when allowances are zero.
+cut. After the completed-pose hold, the demonstration reverses smoothly to reset;
+this reset is animation playback, not an instruction to undo real cuts. The same
+exact paths coincide when allowances are zero.
 
 `Unfolding` uses four copies of that measured quarter-annulus, each with an
 even-odd circle-minus-circle fill clipped to its quadrant. The group is uniformly
 scaled by 0.5 and centered at (224, 224), fitting the complete circle inside the
 same 448-unit viewport. It reverses the horizontal fold first (frames 0–90), then
 the vertical fold (90–180), by mirroring the upper layers about the common origin.
-All four radii remain bound to the current unrounded calculator result.
+All four radii remain bound to the current unrounded calculator result. Cutting
+and unfolding also hold their completed pose for 60 frames, then reverse to repeat.
 
 Review static, intermediate and finished frames, including changed skirt lengths
 and zero allowances. Examples from the project directory:

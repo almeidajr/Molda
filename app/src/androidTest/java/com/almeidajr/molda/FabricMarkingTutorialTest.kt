@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.os.SystemClock
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -30,6 +32,63 @@ import org.junit.runner.RunWith
 class FabricMarkingTutorialTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun enabledMotion_everyStepLoopsAfterPlay_withoutBlankFrames() {
+        val originalScale = shell("settings get global animator_duration_scale")
+        try {
+            shell("settings put global animator_duration_scale 1")
+            composeRule.waitUntil(5_000) { ValueAnimator.areAnimatorsEnabled() }
+            openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+            listOf(
+                "Dobra do tecido em Rive: etapa 1",
+                "Dobra do tecido em Rive: etapa 2",
+                "Dobra do tecido em Rive: etapa 3",
+                "Marcação proporcional em Rive",
+                "Corte proporcional em Rive",
+                "Círculo desdobrado proporcional em Rive",
+            ).forEachIndexed { index, description ->
+                val label = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
+                composeRule.waitUntil(15_000) {
+                    composeRule.onAllNodes(androidx.compose.ui.test.hasText(label))
+                        .fetchSemanticsNodes().isNotEmpty()
+                }
+                // Rive uses Compose's frame clock; an infinite loop never becomes idle.
+                composeRule.mainClock.autoAdvance = false
+                composeRule.onNodeWithText(label).performScrollTo().performClick()
+                val drawing = composeRule.onNodeWithContentDescription(
+                    description,
+                ).performScrollTo()
+                assertContinuousPlayback(description, index == 3)
+                composeRule.onNodeWithText("Pausar animação")
+                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                composeRule.mainClock.advanceTimeBy(160)
+                val paused = drawing.captureToImage().toPixelMap()
+                composeRule.mainClock.advanceTimeBy(1_000)
+                val stillPaused = drawing.captureToImage().toPixelMap()
+                assertTrue(
+                    "$description must remain still while paused",
+                    (0 until paused.height step 8).all { y ->
+                        (0 until paused.width step 8).all { x -> paused[x, y] == stillPaused[x, y] }
+                    },
+                )
+                composeRule.onNodeWithText("Continuar animação")
+                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                composeRule.mainClock.advanceTimeBy(160)
+                composeRule.onNodeWithText("Pausar animação")
+                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                composeRule.mainClock.autoAdvance = true
+                composeRule.onNodeWithText("Próximo").performScrollTo().let {
+                    if (index == 5) it.assertIsNotEnabled() else it.performClick()
+                }
+                composeRule.mainClock.autoAdvance = true
+            }
+        } finally {
+            shell("settings put global animator_duration_scale 0")
+            composeRule.mainClock.autoAdvance = true
+            shell("settings put global animator_duration_scale $originalScale")
+        }
+    }
 
     @Test
     fun disabledSystemMotion_keepsCompletedFramesAfterReplay_forEveryStep() {
@@ -253,6 +312,44 @@ class FabricMarkingTutorialTest {
             )
             composeRule.onNodeWithText("Fechar tutorial").performScrollTo().performClick()
         }
+    }
+
+    private fun assertContinuousPlayback(description: String, marking: Boolean) {
+        val drawing = composeRule.onNodeWithContentDescription(description)
+        val lateFrames = mutableSetOf<Int>()
+        val replayLabel = if (marking) "Repetir marcação" else "Repetir etapa"
+        var replayed = false
+        val started = composeRule.mainClock.currentTime
+        composeRule.waitUntil(30_000) {
+            composeRule.mainClock.advanceTimeBy(160)
+            val elapsed = composeRule.mainClock.currentTime - started
+            if (elapsed > 1_000 && !replayed) {
+                // Invoke the accessible control without scrolling the drawing out of view.
+                composeRule.onNodeWithText(replayLabel)
+                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                composeRule.mainClock.advanceTimeBy(160)
+                if (description == "Dobra do tecido em Rive: etapa 2") {
+                    // Restart brings the moving left half back over this known fabric point.
+                    val restarted = drawing.captureToImage().toPixelMap()
+                    assertTrue(
+                        "Replay must restart the fold, not only update its label",
+                        restarted[restarted.width / 4, restarted.height / 2].blue < 0.9f,
+                    )
+                }
+                replayed = true
+            }
+            val image = drawing.captureToImage()
+            val frame = IntArray(image.width * image.height)
+            image.readPixels(frame)
+            assertTrue(
+                "$description: fabric must remain visible throughout playback",
+                frame.count { Color.blue(it) in 150..239 && Color.red(it) > 200 } > 20,
+            )
+            // Even the longest step has completed two full cycles by 18 seconds.
+            if (elapsed > 18_000) lateFrames += frame.contentHashCode()
+            elapsed > 22_000
+        }
+        assertTrue("$description must keep moving after two cycles", lateFrames.size > 3)
     }
 
     private fun assertCompletedFrameAfterReplay(
