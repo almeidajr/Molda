@@ -58,3 +58,51 @@ rive . --screenshot=build/second-end.png --artboard="Second fold" --advance=1
 See [sewing references](../docs/fabric-folding-references.md) for sources and
 limitations. These drawings are illustrative fabric arrangements, not fabric-fit
 checks. Practical sewist validation remains outstanding.
+
+## Circular cuts and unfolding
+
+`Cutting` retains the marking origin and four bound radii. A wider animated trace
+follows the waist cutting arc first, then the hem cutting arc, **behind** the
+patterned reference lines. The central and outer scraps disappear after both
+cuts. Static playback shows the cut quarter; it never draws a straight closure
+cut. The same exact paths coincide when allowances are zero.
+
+`Unfolding` uses four copies of that measured quarter-annulus, each with an
+even-odd circle-minus-circle fill clipped to its quadrant. The group is uniformly
+scaled by 0.5 and centered at (224, 224), fitting the complete circle inside the
+same 448-unit viewport. It reverses the horizontal fold first (frames 0–90), then
+the vertical fold (90–180), by mirroring the upper layers about the common origin.
+All four radii remain bound to the current unrounded calculator result.
+
+Review static, intermediate and finished frames, including changed skirt lengths
+and zero allowances. Examples from the project directory:
+
+```powershell
+rive . --screenshot=build/cut-mid.png --artboard=Cutting --data=play=true --advance=40
+rive . --screenshot=build/cut-end.png --artboard=Cutting --data=play=true --advance=155
+rive . --screenshot=build/open-half.png --artboard=Unfolding --data=play=true --advance=95
+rive . --screenshot=build/open-end.png --artboard=Unfolding --data=play=true --advance=185
+```
+
+Android rendered-pixel checks cover both artboards at normal and longer lengths
+and zero allowances, checking all unfolded quadrants, the waist cutout and the
+retained fabric. UI tests cover the complete calculator flow, step navigation,
+replay, construction warnings and stale results. The layout test exercises light/dark themes, heading semantics, wrapped text,
+48 dp controls, construction warnings and stale results through the real native
+dialog. Font and window settings are changed on the connected device for the
+large-text/size runs; Compose configuration overrides alone do not verify a
+separate native dialog window. These runs simulate logical sizes on a phone,
+not evidence from tablet hardware. Practical sewing validation is
+not replaced by any of these checks and remains outstanding in #45.
+
+### Device layout validation, 2026-10-15
+
+On the connected API 36 Samsung phone, the native dialog flow passed in both
+light and dark themes at system font scale 2.0 for these logical windows:
+375 × 900 dp (portrait), 1000 × 600 dp and 1200 × 800 dp (landscape). ADB window
+size/density overrides simulated those sizes; no tablet hardware was used. The
+original font scale 1.0, physical 1080 × 2340 size and density 450 were restored.
+The ordinary native-window run also passed. These checks establish reachability,
+heading semantics, readable contrast, wrapped text, enabled 48 dp controls,
+construction notices and stale-result withdrawal, not screen-reader user testing
+or physical sewing validation.

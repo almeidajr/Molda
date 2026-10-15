@@ -33,3 +33,30 @@ allowances and waistband are required before cutting garment fabric.
 
 A participant has not followed the finished tutorial on paper or scrap.
 The practical validation required by #45 remains a release gate.
+
+## Circular cutting and unfolding (#44)
+
+Checked 2026-10-15 against the same sources. Heather Handmade's page 4 specifies
+cutting the marked corner arc first, then the hem arc through the folded layout.
+Mood's full-circle section independently supports cutting along the two curved
+marks from the closed-fold corner. These support the physical order only: Molda
+uses its own calculated cutting radii, including seam and hem allowances, rather
+than either source's elastic/knit dimensions or construction assumptions.
+
+Keep the four layers aligned, cut the waist cutting arc then the hem cutting arc,
+and remove the central and outer scraps. Do not cut the straight folds. The
+stitching and finished-hem arcs remain references; a zero allowance makes the
+corresponding reference and cut coincide.
+
+Unfolding reverses our established folds: open the upper pair upward around the
+horizontal fold to form a right semicircle, then open the upper layer left around
+the vertical fold. The four quarter-annuli make a complete annulus with a central
+waist cutout. This reversal is the geometric consequence of the referenced folds,
+not a claim that a participant has tested this tutorial. The opening animation
+uniformly reduces the quarter to half its marking-screen size to fit the full
+circle, retaining the same origin and all radius ratios.
+
+No straight closure slit is demonstrated. The full circle is not a complete
+pattern and does not guarantee fit. Separate opening, closure-allowance and
+waistband instructions are needed before cutting garment fabric. The displayed
+sequence remains for paper/scrap practice pending the #45 participant trial.

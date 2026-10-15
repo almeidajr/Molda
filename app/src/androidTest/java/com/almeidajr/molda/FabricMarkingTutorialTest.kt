@@ -134,6 +134,99 @@ class FabricMarkingTutorialTest {
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
     }
 
+    @Test
+    fun cuttingAndUnfolding_completeSequence_withConstructionBoundariesAndReplay() {
+        openTutorial(listOf("80", "2", "60", "1", "2"))
+        composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+        composeRule.onNodeWithText("Cortar os arcos").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("2. Corte da cintura: 12,05 cm")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("4. Corte da barra: 75,05 cm")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().performClick()
+        composeRule.onNodeWithText("Repetir etapa").performScrollTo().performClick()
+        composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+        composeRule.onNodeWithText("Desdobrar o círculo").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Centro do recorte da cintura: mesma origem de todos os raios, agora no centro do círculo.",
+        ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Próximo").performScrollTo().assertIsNotEnabled()
+        composeRule.onNodeWithText(
+            "O círculo desdobrado não é um molde completo e não garante caimento.",
+        ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Anterior").performScrollTo().performClick()
+        composeRule.onNodeWithText("Cortar os arcos").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun cuttingAndUnfoldingPixels_preserveCurrentRadiiAndCoincidentAllowances() {
+        listOf(
+            listOf("80", "2", "60", "1", "2") to listOf(0.173892, 0.160568, 0.973352, 1.0),
+            listOf("80", "2", "120", "1", "2") to listOf(0.096635, 0.089230, 0.985191, 1.0),
+            listOf("80", "2", "60", "0", "0") to listOf(0.178653, 1.0),
+        ).forEach { (inputs, ratios) ->
+            openTutorial(inputs)
+            composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+            assertCircularDrawing("Corte proporcional em Rive", ratios, unfolded = false)
+            composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+            assertCircularDrawing(
+                "Círculo desdobrado proporcional em Rive",
+                ratios,
+                unfolded = true,
+            )
+            composeRule.onNodeWithText("Fechar tutorial").performScrollTo().performClick()
+        }
+    }
+
+    private fun assertCircularDrawing(
+        description: String,
+        ratios: List<Double>,
+        unfolded: Boolean,
+    ) {
+        composeRule.waitUntil(15_000) {
+            composeRule.onAllNodes(androidx.compose.ui.test.hasContentDescription(description))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        val drawing = composeRule.onNodeWithContentDescription(description).performScrollTo()
+        composeRule.waitUntil(10_000) {
+            val pixels = drawing.captureToImage().toPixelMap()
+            val scale = pixels.width / 448.0
+            val origin = (if (unfolded) 224 else 24) * scale
+            val outerRadius = (if (unfolded) 200 else 400) * scale
+            val quadrants = if (unfolded) {
+                listOf(1 to 1, -1 to 1, -1 to -1, 1 to -1)
+            } else {
+                listOf(1 to 1)
+            }
+            quadrants.all { (horizontal, vertical) ->
+                val visibleRadii = mutableListOf<Double>()
+                for (y in 0 until pixels.height) {
+                    for (x in 0 until pixels.width) {
+                        val dx = (x - origin) * horizontal
+                        val dy = (y - origin) * vertical
+                        val color = pixels[x, y]
+                        if (atan2(dy, dx) in 0.2..1.35 &&
+                            maxOf(color.red, color.green, color.blue) < 0.25f
+                        ) {
+                            visibleRadii += hypot(dx, dy) / outerRadius
+                        }
+                    }
+                }
+                ratios.all { expected ->
+                    visibleRadii.count { kotlin.math.abs(it - expected) < 0.012 } >
+                        3
+                }
+            } &&
+                pixels[(origin + outerRadius * ratios.min() * 0.5).toInt(), origin.toInt()].red >
+                0.95f &&
+                pixels[
+                    (origin + outerRadius * 0.5).toInt(),
+                    (origin + outerRadius * 0.5).toInt(),
+                ].blue < 0.9f
+        }
+    }
+
     private fun openTutorial(inputs: List<String>, advanceToMarking: Boolean = true) {
         MeasurementField.entries.zip(inputs).forEach { (field, value) ->
             composeRule.onNodeWithText(field.label).performScrollTo().performTextReplacement(value)

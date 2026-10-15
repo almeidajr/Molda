@@ -530,4 +530,516 @@
       </Fill>
     </Shape>
   </Artboard>
+  <Artboard defaultStateMachineId="0:507" viewModelId="0:40" viewModelInstanceId="0:49" width="448" height="448" name="Cutting" id="0:501" styleId="0:502" x="2000">
+    <LayoutComponentStyle id="0:502" />
+    <Shape x="24" y="24" name="Common marking origin">
+      <Ellipse width="8" height="8" />
+      <Fill>
+        <SolidColor colorValue="FF202020" />
+      </Fill>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="waistStitching">
+      <Ellipse width="139" height="139">
+        <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF202020" />
+        <TrimPath start="0" end="0.25" id="0:503" />
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="waistCutting">
+      <Ellipse width="128" height="128">
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF202020" />
+        <TrimPath start="0" end="0.25" id="0:504" />
+        <DashPath>
+          <Dash length="10" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="finishedHem">
+      <Ellipse width="778" height="778">
+        <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF202020" />
+        <TrimPath start="0" end="0.25" id="0:505" />
+        <DashPath>
+          <Dash length="2" />
+          <Dash length="5" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="hemCutting">
+      <Ellipse width="800" height="800">
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF202020" />
+        <TrimPath start="0" end="0.25" id="0:506" />
+        <DashPath>
+          <Dash length="12" />
+          <Dash length="4" />
+          <Dash length="2" />
+          <Dash length="4" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="Cut follows hemCutting">
+      <Ellipse width="800" height="800">
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="6">
+        <SolidColor colorValue="FF365E79" />
+        <TrimPath start="0" end="0.25" id="0:513" />
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" rotation="1.57079632679" name="Cut follows waistCutting">
+      <Ellipse width="128" height="128">
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="6">
+        <SolidColor colorValue="FF365E79" />
+        <TrimPath start="0" end="0.25" id="0:512" />
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" name="Folded fabric" id="0:514" opacity="0">
+      <Rectangle width="408" height="408" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFF6EDD9" />
+      </Fill>
+    </Shape>
+    <Node x="24" y="24" name="Cut fabric">
+      <Shape name="Retained quarter after circular cuts">
+        <Ellipse width="800" height="800">
+          <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+          <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+        </Ellipse>
+        <Ellipse width="128" height="128">
+          <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+          <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+        </Ellipse>
+        <Fill fillRule="evenOdd">
+          <SolidColor colorValue="FFF6EDD9" />
+        </Fill>
+        <ClippingShape sourceId="0:515" />
+      </Shape>
+      <Shape id="0:515" name="Retained quarter mask">
+        <Rectangle width="408" height="408" originX="0" originY="0" />
+      </Shape>
+    </Node>
+    <StateMachine name="Cutting" id="0:507">
+      <StateMachineLayer name="Reveal">
+        <AnyState x="200" y="-120" />
+        <ExitState x="400" y="-120" />
+        <EntryState>
+          <StateTransition stateToId="0:508" />
+        </EntryState>
+        <AnimationState x="200" animationId="0:510" id="0:508">
+          <StateTransition stateToId="0:509">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="true" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="400" animationId="0:511" id="0:509" />
+      </StateMachineLayer>
+    </StateMachine>
+    <LinearAnimation duration="1" name="Ready" id="0:510" />
+    <LinearAnimation id="0:511" name="Cut waist then hem" duration="150">
+      <KeyedObject objectId="0:512">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0.25" frame="60" interpolationType="linear" />
+          <KeyFrameDouble value="0.25" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:513">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="65" interpolationType="linear" />
+          <KeyFrameDouble value="0.25" frame="125" interpolationType="linear" />
+          <KeyFrameDouble value="0.25" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:514">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="125" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <Shape name="Drawing background">
+      <Rectangle width="448" height="448" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFFFFFFF" />
+      </Fill>
+    </Shape>
+  </Artboard>
+  <Artboard defaultStateMachineId="0:526" viewModelId="0:40" viewModelInstanceId="0:49" width="448" height="448" name="Unfolding" id="0:520" styleId="0:521" x="2500">
+    <LayoutComponentStyle id="0:521" />
+    <Node x="224" y="224" scaleX=".5" scaleY=".5" name="Same radii uniformly fitted to full circle">
+      <Node id="0:531" scaleX="-1" name="Open lengthwise fold to left">
+        <Node scaleY="-1" name="Top left quarter" id="0:553">
+          <Shape x="0" y="0" rotation="1.57079632679" name="waistStitching">
+            <Ellipse width="139" height="139">
+              <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="2">
+              <SolidColor colorValue="FF202020" />
+              <TrimPath start="0" end="0.25" id="0:533" />
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="waistCutting">
+            <Ellipse width="128" height="128">
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="2">
+              <SolidColor colorValue="FF202020" />
+              <TrimPath start="0" end="0.25" id="0:534" />
+              <DashPath>
+                <Dash length="10" />
+                <Dash length="5" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="finishedHem">
+            <Ellipse width="778" height="778">
+              <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="2">
+              <SolidColor colorValue="FF202020" />
+              <TrimPath start="0" end="0.25" id="0:535" />
+              <DashPath>
+                <Dash length="2" />
+                <Dash length="5" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="hemCutting">
+            <Ellipse width="800" height="800">
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="2">
+              <SolidColor colorValue="FF202020" />
+              <TrimPath start="0" end="0.25" id="0:536" />
+              <DashPath>
+                <Dash length="12" />
+                <Dash length="4" />
+                <Dash length="2" />
+                <Dash length="4" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape name="Retained quarter after circular cuts">
+            <Ellipse width="800" height="800">
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+            </Ellipse>
+            <Ellipse width="128" height="128">
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+            </Ellipse>
+            <Fill fillRule="evenOdd">
+              <SolidColor colorValue="FFF6EDD9" />
+            </Fill>
+            <ClippingShape sourceId="0:532" />
+          </Shape>
+          <Shape id="0:532" name="Retained quarter mask">
+            <Rectangle width="408" height="408" originX="0" originY="0" />
+          </Shape>
+        </Node>
+        <Node name="Bottom left quarter">
+          <Shape x="0" y="0" rotation="1.57079632679" name="waistStitching">
+            <Ellipse width="139" height="139">
+              <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="2">
+              <SolidColor colorValue="FF202020" />
+              <TrimPath start="0" end="0.25" id="0:538" />
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="waistCutting">
+            <Ellipse width="128" height="128">
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="2">
+              <SolidColor colorValue="FF202020" />
+              <TrimPath start="0" end="0.25" id="0:539" />
+              <DashPath>
+                <Dash length="10" />
+                <Dash length="5" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="finishedHem">
+            <Ellipse width="778" height="778">
+              <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="2">
+              <SolidColor colorValue="FF202020" />
+              <TrimPath start="0" end="0.25" id="0:540" />
+              <DashPath>
+                <Dash length="2" />
+                <Dash length="5" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="hemCutting">
+            <Ellipse width="800" height="800">
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="2">
+              <SolidColor colorValue="FF202020" />
+              <TrimPath start="0" end="0.25" id="0:541" />
+              <DashPath>
+                <Dash length="12" />
+                <Dash length="4" />
+                <Dash length="2" />
+                <Dash length="4" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape name="Retained quarter after circular cuts">
+            <Ellipse width="800" height="800">
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+            </Ellipse>
+            <Ellipse width="128" height="128">
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+            </Ellipse>
+            <Fill fillRule="evenOdd">
+              <SolidColor colorValue="FFF6EDD9" />
+            </Fill>
+            <ClippingShape sourceId="0:537" />
+          </Shape>
+          <Shape id="0:537" name="Retained quarter mask">
+            <Rectangle width="408" height="408" originX="0" originY="0" />
+          </Shape>
+        </Node>
+      </Node>
+      <Node id="0:542" scaleY="-1" name="Open crosswise fold upward">
+        <Shape x="0" y="0" rotation="1.57079632679" name="waistStitching">
+          <Ellipse width="139" height="139">
+            <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
+          </Ellipse>
+          <Stroke thickness="2">
+            <SolidColor colorValue="FF202020" />
+            <TrimPath start="0" end="0.25" id="0:544" />
+          </Stroke>
+        </Shape>
+        <Shape x="0" y="0" rotation="1.57079632679" name="waistCutting">
+          <Ellipse width="128" height="128">
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+          </Ellipse>
+          <Stroke thickness="2">
+            <SolidColor colorValue="FF202020" />
+            <TrimPath start="0" end="0.25" id="0:545" />
+            <DashPath>
+              <Dash length="10" />
+              <Dash length="5" />
+            </DashPath>
+          </Stroke>
+        </Shape>
+        <Shape x="0" y="0" rotation="1.57079632679" name="finishedHem">
+          <Ellipse width="778" height="778">
+            <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
+          </Ellipse>
+          <Stroke thickness="2">
+            <SolidColor colorValue="FF202020" />
+            <TrimPath start="0" end="0.25" id="0:546" />
+            <DashPath>
+              <Dash length="2" />
+              <Dash length="5" />
+            </DashPath>
+          </Stroke>
+        </Shape>
+        <Shape x="0" y="0" rotation="1.57079632679" name="hemCutting">
+          <Ellipse width="800" height="800">
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+          </Ellipse>
+          <Stroke thickness="2">
+            <SolidColor colorValue="FF202020" />
+            <TrimPath start="0" end="0.25" id="0:547" />
+            <DashPath>
+              <Dash length="12" />
+              <Dash length="4" />
+              <Dash length="2" />
+              <Dash length="4" />
+            </DashPath>
+          </Stroke>
+        </Shape>
+        <Shape name="Retained quarter after circular cuts">
+          <Ellipse width="800" height="800">
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+          </Ellipse>
+          <Ellipse width="128" height="128">
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+          </Ellipse>
+          <Fill fillRule="evenOdd">
+            <SolidColor colorValue="FFF6EDD9" />
+          </Fill>
+          <ClippingShape sourceId="0:543" />
+        </Shape>
+        <Shape id="0:543" name="Retained quarter mask">
+          <Rectangle width="408" height="408" originX="0" originY="0" />
+        </Shape>
+      </Node>
+      <Node name="Retained bottom right quarter">
+        <Shape x="0" y="0" rotation="1.57079632679" name="waistStitching">
+          <Ellipse width="139" height="139">
+            <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
+          </Ellipse>
+          <Stroke thickness="2">
+            <SolidColor colorValue="FF202020" />
+            <TrimPath start="0" end="0.25" id="0:549" />
+          </Stroke>
+        </Shape>
+        <Shape x="0" y="0" rotation="1.57079632679" name="waistCutting">
+          <Ellipse width="128" height="128">
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+          </Ellipse>
+          <Stroke thickness="2">
+            <SolidColor colorValue="FF202020" />
+            <TrimPath start="0" end="0.25" id="0:550" />
+            <DashPath>
+              <Dash length="10" />
+              <Dash length="5" />
+            </DashPath>
+          </Stroke>
+        </Shape>
+        <Shape x="0" y="0" rotation="1.57079632679" name="finishedHem">
+          <Ellipse width="778" height="778">
+            <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
+          </Ellipse>
+          <Stroke thickness="2">
+            <SolidColor colorValue="FF202020" />
+            <TrimPath start="0" end="0.25" id="0:551" />
+            <DashPath>
+              <Dash length="2" />
+              <Dash length="5" />
+            </DashPath>
+          </Stroke>
+        </Shape>
+        <Shape x="0" y="0" rotation="1.57079632679" name="hemCutting">
+          <Ellipse width="800" height="800">
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+          </Ellipse>
+          <Stroke thickness="2">
+            <SolidColor colorValue="FF202020" />
+            <TrimPath start="0" end="0.25" id="0:552" />
+            <DashPath>
+              <Dash length="12" />
+              <Dash length="4" />
+              <Dash length="2" />
+              <Dash length="4" />
+            </DashPath>
+          </Stroke>
+        </Shape>
+        <Shape name="Retained quarter after circular cuts">
+          <Ellipse width="800" height="800">
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+          </Ellipse>
+          <Ellipse width="128" height="128">
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+          </Ellipse>
+          <Fill fillRule="evenOdd">
+            <SolidColor colorValue="FFF6EDD9" />
+          </Fill>
+          <ClippingShape sourceId="0:548" />
+        </Shape>
+        <Shape id="0:548" name="Retained quarter mask">
+          <Rectangle width="408" height="408" originX="0" originY="0" />
+        </Shape>
+      </Node>
+    </Node>
+    <StateMachine name="Unfolding" id="0:526">
+      <StateMachineLayer name="Reveal">
+        <AnyState x="200" y="-120" />
+        <ExitState x="400" y="-120" />
+        <EntryState>
+          <StateTransition stateToId="0:527" />
+        </EntryState>
+        <AnimationState x="200" animationId="0:529" id="0:527">
+          <StateTransition stateToId="0:528">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="true" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState x="400" animationId="0:530" id="0:528" />
+      </StateMachineLayer>
+    </StateMachine>
+    <LinearAnimation duration="1" name="Ready" id="0:529" />
+    <LinearAnimation id="0:530" name="Reverse the two folds" duration="180">
+      <KeyedObject objectId="0:542">
+        <KeyedProperty property="scaleY">
+          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="-1" frame="90" interpolationType="linear" />
+          <KeyFrameDouble value="-1" frame="180" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:553">
+        <KeyedProperty property="scaleY">
+          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="-1" frame="90" interpolationType="linear" />
+          <KeyFrameDouble value="-1" frame="180" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:531">
+        <KeyedProperty property="scaleX">
+          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="90" interpolationType="linear" />
+          <KeyFrameDouble value="-1" frame="180" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <Shape name="Drawing background">
+      <Rectangle width="448" height="448" originX="0" originY="0" />
+      <Fill>
+        <SolidColor colorValue="FFFFFFFF" />
+      </Fill>
+    </Shape>
+  </Artboard>
 </Rive>

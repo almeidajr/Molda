@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -42,12 +43,16 @@ private enum class FoldingStep(val title: String, val artboard: String) {
     FirstFold("Primeira dobra", "First fold"),
     SecondFold("Segunda dobra", "Second fold"),
     Marking("Marcar os raios", "Marking"),
+    Cutting("Cortar os arcos", "Cutting"),
+    Unfolding("Desdobrar o círculo", "Unfolding"),
 }
 
 @Composable
 internal fun FabricFoldingTutorial(radii: SkirtRadii) {
     var open by rememberSaveable(radii) { mutableStateOf(false) }
-    TextButton(onClick = { open = true }) { Text("Tutorial de dobra do tecido") }
+    TextButton(onClick = {
+        open = true
+    }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Tutorial de dobra do tecido") }
     if (open) {
         var step by rememberSaveable(radii) { mutableStateOf(FoldingStep.Preparation) }
         val scrollState = key(step) { rememberScrollState() }
@@ -65,21 +70,30 @@ internal fun FabricFoldingTutorial(radii: SkirtRadii) {
                     )
                     key(step) {
                         TutorialAnimation(radii, step)
-                        if (step == FoldingStep.Marking) {
-                            MarkingInstructions(radii)
-                        } else {
-                            FoldingInstructions(step)
+                        when (step) {
+                            FoldingStep.Marking -> MarkingInstructions(radii)
+
+                            FoldingStep.Cutting, FoldingStep.Unfolding -> {
+                                CuttingInstructions(step)
+                                MarkingInstructions(radii, unfolded = step == FoldingStep.Unfolding)
+                            }
+
+                            else -> FoldingInstructions(step)
                         }
                     }
                     TextButton(
+                        modifier = Modifier.heightIn(min = 48.dp),
                         onClick = { step = FoldingStep.entries[step.ordinal - 1] },
                         enabled = step != FoldingStep.Preparation,
                     ) { Text("Anterior") }
                     TextButton(
+                        modifier = Modifier.heightIn(min = 48.dp),
                         onClick = { step = FoldingStep.entries[step.ordinal + 1] },
-                        enabled = step != FoldingStep.Marking,
+                        enabled = step != FoldingStep.Unfolding,
                     ) { Text("Próximo") }
-                    TextButton(onClick = { open = false }) { Text("Fechar tutorial") }
+                    TextButton(onClick = {
+                        open = false
+                    }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Fechar tutorial") }
                 }
             }
         }
@@ -102,7 +116,7 @@ private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
         is Result.Success -> {
             var replay by remember { mutableStateOf(0) }
             key(replay) { TutorialDrawing(result.value, radii, step, replay > 0) }
-            TextButton(onClick = { replay++ }) {
+            TextButton(onClick = { replay++ }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(
                     if (step == FoldingStep.Marking) {
                         if (replay == 0) "Reproduzir marcação" else "Repetir marcação"
@@ -164,10 +178,11 @@ private fun TutorialDrawing(file: RiveFile, radii: SkirtRadii, step: FoldingStep
                     fit = Fit.Contain(),
                     modifier = Modifier.fillMaxWidth().aspectRatio(1f).semantics {
                         contentDescription =
-                            if (step == FoldingStep.Marking) {
-                                "Marcação proporcional em Rive"
-                            } else {
-                                "Dobra do tecido em Rive: etapa ${step.ordinal + 1}"
+                            when (step) {
+                                FoldingStep.Marking -> "Marcação proporcional em Rive"
+                                FoldingStep.Cutting -> "Corte proporcional em Rive"
+                                FoldingStep.Unfolding -> "Círculo desdobrado proporcional em Rive"
+                                else -> "Dobra do tecido em Rive: etapa ${step.ordinal + 1}"
                             }
                     },
                 )
@@ -177,17 +192,23 @@ private fun TutorialDrawing(file: RiveFile, radii: SkirtRadii, step: FoldingStep
 }
 
 @Composable
-private fun MarkingInstructions(radii: SkirtRadii) {
+private fun MarkingInstructions(radii: SkirtRadii, unfolded: Boolean = false) {
     Text("Proporções calculadas; desenho não está em tamanho real.")
     Text(
         "Tamanho do tecido ilustrativo. Pressupõe tecido suficiente; a largura " +
             "e o comprimento reais do tecido não foram verificados.",
     )
-    Text(
-        "Origem comum: ponto no canto superior esquerdo, encontro das duas " +
-            "dobras fechadas. Com fita ou régua presa nesse ponto, marque cada arco " +
-            "mantendo seu raio constante.",
-    )
+    if (unfolded) {
+        Text(
+            "Centro do recorte da cintura: mesma origem de todos os raios, agora no centro do círculo.",
+        )
+    } else {
+        Text(
+            "Origem comum: ponto no canto superior esquerdo, encontro das duas " +
+                "dobras fechadas. Com fita ou régua presa nesse ponto, marque cada arco " +
+                "mantendo seu raio constante.",
+        )
+    }
     Text("1. Costura da cintura: ${formatRadius(radii.waistStitching)}")
     Text("Linha contínua: referência de costura, não de corte.")
     Text("2. Corte da cintura: ${formatRadius(radii.waistCutting)}")
@@ -249,7 +270,7 @@ private fun FoldingInstructions(step: FoldingStep) {
             )
         }
 
-        FoldingStep.Marking -> Unit
+        FoldingStep.Marking, FoldingStep.Cutting, FoldingStep.Unfolding -> Unit
     }
     Text(
         "A imagem parada mostra o resultado da etapa. Reproduza para acompanhar " +
@@ -269,5 +290,39 @@ private fun FabricPreparationInstructions() {
         "Prepare o tecido conforme seus cuidados e passe os vincos. Não force " +
             "um tecido torcido para alinhar as bordas. Estampas direcionais e " +
             "tecidos com pelo exigem outro estudo de disposição.",
+    )
+}
+
+@Composable
+private fun CuttingInstructions(step: FoldingStep) {
+    Text(
+        "Pratique em papel ou retalho; a sequência ainda aguarda validação prática por uma pessoa que costura.",
+    )
+    if (step == FoldingStep.Cutting) {
+        Text(
+            "Mantenha as quatro camadas alinhadas. Corte primeiro o arco 2, " +
+                "da cintura (tracejado), e depois o arco 4, da barra (traço e ponto), " +
+                "atravessando as quatro camadas. Retire o miolo e a sobra externa.",
+        )
+        Text(
+            "Não corte as linhas 1 e 3: são referências de costura e barra acabada. " +
+                "Não corte em linha reta pelas dobras; elas mantêm o círculo inteiro.",
+        )
+    } else {
+        Text(
+            "O desenho foi reduzido uniformemente para caber o círculo, sem mudar " +
+                "as proporções. O quarto cortado começa abaixo e à direita da origem.",
+        )
+        Text(
+            "Desfaça a segunda dobra: abra as duas camadas superiores para cima, " +
+                "abrindo um semicírculo à direita. Depois desfaça a primeira dobra, " +
+                "levando a camada de cima para a esquerda. Alise sem esticar: " +
+                "surge um círculo inteiro com o recorte central da cintura.",
+        )
+        Text("O círculo desdobrado não é um molde completo e não garante caimento.")
+    }
+    Text(
+        "A imagem parada mostra o resultado. Reproduza ou repita a etapa para " +
+            "acompanhar o movimento; todas as instruções também estão escritas.",
     )
 }
