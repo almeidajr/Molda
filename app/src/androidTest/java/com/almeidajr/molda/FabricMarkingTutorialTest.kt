@@ -1,5 +1,8 @@
 package com.almeidajr.molda
 
+import android.animation.ValueAnimator
+import android.os.SystemClock
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -12,9 +15,12 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.skirt.ui.MeasurementField
+import java.io.FileInputStream
 import kotlin.math.atan2
 import kotlin.math.hypot
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,6 +29,72 @@ import org.junit.runner.RunWith
 class FabricMarkingTutorialTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun disabledSystemMotion_keepsCompletedFramesAfterReplay_forEveryStep() {
+        val originalScale = shell("settings get global animator_duration_scale")
+        try {
+            shell("settings put global animator_duration_scale 1")
+            openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+            // Change the actual system preference while the tutorial is already open.
+            shell("settings put global animator_duration_scale 0")
+            composeRule.waitUntil(5_000) { !ValueAnimator.areAnimatorsEnabled() }
+            composeRule.onNodeWithText(
+                "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
+            ).performScrollTo().assertIsDisplayed()
+            listOf(
+                "Dobra do tecido em Rive: etapa 1",
+                "Dobra do tecido em Rive: etapa 2",
+                "Dobra do tecido em Rive: etapa 3",
+                "Marcação proporcional em Rive",
+                "Corte proporcional em Rive",
+                "Círculo desdobrado proporcional em Rive",
+            ).forEachIndexed { index, description ->
+                composeRule.waitUntil(15_000) {
+                    composeRule.onAllNodes(
+                        androidx.compose.ui.test.hasContentDescription(description),
+                    )
+                        .fetchSemanticsNodes().isNotEmpty()
+                }
+                val drawing = composeRule.onNodeWithContentDescription(
+                    description,
+                ).performScrollTo()
+                composeRule.onNodeWithText(
+                    "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
+                ).performScrollTo().assertIsDisplayed()
+                drawing.performScrollTo()
+                fun frame(): List<Int> {
+                    val pixels = drawing.captureToImage().toPixelMap()
+                    return (0 until pixels.height step 4).flatMap { y ->
+                        (0 until pixels.width step 4).map { x -> pixels[x, y].toArgb() }
+                    }
+                }
+                composeRule.waitUntil(10_000) { frame().count { it == 0xff202020.toInt() } > 10 }
+                val completed = frame()
+                val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
+                composeRule.onNodeWithText(playLabel).performScrollTo().performClick()
+                drawing.performScrollTo()
+                assertCompletedFrameAfterReplay(description, completed, ::frame)
+                composeRule.onNodeWithText("Próximo").performScrollTo().let {
+                    if (index == 5) it.assertIsNotEnabled() else it.performClick()
+                }
+            }
+            shell("settings put global animator_duration_scale 1")
+            composeRule.waitUntil(5_000) { ValueAnimator.areAnimatorsEnabled() }
+            composeRule.onNodeWithText(
+                "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
+            ).assertDoesNotExist()
+            composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().assertIsDisplayed()
+        } finally {
+            shell(
+                if (originalScale == "null") {
+                    "settings delete global animator_duration_scale"
+                } else {
+                    "settings put global animator_duration_scale $originalScale"
+                },
+            )
+        }
+    }
 
     @Test
     fun markingPixels_preserveCalculatedRatios_whenLengthChangesAndAllowancesAreZero() {
@@ -178,6 +250,29 @@ class FabricMarkingTutorialTest {
             composeRule.onNodeWithText("Fechar tutorial").performScrollTo().performClick()
         }
     }
+
+    private fun assertCompletedFrameAfterReplay(
+        description: String,
+        completed: List<Int>,
+        frame: () -> List<Int>,
+    ) {
+        val start = SystemClock.elapsedRealtime()
+        composeRule.waitUntil(5_000) {
+            assertTrue(
+                "$description must retain the completed diagram with motion disabled",
+                completed == frame(),
+            )
+            SystemClock.elapsedRealtime() - start >= 500
+        }
+    }
+
+    private fun shell(command: String): String =
+        InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+            .use { descriptor ->
+                FileInputStream(descriptor.fileDescriptor).bufferedReader().use {
+                    it.readText().trim()
+                }
+            }
 
     private fun assertCircularDrawing(
         description: String,

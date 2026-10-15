@@ -1,5 +1,6 @@
 package com.almeidajr.molda.skirt.ui
 
+import android.animation.ValueAnimator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -13,6 +14,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -102,6 +104,15 @@ internal fun FabricFoldingTutorial(radii: SkirtRadii) {
 
 @Composable
 private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
+    var motionEnabled by remember { mutableStateOf(ValueAnimator.areAnimatorsEnabled()) }
+    DisposableEffect(Unit) {
+        val listener = ValueAnimator.DurationScaleChangeListener { scale ->
+            motionEnabled = scale > 0f
+        }
+        ValueAnimator.registerDurationScaleChangeListener(listener)
+        motionEnabled = ValueAnimator.areAnimatorsEnabled()
+        onDispose { ValueAnimator.unregisterDurationScaleChangeListener(listener) }
+    }
     val worker = rememberRiveWorkerOrNull()
     if (worker == null) {
         Text("Não foi possível iniciar a animação. As instruções escritas continuam disponíveis.")
@@ -114,8 +125,13 @@ private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
         is Result.Error -> Text("Não foi possível abrir a animação. Consulte as instruções abaixo.")
 
         is Result.Success -> {
-            var replay by remember { mutableStateOf(0) }
-            key(replay) { TutorialDrawing(result.value, radii, step, replay > 0) }
+            var replay by remember(motionEnabled) { mutableStateOf(0) }
+            key(replay, motionEnabled) {
+                TutorialDrawing(result.value, radii, step, motionEnabled && replay > 0)
+            }
+            if (!motionEnabled) {
+                Text("Movimento desativado no sistema. O desenho mostra o resultado da etapa.")
+            }
             TextButton(onClick = { replay++ }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(
                     if (step == FoldingStep.Marking) {
