@@ -140,7 +140,7 @@ class ProfilesViewModel(
         savedState[field.name] = text
         val inputs = mutableState.value.inputs + (field to text)
         val original: HashMap<String, String>? = savedState["originalInputs"]
-        val isDirty = inputs.any { (key, value) -> value != (original?.get(key.name) ?: "") }
+        val isDirty = inputs.any { (key, value) -> value != original?.get(key.name).orEmpty() }
         savedState["isDirty"] = isDirty
         mutableState.update {
             it.copy(

@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
@@ -44,6 +45,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -91,7 +93,7 @@ class ProfilePresentationTest {
                         DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, height.dp)),
                     ) {
                         MoldaTheme(darkTheme = dark, dynamicColor = dynamic) {
-                            com.almeidajr.molda.MoldaRoute(
+                            MoldaRoute(
                                 calculator = calculator,
                                 profiles = profiles,
                             )
@@ -176,7 +178,9 @@ class ProfilePresentationTest {
         val text = composeRule.onNodeWithText(label, useUnmergedTree = true)
             .performScrollTo().assertIsDisplayed()
         val layouts = mutableListOf<TextLayoutResult>()
-        text.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        text.performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
+            assertTrue(it(layouts))
+        }
         val style = layouts.single().layoutInput.style
         assertEquals("$label size", size.sp, style.fontSize)
         assertEquals("$label line height", height.sp, style.lineHeight)
@@ -268,7 +272,7 @@ class ProfilePresentationTest {
 
     private fun manage() {
         if (composeRule.onAllNodes(
-                androidx.compose.ui.test.hasText("Perfis de medidas"),
+                hasText("Perfis de medidas"),
             ).fetchSemanticsNodes().isNotEmpty()
         ) {
             click("Perfis de medidas")

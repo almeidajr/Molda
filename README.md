@@ -12,7 +12,7 @@ Run from the repository root in PowerShell:
 
 ```powershell
 .\gradlew.bat spotlessApply
-.\gradlew.bat spotlessCheck :app:detekt :app:lintDebug :app:testDebugUnitTest :app:assembleDebug --continue
+.\gradlew.bat spotlessCheck :app:detektMain :app:detektTest :app:lintDebug :app:testDebugUnitTest :app:assembleDebug --continue
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
 
@@ -30,11 +30,14 @@ issue-specific validation reports and screenshots live in
 results and any checks that remain unverified.
 
 Spotless + ktlint and `.editorconfig` define formatting, including Kotlin build
-scripts. Apply formatting locally; CI only checks it. Detekt handles Kotlin
-analysis without its optional formatting rules, and Android Lint treats warnings
-as errors. Only dependency update notices (`GradleDependency` and
-`NewerVersionAvailable`) are disabled: Dependabot handles reviewed upgrades,
-so a newly published release cannot break an unchanged PR. No baselines:
+scripts. Apply formatting locally; CI only checks it. Detekt runs with type resolution for Kotlin
+analysis without its optional formatting rules, and the Kotlin compiler and
+Android Lint (all checks, including tests) treat warnings as errors; Kotlin also
+reports its extra checks (`-Wextra`), such as unused variables. Lint disables
+dependency update notices (`GradleDependency` and
+`NewerVersionAvailable`) because Dependabot handles reviewed upgrades,
+so a newly published release cannot break an unchanged PR. `SyntheticAccessor` is
+also disabled because R8 inlines those accessors. No baselines:
 fix findings or explain a narrow suppression.
 Detekt currently uses a pinned 2.x alpha for the Gradle 9/JDK 25 toolchain;
 review compatibility when updating it.

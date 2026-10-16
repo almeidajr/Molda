@@ -3,13 +3,12 @@ package com.almeidajr.molda
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
@@ -40,13 +39,12 @@ import com.almeidajr.molda.profile.ui.ProfileCreateAction
 import com.almeidajr.molda.profile.ui.ProfileEditor
 import com.almeidajr.molda.profile.ui.ProfilePicker
 import com.almeidajr.molda.profile.ui.ProfilesContent
+import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.profileWaistText
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 
-// Let the IME consume Back before leaving profile management.
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 // Keep saveable destinations and their transitions together.
 @Suppress("LongMethod")
 @Composable
@@ -270,12 +268,13 @@ private fun ProfileSaveFeedback(
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+// Let the IME consume Back before leaving profile management.
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProfileBackHandler(
     showManagement: Boolean,
     showPicker: Boolean,
-    state: com.almeidajr.molda.profile.ui.ProfilesState,
+    state: ProfilesState,
     onCancel: () -> Unit,
     onLeave: () -> Unit,
 ) {
@@ -289,7 +288,7 @@ private fun ProfileBackHandler(
 }
 
 private fun requestProfileEditor(
-    state: com.almeidajr.molda.profile.ui.ProfilesState,
+    state: ProfilesState,
     profiles: ProfilesViewModel,
     id: Long,
     onDiscard: () -> Unit,

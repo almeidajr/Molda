@@ -10,9 +10,30 @@ naming:
 complexity:
   LongParameterList:
     ignoreDefaultParameters: true
+    # Hoisted Compose state passes values in and one lambda per event out.
+    ignoreAnnotated: ['Composable']
 
 style:
   MagicNumber:
     ignorePropertyDeclaration: true
   UnusedPrivateFunction:
     ignoreAnnotated: ['Preview']
+  # Enable inactive rules that mirror Android Studio's redundancy inspections.
+  UnusedImport:
+    active: true
+  UnnecessaryFullyQualifiedName:
+    active: true
+  UnnecessaryBackticks:
+    active: true
+  UnnecessaryBracesAroundTrailingLambda:
+    active: true
+  UnnecessaryInnerClass:
+    active: true
+  UnnecessaryLet:
+    active: true
+  UnnecessaryParentheses:
+    active: true
+  RedundantExplicitType:
+    active: true
+  RedundantVisibilityModifier:
+    active: true

@@ -11,7 +11,7 @@ import org.junit.Assert.assertTrue
 
 internal fun SemanticsNodeInteraction.assertReadableTextContrast(context: String) {
     val layouts = mutableListOf<TextLayoutResult>()
-    performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+    performSemanticsAction(SemanticsActions.GetTextLayoutResult) { assertTrue(it(layouts)) }
     val foreground = layouts.single().layoutInput.style.color.luminance()
     val background = captureToImage().toPixelMap()[0, 0].luminance()
     val contrast = (maxOf(foreground, background) + 0.05f) /

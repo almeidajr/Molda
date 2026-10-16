@@ -9,6 +9,8 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -21,6 +23,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.skirt.ui.MeasurementField
 import java.io.FileInputStream
+import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
 import org.junit.Assert.assertTrue
@@ -50,7 +53,7 @@ class FabricMarkingTutorialTest {
             ).forEachIndexed { index, description ->
                 val label = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
                 composeRule.waitUntil(15_000) {
-                    composeRule.onAllNodes(androidx.compose.ui.test.hasText(label))
+                    composeRule.onAllNodes(hasText(label))
                         .fetchSemanticsNodes().isNotEmpty()
                 }
                 val drawing = composeRule.onNodeWithContentDescription(
@@ -66,10 +69,10 @@ class FabricMarkingTutorialTest {
                 // Keep the rendered drawing onscreen while starting the infinite loop.
                 composeRule.mainClock.autoAdvance = false
                 composeRule.onNodeWithText(label)
-                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                    .performSemanticsAction(SemanticsActions.OnClick)
                 assertContinuousPlayback(description, index == 3)
                 composeRule.onNodeWithText("Pausar animação")
-                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                    .performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.mainClock.advanceTimeBy(160)
                 val paused = drawing.captureToImage().toPixelMap()
                 composeRule.mainClock.advanceTimeBy(1_000)
@@ -81,10 +84,10 @@ class FabricMarkingTutorialTest {
                     },
                 )
                 composeRule.onNodeWithText("Continuar animação")
-                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                    .performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.mainClock.advanceTimeBy(160)
                 composeRule.onNodeWithText("Pausar animação")
-                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                    .performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.mainClock.autoAdvance = true
                 composeRule.onNodeWithText("Próximo").performScrollTo().let {
                     if (index == 5) it.assertIsNotEnabled() else it.performClick()
@@ -119,7 +122,7 @@ class FabricMarkingTutorialTest {
             ).forEachIndexed { index, description ->
                 composeRule.waitUntil(15_000) {
                     composeRule.onAllNodes(
-                        androidx.compose.ui.test.hasContentDescription(description),
+                        hasContentDescription(description),
                     )
                         .fetchSemanticsNodes().isNotEmpty()
                 }
@@ -177,7 +180,7 @@ class FabricMarkingTutorialTest {
             openTutorial(inputs)
             composeRule.waitUntil(15_000) {
                 composeRule.onAllNodes(
-                    androidx.compose.ui.test.hasContentDescription("Marcação proporcional em Rive"),
+                    hasContentDescription("Marcação proporcional em Rive"),
                 )
                     .fetchSemanticsNodes().isNotEmpty()
             }
@@ -204,7 +207,7 @@ class FabricMarkingTutorialTest {
                 }
                 expectedRatios.all { expected ->
                     visibleRadii.count {
-                        kotlin.math.abs(it - expected) <
+                        abs(it - expected) <
                             0.009
                     } >
                         8
@@ -228,7 +231,7 @@ class FabricMarkingTutorialTest {
         composeRule.onNodeWithText("Marcar os raios").assertIsDisplayed()
         composeRule.waitUntil(15_000) {
             composeRule.onAllNodes(
-                androidx.compose.ui.test.hasContentDescription("Marcação proporcional em Rive"),
+                hasContentDescription("Marcação proporcional em Rive"),
             )
                 .fetchSemanticsNodes().isNotEmpty()
         }
@@ -333,7 +336,7 @@ class FabricMarkingTutorialTest {
             if (elapsed > 1_000 && !replayed) {
                 // Invoke the accessible control without scrolling the drawing out of view.
                 composeRule.onNodeWithText(replayLabel)
-                    .performSemanticsAction(SemanticsActions.OnClick) { it() }
+                    .performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.mainClock.advanceTimeBy(160)
                 if (description == "Dobra do tecido em Rive: etapa 2") {
                     // Restart brings the moving left half back over this known fabric point.
@@ -389,7 +392,7 @@ class FabricMarkingTutorialTest {
         unfolded: Boolean,
     ) {
         composeRule.waitUntil(15_000) {
-            composeRule.onAllNodes(androidx.compose.ui.test.hasContentDescription(description))
+            composeRule.onAllNodes(hasContentDescription(description))
                 .fetchSemanticsNodes().isNotEmpty()
         }
         val drawing = composeRule.onNodeWithContentDescription(description).performScrollTo()
@@ -419,7 +422,7 @@ class FabricMarkingTutorialTest {
                     }
                 }
                 ratios.all { expected ->
-                    visibleRadii.count { kotlin.math.abs(it - expected) < 0.012 } >
+                    visibleRadii.count { abs(it - expected) < 0.012 } >
                         3
                 }
             } &&

@@ -1,3 +1,9 @@
+---
+paths:
+  - "app/src/test/**"
+  - "app/src/androidTest/**"
+---
+
 # Kotlin tests
 
 Write tests for valuable observable behavior, not coverage. Before adding a

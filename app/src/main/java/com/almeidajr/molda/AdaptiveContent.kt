@@ -90,7 +90,6 @@ private fun ReadablePane(content: @Composable () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 // Material scenes exclude vertical hinges; compact and tabletop layouts need a safe region too.
 internal fun HingeSafeContent(modifier: Modifier, content: @Composable () -> Unit) {

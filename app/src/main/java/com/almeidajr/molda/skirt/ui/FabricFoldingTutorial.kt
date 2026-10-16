@@ -18,6 +18,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -120,14 +121,13 @@ private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
         Text("Não foi possível iniciar a animação. As instruções escritas continuam disponíveis.")
         return
     }
-    val result = rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), worker)
-    when (result) {
+    when (val result = rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), worker)) {
         is Result.Loading -> Text("Carregando animação…")
 
         is Result.Error -> Text("Não foi possível abrir a animação. Consulte as instruções abaixo.")
 
         is Result.Success -> {
-            var replay by remember(motionEnabled) { mutableStateOf(0) }
+            var replay by remember(motionEnabled) { mutableIntStateOf(0) }
             var paused by remember(motionEnabled) { mutableStateOf(false) }
             TutorialDrawing(result.value, radii, step, motionEnabled && replay > 0, replay, paused)
             if (!motionEnabled) {
@@ -173,8 +173,7 @@ private fun TutorialDrawing(
         Text("Preparando desenho. As instruções escritas continuam disponíveis.")
         return
     }
-    val result = rememberViewModelInstanceResult(file)
-    when (result) {
+    when (val result = rememberViewModelInstanceResult(file)) {
         is Result.Loading -> Text("Preparando medidas…")
 
         is Result.Error -> Text(

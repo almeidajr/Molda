@@ -39,14 +39,28 @@ android {
         warningsAsErrors = true
         abortOnError = true
         checkDependencies = true
+        checkAllWarnings = true
+        checkTestSources = true
         // Dependabot owns update notices; available releases must not change CI results.
         disable += setOf("GradleDependency", "NewerVersionAvailable")
+        // Opt-in library check: accessors for file-private Kotlin helpers are trivial and R8 inlines them.
+        disable += "SyntheticAccessor"
+    }
+}
+
+kotlin {
+    compilerOptions {
+        allWarningsAsErrors = true
+        // K2 reports unused variables and similar IDE-level diagnostics only with -Wextra.
+        extraWarnings = true
+        freeCompilerArgs.add("-Xreturn-value-checker=check")
     }
 }
 
 detekt {
     toolVersion = libs.versions.detekt.get()
     buildUponDefaultConfig = true
+    failOnSeverity = dev.detekt.gradle.extensions.FailOnSeverity.Info
     config.setFrom(rootProject.file("config/detekt.yml"))
     source.setFrom("src/main/java", "src/test/java", "src/androidTest/java")
 }
