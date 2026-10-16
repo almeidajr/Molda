@@ -26,6 +26,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.ui.MeasurementField
@@ -433,6 +435,11 @@ class SkirtCalculatorTest {
         composeRule.onNodeWithText("Editar medidas").performScrollTo().performClick()
         composeRule.onNodeWithText(MeasurementField.Waist.label)
             .assertIsFocused().assertTextContains("80")
+        // Android's keyboard can resize the viewport after Compose has become idle.
+        composeRule.waitUntil {
+            ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
+                ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+        }
         composeRule.onNodeWithText("Calcular").performScrollTo().assertIsDisplayed()
         composeRule.runOnUiThread {
             width.value = 1200

@@ -228,6 +228,12 @@ class MeasurementProfilesTest {
         click("Novo perfil")
         edit("Nome ou apelido", "Data limite")
         edit("Cintura do perfil (cm)", "80")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        // Native IME dismissal can move the button after Compose has become idle.
+        composeRule.waitUntil(5_000) {
+            !composeRule.activity.window.decorView.rootWindowInsets
+                .isVisible(android.view.WindowInsets.Type.ime())
+        }
         click("Salvar perfil")
         composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
             .performScrollTo().assertIsDisplayed()

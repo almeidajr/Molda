@@ -11,6 +11,14 @@ _Avoid_: Automatic pattern generator
 **Full-circle skirt (saia godê inteira)**:
 A skirt whose main body is drafted from a complete circle with an opening for the waist.
 
+**Fabric folding**:
+Arranging fabric in layers before marking or cutting a sewing pattern.
+_Avoid_: Pleating
+
+**Pleat**:
+A fold formed in a garment's fabric to control fullness or create shape.
+_Avoid_: Fabric folding before cutting
+
 **Measurement profile**:
 A named collection of body measurements for one person, recorded on a measurement date and optionally accompanied by notes, for reuse in drafting calculations.
 _Avoid_: User account, client account

@@ -185,6 +185,7 @@ private fun CalculationOutcome(
     }
     state.radii?.let {
         SkirtResults(it, state.inputs, onEditMeasurements, modifier)
+        FabricFoldingTutorial(it)
         DraftingExplanation(state.inputs, it)
     }
 }
