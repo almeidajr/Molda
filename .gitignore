@@ -21,3 +21,8 @@
 .env
 .env.*
 !.env.example
+# Impeccable's platform binary is installed per machine; its launcher finds it elsewhere.
+.agents/skills/impeccable/scripts/bin/
+.claude/skills/impeccable/scripts/bin/
+# Personal Claude Code settings; shared ones go in .claude/settings.json.
+.claude/settings.local.json
