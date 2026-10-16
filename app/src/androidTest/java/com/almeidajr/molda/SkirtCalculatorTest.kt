@@ -445,7 +445,7 @@ class SkirtCalculatorTest {
         composeRule.onNodeWithText(MeasurementField.Waist.label)
             .assertIsFocused().assertTextContains("80")
         // Android's keyboard can resize the viewport after Compose has become idle.
-        composeRule.waitUntil {
+        composeRule.waitUntil(10_000) {
             ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
                 ?.isVisible(WindowInsetsCompat.Type.ime()) == true
         }
