@@ -1,10 +1,12 @@
 package com.almeidajr.molda.profile
 
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import java.time.LocalDate
+import java.time.format.DateTimeParseException
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -60,7 +62,7 @@ class ProfileStorageTest {
                 var failed = false
                 try {
                     storage.list()
-                } catch (_: android.database.sqlite.SQLiteException) {
+                } catch (_: SQLiteException) {
                     failed = true
                 }
                 assertTrue("Corrupt records must produce a load failure", failed)
@@ -97,7 +99,7 @@ class ProfileStorageTest {
                         storage.list()
                     } catch (_: IllegalArgumentException) {
                         failed = true
-                    } catch (_: java.time.format.DateTimeParseException) {
+                    } catch (_: DateTimeParseException) {
                         failed = true
                     }
                     assertTrue("Invalid persisted measurements must fail to load", failed)

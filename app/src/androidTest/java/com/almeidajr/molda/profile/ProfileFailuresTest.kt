@@ -1,5 +1,6 @@
 package com.almeidajr.molda.profile
 
+import android.view.KeyEvent
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -11,8 +12,10 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -23,7 +26,9 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
+import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileRepository
@@ -34,6 +39,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -45,7 +51,7 @@ class ProfileFailuresTest {
 
     @Test
     fun saving_pendingStorageKeepsEditorAndDisablesDuplicateMutation() {
-        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
         showProfiles(FailingProfiles(saveGate = gate))
         click("Perfis de medidas")
         click("Novo perfil")
@@ -60,7 +66,7 @@ class ProfileFailuresTest {
         composeRule.onNodeWithContentDescription("Escolher data no calendário").assertIsNotEnabled()
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Novo perfil de medidas").performScrollTo().assertIsDisplayed()
         gate.complete(Unit)
         composeRule.waitUntil(5_000) {
@@ -72,7 +78,7 @@ class ProfileFailuresTest {
 
     @Test
     fun deleting_pendingStorageDisablesMutationsAndFailureKeepsRecords() {
-        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
         val storage = FailingProfiles(deleteGate = gate)
         showProfiles(storage)
         click("Perfis de medidas")
@@ -161,7 +167,7 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Tentar carregar novamente").performScrollTo().performClick()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
-                androidx.compose.ui.test.hasText(
+                hasText(
                     "Existente",
                 ),
             ).fetchSemanticsNodes().isNotEmpty()
@@ -172,7 +178,7 @@ class ProfileFailuresTest {
 
     @Test
     fun loadingProfiles_manualCalculationRemainsAvailable() {
-        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
         showProfiles(FailingProfiles(loadGate = gate))
         click("Usar perfil")
         composeRule.onNodeWithText("Carregando perfis…").assertIsDisplayed()
@@ -216,7 +222,7 @@ class ProfileFailuresTest {
         click("Perfis de medidas")
         click("Existente", useUnmergedTree = true)
         edit("Nome ou apelido", "Rascunho")
-        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        Espresso.closeSoftKeyboard()
         click("Ações: Outra pessoa")
         click("Excluir perfil")
         click("Confirmar exclusão")
@@ -241,20 +247,20 @@ class ProfileFailuresTest {
                 SavedStateHandle(),
                 Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC),
             )
-            val calculator = SkirtCalculatorViewModel(androidx.lifecycle.SavedStateHandle())
+            val calculator = SkirtCalculatorViewModel(SavedStateHandle())
             composeRule.activity.setContent {
                 MoldaTheme {
                     if (wide) {
                         DeviceConfigurationOverride(
                             DeviceConfigurationOverride.ForcedSize(DpSize(1200.dp, 2700.dp)),
                         ) {
-                            com.almeidajr.molda.MoldaRoute(
+                            MoldaRoute(
                                 calculator = calculator,
                                 profiles = profiles,
                             )
                         }
                     } else {
-                        com.almeidajr.molda.MoldaRoute(calculator = calculator, profiles = profiles)
+                        MoldaRoute(calculator = calculator, profiles = profiles)
                     }
                 }
             }
@@ -272,8 +278,8 @@ class ProfileFailuresTest {
     private fun click(label: String, useUnmergedTree: Boolean = false) {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
-                androidx.compose.ui.test.hasText(label) and androidx.compose.ui.test.isEnabled() and
-                    !androidx.compose.ui.test.hasAnyAncestor(!androidx.compose.ui.test.isEnabled()),
+                hasText(label) and isEnabled() and
+                    !hasAnyAncestor(!isEnabled()),
             ).fetchSemanticsNodes().isNotEmpty()
         }
         val node = composeRule.onNodeWithText(label, useUnmergedTree = useUnmergedTree)
@@ -285,9 +291,9 @@ class ProfileFailuresTest {
 private class FailingProfiles(
     var failLoad: Boolean = false,
     val failSave: Boolean = false,
-    val loadGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
-    val deleteGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
-    val saveGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
+    val loadGate: CompletableDeferred<Unit>? = null,
+    val deleteGate: CompletableDeferred<Unit>? = null,
+    val saveGate: CompletableDeferred<Unit>? = null,
     val measurementDate: LocalDate = LocalDate.of(2026, 10, 12),
 ) : ProfileRepository {
     private val records =

@@ -38,6 +38,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.almeidajr.molda.AdaptiveContent
+import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import java.util.Locale
 import kotlinx.coroutines.launch
@@ -47,9 +49,11 @@ fun SkirtCalculatorRoute(
     modifier: Modifier = Modifier,
     viewModel: SkirtCalculatorViewModel = viewModel(),
 ) {
-    com.almeidajr.molda.MoldaRoute(modifier = modifier, calculator = viewModel)
+    MoldaRoute(modifier = modifier, calculator = viewModel)
 }
 
+// `profiles` is a named slot for the profile picker, not the screen's content.
+@Suppress("ComposableLambdaParameterNaming")
 @Composable
 fun SkirtCalculatorScreen(
     state: CalculatorState,
@@ -237,7 +241,7 @@ private fun MeasurementInput(
         },
     )
     if (field == MeasurementField.Waist) {
-        androidx.compose.material3.TextButton(onClick = onUseProfile) { Text("Usar perfil") }
+        TextButton(onClick = onUseProfile) { Text("Usar perfil") }
         Text(
             state.sourceProfileName?.let { "Cintura copiada do perfil: $it" } ?: "Medida manual",
             style = MaterialTheme.typography.bodyMedium,
@@ -319,7 +323,7 @@ private fun AdaptiveCalculator(
     form: @Composable () -> Unit,
     outcome: @Composable () -> Unit,
 ) {
-    com.almeidajr.molda.AdaptiveContent(
+    AdaptiveContent(
         modifier = modifier.imePadding(),
         detailOpen = false,
         primary = {

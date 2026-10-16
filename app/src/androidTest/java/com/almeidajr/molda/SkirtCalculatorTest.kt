@@ -1,6 +1,8 @@
 package com.almeidajr.molda
 
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.SemanticsActions
@@ -34,6 +36,7 @@ import com.almeidajr.molda.skirt.ui.MeasurementField
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorRoute
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -84,7 +87,9 @@ class SkirtCalculatorTest {
             ).forEach { radius ->
                 val node = composeRule.onNodeWithText(radius).performScrollTo().assertIsDisplayed()
                 val layouts = mutableListOf<TextLayoutResult>()
-                node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+                node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
+                    assertTrue(it(layouts))
+                }
                 val style = layouts.single().layoutInput.style
                 assertEquals(24.sp, style.fontSize)
                 assertEquals(32.sp, style.lineHeight)
@@ -410,27 +415,31 @@ class SkirtCalculatorTest {
 
     @Test
     fun resizingAndLargeText_keepCalculatorDraftAndSameScreenResults() {
-        val width = androidx.compose.runtime.mutableStateOf(1200)
-        val font = androidx.compose.runtime.mutableStateOf(1f)
+        val width = mutableIntStateOf(1200)
+        val font = mutableFloatStateOf(1f)
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 val window = LocalWindowInfo.current.containerSize
-                val height = maxOf(900f, width.value * window.height.toFloat() / window.width)
-                DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(font.value)) {
+                val height = maxOf(900f, width.intValue * window.height.toFloat() / window.width)
+                DeviceConfigurationOverride(
+                    DeviceConfigurationOverride.FontScale(font.floatValue),
+                ) {
                     DeviceConfigurationOverride(
-                        DeviceConfigurationOverride.ForcedSize(DpSize(width.value.dp, height.dp)),
+                        DeviceConfigurationOverride.ForcedSize(
+                            DpSize(width.intValue.dp, height.dp),
+                        ),
                     ) { MoldaTheme { SkirtCalculatorRoute() } }
                 }
             }
         }
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
-        composeRule.runOnUiThread { width.value = 400 }
+        composeRule.runOnUiThread { width.intValue = 400 }
         composeRule.onNodeWithText("Raio de corte da barra: 75,05 cm")
             .performScrollTo().assertIsDisplayed()
         composeRule.runOnUiThread {
-            width.value = 1000
-            font.value = 2f
+            width.intValue = 1000
+            font.floatValue = 2f
         }
         composeRule.onNodeWithText("Editar medidas").performScrollTo().performClick()
         composeRule.onNodeWithText(MeasurementField.Waist.label)
@@ -442,8 +451,8 @@ class SkirtCalculatorTest {
         }
         composeRule.onNodeWithText("Calcular").performScrollTo().assertIsDisplayed()
         composeRule.runOnUiThread {
-            width.value = 1200
-            font.value = 1f
+            width.intValue = 1200
+            font.floatValue = 1f
         }
         composeRule.onNodeWithText("Raios para o molde").assertIsDisplayed()
         edit(MeasurementField.Length, "70")

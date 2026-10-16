@@ -10,15 +10,19 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import java.time.LocalDate
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class LocalProfileRepository(context: Context, databaseName: String = "profiles.db") :
-    ProfileRepository,
+class LocalProfileRepository(
+    context: Context,
+    databaseName: String = "profiles.db",
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : ProfileRepository,
     AutoCloseable {
     private val database = ProfileDatabase(context.applicationContext, databaseName)
 
-    override suspend fun list(): List<MeasurementProfile> = withContext(Dispatchers.IO) {
+    override suspend fun list(): List<MeasurementProfile> = withContext(ioDispatcher) {
         database.readableDatabase.query(
             "profiles",
             arrayOf("id", "name", "waist", "measurement_date", "notes"),
@@ -51,7 +55,7 @@ class LocalProfileRepository(context: Context, databaseName: String = "profiles.
     }
 
     override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             val checked = measurements.copy()
             MeasurementProfile(
                 database.writableDatabase.insertOrThrow("profiles", null, checked.toValues()),
@@ -59,7 +63,7 @@ class LocalProfileRepository(context: Context, databaseName: String = "profiles.
             )
         }
 
-    override suspend fun update(profile: MeasurementProfile): Unit = withContext(Dispatchers.IO) {
+    override suspend fun update(profile: MeasurementProfile): Unit = withContext(ioDispatcher) {
         val checked = profile.copy(measurements = profile.measurements.copy())
         check(
             database.writableDatabase.update(
@@ -71,7 +75,7 @@ class LocalProfileRepository(context: Context, databaseName: String = "profiles.
         ) { "Profile no longer exists" }
     }
 
-    override suspend fun delete(id: Long): Unit = withContext(Dispatchers.IO) {
+    override suspend fun delete(id: Long): Unit = withContext(ioDispatcher) {
         require(id > 0) { "Profile identity must be positive" }
         check(
             database.writableDatabase.delete("profiles", "id = ?", arrayOf(id.toString())) == 1,

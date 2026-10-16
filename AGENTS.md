@@ -22,6 +22,8 @@ On macOS/Linux, use `./gradlew`. Configure Android SDK 37; devices require API 3
 
 Use Spotless + ktlint with `.editorconfig`. Run `.\gradlew.bat spotlessApply` before validation. Use PascalCase for classes, files, and UI composables (`GreetingPreview`); use camelCase for ordinary functions and properties. Keep packages under `com.almeidajr.molda` and use lowercase underscore names for Android resources. See `README.md` for quality checks, CI, and dependency-update conventions.
 
+Target zero warnings from every tool, Android Studio inspections included; Kotlin specifics live in [Kotlin style](.agents/rules/kotlin-style.md).
+
 Prefer existing tools and their configuration over custom code; add scripts only when available tools cannot complete the task.
 
 For UI icons, use official Material Symbols XML vector assets from [Google Fonts](https://fonts.google.com/icons), stored in `app/src/main/res/drawable/`. Reuse existing assets and render them with Material 3 `Icon` and `painterResource`, letting Compose apply the theme tint; remove XML theme tint attributes. Do not add the legacy Compose Material Icons libraries. See [Android icon guidance](https://developer.android.com/develop/ui/compose/graphics/images/material).

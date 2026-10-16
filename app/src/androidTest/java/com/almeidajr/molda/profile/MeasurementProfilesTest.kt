@@ -1,5 +1,8 @@
 package com.almeidajr.molda.profile
 
+import android.view.KeyEvent
+import android.view.WindowInsets
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.test.DeviceConfigurationOverride
@@ -9,7 +12,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
@@ -20,14 +22,15 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
@@ -83,7 +86,7 @@ class MeasurementProfilesTest {
                         DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, height.dp)),
                     ) {
                         MoldaTheme {
-                            com.almeidajr.molda.MoldaRoute(
+                            MoldaRoute(
                                 calculator = calculator,
                                 profiles = profiles,
                             )
@@ -119,7 +122,7 @@ class MeasurementProfilesTest {
         click("Excluir perfil")
         waitForDialogFocus()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(hasText("Excluir perfil Ana?")).fetchSemanticsNodes().isEmpty()
         }
@@ -145,7 +148,7 @@ class MeasurementProfilesTest {
         edit("Margem de barra (cm)", "0")
         click("Calcular")
         manage()
-        composeRule.onAllNodes(androidx.compose.ui.test.hasText("Ações: Ana"))[0]
+        composeRule.onAllNodes(hasText("Ações: Ana"))[0]
             .performScrollTo().performClick()
         click("Excluir perfil")
         composeRule.onNodeWithText("Excluir perfil Ana?").assertIsDisplayed()
@@ -203,12 +206,12 @@ class MeasurementProfilesTest {
         click("Novo perfil")
         edit("Nome ou apelido", "Rascunho")
         // Settle native IME dismissal before testing the calendar's own Back handling.
-        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        Espresso.closeSoftKeyboard()
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
         composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
         waitForDialogFocus()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(hasText("Cancelar calendário")).fetchSemanticsNodes().isEmpty()
         }
@@ -216,7 +219,7 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
         composeRule.waitUntil(5_000) { composeRule.activity.hasWindowFocus() }
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
         click("Descartar")
         composeRule.onNodeWithText("Perfis de medidas (opcional)").assertIsDisplayed()
@@ -228,11 +231,11 @@ class MeasurementProfilesTest {
         click("Novo perfil")
         edit("Nome ou apelido", "Data limite")
         edit("Cintura do perfil (cm)", "80")
-        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        Espresso.closeSoftKeyboard()
         // Native IME dismissal can move the button after Compose has become idle.
         composeRule.waitUntil(5_000) {
             !composeRule.activity.window.decorView.rootWindowInsets
-                .isVisible(android.view.WindowInsets.Type.ime())
+                .isVisible(WindowInsets.Type.ime())
         }
         click("Salvar perfil")
         composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
@@ -351,7 +354,7 @@ class MeasurementProfilesTest {
         edit("Circunferência da cintura (cm)", "90")
         manage()
         composeRule.onAllNodes(
-            androidx.compose.ui.test.hasText("Ana"),
+            hasText("Ana"),
         )[0].performScrollTo().performClick()
         composeRule.onNodeWithText("Cintura do perfil (cm)")
             .performScrollTo().assertTextContains("80,123456789")
@@ -400,7 +403,7 @@ class MeasurementProfilesTest {
         saveProfile()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
-                androidx.compose.ui.test.hasText(
+                hasText(
                     "Teste reutilização",
                 ),
             ).fetchSemanticsNodes().isNotEmpty()
@@ -525,7 +528,7 @@ class MeasurementProfilesTest {
             .performScrollTo().performClick().assertIsDisplayed()
         saveProfile()
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(androidx.compose.ui.test.hasText("Perfil salvo neste aparelho."))
+            composeRule.onAllNodes(hasText("Perfil salvo neste aparelho."))
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Ana")
@@ -576,9 +579,9 @@ class MeasurementProfilesTest {
         click("Cancelar")
         click("Continuar editando")
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
-        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        Espresso.closeSoftKeyboard()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-            .sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
         click("Descartar")
         composeRule.onNodeWithText("Perfis de medidas (opcional)").assertIsDisplayed()
@@ -621,9 +624,9 @@ class MeasurementProfilesTest {
         composeRule.waitUntil(5_000) {
             android.view.inspector.WindowInspector.getGlobalWindowViews().any {
                 it.hasWindowFocus() &&
-                    !it.rootWindowInsets.isVisible(android.view.WindowInsets.Type.ime()) &&
-                    (it.layoutParams as android.view.WindowManager.LayoutParams).type ==
-                    android.view.WindowManager.LayoutParams.TYPE_APPLICATION
+                    !it.rootWindowInsets.isVisible(WindowInsets.Type.ime()) &&
+                    (it.layoutParams as WindowManager.LayoutParams).type ==
+                    WindowManager.LayoutParams.TYPE_APPLICATION
             }
         }
     }
@@ -637,7 +640,7 @@ class MeasurementProfilesTest {
 
     private fun manage() {
         if (composeRule.onAllNodes(
-                androidx.compose.ui.test.hasText("Perfis de medidas"),
+                hasText("Perfis de medidas"),
             ).fetchSemanticsNodes().isNotEmpty()
         ) {
             click("Perfis de medidas")
@@ -646,13 +649,13 @@ class MeasurementProfilesTest {
 
     private fun pick(label: String) {
         if (composeRule.onAllNodes(
-                androidx.compose.ui.test.hasText("Voltar ao cálculo"),
+                hasText("Voltar ao cálculo"),
             ).fetchSemanticsNodes().isNotEmpty()
         ) {
             click("Voltar ao cálculo")
         }
         click("Usar perfil")
-        composeRule.onAllNodes(androidx.compose.ui.test.hasText(label))[0].performClick()
+        composeRule.onAllNodes(hasText(label))[0].performClick()
     }
 
     private fun saveProfile(label: String = "Salvar perfil") {

@@ -1,8 +1,22 @@
+---
+paths:
+  - "**/*.kt"
+  - "**/*.kts"
+---
+
 # Kotlin code style
 
 Apply these rules to new Kotlin code and code already being changed in Molda.
 Follow `AGENTS.md`, `.editorconfig`, and established local conventions; leave
-unrelated code alone. Spotless/ktlint owns formatting, Detekt owns static analysis.
+unrelated code alone. Spotless/ktlint owns formatting.
+
+**Zero warnings.** The Kotlin compiler (`-Werror`, `-Wextra`, return value
+checker), type-resolved Detekt, and Android Lint fail the build on any finding.
+Android Studio inspections the build cannot run count too, so write code that
+passes them: declare a `when` subject inline (`when (val result = load())`),
+import names instead of qualifying them in place, and place `@OptIn` only on
+declarations that call the experimental API. Fix the cause; when a suppression
+is the right call, scope it to one declaration and comment the reason.
 
 **Functional first.** Prefer pure functions that transform inputs into outputs.
 Use expression bodies for single expressions, `when` for alternatives, and

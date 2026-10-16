@@ -22,6 +22,8 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.skirt.domain.SkirtRadii
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 internal fun DraftingExplanation(inputs: Map<MeasurementField, String>, radii: SkirtRadii) {
@@ -146,8 +148,8 @@ private fun SkirtDiagram(radii: SkirtRadii, description: String) {
                 topLeft =
                     center +
                         Offset(
-                            radius * kotlin.math.cos(angle),
-                            radius * kotlin.math.sin(angle),
+                            radius * cos(angle),
+                            radius * sin(angle),
                         ),
                 style = labelStyle,
             )

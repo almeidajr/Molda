@@ -50,7 +50,9 @@ class FabricFoldingLayoutTest {
                     )
                 heading.assertReadableTextContrast("$title dark=$dark")
                 val layouts = mutableListOf<TextLayoutResult>()
-                heading.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+                heading.performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
+                    assertTrue(it(layouts))
+                }
                 val layout = layouts.single()
                 // Text bounds can differ from rounded pixel size by a fraction of a pixel.
                 assertTrue(
