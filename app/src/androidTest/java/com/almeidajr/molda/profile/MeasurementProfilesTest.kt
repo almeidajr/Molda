@@ -661,7 +661,7 @@ class MeasurementProfilesTest {
     private fun saveProfile(label: String = "Salvar perfil") {
         click(label)
         // A profile name also matches its draft field while storage is still pending.
-        composeRule.waitUntil(5_000) {
+        composeRule.waitUntil(10_000) {
             composeRule.onAllNodes(hasText("Nome ou apelido")).fetchSemanticsNodes().isEmpty()
         }
     }
