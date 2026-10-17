@@ -1,38 +1,370 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-17T00:00:00Z",
+  "generatedAt": "2026-10-17T19:17:09Z",
   "title": "Design System: Molda",
   "extensions": {
     "colorMeta": {
-      "mulberry-dye": { "role": "primary", "displayName": "Mulberry Dye", "canonical": "#784F82", "tonalRamp": ["#2F0A3A", "#462151", "#5F3869", "#784F82", "#9367A0", "#C49ACD", "#E7B6F0", "#FBD7FF"] },
-      "mulberry-wash": { "role": "primary", "displayName": "Mulberry Wash", "canonical": "#FBD7FF" },
-      "heather-plum": { "role": "secondary", "displayName": "Heather Plum", "canonical": "#6A596C", "tonalRamp": ["#241727", "#3A2B3D", "#514154", "#6A596C", "#847186", "#B9A5BA", "#D6C0D6", "#F2DBF3"] },
-      "lichen-green": { "role": "tertiary", "displayName": "Lichen Green", "canonical": "#4F644A", "tonalRamp": ["#0D200C", "#22351F", "#384C34", "#4F644A", "#677D61", "#9AB193", "#B5CDAE", "#D1E9C9"] },
-      "raw-calico": { "role": "neutral", "displayName": "Raw Calico", "canonical": "#FFF8F3", "tonalRamp": ["#17130B", "#241F17", "#352F27", "#4E4539", "#807667", "#E3D8CC", "#F2E6D9", "#FFF8F3"] },
-      "calico-low": { "role": "neutral", "displayName": "Calico Low", "canonical": "#FEF2E5" },
-      "calico-mid": { "role": "neutral", "displayName": "Calico Mid", "canonical": "#F8ECDF" },
-      "calico-high": { "role": "neutral", "displayName": "Calico High", "canonical": "#F2E6D9" },
-      "walnut-ink": { "role": "neutral", "displayName": "Walnut Ink", "canonical": "#201B13" },
-      "faded-walnut": { "role": "neutral", "displayName": "Faded Walnut", "canonical": "#4E4539" },
-      "basting-outline": { "role": "neutral", "displayName": "Basting Outline", "canonical": "#807667" },
-      "basting-faint": { "role": "neutral", "displayName": "Basting Faint", "canonical": "#D2C5B4" },
-      "snip-red": { "role": "error", "displayName": "Snip Red", "canonical": "#BA1A1A" }
+      "mulberry-dye": {
+        "role": "primary",
+        "displayName": "Mulberry Dye",
+        "canonical": "#784F82",
+        "tonalRamp": [
+          "#2F0A3A",
+          "#462151",
+          "#5F3869",
+          "#784F82",
+          "#9367A0",
+          "#C49ACD",
+          "#E7B6F0",
+          "#FBD7FF"
+        ]
+      },
+      "on-mulberry-dye": {
+        "role": "primary",
+        "displayName": "On Mulberry Dye",
+        "canonical": "#FFFFFF"
+      },
+      "mulberry-wash": {
+        "role": "primary",
+        "displayName": "Mulberry Wash",
+        "canonical": "#FBD7FF",
+        "tonalRamp": [
+          "#2F0A3A",
+          "#462151",
+          "#5F3869",
+          "#784F82",
+          "#9367A0",
+          "#C49ACD",
+          "#E7B6F0",
+          "#FBD7FF"
+        ]
+      },
+      "on-mulberry-wash": {
+        "role": "primary",
+        "displayName": "On Mulberry Wash",
+        "canonical": "#5F3869"
+      },
+      "heather-plum": {
+        "role": "secondary",
+        "displayName": "Heather Plum",
+        "canonical": "#6A596C",
+        "tonalRamp": [
+          "#241727",
+          "#3A2B3D",
+          "#514154",
+          "#6A596C",
+          "#847186",
+          "#B9A5BA",
+          "#D6C0D6",
+          "#F2DBF3"
+        ]
+      },
+      "heather-wash": {
+        "role": "secondary",
+        "displayName": "Heather Wash",
+        "canonical": "#F2DBF3",
+        "tonalRamp": [
+          "#241727",
+          "#3A2B3D",
+          "#514154",
+          "#6A596C",
+          "#847186",
+          "#B9A5BA",
+          "#D6C0D6",
+          "#F2DBF3"
+        ]
+      },
+      "on-heather-wash": {
+        "role": "secondary",
+        "displayName": "On Heather Wash",
+        "canonical": "#514154"
+      },
+      "lichen-green": {
+        "role": "tertiary",
+        "displayName": "Lichen Green",
+        "canonical": "#4F644A",
+        "tonalRamp": [
+          "#0D200C",
+          "#22351F",
+          "#384C34",
+          "#4F644A",
+          "#677D61",
+          "#9AB193",
+          "#B5CDAE",
+          "#D1E9C9"
+        ]
+      },
+      "lichen-wash": {
+        "role": "tertiary",
+        "displayName": "Lichen Wash",
+        "canonical": "#D1E9C9",
+        "tonalRamp": [
+          "#0D200C",
+          "#22351F",
+          "#384C34",
+          "#4F644A",
+          "#677D61",
+          "#9AB193",
+          "#B5CDAE",
+          "#D1E9C9"
+        ]
+      },
+      "raw-calico": {
+        "role": "neutral",
+        "displayName": "Raw Calico",
+        "canonical": "#FFF8F3",
+        "tonalRamp": [
+          "#17130B",
+          "#241F17",
+          "#352F27",
+          "#4E4539",
+          "#807667",
+          "#E3D8CC",
+          "#F2E6D9",
+          "#FFF8F3"
+        ]
+      },
+      "calico-low": {
+        "role": "neutral",
+        "displayName": "Calico Low",
+        "canonical": "#FEF2E5",
+        "tonalRamp": [
+          "#17130B",
+          "#241F17",
+          "#352F27",
+          "#4E4539",
+          "#807667",
+          "#E3D8CC",
+          "#F2E6D9",
+          "#FFF8F3"
+        ]
+      },
+      "calico-mid": {
+        "role": "neutral",
+        "displayName": "Calico Mid",
+        "canonical": "#F8ECDF",
+        "tonalRamp": [
+          "#17130B",
+          "#241F17",
+          "#352F27",
+          "#4E4539",
+          "#807667",
+          "#E3D8CC",
+          "#F2E6D9",
+          "#FFF8F3"
+        ]
+      },
+      "calico-high": {
+        "role": "neutral",
+        "displayName": "Calico High",
+        "canonical": "#F2E6D9",
+        "tonalRamp": [
+          "#17130B",
+          "#241F17",
+          "#352F27",
+          "#4E4539",
+          "#807667",
+          "#E3D8CC",
+          "#F2E6D9",
+          "#FFF8F3"
+        ]
+      },
+      "walnut-ink": {
+        "role": "neutral",
+        "displayName": "Walnut Ink",
+        "canonical": "#201B13"
+      },
+      "faded-walnut": {
+        "role": "neutral",
+        "displayName": "Faded Walnut",
+        "canonical": "#4E4539"
+      },
+      "basting-outline": {
+        "role": "neutral",
+        "displayName": "Basting Outline",
+        "canonical": "#807667"
+      },
+      "basting-faint": {
+        "role": "neutral",
+        "displayName": "Basting Faint",
+        "canonical": "#D2C5B4"
+      },
+      "snip-red": {
+        "role": "error",
+        "displayName": "Snip Red",
+        "canonical": "#BA1A1A",
+        "tonalRamp": [
+          "#410002",
+          "#690005",
+          "#93000A",
+          "#BA1A1A",
+          "#DE3730",
+          "#FF897D",
+          "#FFB4AB",
+          "#FFDAD6"
+        ]
+      },
+      "snip-red-wash": {
+        "role": "error",
+        "displayName": "Snip Red Wash",
+        "canonical": "#FFDAD6",
+        "tonalRamp": [
+          "#410002",
+          "#690005",
+          "#93000A",
+          "#BA1A1A",
+          "#DE3730",
+          "#FF897D",
+          "#FFB4AB",
+          "#FFDAD6"
+        ]
+      },
+      "dark-mulberry-dye": {
+        "role": "primary",
+        "displayName": "Dark Mulberry Dye",
+        "canonical": "#E7B6F0"
+      },
+      "dark-heather-wash": {
+        "role": "secondary",
+        "displayName": "Dark Heather Wash",
+        "canonical": "#514154"
+      },
+      "dark-on-heather-wash": {
+        "role": "secondary",
+        "displayName": "Dark On Heather Wash",
+        "canonical": "#F2DBF3"
+      },
+      "dark-lichen-green": {
+        "role": "tertiary",
+        "displayName": "Dark Lichen Green",
+        "canonical": "#B5CDAE"
+      },
+      "dark-lichen-wash": {
+        "role": "tertiary",
+        "displayName": "Dark Lichen Wash",
+        "canonical": "#384C34"
+      },
+      "dark-raw-calico": {
+        "role": "neutral",
+        "displayName": "Dark Raw Calico",
+        "canonical": "#17130B"
+      },
+      "dark-calico-low": {
+        "role": "neutral",
+        "displayName": "Dark Calico Low",
+        "canonical": "#201B13"
+      },
+      "dark-calico-mid": {
+        "role": "neutral",
+        "displayName": "Dark Calico Mid",
+        "canonical": "#241F17"
+      },
+      "dark-calico-high": {
+        "role": "neutral",
+        "displayName": "Dark Calico High",
+        "canonical": "#2F2921"
+      },
+      "dark-walnut-ink": {
+        "role": "neutral",
+        "displayName": "Dark Walnut Ink",
+        "canonical": "#ECE1D4"
+      },
+      "dark-snip-red": {
+        "role": "error",
+        "displayName": "Dark Snip Red",
+        "canonical": "#FFB4AB"
+      }
     },
     "typographyMeta": {
-      "headline-medium": { "displayName": "Headline Medium", "purpose": "Profile-screen headings." },
-      "headline-small": { "displayName": "Headline Small", "purpose": "Each calculated radius value on the cutting card; all four equal, tabular figures." },
-      "title-large": { "displayName": "Title Large", "purpose": "App bar title, section headings, cutting-card heading, tutorial step titles." },
-      "title-medium": { "displayName": "Title Medium", "purpose": "Profile names, component titles, cutting-card groups." },
-      "body-large": { "displayName": "Body Large", "purpose": "Field text and explanations." },
-      "body-medium": { "displayName": "Body Medium", "purpose": "Supporting text and field errors." },
-      "label-large": { "displayName": "Label Large", "purpose": "Action labels, line numbers, tutorial step position." }
+      "headline-medium": {
+        "displayName": "Headline Medium",
+        "purpose": "Profile headings, including the picker's Usar perfil."
+      },
+      "headline-small": {
+        "displayName": "Headline Small",
+        "purpose": "The four radius values only, equal size and weight, tabular figures."
+      },
+      "title-large": {
+        "displayName": "Title Large",
+        "purpose": "App bar and tutorial step titles, group headings, the cutting card's heading."
+      },
+      "title-medium": {
+        "displayName": "Title Medium",
+        "purpose": "Sub-headings, profile names and picker rows, each tutorial step's lead sentence."
+      },
+      "body-large": {
+        "displayName": "Body Large",
+        "purpose": "Field text, explanations, line labels on the cutting card."
+      },
+      "body-medium": {
+        "displayName": "Body Medium",
+        "purpose": "Field guidance and errors, the measurement summary, the diagram note, tutorial Detalhes."
+      },
+      "label-large": {
+        "displayName": "Label Large",
+        "purpose": "Action labels, line numbers, Etapa n de 6."
+      }
     },
-    "shadows": [],
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "Every app surface is flat; depth is tonal. Only Material's own defaults on the FAB and menus cast a shadow."
+      }
+    ],
     "motion": [
-      { "name": "material-default", "value": "Material 3 component motion", "purpose": "Pressed state, disclosure and navigation continuity only; honour system animation settings." }
+      {
+        "name": "material-default",
+        "value": "Material 3 component motion",
+        "purpose": "Ripple, pressed states and the disclosure chevron flip; follows the system animator scale."
+      },
+      {
+        "name": "tutorial-ease-in-out",
+        "value": "cubic-bezier(0.45, 0, 0.55, 1)",
+        "purpose": "Rive tutorial: folds, sweeps and the unfolding, no bounce."
+      },
+      {
+        "name": "tutorial-decelerate",
+        "value": "cubic-bezier(0, 0, 0.3, 1)",
+        "purpose": "Rive tutorial: arcs and traces settling into place."
+      },
+      {
+        "name": "tutorial-accelerate",
+        "value": "cubic-bezier(0.4, 0, 1, 1)",
+        "purpose": "Rive tutorial: cut scraps lifting away."
+      },
+      {
+        "name": "tutorial-step-duration",
+        "value": "180–240 frames (3–4 s at 60 fps), ping-pong",
+        "purpose": "One step plays on request, holds its completed pose, then reverses; never plays with system animations off."
+      }
     ],
     "breakpoints": [
-      { "name": "two-pane", "value": "360dp × max(fontScale,1) × 2 + 24dp", "purpose": "Content-fit threshold for side-by-side panes; max pane width 640dp." }
+      {
+        "name": "two-pane",
+        "value": "360dp × max(fontScale, 1) × 2 + 24dp",
+        "purpose": "Content-fit threshold for side-by-side panes, with a 24dp gap."
+      },
+      {
+        "name": "pane-max",
+        "value": "640dp",
+        "purpose": "Maximum readable width of a pane and of the tutorial player, centred."
+      },
+      {
+        "name": "card-two-column",
+        "value": "260dp × max(fontScale, 1) × 2 + 24dp",
+        "purpose": "Cutting-card content width at which the diagram moves beside the radii."
+      },
+      {
+        "name": "tutorial-pinned-drawing",
+        "value": "560dp window height",
+        "purpose": "At or above, the tutorial drawing stays pinned while the text scrolls; below, it scrolls with the text."
+      },
+      {
+        "name": "tutorial-stacked-step-bar",
+        "value": "fontScale > 1.3",
+        "purpose": "The step position moves above the step-bar buttons."
+      }
     ]
   },
   "components": [
@@ -40,116 +372,86 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The single filled main action on a page, e.g. Calcular or Salvar.",
+      "description": "The single filled main action on a page: Calcular, Salvar perfil, Próximo or Concluir.",
       "html": "<button class=\"ds-btn-primary\">Calcular</button>",
-      "css": ".ds-btn-primary { background: #784F82; color: #FFFFFF; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; padding: 10px 24px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-btn-primary:hover { background: #6B4575; } .ds-btn-primary:active { background: #5F3869; } .ds-btn-primary:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
+      "css": ".ds-btn-primary { background: #784F82; color: #FFFFFF; padding: 10px 24px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-btn-primary:hover { background: #6E4878; } .ds-btn-primary:active { background: #694473; } .ds-btn-primary:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
     },
     {
       "name": "Text Button",
       "kind": "button",
       "refersTo": "button-text",
-      "description": "Dominant secondary action: Perfis de medidas, Usar perfil, Editar medidas, Anterior, Cancelar.",
-      "html": "<button class=\"ds-btn-text\">Editar medidas</button>",
-      "css": ".ds-btn-text { background: transparent; color: #784F82; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; padding: 10px 12px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-btn-text:hover { background: rgba(120,79,130,0.08); } .ds-btn-text:active { background: rgba(120,79,130,0.12); } .ds-btn-text:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
+      "description": "Every other action: Perfis de medidas, Usar perfil, Editar medidas, Voltar ao cálculo, Anterior, Cancelar.",
+      "html": "<button class=\"ds-btn-text\">Usar perfil</button>",
+      "css": ".ds-btn-text { background: transparent; color: #784F82; padding: 10px 12px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-btn-text:hover { background: rgba(120,79,130,0.08); } .ds-btn-text:active { background: rgba(120,79,130,0.12); } .ds-btn-text:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; } .ds-btn-text:disabled { color: rgba(32,27,19,0.38); background: transparent; cursor: default; }"
     },
     {
       "name": "Tonal Button",
       "kind": "button",
       "refersTo": "button-tonal",
-      "description": "The prominent secondary path, Tutorial de dobra do tecido, leading the wrapping action row under the cutting card beside Editar medidas.",
+      "description": "Used once: Tutorial de dobra do tecido, on the cutting card's own Heather Wash pair.",
       "html": "<button class=\"ds-btn-tonal\">Tutorial de dobra do tecido</button>",
-      "css": ".ds-btn-tonal { background: #F2DBF3; color: #514154; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; padding: 10px 24px; border: none; border-radius: 9999px; cursor: pointer; } .ds-btn-tonal:hover { background: #EACFEB; } .ds-btn-tonal:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
+      "css": ".ds-btn-tonal { background: #F2DBF3; color: #514154; padding: 10px 24px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-btn-tonal:hover { background: #E7D1E8; } .ds-btn-tonal:active { background: #E2CCE3; } .ds-btn-tonal:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
+    },
+    {
+      "name": "Disclosure",
+      "kind": "button",
+      "refersTo": "disclosure",
+      "description": "Collapsed-by-default text button with a Material Symbols chevron that flips when open; the label wraps before the chevron shrinks.",
+      "html": "<div class=\"ds-disclosures\"><button class=\"ds-disclosure\" aria-expanded=\"false\">Como levar os raios ao papel<svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z\"/></svg></button><button class=\"ds-disclosure\" aria-expanded=\"true\">Fórmulas<svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z\"/></svg></button><p class=\"ds-disclosure-body\">Use r sem arredondamento nos cálculos; apenas os resultados exibidos têm duas casas decimais.</p></div>",
+      "css": ".ds-disclosures { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-family: Roboto, system-ui, sans-serif; color: #201B13; } .ds-disclosure { display: inline-flex; align-items: center; gap: 4px; background: transparent; color: #784F82; padding: 10px 12px; text-align: left; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-disclosure svg { flex: none; transition: transform 0.15s; } .ds-disclosure[aria-expanded=\"true\"] svg { transform: scaleY(-1); } .ds-disclosure:hover { background: rgba(120,79,130,0.08); } .ds-disclosure:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; } .ds-disclosure-body { margin: 0; font: 400 16px/24px Roboto, system-ui, sans-serif; }"
     },
     {
       "name": "Top App Bar",
-      "kind": "navigation",
+      "kind": "nav",
       "refersTo": "top-app-bar",
-      "description": "Calculator title with the labelled Perfis de medidas action; a title and an action, not a navigation destination.",
+      "description": "The calculator's only bar: the Saia godê inteira heading and the labelled Perfis de medidas action. A title and an action, not navigation.",
       "html": "<header class=\"ds-appbar\"><h1>Saia godê inteira</h1><button>Perfis de medidas</button></header>",
-      "css": ".ds-appbar { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 0 4px 0 16px; background: #FFF8F3; color: #201B13; font-family: Roboto, system-ui, sans-serif; } .ds-appbar h1 { flex: 1; margin: 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-appbar button { background: transparent; color: #784F82; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; padding: 10px 12px; border: none; border-radius: 9999px; }"
+      "css": ".ds-appbar { display: flex; align-items: center; min-height: 64px; padding: 0 4px 0 16px; background: #FFF8F3; color: #201B13; } .ds-appbar h1 { flex: 1; margin: 0 16px 0 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-appbar button { background: transparent; color: #784F82; padding: 10px 12px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-appbar button:hover { background: rgba(120,79,130,0.08); } .ds-appbar button:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
     },
     {
-      "name": "Measurement Field",
+      "name": "Section Group with Field",
       "kind": "input",
-      "refersTo": "measurement-field",
-      "description": "Outlined field with persistent label, cm suffix and supporting guidance.",
-      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Cintura</span><span class=\"ds-field-box\"><input inputmode=\"decimal\" value=\"80\"><span class=\"ds-field-suffix\">cm</span></span><span class=\"ds-field-support\">Meça na altura do cós.</span></label>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: 4px; font-family: Roboto, system-ui, sans-serif; color: #201B13; } .ds-field-label { font: 400 12px/16px Roboto, system-ui, sans-serif; color: #4E4539; } .ds-field-box { display: flex; align-items: center; border: 1px solid #807667; border-radius: 8px; padding: 0 16px; min-height: 56px; } .ds-field-box:focus-within { border: 2px solid #784F82; padding: 0 15px; } .ds-field input { flex: 1; border: none; background: transparent; font: 400 16px/24px Roboto, system-ui, sans-serif; color: #201B13; outline: none; } .ds-field-suffix { color: #4E4539; font: 400 16px/24px Roboto, system-ui, sans-serif; } .ds-field-support { font: 400 14px/20px Roboto, system-ui, sans-serif; color: #4E4539; padding: 0 16px; }"
-    },
-    {
-      "name": "Section Group",
-      "kind": "card",
       "refersTo": "section-group",
-      "description": "Tonal input grouping with heading; never nested, never shadowed.",
-      "html": "<section class=\"ds-group\"><h3>Margens de corte</h3><p>Valores explícitos, inclusive zero.</p></section>",
-      "css": ".ds-group { background: #FEF2E5; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; color: #201B13; font-family: Roboto, system-ui, sans-serif; } .ds-group h3 { margin: 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-group p { margin: 0; font: 400 16px/24px Roboto, system-ui, sans-serif; color: #4E4539; }"
+      "description": "A Calico Low group with a Title Large heading and outlined fields whose label carries the unit; the waist field has its source line and Usar perfil above it.",
+      "html": "<section class=\"ds-group\"><h2>Medida do corpo</h2><div class=\"ds-source\"><span>Medida manual</span><button>Usar perfil</button></div><label class=\"ds-field\"><span class=\"ds-field-box\"><span class=\"ds-field-label\">Circunferência da cintura (cm)</span><input inputmode=\"decimal\" value=\"80\"></span><span class=\"ds-field-support\">Meça a circunferência da cintura na posição desejada do cós, sem acrescentar folga ou margens.</span></label><label class=\"ds-field ds-field-error\"><span class=\"ds-field-box\"><span class=\"ds-field-label\">Folga de cintura (cm)</span><input inputmode=\"decimal\" value=\"\"></span><span class=\"ds-field-support\">Informe a folga; zero é válido.</span></label></section>",
+      "css": ".ds-group { background: #FEF2E5; color: #201B13; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; font-family: Roboto, system-ui, sans-serif; } .ds-group h2 { margin: 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-source { display: flex; align-items: center; margin-bottom: -12px; } .ds-source span { flex: 1; font: 400 14px/20px Roboto, system-ui, sans-serif; color: #4E4539; } .ds-source button { background: transparent; color: #784F82; padding: 10px 12px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-source button:hover { background: rgba(120,79,130,0.08); } .ds-source button:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; } .ds-field { display: flex; flex-direction: column; gap: 4px; } .ds-field-box { position: relative; display: flex; align-items: center; border: 1px solid #807667; border-radius: 8px; padding: 0 16px; min-height: 56px; } .ds-field-box:hover { border-color: #201B13; } .ds-field-box:focus-within { border: 2px solid #784F82; padding: 0 15px; } .ds-field-label { position: absolute; top: -9px; left: 12px; padding: 0 4px; background: #FEF2E5; font: 400 12px/16px Roboto, system-ui, sans-serif; color: #4E4539; } .ds-field-box:focus-within .ds-field-label { color: #784F82; } .ds-field input { flex: 1; border: none; background: transparent; font: 400 16px/24px Roboto, system-ui, sans-serif; color: #201B13; outline: none; } .ds-field-support { font: 400 14px/20px Roboto, system-ui, sans-serif; color: #4E4539; padding: 0 16px; } .ds-field-error .ds-field-box { border: 2px solid #BA1A1A; padding: 0 15px; } .ds-field-error .ds-field-label, .ds-field-error .ds-field-support { color: #BA1A1A; }"
     },
     {
       "name": "Cutting Card",
       "kind": "card",
       "refersTo": "cutting-card",
-      "description": "The answer on Heather Wash with 28dp corners: reference and cutting groups, each value once with its line number, stroke sample and label, then the drafting diagram under \"Diagrama das linhas\" on the same surface (beside the radii when two 260dp columns fit). The radius rows are the diagram's key. Every text and stroke on it is On Heather Wash; labels and the note are quieter by type size only.",
-      "html": "<section class=\"ds-cut\"><h2>Raios para o molde</h2><h3>Linhas de referência</h3><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>1</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>Costura da cintura</p><p class=\"ds-cut-value\">13,05&nbsp;cm</p></div><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>3</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"2 5\"/></svg>Barra acabada</p><p class=\"ds-cut-value\">73,05&nbsp;cm</p></div><h3>Linhas de corte</h3><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>2</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"12 6\"/></svg>Corte da cintura</p><p class=\"ds-cut-value\">12,05&nbsp;cm</p></div><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>4</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"12 5 2 5\"/></svg>Corte da barra</p><p class=\"ds-cut-value\">75,05&nbsp;cm</p></div><h3>Diagrama das linhas</h3><div class=\"ds-cut-figure\" role=\"img\" aria-label=\"Diagrama esquemático, sem escala; linhas 2, 1, 3 e 4 do centro para fora\"></div><p class=\"ds-cut-note\">Esquema sem escala, não é molde para impressão.</p></section>",
-      "css": ".ds-cut { background: #F2DBF3; color: #514154; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px; font-family: Roboto, system-ui, sans-serif; } .ds-cut h2 { margin: 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-cut h3 { margin: 8px 0 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-cut-entry { display: flex; flex-direction: column; gap: 4px; } .ds-cut-key { margin: 0; display: flex; align-items: center; gap: 8px; font: 400 16px/24px Roboto, system-ui, sans-serif; } .ds-cut-key span { font: 500 14px/20px Roboto, system-ui, sans-serif; } .ds-cut-value { margin: 0; font: 500 24px/32px Roboto, system-ui, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-cut-figure { aspect-ratio: 1; max-width: 400px; } .ds-cut-note { margin: -8px 0 0; font: 400 14px/20px Roboto, system-ui, sans-serif; }"
+      "description": "The answer on Heather Wash with 28dp corners: reference then cutting groups, each value once under its line key, then the drafting diagram on the same surface (beside the radii when two 260dp columns fit). Everything is On Heather Wash; the radius rows are the diagram's only key, and its text equivalent omits the values.",
+      "html": "<section class=\"ds-cut\"><h2>Raios para o molde</h2><div class=\"ds-cut-group\"><h3>Linhas de referência</h3><div class=\"ds-cut-row\"><p class=\"ds-cut-key\"><span>1</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>Costura da cintura</p><p class=\"ds-cut-value\">13,05&nbsp;cm</p></div><div class=\"ds-cut-row\"><p class=\"ds-cut-key\"><span>3</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"2 5\"/></svg>Barra acabada</p><p class=\"ds-cut-value\">73,05&nbsp;cm</p></div></div><div class=\"ds-cut-group\"><h3>Linhas de corte</h3><div class=\"ds-cut-row\"><p class=\"ds-cut-key\"><span>2</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"12 6\"/></svg>Corte da cintura</p><p class=\"ds-cut-value\">12,05&nbsp;cm</p></div><div class=\"ds-cut-row\"><p class=\"ds-cut-key\"><span>4</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"12 5 2 5\"/></svg>Corte da barra</p><p class=\"ds-cut-value\">75,05&nbsp;cm</p></div></div><div class=\"ds-cut-group\"><h3>Diagrama das linhas</h3><svg class=\"ds-cut-figure\" viewBox=\"0 0 220 220\" role=\"img\" aria-label=\"Diagrama esquemático de um setor da saia godê inteira, sem escala. Centro comum no canto superior esquerdo; do centro para fora, linhas 2, 1, 3 e 4.\"><g fill=\"none\" stroke=\"#514154\" stroke-width=\"2\"><path d=\"M76 16 A60 60 0 0 1 16 76\"/><path d=\"M60 16 A44 44 0 0 1 16 60\" stroke-dasharray=\"12 6\"/><path d=\"M180 16 A164 164 0 0 1 16 180\" stroke-dasharray=\"2 5\"/><path d=\"M206 16 A190 190 0 0 1 16 206\" stroke-dasharray=\"12 5 2 5\"/></g><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"#514154\"/><g fill=\"#F2DBF3\"><circle cx=\"72\" cy=\"38\" r=\"9\"/><circle cx=\"31\" cy=\"56\" r=\"9\"/><circle cx=\"170\" cy=\"72\" r=\"9\"/><circle cx=\"83\" cy=\"191\" r=\"9\"/></g><g font-family=\"Roboto, sans-serif\" font-size=\"14\" font-weight=\"500\" fill=\"#514154\" text-anchor=\"middle\" dominant-baseline=\"central\"><text x=\"72\" y=\"38\">1</text><text x=\"31\" y=\"56\">2</text><text x=\"170\" y=\"72\">3</text><text x=\"83\" y=\"191\">4</text></g></svg><p class=\"ds-cut-note\">Esquema sem escala, não é molde para impressão. O cálculo não garante o caimento.</p></div></section>",
+      "css": ".ds-cut { background: #F2DBF3; color: #514154; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 24px; font-family: Roboto, system-ui, sans-serif; } .ds-cut h2 { margin: 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-cut-group { display: flex; flex-direction: column; gap: 16px; } .ds-cut h3 { margin: 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-cut-row { display: flex; flex-direction: column; gap: 4px; border-radius: 8px; } .ds-cut-row:hover { background: rgba(81,65,84,0.06); } .ds-cut-key { margin: 0; display: flex; align-items: center; gap: 8px; font: 400 16px/24px Roboto, system-ui, sans-serif; } .ds-cut-key span { font: 500 14px/20px Roboto, system-ui, sans-serif; } .ds-cut-value { margin: 0; font: 500 24px/32px Roboto, system-ui, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-cut-figure { width: 100%; max-width: 400px; aspect-ratio: 1; margin-bottom: -8px; } .ds-cut-figure:focus-visible { outline: 3px solid #514154; outline-offset: 2px; } .ds-cut-note { margin: 0; font: 400 14px/20px Roboto, system-ui, sans-serif; }"
     },
     {
-      "name": "Results Action Row",
-      "kind": "button",
-      "refersTo": "button-tonal",
-      "description": "One wrapping row under the cutting card: the tonal tutorial button, then the Editar medidas text button 8dp after it; at large text the second wraps below the first.",
-      "html": "<div class=\"ds-actions\"><button class=\"ds-btn-tonal\">Tutorial de dobra do tecido</button><button class=\"ds-btn-text\">Editar medidas</button></div>",
-      "css": ".ds-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }"
-    },
-    {
-      "name": "Measurement Summary",
+      "name": "Results Sequence",
       "kind": "custom",
-      "description": "Medidas utilizadas (cm): a Title Medium heading, then the inputs as one wrapping Body Medium line in On Surface; the unit is stated once and a non-breaking space keeps each value with its label.",
-      "html": "<section class=\"ds-summary\"><h3>Medidas utilizadas (cm)</h3><p>Circunferência da cintura:&nbsp;80,00 · Folga de cintura:&nbsp;2,00 · Comprimento acabado:&nbsp;60,00 · Margem de costura da cintura:&nbsp;1,00 · Margem de barra:&nbsp;2,00</p></section>",
-      "css": ".ds-summary { display: flex; flex-direction: column; gap: 4px; color: #201B13; font-family: Roboto, system-ui, sans-serif; } .ds-summary h3 { margin: 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-summary p { margin: 0; font: 400 14px/20px Roboto, system-ui, sans-serif; }"
-    },
-    {
-      "name": "Boundary Callout",
-      "kind": "card",
       "refersTo": "boundary-callout",
-      "description": "Limites do cálculo: one Calico High callout stating what the calculation does not cover.",
-      "html": "<aside class=\"ds-callout\"><h3>Limites do cálculo</h3><p>Não inclui divisão em painéis, molde do cós ou metragem de tecido.</p></aside>",
-      "css": ".ds-callout { background: #F2E6D9; color: #201B13; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; font-family: Roboto, system-ui, sans-serif; } .ds-callout h3 { margin: 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-callout p { margin: 0; font: 400 16px/24px Roboto, system-ui, sans-serif; }"
+      "description": "Under the card, 16dp apart: the wrapping action row (tonal tutorial button, Editar medidas), the Medidas utilizadas (cm) summary as one Body Medium line, and the Limites do cálculo callout on Calico High.",
+      "html": "<div class=\"ds-results\"><div class=\"ds-actions\"><button class=\"ds-tonal\">Tutorial de dobra do tecido</button><button class=\"ds-text\">Editar medidas</button></div><section class=\"ds-summary\"><h3>Medidas utilizadas (cm)</h3><p>Circunferência da cintura:&nbsp;80,00 · Folga de cintura:&nbsp;2,00 · Comprimento acabado:&nbsp;60,00 · Margem de costura da cintura:&nbsp;1,00 · Margem de barra:&nbsp;2,00</p></section><aside class=\"ds-callout\"><h3>Limites do cálculo</h3><p>Para saia godê inteira em tecido plano, com cós e fechamento. Não inclui divisão em painéis, margens do fechamento, molde do cós ou metragem de tecido.</p></aside></div>",
+      "css": ".ds-results { display: flex; flex-direction: column; gap: 16px; color: #201B13; font-family: Roboto, system-ui, sans-serif; } .ds-actions { display: flex; flex-wrap: wrap; gap: 8px; } .ds-tonal { background: #F2DBF3; color: #514154; padding: 10px 24px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-tonal:hover { background: #E7D1E8; } .ds-text { background: transparent; color: #784F82; padding: 10px 12px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-text:hover { background: rgba(120,79,130,0.08); } .ds-tonal:focus-visible, .ds-text:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; } .ds-summary { display: flex; flex-direction: column; gap: 4px; } .ds-results h3 { margin: 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-summary p { margin: 0; font: 400 14px/20px Roboto, system-ui, sans-serif; } .ds-callout { background: #F2E6D9; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; } .ds-callout p { margin: 0; font: 400 16px/24px Roboto, system-ui, sans-serif; }"
     },
     {
-      "name": "Disclosure",
-      "kind": "button",
-      "refersTo": "button-text",
-      "description": "Text button that shows or hides the drafting steps or formulas; starts collapsed and exposes its state. The two disclosures sit 8dp apart as one pair after the limits callout.",
-      "html": "<button class=\"ds-disclosure\" aria-expanded=\"false\">Fórmulas<svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z\"/></svg></button>",
-      "css": ".ds-disclosure { display: inline-flex; align-items: center; gap: 4px; background: transparent; color: #784F82; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; padding: 10px 12px; border: none; border-radius: 9999px; cursor: pointer; } .ds-disclosure svg { flex: none; } .ds-disclosure[aria-expanded=\"true\"] svg { transform: scaleY(-1); } .ds-disclosure:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
-    },
-    {
-      "name": "Profile FAB",
-      "kind": "button",
-      "refersTo": "fab-create-profile",
-      "description": "The only FAB: create a measurement profile.",
-      "html": "<button class=\"ds-fab\"><svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z\"/></svg>Novo perfil</button>",
-      "css": ".ds-fab { display: inline-flex; align-items: center; gap: 12px; background: #FBD7FF; color: #5F3869; font: 500 14px/20px Roboto, system-ui, sans-serif; height: 56px; padding: 0 20px 0 16px; border: none; border-radius: 16px; box-shadow: 0 3px 6px rgba(0,0,0,0.15); cursor: pointer; } .ds-fab:hover { background: #F3CBF9; } .ds-fab:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
-    },
-    {
-      "name": "Tutorial Step Bar",
-      "kind": "navigation",
-      "refersTo": "tutorial-step-bar",
-      "description": "Fixed bottom bar of the full-screen tutorial: Anterior, Etapa n de 6, Próximo or Concluir.",
-      "html": "<nav class=\"ds-stepbar\"><button disabled>Anterior</button><span>Etapa 1 de 6</span><button class=\"ds-stepbar-next\">Próximo</button></nav>",
-      "css": ".ds-stepbar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #F8ECDF; font-family: Roboto, system-ui, sans-serif; } .ds-stepbar span { flex: 1; text-align: center; font: 500 14px/20px Roboto, system-ui, sans-serif; color: #4E4539; } .ds-stepbar button { min-height: 48px; padding: 10px 12px; border: none; border-radius: 9999px; background: transparent; color: #784F82; font: 500 14px/20px Roboto, system-ui, sans-serif; } .ds-stepbar button:disabled { color: rgba(32,27,19,0.38); } .ds-stepbar .ds-stepbar-next { background: #784F82; color: #FFFFFF; padding: 10px 24px; }"
-    },
-    {
-      "name": "Drafting Diagram",
+      "name": "Fabric Folding Tutorial",
       "kind": "custom",
-      "description": "Square quarter-circle sketch up to 400dp drawn on the cutting card's own surface in its on-container ink, arcs told apart by stroke pattern and number labels, never colour; no separate key, since the card's radius rows are the key; its text equivalent omits the radius values, which the cutting card states once (owner-confirmed).",
-      "html": "<svg class=\"ds-diagram\" width=\"220\" height=\"220\" viewBox=\"0 0 220 220\" role=\"img\" aria-label=\"Diagrama: 1 costura da cintura, 2 corte da cintura, 3 barra acabada, 4 corte da barra\"><g fill=\"none\" stroke=\"#514154\" stroke-width=\"2\"><path d=\"M76 16 A60 60 0 0 1 16 76\"/><path d=\"M60 16 A44 44 0 0 1 16 60\" stroke-dasharray=\"12 6\"/><path d=\"M180 16 A164 164 0 0 1 16 180\" stroke-dasharray=\"2 5\"/><path d=\"M206 16 A190 190 0 0 1 16 206\" stroke-dasharray=\"12 5 2 5\"/></g><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"#514154\"/><g font-family=\"Roboto, sans-serif\" font-size=\"14\" font-weight=\"500\" fill=\"#514154\"><text x=\"66\" y=\"58\">1</text><text x=\"36\" y=\"58\">2</text><text x=\"150\" y=\"112\">3</text><text x=\"100\" y=\"190\">4</text></g></svg>",
-      "css": ".ds-diagram { display: block; background: #F2DBF3; }"
+      "refersTo": "tutorial-step-bar",
+      "description": "Full-screen player, one column at most 640dp: close button and step title, the theme-bound Rive drawing in a Calico High frame, a Title Medium lead, brief context, a collapsed Detalhes in Body Medium and Faded Walnut, and the fixed Calico Mid step bar.",
+      "html": "<div class=\"ds-player\"><header class=\"ds-player-top\"><button class=\"ds-icon\" aria-label=\"Fechar tutorial\"><svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z\"/></svg></button><h1>Marcar os raios</h1></header><div class=\"ds-frame\"><svg viewBox=\"0 0 448 448\" role=\"img\" aria-label=\"Marcação proporcional em Rive\"><rect x=\"24\" y=\"24\" width=\"400\" height=\"400\" fill=\"#F2DBF3\"/><g fill=\"none\" stroke=\"#514154\" stroke-width=\"3\"><path d=\"M24 24H424M24 24V424\"/><path d=\"M424 24V424\" stroke-dasharray=\"3 7\"/><path d=\"M24 424H424\" stroke-dasharray=\"18 9\"/><path d=\"M94 24A70 70 0 0 1 24 94\"/><path d=\"M88 24A64 64 0 0 1 24 88\" stroke-dasharray=\"18 9\"/><path d=\"M413 24A389 389 0 0 1 24 413\" stroke-dasharray=\"3 7\"/><path d=\"M424 24A400 400 0 0 1 24 424\" stroke=\"#4F644A\" stroke-dasharray=\"18 7 3 7\"/></g><circle cx=\"24\" cy=\"24\" r=\"5\" fill=\"#514154\"/></svg></div><div class=\"ds-controls\"><button class=\"ds-text\">Reproduzir marcação</button></div><div class=\"ds-steps\"><p class=\"ds-lead\">Prenda fita ou régua no encontro das duas dobras fechadas e marque cada arco com raio constante.</p><ol class=\"ds-key\"><li>1. Costura da cintura: 13,05&nbsp;cm</li><li>2. Corte da cintura: 12,05&nbsp;cm</li><li>3. Barra acabada: 73,05&nbsp;cm</li><li>4. Corte da barra: 75,05&nbsp;cm</li></ol><p>As linhas 1 (contínua) e 3 (pontilhada) são referências de costura e do comprimento acabado, não de corte.</p><button class=\"ds-text ds-more\" aria-expanded=\"false\">Detalhes<svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z\"/></svg></button></div><nav class=\"ds-stepbar\"><button class=\"ds-text\">Anterior</button><span>Etapa 4 de 6</span><button class=\"ds-next\">Próximo</button></nav></div>",
+      "css": ".ds-player { max-width: 640px; background: #FFF8F3; color: #201B13; font-family: Roboto, system-ui, sans-serif; display: flex; flex-direction: column; } .ds-player-top { display: flex; align-items: center; gap: 4px; min-height: 64px; padding: 0 4px; } .ds-player-top h1 { flex: 1; margin: 0 12px 0 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-icon { width: 48px; height: 48px; display: grid; place-items: center; background: transparent; color: #4E4539; border: none; border-radius: 9999px; cursor: pointer; } .ds-icon:hover { background: rgba(78,69,57,0.08); } .ds-frame { margin: 0 16px; align-self: center; width: min(100% - 32px, 320px); padding: 8px; background: #F2E6D9; border-radius: 16px; } .ds-frame svg { display: block; width: 100%; } .ds-controls { display: flex; justify-content: center; } .ds-steps { display: flex; flex-direction: column; gap: 12px; padding: 16px; } .ds-steps p { margin: 0; font: 400 16px/24px Roboto, system-ui, sans-serif; } .ds-steps .ds-lead { font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-key { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font: 400 16px/24px Roboto, system-ui, sans-serif; } .ds-text { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; background: transparent; color: #784F82; padding: 10px 12px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-text:hover { background: rgba(120,79,130,0.08); } .ds-stepbar { display: flex; align-items: center; padding: 8px 16px; background: #F8ECDF; } .ds-stepbar span { flex: 1; text-align: center; font: 500 14px/20px Roboto, system-ui, sans-serif; color: #4E4539; } .ds-next { background: #784F82; color: #FFFFFF; padding: 10px 24px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-next:hover { background: #6E4878; } .ds-icon:focus-visible, .ds-text:focus-visible, .ds-next:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
+    },
+    {
+      "name": "Profile List",
+      "kind": "card",
+      "refersTo": "profile-row",
+      "description": "Profile management: Calico Low rows with 16dp corners, the name in Title Medium, waist and date, and a labelled Ações menu button; the extended Mulberry Wash FAB is the app's only FAB.",
+      "html": "<div class=\"ds-profiles\"><article class=\"ds-row\" tabindex=\"0\"><h3>Ana</h3><p>80 cm — 12/09/2026</p><p>Cós alto</p><button class=\"ds-text\">Ações: Ana</button></article><article class=\"ds-row\" tabindex=\"0\"><h3>Beatriz</h3><p>72,5 cm — 03/10/2026</p><button class=\"ds-text\">Ações: Beatriz</button></article><button class=\"ds-fab\"><svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z\"/></svg>Novo perfil</button></div>",
+      "css": ".ds-profiles { display: flex; flex-direction: column; gap: 16px; color: #201B13; font-family: Roboto, system-ui, sans-serif; } .ds-row { background: #FEF2E5; border-radius: 16px; padding: 12px 16px 8px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.15s; } .ds-row:hover { background: #F4E8DB; } .ds-row:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; } .ds-row h3 { margin: 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-row p { margin: 0; font: 400 14px/20px Roboto, system-ui, sans-serif; color: #4E4539; } .ds-text { align-self: flex-start; background: transparent; color: #784F82; padding: 10px 12px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-text:hover { background: rgba(120,79,130,0.08); } .ds-text:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; } .ds-fab { align-self: flex-end; display: inline-flex; align-items: center; gap: 12px; background: #FBD7FF; color: #5F3869; font: 500 14px/20px Roboto, system-ui, sans-serif; height: 56px; padding: 0 20px 0 16px; border: none; border-radius: 16px; box-shadow: 0 3px 6px rgba(0,0,0,0.15); cursor: pointer; } .ds-fab:hover { background: #F1CEF5; } .ds-fab:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
     }
   ],
   "narrative": {
     "northStar": "The Tailor's Notebook",
-    "overview": "Molda should feel like the drafting notebook a skilled tailor keeps next to the cutting table. The pages are warm, the figures are exact, and a worked explanation always sits in the margin. Every screen is a page you can check: the inputs at the top, the assumptions stated, the results set apart on a cutting card, and the formulas available on request. The character is tactile and confident. Primary actions are firm pill shapes you can rely on, and grouped content reads like swatches laid on raw calico, stacked by tone rather than lifted with shadows.\n\nThe system is native Material 3, themed rather than reinvented. Dynamic color is the runtime default, so the dyed-fabric palette is the fallback identity. The notebook character must also survive in shape, spacing and hierarchy when the wallpaper replaces the plum. Density is calm: one readable column on compact windows, generous 16dp rhythm, and two panes only when the content truly fits. Motion is Material's own and never moves a dimension while someone is reading it.",
+    "overview": "Molda should feel like the drafting notebook a skilled tailor keeps next to the cutting table. The pages are warm, the figures are exact, and a worked explanation always sits in the margin. Every screen is a page you can check: the inputs at the top, the assumptions stated, the results set apart on a cutting card, and the formulas available on request. The character is tactile and confident. Primary actions are firm pill shapes you can rely on, and grouped content reads like swatches laid on raw calico, stacked by tone rather than lifted with shadows.\n\nThe system is native Material 3, themed rather than reinvented. Dynamic color is the runtime default, so the dyed-fabric palette is the fallback identity. The notebook character must also survive in shape, spacing and hierarchy when the wallpaper replaces the plum. Density is calm: one readable column on compact windows, generous 16dp rhythm, and two panes only when the content truly fits. Interface motion is Material's own and never moves a dimension while someone is reading it; the one choreographed motion is the tutorial drawing, which plays only when asked.",
     "keyCharacteristics": [
       "Dynamic color first; the warm Mulberry/Lichen/Calico palette is the fallback.",
       "Flat tonal layering; no decorative shadows, no nested cards.",
@@ -158,24 +460,52 @@
       "System sans-serif on the full Material type scale, in sp, so it scales to 200%."
     ],
     "rules": [
-      { "name": "The Dynamic-First Rule", "body": "Always read colors from `MaterialTheme.colorScheme` roles; never hard-code a hex value in a screen. The dyed-fabric palette exists in `ui/theme/Color.kt` only as the fallback scheme.", "section": "colors" },
-      { "name": "The Not-By-Color Rule", "body": "No meaning travels on color alone. Reference and cutting lines, errors and states also carry a label, a line style or text.", "section": "colors" },
-      { "name": "The On-Its-Container Rule", "body": "Text and strokes take the on-role of the surface they sit on: everything on the cutting card is On Heather Wash (onSecondaryContainer), quieter only through type, never a borrowed onSurfaceVariant. Text at least 4.5:1, meaningful graphics at least 3:1, in light, dark and dynamic schemes.", "section": "colors" },
-      { "name": "The Equal Radii Rule", "body": "All four radii share Headline Small. No result is bolder than another; the labels say which is a reference line and which is a cutting line.", "section": "typography" },
-      { "name": "The Never-Truncate Rule", "body": "Never truncate drafting values, errors or essential action labels. Keep the value and its \"cm\" together with a non-breaking space, format with pt-BR decimal commas, and avoid fixed-height text containers.", "section": "typography" },
-      { "name": "The Fits-Or-Stacks Rule", "body": "If two panes would squeeze either one below 360dp at the current font scale, stack them.", "section": "layout" },
-      { "name": "The Swatch Stack Rule", "body": "Group content with a tonal surface, never a shadow, and never nest one grouped surface inside another.", "section": "elevation" }
+      {
+        "name": "The Dynamic-First Rule",
+        "body": "Always read colors from `MaterialTheme.colorScheme` roles; never hard-code a hex value in a screen. The dyed-fabric palette exists in `ui/theme/Color.kt` only as the fallback scheme.",
+        "section": "colors"
+      },
+      {
+        "name": "The Not-By-Color Rule",
+        "body": "No meaning travels on color alone. Reference and cutting lines, errors and states also carry a label, a line style or text.",
+        "section": "colors"
+      },
+      {
+        "name": "The On-Its-Container Rule",
+        "body": "Text and strokes take the \"on\" role of the surface they sit on. Everything on the cutting card (heading, group titles, labels, values, stroke samples, diagram lines, numbers and the note) is On Heather Wash (`onSecondaryContainer`); quieter elements are quieter through type size and weight, never through a borrowed role such as `onSurfaceVariant`, which drops to grey-on-slate in dark mode. Checked pairs: text at least 4.5:1 and meaningful graphics at least 3:1 in light, dark and dynamic schemes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Equal Radii Rule",
+        "body": "All four radii share Headline Small. No result is bolder than another; the labels say which is a reference line and which is a cutting line.",
+        "section": "typography"
+      },
+      {
+        "name": "The Never-Truncate Rule",
+        "body": "Never truncate drafting values, errors or essential action labels. Keep the value and its \"cm\" together with a non-breaking space, format with pt-BR decimal commas, and avoid fixed-height text containers.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fits-Or-Stacks Rule",
+        "body": "If two panes would squeeze either one below 360dp at the current font scale, stack them.",
+        "section": "layout"
+      },
+      {
+        "name": "The Swatch Stack Rule",
+        "body": "Group content with a tonal surface, never a shadow, and never nest one grouped surface inside another.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do take every color from `MaterialTheme.colorScheme` roles so dynamic color, dark theme and the fallback palette all hold.",
       "Do group inputs on Calico Low with 16dp corners and 16dp padding, and put the four radii on the Heather Wash cutting card with 28dp corners.",
-      "Do give each page one filled Mulberry Dye primary action and make the other actions text buttons.",
+      "Do give each page one filled Mulberry Dye primary action and make the other actions text buttons; the tutorial entry is the one tonal button.",
       "Do set every radius in Headline Small with two pt-BR decimals and a non-breaking space before \"cm\", and show each value once.",
-      "Do put formulas and drafting steps behind disclosures that start collapsed and announce their state.",
+      "Do put formulas, drafting steps and tutorial details behind disclosures that start collapsed and announce their state.",
       "Do keep the tutorial's step bar fixed and fully visible on every step, at every text size.",
-      "Do distinguish diagram lines by stroke pattern and number labels, and provide the text equivalent.",
+      "Do distinguish diagram and drawing lines by stroke pattern and number labels, and provide the text equivalent.",
       "Do keep the diagram on the cutting card's own surface, under \"Diagrama das linhas\", directly after or beside the radii.",
-      "Do put the tutorial and \"Editar medidas\" in one wrapping action row under the card, then the summary, the limits and the disclosures.",
+      "Do follow the card with the action row, the summary, the limits callout and the disclosures, in that order.",
       "Do keep touch targets at 48dp or more and check layouts at 200% text size."
     ],
     "donts": [
@@ -186,7 +516,7 @@
       "Don't make one radius more prominent than the others.",
       "Don't signal reference versus cutting, or error versus valid, by color alone.",
       "Don't use the legacy Compose Material Icons library. Use Material Symbols XML vectors tinted by the theme.",
-      "Don't animate a dimension while it is being read, or add bespoke choreography beyond Material motion."
+      "Don't animate a dimension while it is being read, or add choreography outside the tutorial drawing; interface motion stays Material's own."
     ]
   }
 }
