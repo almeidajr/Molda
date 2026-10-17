@@ -157,7 +157,8 @@ class MeasurementProfilesTest {
         click("Voltar ao cálculo")
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("80")
-        composeRule.onNodeWithText("Cintura copiada do perfil: Ana").assertIsDisplayed()
+        composeRule.onNodeWithText("Cintura copiada do perfil: Ana")
+            .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
         runBlocking { assertEquals(2L, storage.list().single().id) }
     }

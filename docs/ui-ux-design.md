@@ -7,6 +7,12 @@ below with a branded fallback palette while preserving dynamic color and the
 existing interaction, navigation and data-safety requirements. Screen
 implementation remains outside that design-system phase.
 
+The results redesign in [issue #51](https://github.com/almeidajr/Molda/issues/51)
+updates the screen structure and result details below: the calculator gains a
+top app bar, results become a cutting card, the explanation and formulas sit
+behind disclosures, and the fabric-folding tutorial opens in a full-screen
+player instead of a dialog.
+
 Status: confirmed design, implemented in
 [PR #30](https://github.com/almeidajr/Molda/pull/30). This record preserves the
 design interview and decisions agreed by the product owner. It supplements the
@@ -30,18 +36,23 @@ accessibility and human-feedback verification.
 
 ## Confirmed screen structure and calculation flow
 
-- Launch into the calculator. Place "Usar perfil" beside the waist input and
-  provide access to a separate "Perfis de medidas" management screen. Do not
-  introduce an additional home screen.
+- Launch into the calculator under a top app bar titled "Saia godê inteira",
+  whose labelled "Perfis de medidas" action opens the separate management
+  screen. Place "Usar perfil" and the waist's source just above the waist input.
+  Do not introduce an additional home screen; the app bar is not a navigation
+  destination.
 - Keep the five inputs in one form, grouped into body measurement, garment
   choices, and cutting allowances. Place brief guidance by the relevant fields;
   ease and allowances still require explicit values, including zero.
-- After successful calculation, bring results into view on the same screen.
-  Present all four labelled radii, distinguish stitching/reference dimensions
-  from cutting dimensions, include the labelled diagram, and offer
-  "Editar medidas" to return to the form.
-- Keep construction boundaries beside results. Put detailed formulas in an
-  expandable explanation so they remain available for checking.
+- End the form with a full-width "Calcular". After a successful calculation,
+  hide the keyboard and bring the whole cutting card into view on the same
+  screen. The card presents all four labelled radii once, distinguishes
+  stitching/reference dimensions from cutting dimensions, and pairs each value
+  with its diagram number and line style. "Tutorial de dobra do tecido" and
+  "Editar medidas" follow it.
+- Keep construction boundaries beside results in one callout. Put the drafting
+  explanation ("Como levar os raios ao papel") and the formulas behind
+  disclosures that start collapsed, so they remain available for checking.
 
 ## Design tree
 
@@ -104,9 +115,13 @@ accessibility and human-feedback verification.
 - Compact windows show one column. Sufficiently wide windows show calculator
   inputs beside results and may show profile lists beside their editor.
   Adapt to available window space and text size, constrain readable widths,
-  avoid fold hinges, and preserve the current draft when resizing.
-- Keep the agreed hierarchical navigation; no bottom navigation bar or drawer
-  is needed.
+  avoid fold hinges, and preserve the current draft when resizing. One column
+  spans a flat fold and keeps to one side of a half-open or separating one; two
+  panes split at the fold, or share one side when they cannot fit beside it.
+- Keep the agreed hierarchical navigation; no home screen, bottom navigation
+  bar, rail or drawer is needed. The full-screen tutorial player keeps to one
+  side of a half-open or separating fold but spans a flat one, and the cutting
+  card stays in the results pane.
 
 ## Confirmed accessibility acceptance criteria
 
@@ -135,11 +150,21 @@ accessibility and human-feedback verification.
 
 ## Confirmed result details and edge cases
 
-- Use two clearly labelled groups: "Linhas de referência" (waist stitching
-  radius and finished hem radius) and "Linhas de corte" (waist and hem cutting
-  radii). Keep all four values equally readable, in centimetres with two decimal
-  places. Include a compact summary of all five calculation inputs, then the
-  diagram and construction limits. Detailed formulas start collapsed.
+- Use two clearly labelled groups on the cutting card: "Linhas de referência"
+  (waist stitching radius and finished hem radius) and "Linhas de corte" (waist
+  and hem cutting radii). Keep all four values equally readable, in centimetres
+  with two decimal places, each shown and announced once. Then include the
+  tutorial entry, "Editar medidas", a compact summary of all five calculation
+  inputs under "Medidas utilizadas (cm)", the construction-limits callout, the
+  diagram with its line key, and the collapsed drafting explanation and formulas.
+- The diagram's text equivalent describes every line but no longer repeats the
+  radius values, which the card states once. The product owner confirmed this
+  departure from the earlier "lists all dimensions" contract.
+- The tutorial player keeps the drawing pinned while the step's instructions
+  scroll (in short windows the drawing scrolls with them) and has a fixed bar:
+  "Anterior", "Etapa n de 6", and "Próximo", which becomes "Concluir" on the last
+  step. Close, "Concluir" and Back return to the results. Its still frame stays
+  white in dark mode because the Rive artboards paint white; this is a known gap.
 - Before calculation, the wide-window results pane says
   "Preencha as medidas e toque em Calcular." Input changes remove results;
   no usable-looking stale dimensions remain visible.

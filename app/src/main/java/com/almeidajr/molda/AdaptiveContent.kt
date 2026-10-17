@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.HingeInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.HingePolicy
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
@@ -90,9 +91,19 @@ private fun ReadablePane(content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * Places [content] on one side of any hinge that would split it. Material scenes exclude
+ * vertical hinges; compact and tabletop layouts need a safe region too. One column (narrow
+ * content, or [isSingleColumn] content such as the tutorial player) moves off a half-open or
+ * separating vertical fold but spans a flat one; two panes move only when they cannot sit
+ * beside the fold.
+ */
 @Composable
-// Material scenes exclude vertical hinges; compact and tabletop layouts need a safe region too.
-internal fun HingeSafeContent(modifier: Modifier, content: @Composable () -> Unit) {
+internal fun HingeSafeContent(
+    modifier: Modifier,
+    isSingleColumn: Boolean = false,
+    content: @Composable () -> Unit,
+) {
     val hinges = currentWindowAdaptiveInfoV2().windowPosture.hingeList
     val density = LocalDensity.current
     val minimumWidth = with(density) { (360.dp * fontScale.coerceAtLeast(1f)).toPx() }
@@ -108,8 +119,12 @@ internal fun HingeSafeContent(modifier: Modifier, content: @Composable () -> Uni
             if (hinge.isVertical && bounds.left > area.left && bounds.right < area.right) {
                 val left = bounds.left - area.left
                 val right = area.right - bounds.right
-                if (minOf(left, right) < minimumWidth + spacerWidth ||
-                    area.width < minimumWidth * 2 + spacerWidth
+                val isTwoPane = !isSingleColumn && area.width >= minimumWidth * 2 + spacerWidth
+                if (hinge.displacesContent(
+                        isTwoPane,
+                        minOf(left, right),
+                        minimumWidth + spacerWidth,
+                    )
                 ) {
                     area = if (left >= right) {
                         area.copy(right = bounds.left)
@@ -136,3 +151,16 @@ internal fun HingeSafeContent(modifier: Modifier, content: @Composable () -> Uni
         }
     }
 }
+
+/** A half-open (book posture) or physically separating fold splits one column; a flat one does not. */
+private val HingeInfo.splitsSingleColumn: Boolean get() = isSeparating || !isFlat
+
+/**
+ * Whether content must move off this vertical hinge: two panes when the [narrowerSide] cannot
+ * hold a pane plus its gap ([paneWidth]), one column when the fold would split it.
+ */
+private fun HingeInfo.displacesContent(
+    isTwoPane: Boolean,
+    narrowerSide: Float,
+    paneWidth: Float,
+): Boolean = if (isTwoPane) narrowerSide < paneWidth else splitsSingleColumn

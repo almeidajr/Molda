@@ -6,16 +6,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,11 +26,14 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.createSavedStateHandle
@@ -42,6 +48,7 @@ import com.almeidajr.molda.profile.ui.ProfilesContent
 import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.profileWaistText
+import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 
@@ -54,6 +61,10 @@ fun MoldaRoute(
     profiles: ProfilesViewModel = profileViewModel(),
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
+    val calculatorState by calculator.state.collectAsStateWithLifecycle()
+    var showTutorial by rememberSaveable { mutableStateOf(false) }
+    // Keeps the calculator's scroll and disclosures while the tutorial player replaces it.
+    val destinations = rememberSaveableStateHolder()
     var showManagement by rememberSaveable { mutableStateOf(false) }
     var showPicker by rememberSaveable { mutableStateOf(false) }
     var editorFromPicker by rememberSaveable { mutableStateOf(false) }
@@ -88,7 +99,9 @@ fun MoldaRoute(
         showManagement =
             false
     }
-    HingeSafeContent(modifier.fillMaxSize()) {
+    val tutorialRadii = calculatorState.radii?.takeIf { showTutorial }
+    // The player is one column even on a wide window: keep it off a book-posture fold only.
+    HingeSafeContent(modifier.fillMaxSize(), isSingleColumn = tutorialRadii != null) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val wide = maxWidth >= minimumTwoPaneWidth(LocalDensity.current.fontScale)
             Scaffold(
@@ -106,16 +119,23 @@ fun MoldaRoute(
             ) { padding ->
                 // Keep bottom actions reachable while storage feedback is visible.
                 val contentModifier = Modifier.padding(padding).padding(bottom = snackbarInset)
-                Destination(
-                    calculator,
-                    profiles,
-                    showManagement,
-                    { showManagement = it },
-                    { showPicker = true },
-                    cancelEditor,
-                    requestEditor,
-                    contentModifier,
-                )
+                if (tutorialRadii != null) {
+                    FabricFoldingPlayer(tutorialRadii, { showTutorial = false }, contentModifier)
+                } else {
+                    destinations.SaveableStateProvider("destination") {
+                        Destination(
+                            calculator,
+                            profiles,
+                            showManagement,
+                            { showManagement = it },
+                            { showPicker = true },
+                            { showTutorial = true },
+                            cancelEditor,
+                            requestEditor,
+                            contentModifier,
+                        )
+                    }
+                }
                 if (showPicker) {
                     AppProfilePicker(
                         profiles,
@@ -166,6 +186,7 @@ private fun Destination(
     showManagement: Boolean,
     onManage: (Boolean) -> Unit,
     onUseProfile: () -> Unit,
+    onOpenTutorial: () -> Unit,
     cancelEditor: () -> Unit,
     requestEditor: (Long) -> Unit,
     modifier: Modifier,
@@ -207,17 +228,36 @@ private fun Destination(
             compact = { if (profileState.isCreating) editor() else list() },
         )
     } else {
-        SkirtCalculatorScreen(
-            calculatorState,
-            calculator::edit,
-            calculator::calculate,
-            modifier,
-            onBlur = calculator::blur,
-            onUseProfile = onUseProfile,
-        ) {
-            TextButton(onClick = { onManage(true) }) { Text("Perfis de medidas") }
+        Column(modifier) {
+            CalculatorTopBar(onManageProfiles = { onManage(true) })
+            SkirtCalculatorScreen(
+                calculatorState,
+                calculator::edit,
+                calculator::calculate,
+                Modifier.weight(1f),
+                onBlur = calculator::blur,
+                onUseProfile = onUseProfile,
+                onOpenTutorial = onOpenTutorial,
+            )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CalculatorTopBar(onManageProfiles: () -> Unit) {
+    TopAppBar(
+        title = {
+            // TopAppBar measures the title as if its 16dp start inset were free, so a title that
+            // wraps at large text would run under the action without this end padding.
+            Text("Saia godê inteira", Modifier.padding(end = 16.dp).semantics { heading() })
+        },
+        actions = {
+            TextButton(onClick = onManageProfiles, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("Perfis de medidas")
+            }
+        },
+    )
 }
 
 @Composable

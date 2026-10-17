@@ -3,13 +3,18 @@ package com.almeidajr.molda
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertWidthIsAtLeast
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -33,9 +38,9 @@ class FabricFoldingLayoutTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun fullTutorial_keepsInstructionsAndControlsReachable() {
-        listOf(false, true).forEach { dark ->
-            openTutorial(dark)
+    fun fullTutorial_keepsStepBarAndDrawingInView_onEveryStep() {
+        listOf(false to 1f, true to 2f).forEach { (dark, fontScale) ->
+            openTutorial(dark, fontScale)
             listOf(
                 "Preparar o tecido",
                 "Primeira dobra",
@@ -44,11 +49,11 @@ class FabricFoldingLayoutTest {
                 "Cortar os arcos",
                 "Desdobrar o círculo",
             ).forEachIndexed { index, title ->
-                val heading = composeRule.onNodeWithText(title).performScrollTo()
-                    .assertIsDisplayed().assert(
-                        SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading),
-                    )
-                heading.assertReadableTextContrast("$title dark=$dark")
+                val context = "$title dark=$dark fontScale=$fontScale"
+                val heading = composeRule.onNodeWithText(title).assertIsDisplayed().assert(
+                    SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading),
+                )
+                heading.assertReadableTextContrast(context)
                 val layouts = mutableListOf<TextLayoutResult>()
                 heading.performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
                     assertTrue(it(layouts))
@@ -56,43 +61,60 @@ class FabricFoldingLayoutTest {
                 val layout = layouts.single()
                 // Text bounds can differ from rounded pixel size by a fraction of a pixel.
                 assertTrue(
-                    "$title must wrap within the available width",
+                    "$context must wrap within the available width",
                     (0 until layout.lineCount).all {
                         layout.getLineRight(it) <= layout.size.width + 1f &&
                             layout.getLineBottom(it) <= layout.size.height + 1f
                     },
                 )
-                if (index >= 3) {
-                    composeRule.onNodeWithText("Margem de cintura zero: linhas 1 e 2 coincidem.")
-                        .performScrollTo().assertIsDisplayed()
-                    composeRule.onNodeWithText("Antes de cortar tecido da peça", substring = true)
-                        .performScrollTo().assertIsDisplayed()
+                val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
+                composeRule.waitUntil(15_000) {
+                    composeRule.onAllNodes(hasText(playLabel)).fetchSemanticsNodes().isNotEmpty()
                 }
-                val next = composeRule.onNodeWithText(
-                    "Próximo",
+                // Reading to the end of the instructions leaves the drawing's controls in view.
+                composeRule.onNodeWithText(
+                    if (index >= 3) "Antes de cortar tecido da peça" else "A imagem parada mostra",
+                    substring = true,
                 ).performScrollTo().assertIsDisplayed()
-                if (index == 5) {
-                    next.assertIsNotEnabled()
-                } else {
-                    next.assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
+                composeRule.onNodeWithText(playLabel).assertIsDisplayed()
+                if (index >= 3) {
+                    composeRule.onNodeWithText("Margem de cintura zero: as linhas 1 e 2 coincidem.")
+                        .performScrollTo().assertIsDisplayed()
                 }
+                composeRule.onNodeWithText("Etapa ${index + 1} de 6").assertIsDisplayed()
+                composeRule.onNodeWithText("Anterior").assertIsDisplayed().let {
+                    if (index == 0) it.assertIsNotEnabled() else it.assertIsEnabled()
+                }
+                composeRule.onNodeWithText(if (index == 5) "Concluir" else "Próximo")
+                    .assertIsDisplayed()
+                    .assertHeightIsAtLeast(48.dp)
+                    .assertWidthIsAtLeast(48.dp)
+                    .performClick()
             }
-            composeRule.onNodeWithText(
-                "O círculo desdobrado não é um molde completo e não garante caimento.",
-            ).performScrollTo().assertIsDisplayed()
-            composeRule.onNodeWithText("Fechar tutorial").performScrollTo()
-                .assertHeightIsAtLeast(48.dp).performClick()
+            composeRule.onNodeWithText("Etapa 6 de 6").assertDoesNotExist()
+            composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
             composeRule.onNodeWithText(MeasurementField.Length.label).performScrollTo()
                 .performTextReplacement("70")
             composeRule.onNodeWithText("Tutorial de dobra do tecido").assertDoesNotExist()
         }
     }
 
-    private fun openTutorial(dark: Boolean) {
+    @Test
+    fun closeAction_isTallEnough_andReturnsToResults() {
+        openTutorial(dark = false, fontScale = 2f)
+        composeRule.onNodeWithContentDescription("Fechar tutorial")
+            .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
+        composeRule.onNodeWithText("Preparar o tecido").assertDoesNotExist()
+        composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
+    }
+
+    private fun openTutorial(dark: Boolean, fontScale: Float) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
-                MoldaTheme(darkTheme = dark, dynamicColor = false) {
-                    SkirtCalculatorRoute()
+                DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
+                    MoldaTheme(darkTheme = dark, dynamicColor = false) {
+                        SkirtCalculatorRoute()
+                    }
                 }
             }
         }
@@ -104,6 +126,6 @@ class FabricFoldingLayoutTest {
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
         composeRule.onNodeWithText("Tutorial de dobra do tecido")
-            .performScrollTo().performClick()
+            .performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
     }
 }
