@@ -6,6 +6,10 @@ this document. Accepted decisions below extend the existing
 remain in force.
 
 Implementation is specified in [GitHub issue #35](https://github.com/almeidajr/Molda/issues/35).
+The results redesign in [issue #51](https://github.com/almeidajr/Molda/issues/51)
+supersedes the result groups, inline explanation and dialog tutorial with the
+cutting card, disclosures, a full-screen tutorial player and a calculator top app
+bar; this document describes what shipped.
 
 ## Accepted direction
 
@@ -37,18 +41,21 @@ line heights are in sp and scale with system preferences.
 
 | Use | Material role | Size / line height | Weight |
 | --- | --- | --- | --- |
-| Screen heading | headlineMedium | 28 / 36 | Regular |
-| Section heading | titleLarge | 22 / 28 | Regular |
-| Profile name / component title | titleMedium | 16 / 24 | Medium |
+| Profile screen heading | headlineMedium | 28 / 36 | Regular |
+| App bar title, section heading, cutting-card heading, tutorial step title | titleLarge | 22 / 28 | Regular |
+| Profile name / component title / cutting-card group | titleMedium | 16 / 24 | Medium |
 | Field text / explanatory body | bodyLarge | 16 / 24 | Regular |
 | Supporting text / field errors | bodyMedium | 14 / 20 | Regular |
-| Action label | labelLarge | 14 / 20 | Medium |
-| Each calculated radius | headlineSmall | 24 / 32 | Medium emphasis |
+| Action label, line number, tutorial step position | labelLarge | 14 / 20 | Medium |
+| Each calculated radius value | headlineSmall | 24 / 32 | Medium emphasis |
 
 Display all four radii with equal size and weight; labels identify their meaning.
+On the cutting card each label sits above its value in bodyLarge and
+onSurfaceVariant, and values use tabular figures where the system font has them.
 Show centimetres and two decimal places using Brazilian Portuguese formatting.
-Keep values and units associated when wrapping. Never truncate drafting values,
-field errors or essential action labels. Avoid fixed-height text containers.
+Keep values and units associated with a non-breaking space. Never truncate
+drafting values, field errors or essential action labels. Avoid fixed-height
+text containers.
 
 ## Color system
 
@@ -66,10 +73,11 @@ hex values and contrast measurements belong in this document before implementati
 | --- | --- |
 | primary / onPrimary | Calculate and Save fills/labels |
 | primaryContainer / onPrimaryContainer | Profile-creation FAB |
-| secondaryContainer / onSecondaryContainer | Tonal secondary actions |
-| surface / onSurface | Screen background and essential text |
-| surfaceContainerLow | Grouped input and result surfaces |
-| surfaceContainerHigh | Overlay surfaces where Material defaults select it |
+| secondaryContainer / onSecondaryContainer | Cutting card; tonal tutorial action |
+| surface / onSurface | Screen background, top app bar and essential text |
+| surfaceContainerLow | Grouped input surfaces |
+| surfaceContainer | Tutorial step bar |
+| surfaceContainerHigh | Calculation-limits callout; tutorial drawing frame; overlays where Material defaults select it |
 | onSurfaceVariant | Supporting text and secondary labels |
 | outline | Essential field boundaries |
 | outlineVariant | Decorative separators |
@@ -97,8 +105,8 @@ Interactive targets are at least 48dp in both dimensions, with separate hit
 areas. Forms and buttons grow with text instead of fitting content to fixed heights.
 
 Use Material shape roles: small 8dp, medium 12dp, large 16dp and extraLarge 28dp.
-Grouped surfaces use 16dp corners; prominent result grouping and modal surfaces
-may use 28dp. Primary actions use full rounded ends. Keep standard outlined field
+Grouped surfaces use 16dp corners; the cutting card and modal surfaces use
+28dp. Primary actions use full rounded ends. Keep standard outlined field
 shapes. Use tonal grouping rather than nested cards or decorative shadows.
 
 Use Material interaction feedback and available Expressive motion defaults.
@@ -110,9 +118,13 @@ the installed Material3 version before later implementation.
 
 ## Navigation and adaptive layout
 
-Keep the calculator as the launch destination. Expose profile management as a
-labelled secondary action; keep "Usar perfil" near waist input. Selection uses
-a modal bottom sheet; editing and creation use a dedicated profile form.
+Keep the calculator as the launch destination. Its top app bar shows the screen
+title and the labelled "Perfis de medidas" action; the bar is not a navigation
+destination. "Usar perfil" and the waist's source sit just above the waist
+field. Selection uses a modal bottom sheet; editing and creation use a dedicated
+profile form. The fabric-folding tutorial opens as a full-screen player owned by
+the same hierarchical route; its close action, "Concluir", system Back and
+predictive Back return to the results.
 Retain the existing hierarchical Back, unsaved-discard and picker-return rules
 in [the behavior specification](ui-ux-design.md).
 
@@ -122,11 +134,17 @@ width, with a 24dp gap and a 640dp maximum readable pane width. This is a
 content-fit rule, not a device-type test. Inputs sit beside results; a profile
 list may sit beside its active editor. Avoid hinges and preserve drafts when
 window size or orientation changes. Large text can return the layout to one pane.
+The cutting card follows the results pane. The tutorial player is one column of
+at most 640dp that keeps to one side of a half-open or separating vertical
+fold, spans a flat one, and keeps above or below a horizontal one. When its window is under 560dp tall, the drawing scrolls with the
+instructions instead of staying pinned, so the fixed step bar and the text both
+keep room.
 
 Apply system-bar and keyboard insets. Scroll focused fields and their errors
 into view. Primary actions stay in the form flow so they cannot cover fields or
 results. No new home screen, bottom navigation, drawer or navigation rail is
-needed for the accepted destination hierarchy.
+needed for the accepted destination hierarchy; the top app bar and the tutorial
+player do not change that.
 
 ## Reusable component contracts
 
@@ -137,13 +155,16 @@ Material component. Reuse the current Compose components and state ownership.
 | --- | --- | --- |
 | Measurement field | Outlined field, persistent label, cm suffix, supporting guidance, decimal keyboard; explicit zero for allowances | Unedited, focused, entered, invalid; submit-first errors, first invalid field focused, revalidate corrected fields on blur after first attempt |
 | Section group | Heading, concise guidance, related fields with 16dp padding and gaps | Content wraps; heading semantics; no extra interactive card wrapper |
-| Primary action | Filled "Calcular" or "Salvar" with visible label | Calculate remains enabled for incomplete input; show save progress and prevent duplicate writes; retain values on failure |
+| Top app bar | Calculator title (heading) and labelled "Perfis de medidas" text action | Title wraps at large text without running under the action; 48dp action target |
+| Primary action | Filled "Calcular" (full width at the end of the form) or "Salvar" with visible label | Calculate remains enabled for incomplete input; show save progress and prevent duplicate writes; retain values on failure |
 | Secondary action | Tonal or text button for reuse/edit/cancel | Visible pressed/focus feedback; accessible name; destructive actions use explicit wording |
 | Profile row | Name, waist, measurement date; notes when needed to distinguish identical rows | Picker tap selects; management tap edits with separately labelled overflow; loading, empty, failure/Retry and ready list |
 | Profile picker | Material modal sheet, profile rows and creation action | Dismissal changes nothing; creation returns to picker without auto-selection; manual calculation remains available |
-| Result group | Reference/cutting heading and two equally emphasized labelled radii per group | Hidden after any input change; wide empty pane explains how to calculate; valid result includes five-input summary |
-| Drafting diagram | Labelled reference/cutting lines with distinct styles | Text equivalent lists all dimensions and meaning; no color-only information or gesture-only controls |
-| Formula disclosure | Labelled expand/collapse action; formulas initially collapsed | Expose expanded state; formulas wrap and stay readable with scaled text |
+| Cutting card | secondaryContainer, 28dp corners; "Raios para o molde" heading, reference and cutting groups, each radius with diagram number, line-style sample, label and value | Each value shown and announced once, outside the expanded formulas; heading announces a successful calculation once; Calculate hides the keyboard and brings the whole card into view; hidden after any input change; wide empty pane explains how to calculate |
+| Results follow-up | Tonal tutorial action, "Editar medidas", "Medidas utilizadas (cm)" summary with the unit stated once, "Limites do cálculo" callout | "Editar medidas" focuses waist; the callout keeps every honest limit |
+| Drafting diagram | Square sketch up to 400dp with labelled reference/cutting lines in distinct styles and a compact key | Text equivalent gives each line's number, style and meaning, the drawing order, coincident lines and allowance direction, but not the radius values, which the cutting card states once (a departure from the earlier "lists all dimensions" contract, confirmed by the owner); no color-only information or gesture-only controls |
+| Disclosures | "Como levar os raios ao papel" and "Fórmulas" text buttons with a chevron; both start collapsed | Expose "Recolhido"/"Expandido"; 48dp target; content wraps and stays readable with scaled text; label wraps before the chevron shrinks |
+| Tutorial player | Full screen: close action and step title, pinned Rive drawing with play/replay/pause, scrolling instructions, fixed bar with "Anterior", "Etapa n de 6", "Próximo"/"Concluir" | "Anterior" disabled on step 1; "Concluir" closes; Back closes; focus returns to the entry; step survives recreation; reduced motion shows each step's final drawing; bar fully visible on every step at 200% text |
 | Feedback | Inline field/action errors, loading indicators and brief success snackbar | Announce results/errors without duplicate speech; success only after storage succeeds; errors persist until resolved |
 | Date entry | Editable dd/mm/aaaa field with Material date picker | Initially blank; syntax and future-date errors; explicit actual measurement date |
 | Confirmation dialog | Named deletion confirmation; unsaved-discard confirmation | Clear cancel and destructive actions; retain draft after cancel or failed save/delete |
@@ -197,6 +218,13 @@ meet the ADR threshold.
   recommendations did not fit this native calculation tool and were discarded.
 - mobile-android-design guidance informs theme roles and native components;
   repository icon rules take precedence over legacy Material Icons examples.
+
+## Known gaps
+
+- The Rive artboards paint a white sheet, so the tutorial's still frame stays
+  white in dark mode; only the surfaceContainerHigh frame around it follows the
+  theme. Fixing it needs a change to the animation file, which the results
+  redesign left out of scope.
 
 ## Validation status
 
