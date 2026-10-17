@@ -26,5 +26,6 @@ The repeatable practical-trial protocol for [#45](https://github.com/almeidajr/M
 - Teach how to make pleats in the finished skirt. This is separate from folding fabric before cutting.
 - Provide a physical 1:1 cutting template. This is separate from an on-screen drawing with accurate proportions.
 - Provide waistband instructions to consult before cutting garment fabric.
+- Tell testers inside the app when a newer beta build is available. Until then, the product owner tells testers about each new beta build.
 
 Follow-up priority and implementation details are not yet decided.
