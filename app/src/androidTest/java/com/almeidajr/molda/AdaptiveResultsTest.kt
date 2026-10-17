@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -63,26 +64,27 @@ class AdaptiveResultsTest {
     private var contentBounds = Rect.Zero
 
     @Test
-    fun forcedSizes_keepCuttingCardInReadableResultsPane_andTutorialBarWhole() {
+    fun forcedSizes_keepCuttingCardAndItsDiagramInReadableResultsPane_andTutorialBarWhole() {
         listOf(
-            Triple(DpSize(1600.dp, 1000.dp), 1f, true),
-            Triple(DpSize(700.dp, 1000.dp), 1f, false),
-            Triple(DpSize(1600.dp, 1000.dp), 2f, true),
-            Triple(DpSize(1000.dp, 1000.dp), 2f, false),
+            ResultsLayout(DpSize(1600.dp, 1000.dp), 1f, isTwoPane = true, isDiagramBeside = true),
+            ResultsLayout(DpSize(700.dp, 1000.dp), 1f, isTwoPane = false, isDiagramBeside = true),
+            ResultsLayout(DpSize(1600.dp, 1000.dp), 2f, isTwoPane = true, isDiagramBeside = false),
+            ResultsLayout(DpSize(1000.dp, 1000.dp), 2f, isTwoPane = false, isDiagramBeside = false),
             // A landscape phone: too short to pin the drawing above the instructions.
-            Triple(DpSize(800.dp, 360.dp), 2f, false),
-        ).forEach { (size, fontScale, isTwoPane) ->
-            val context = "size=$size fontScale=$fontScale"
-            showCalculator(size, fontScale)
+            ResultsLayout(DpSize(800.dp, 360.dp), 2f, isTwoPane = false, isDiagramBeside = false),
+        ).forEach { layout ->
+            val context = "size=${layout.size} fontScale=${layout.fontScale}"
+            showCalculator(layout.size, layout.fontScale)
             calculateReferenceCase()
             val card = cuttingCard().layoutBounds()
             assertTrue("$context card width", card.width <= 640.dp.value * pixelsPerDp + 1f)
             val waist = composeRule.onNodeWithText(MeasurementField.Waist.label).layoutBounds()
-            if (isTwoPane) {
+            if (layout.isTwoPane) {
                 assertTrue("$context card beside inputs", card.left >= waist.right)
             } else {
                 assertTrue("$context card below inputs", card.left < waist.right)
             }
+            assertDiagramInCard(card, layout.isDiagramBeside, context)
             openTutorial()
             assertTutorialBarWhole(context)
             // The instructions still have room to scroll into view.
@@ -116,6 +118,15 @@ class AdaptiveResultsTest {
         radii.zipWithNext().forEach { (upper, lower) ->
             assertTrue("radii overlap: $upper $lower", upper.bottom <= lower.top)
         }
+        // The action row wraps rather than squeezing either label.
+        val actionLabels = listOf("Tutorial de dobra do tecido", "Editar medidas")
+        actionLabels.forEach {
+            composeRule.onNodeWithText(it).performScrollTo().assertTextFits(it)
+                .fullyVisibleBounds(it)
+        }
+        // Both read at one scroll position.
+        val (tutorial, edit) = actionLabels.map { composeRule.onNodeWithText(it).layoutBounds() }
+        assertTrue("actions overlap: $tutorial $edit", !tutorial.overlaps(edit))
         listOf("Como levar os raios ao papel", "Fórmulas").forEach { label ->
             val disclosure = composeRule.onNode(hasText(label) and hasClickAction())
             disclosure.performScrollTo().performClick()
@@ -253,6 +264,35 @@ class AdaptiveResultsTest {
     private fun cuttingCard(): SemanticsNodeInteraction =
         composeRule.onNode(hasAnyChild(hasText("Raios para o molde")))
 
+    /** The diagram sits on the card's own surface, beside the radii when both columns fit. */
+    private fun assertDiagramInCard(card: Rect, isBeside: Boolean, context: String) {
+        val diagram = composeRule.onNodeWithContentDescription(
+            "Diagrama esquemático",
+            substring = true,
+        )
+            .layoutBounds()
+        assertTrue(
+            "$context diagram outside the card",
+            card.contains(diagram.topLeft) && card.contains(diagram.bottomRight - Offset(1f, 1f)),
+        )
+        val radii = REFERENCE_RADII.map {
+            composeRule.onNodeWithContentDescription(it).layoutBounds()
+        }
+        if (isBeside) {
+            assertTrue(
+                "$context diagram not beside the radii",
+                radii.all { it.right <= diagram.left } && diagram.top < radii.last().bottom,
+            )
+        } else {
+            assertTrue(
+                "$context diagram not below the radii",
+                radii.all {
+                    it.bottom <= diagram.top
+                },
+            )
+        }
+    }
+
     private fun openTutorial() {
         composeRule.onNodeWithText("Tutorial de dobra do tecido").performScrollTo().performClick()
         composeRule.onNodeWithText("Preparar o tecido").fullyVisibleBounds("step title")
@@ -306,6 +346,13 @@ class AdaptiveResultsTest {
         )
         return unclipped
     }
+
+    private data class ResultsLayout(
+        val size: DpSize,
+        val fontScale: Float,
+        val isTwoPane: Boolean,
+        val isDiagramBeside: Boolean,
+    )
 
     private companion object {
         val REFERENCE_RADII = listOf(

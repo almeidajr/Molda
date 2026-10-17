@@ -3,7 +3,6 @@ package com.almeidajr.molda.skirt.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -38,50 +37,47 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
-internal fun DraftingExplanation(
-    inputs: Map<MeasurementField, String>,
-    radii: SkirtRadii,
-    card: List<CuttingCardGroup>,
-) {
-    val seam = inputs.getValue(MeasurementField.WaistSeamAllowance).trim().replace('.', ',')
-    val hem = inputs.getValue(MeasurementField.HemAllowance).trim().replace('.', ',')
-    DraftingFigure(card, diagramDescription(card, seam, hem))
-    Disclosure("Como levar os raios ao papel") {
-        Text(
-            "Cintura é a medida do corpo; folga é o acréscimo escolhido para vestir. " +
-                "Margens são tecido reservado para costura e acabamento, não folga.",
-        )
-        Text(
-            "Transfira os raios ao papel a partir de um mesmo centro, o ponto no canto " +
-                "superior esquerdo do diagrama. Do centro para fora: linhas 2, 1, 3 e 4.",
-        )
-        Text(
-            "A margem de cintura de $seam cm avança para dentro; " +
-                "a margem de barra de $hem cm avança para fora.",
-        )
+internal fun DraftingExplanation(inputs: Map<MeasurementField, String>, radii: SkirtRadii) {
+    val seam = enteredValue(inputs, MeasurementField.WaistSeamAllowance)
+    val hem = enteredValue(inputs, MeasurementField.HemAllowance)
+    // The pair reads as one set of toggles: 8dp between 48dp targets, not the page's 16dp.
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Disclosure("Como levar os raios ao papel") {
+            Text(
+                "Cintura é a medida do corpo; folga é o acréscimo escolhido para vestir. " +
+                    "Margens são tecido reservado para costura e acabamento, não folga.",
+            )
+            Text(
+                "Transfira os raios ao papel a partir de um mesmo centro, o ponto no canto " +
+                    "superior esquerdo do diagrama. Do centro para fora: linhas 2, 1, 3 e 4.",
+            )
+            Text(
+                "A margem de cintura de $seam cm avança para dentro; " +
+                    "a margem de barra de $hem cm avança para fora.",
+            )
+        }
+        Disclosure("Fórmulas") { DraftingFormulas(inputs, radii) }
     }
-    Disclosure("Fórmulas") { DraftingFormulas(inputs, radii) }
 }
 
-/** The diagram, its key and limits as one figure that the text equivalent announces once. */
+/** A typed measurement as the user entered it, with a pt-BR decimal comma. */
+internal fun enteredValue(inputs: Map<MeasurementField, String>, field: MeasurementField): String =
+    inputs.getValue(field).trim().replace('.', ',')
+
+/** The diagram, coincidences and limits as one figure that the text equivalent announces once. */
 @Composable
-private fun DraftingFigure(card: List<CuttingCardGroup>, description: String) {
-    val entries = card.flatMap { it.entries }.sortedBy { it.number }
-    val ink = MaterialTheme.colorScheme.onSurface
+internal fun DraftingFigure(card: List<CuttingCardGroup>, description: String) {
     Column(
         Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        SkirtDiagram(entries)
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) { entries.forEach { LineKey(it, ink) } }
+        SkirtDiagram(card.flatMap { it.entries }.sortedBy { it.number })
         coincidenceNotes(card).forEach { Text(it) }
         Text(
             "Esquema sem escala, não é molde para impressão. O cálculo não garante o caimento.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // Drawn on the cutting card: its ink, quieter through the smaller type.
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
         )
     }
 }
@@ -110,11 +106,11 @@ private fun Disclosure(label: String, content: @Composable () -> Unit) {
 
 @Composable
 private fun DraftingFormulas(inputs: Map<MeasurementField, String>, radii: SkirtRadii) {
-    val waist = inputs.getValue(MeasurementField.Waist).trim().replace('.', ',')
-    val ease = inputs.getValue(MeasurementField.Ease).trim().replace('.', ',')
-    val length = inputs.getValue(MeasurementField.Length).trim().replace('.', ',')
-    val seam = inputs.getValue(MeasurementField.WaistSeamAllowance).trim().replace('.', ',')
-    val hem = inputs.getValue(MeasurementField.HemAllowance).trim().replace('.', ',')
+    val waist = enteredValue(inputs, MeasurementField.Waist)
+    val ease = enteredValue(inputs, MeasurementField.Ease)
+    val length = enteredValue(inputs, MeasurementField.Length)
+    val seam = enteredValue(inputs, MeasurementField.WaistSeamAllowance)
+    val hem = enteredValue(inputs, MeasurementField.HemAllowance)
     Text("Valores em centímetros.")
     Text("Costura da cintura: r = (cintura + folga) / (2π)")
     Text("r = ($waist + $ease) / (2π) = ${formatCentimetres(radii.waistStitching)}")
@@ -137,8 +133,9 @@ private fun DraftingFormulas(inputs: Map<MeasurementField, String>, radii: Skirt
 
 @Composable
 private fun SkirtDiagram(entries: List<CuttingCardEntry>) {
-    val ink = MaterialTheme.colorScheme.onSurface
-    val paper = MaterialTheme.colorScheme.background
+    // Drawn on the cutting card, so it takes the card's own ink and paper roles.
+    val ink = MaterialTheme.colorScheme.onSecondaryContainer
+    val paper = MaterialTheme.colorScheme.secondaryContainer
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelLarge.copy(color = ink)
     // Fills the width up to a cap so the drawing stays a sketch, not a full-screen poster.
@@ -182,7 +179,8 @@ private fun SkirtDiagram(entries: List<CuttingCardEntry>) {
 private fun diagramFraction(entry: CuttingCardEntry): Float =
     DiagramFractions.getValue(minOf(entry.number, entry.coincidentLine ?: entry.number))
 
-private val DiagramFractions = mapOf(1 to 0.3f, 2 to 0.22f, 3 to 0.82f, 4 to 0.95f)
+// Waist arcs sit wider than to scale so lines 1 and 2 and their numbers stay legible.
+private val DiagramFractions = mapOf(1 to 0.42f, 2 to 0.3f, 3 to 0.84f, 4 to 0.96f)
 
 /** The stroke pattern for [style], shared by the diagram and the cutting card. */
 internal fun DrawScope.linePathEffect(style: LineStyle): PathEffect? = when (style) {

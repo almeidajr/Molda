@@ -105,16 +105,16 @@ class CuttingCardTest {
     }
 
     @Test
-    fun measurementSummary_statesValuesWithoutRepeatingTheUnit() {
+    fun measurementSummary_statesValuesWithoutRepeatingTheUnit_andKeepsEachValueWithItsLabel() {
         val inputs = MeasurementField.entries.zip(listOf(80.0, 2.0, 60.5, 1.0, 0.0)).toMap()
 
         assertEquals(
             listOf(
-                "Circunferência da cintura: 80,00",
-                "Folga de cintura: 2,00",
-                "Comprimento acabado: 60,50",
-                "Margem de costura da cintura: 1,00",
-                "Margem de barra: 0,00",
+                "Circunferência da cintura: 80,00",
+                "Folga de cintura: 2,00",
+                "Comprimento acabado: 60,50",
+                "Margem de costura da cintura: 1,00",
+                "Margem de barra: 0,00",
             ),
             measurementSummary(inputs),
         )

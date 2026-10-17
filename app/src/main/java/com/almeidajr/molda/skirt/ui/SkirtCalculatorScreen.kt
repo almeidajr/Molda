@@ -2,6 +2,7 @@ package com.almeidajr.molda.skirt.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -214,10 +216,14 @@ private fun CalculationOutcome(
     }
     state.radii?.let {
         val card = cuttingCard(it)
-        CuttingCard(card, modifier)
-        FabricFoldingTutorialEntry(onOpenTutorial)
-        SkirtResults(state.inputs, onEditMeasurements)
-        DraftingExplanation(state.inputs, it, card)
+        val description = diagramDescription(
+            card,
+            enteredValue(state.inputs, MeasurementField.WaistSeamAllowance),
+            enteredValue(state.inputs, MeasurementField.HemAllowance),
+        )
+        CuttingCard(card, description, modifier)
+        SkirtResults(state.inputs, onOpenTutorial, onEditMeasurements)
+        DraftingExplanation(state.inputs, it)
     }
 }
 
@@ -289,9 +295,20 @@ private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
 }
 
 @Composable
-private fun SkirtResults(inputs: Map<MeasurementField, String>, onEditMeasurements: () -> Unit) {
-    TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
-        Text("Editar medidas")
+private fun SkirtResults(
+    inputs: Map<MeasurementField, String>,
+    onOpenTutorial: () -> Unit,
+    onEditMeasurements: () -> Unit,
+) {
+    // One action row under the card; at large text the second button wraps below the first.
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FabricFoldingTutorialEntry(onOpenTutorial)
+        TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text("Editar medidas")
+        }
     }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -299,9 +316,15 @@ private fun SkirtResults(inputs: Map<MeasurementField, String>, onEditMeasuremen
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
-        measurementSummary(
+        val summary = measurementSummary(
             inputs.mapValues { requireNotNull(parseMeasurement(it.value)) },
-        ).forEach { Text(it) }
+        )
+        // One wrapping line; TalkBack hears pauses instead of the visual separators.
+        Text(
+            summary.joinToString(" · "),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.semantics { contentDescription = summary.joinToString("; ") },
+        )
     }
     Surface(
         shape = MaterialTheme.shapes.medium,
