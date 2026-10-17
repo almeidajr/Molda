@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -58,7 +61,7 @@ internal fun TutorialAnimation(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // The artboard is a white sheet; the frame around it follows the theme.
+        // The artboards are transparent: this frame is the page behind the drawing.
         Surface(
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -135,8 +138,10 @@ private fun TutorialDrawing(
 
         is Result.Success -> {
             val instance = result.value
+            val palette = tutorialPalette(MaterialTheme.colorScheme)
             var ready by remember(instance, radii) { mutableStateOf(false) }
-            LaunchedEffect(instance, radii) {
+            LaunchedEffect(instance, radii, palette) {
+                palette.forEach { (name, color) -> instance.setColor(name, color.toArgb()) }
                 val markingDiameter = 800f
                 // Normalize before converting to Float; large valid centimetre values stay finite.
                 val waistDiameter =
@@ -178,6 +183,17 @@ private fun TutorialDrawing(
         }
     }
 }
+
+/**
+ * The drawing's colour properties by view-model name. The cutting card's roles: fabric is its
+ * paper and lines its ink, so the drawing reads on the light, dark and dynamic schemes alike.
+ */
+internal fun tutorialPalette(colors: ColorScheme): Map<String, Color> = mapOf(
+    "ink" to colors.onSecondaryContainer,
+    "fabric" to colors.secondaryContainer,
+    "fabricFold" to colors.tertiaryContainer,
+    "accent" to colors.tertiary,
+)
 
 @Composable
 internal fun StepInstructions(radii: SkirtRadii, step: FoldingStep) {

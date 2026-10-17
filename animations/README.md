@@ -8,9 +8,22 @@ diameter is 800. The common origin is (24, 24) in a 448 × 448 artboard; Android
 uses contain fitting. Normalize the unrounded Double ratios before converting
 to Float. Do not enlarge allowance spacing.
 
+The same view model has four colour properties: `ink`, `fabric`, `fabricFold` and
+`accent`. No artboard paints a background, so the host's surface shows through.
+Android binds them from the theme (onSecondaryContainer, secondaryContainer,
+tertiaryContainer and tertiary); the authored defaults are Molda's light fallback
+palette. The CLI capture renders transparency on a dark backdrop, so preview against
+a surface by adding a temporary background shape to a scratch copy, and set dark
+colours with `--data=ink=FFF2DBF3 --data=fabric=FF514154` and so on.
+
+Lines follow the cutting card's key: 1 solid (waist stitching), 2 dashed (waist
+cutting), 3 dotted (finished hem), 4 dash-dot (hem cutting). Each line's number
+sits on a fabric-coloured disc at an arc end, placed by multiply converters on the
+bound diameter. Numerals are stroked paths, since text would need an embedded font.
+
 The default `play=false` state shows the completed diagram without motion.
-Setting `play=true` starts continuous ping-pong playback: the arcs reveal over
-120 frames at 60 fps, hold for 60 frames, then reverse smoothly to repeat without
+Setting `play=true` starts continuous ping-pong playback: the arcs sweep out in
+line order over 120 frames at 60 fps, hold for 60 frames, then reverse smoothly to repeat without
 a discontinuous wrap. Android keeps the same artboard, view model, state machine,
 and rendering surface for play, replay, pause, and system-motion changes. The
 `restart` view-model trigger alternates between two active states sharing the
@@ -44,12 +57,13 @@ never becomes idle. Sewing validation remains the separate release gate.
 
 `Preparation`, `First fold`, and `Second fold` share the `Marking` view model.
 Each has its own state machine: `play=false` presents the completed static step,
-while `play=true` loops its 120-frame demonstration with a one-second completed
-hold and a smooth reverse. Playback remains on demand: press Play once to loop,
+while `play=true` loops its 120-frame demonstration, eased in and out, with a
+one-second completed hold and a smooth reverse. Playback remains on demand: press Play once to loop,
 use Pause/Continue to study a frame, or Replay to restart. Changing steps returns
 to the completed static drawing and waits for Play. The preparation
-animation reveals the lengthwise grain guide. The folding animations pivot a
-half about the crease by mirroring its horizontal/vertical scale. The Android
+animation grows the lengthwise grain arrow from its centre. The folding animations
+pivot a half about the crease by mirroring its horizontal/vertical scale; the layer
+being folded is drawn in `fabricFold`. The Android
 controls change playback properties without recreating the viewport. Written
 instructions remain available independently; system-disabled motion always shows
 the completed step even after Replay.
@@ -76,19 +90,20 @@ checks. Practical sewist validation remains outstanding.
 
 ## Circular cuts and unfolding
 
-`Cutting` retains the marking origin and four bound radii. A wider animated trace
-follows the waist cutting arc first, then the hem cutting arc, **behind** the
-patterned reference lines. The central and outer scraps disappear after both
-cuts. Static playback shows the cut quarter; it never draws a straight closure
-cut. After the completed-pose hold, the demonstration reverses smoothly to reset;
+`Cutting` retains the marking origin, numbers and four bound radii. A wider
+`accent` trace follows the waist cutting arc first, then the hem cutting arc,
+**behind** the patterned lines. After both cuts the central and outer scraps lift
+away and fade with the traces; their fold-edge segments end at the bound radii.
+Static playback shows the cut quarter; it never draws a straight closure cut. After the completed-pose hold, the demonstration reverses smoothly to reset;
 this reset is animation playback, not an instruction to undo real cuts. The same
 exact paths coincide when allowances are zero.
 
 `Unfolding` uses four copies of that measured quarter-annulus, each with an
 even-odd circle-minus-circle fill clipped to its quadrant. The group is uniformly
 scaled by 0.5 and centered at (224, 224), fitting the complete circle inside the
-same 448-unit viewport. It reverses the horizontal fold first (frames 0–90), then
-the vertical fold (90–180), by mirroring the upper layers about the common origin.
+same 448-unit viewport. It carries no line numbers: at half scale the waist cutout
+is too small for them. It reverses the horizontal fold first (frames 0–84), then
+the vertical fold (96–180), by mirroring the upper layers about the common origin.
 All four radii remain bound to the current unrounded calculator result. Cutting
 and unfolding also hold their completed pose for 60 frames, then reverse to repeat.
 
