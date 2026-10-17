@@ -10,6 +10,7 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.toSize
 import java.util.Locale
 import org.junit.Assert.assertTrue
@@ -63,4 +64,30 @@ internal fun SemanticsNodeInteraction.fullyVisibleBounds(context: String): Rect 
         visible.width >= unclipped.width - 1f && visible.height >= unclipped.height - 1f,
     )
     return unclipped
+}
+
+/**
+ * A grouped surface's fill, sampled inside its end padding, against what shows through its
+ * rounded top-start corner, so the group reads as its own item on the surface below it.
+ */
+internal fun SemanticsNodeInteraction.assertSurfaceStandsOut(context: String) {
+    val pixels = captureToImage().toPixelMap()
+    val fill = pixels[pixels.width - 4, pixels.height / 2]
+    // Tonal neighbours sit near 1.1:1; equal tones, the regression, measure exactly 1.
+    assertContrast(context, contrastRatio(fill, pixels[0, 0]), minimum = 1.05f)
+}
+
+/**
+ * Every layer of the node's own layout is at least [minimum] tall. A Material button pads a
+ * 40dp container out to a 48dp touch target, so its bounds pass while it still draws at 40dp.
+ */
+internal fun SemanticsNodeInteraction.assertDrawnHeightIsAtLeast(
+    minimum: Dp,
+): SemanticsNodeInteraction {
+    val layout = fetchSemanticsNode().layoutInfo
+    val drawn = layout.getModifierInfo().filter { it.coordinates.isAttached }
+        .minOf { it.coordinates.size.height }
+    val required = with(layout.density) { minimum.roundToPx() }
+    assertTrue("drawn height $drawn px < $required px", drawn >= required)
+    return this
 }

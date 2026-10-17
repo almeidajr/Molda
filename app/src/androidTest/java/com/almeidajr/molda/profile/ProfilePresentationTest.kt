@@ -35,7 +35,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertReadableTextContrast
+import com.almeidajr.molda.assertSurfaceStandsOut
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
@@ -167,6 +169,63 @@ class ProfilePresentationTest {
         click("Voltar ao cálculo")
         click("Usar perfil")
         assertTypography("Usar perfil: Ana — 80 cm — 12/10/2026", 16, 24, FontWeight.Medium)
+    }
+
+    @Test
+    fun pickerRows_standOutFromTheSheet_inEveryScheme() {
+        manage()
+        listOf("Ana" to "80", "Bia" to "72").forEach { (name, waist) ->
+            click("Novo perfil")
+            edit("Nome ou apelido", name)
+            edit("Cintura do perfil (cm)", waist)
+            edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+            saveProfile()
+        }
+        click("Voltar ao cálculo")
+        listOf(
+            false to false,
+            true to false,
+            false to true,
+            true to true,
+        ).forEach { (dark, dynamic) ->
+            showContent(dark = dark, dynamic = dynamic)
+            click("Usar perfil")
+            listOf("Ana — 80", "Bia — 72").forEach {
+                val label = "Usar perfil: $it cm — 12/10/2026"
+                val context = "$label dark=$dark dynamic=$dynamic"
+                composeRule.onNodeWithText(label).performScrollTo()
+                    .assertSurfaceStandsOut("$context row")
+                composeRule.onNodeWithText(label, useUnmergedTree = true)
+                    .assertReadableTextContrast(context)
+            }
+            click("Cancelar seleção")
+        }
+    }
+
+    @Test
+    fun profileButtons_drawAtLeast48dpTall_atDefaultTextSize() {
+        manage()
+        assertDrawnHeight("Voltar ao cálculo")
+        click("Novo perfil")
+        assertDrawnHeight("Salvar perfil", "Cancelar")
+        edit("Nome ou apelido", "Ana")
+        edit("Cintura do perfil (cm)", "80")
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        saveProfile()
+        assertDrawnHeight("Ações: Ana")
+        click("Ações: Ana")
+        click("Excluir perfil")
+        assertDrawnHeight("Confirmar exclusão", "Cancelar")
+        click("Cancelar")
+        click("Voltar ao cálculo")
+        click("Usar perfil")
+        assertDrawnHeight("Cancelar seleção", "Novo perfil")
+    }
+
+    private fun assertDrawnHeight(vararg labels: String) = labels.forEach {
+        val node = composeRule.onNodeWithText(it)
+        if (!node.isDisplayed()) node.performScrollTo()
+        node.assertDrawnHeightIsAtLeast(48.dp)
     }
 
     private fun assertTypography(

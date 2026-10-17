@@ -147,6 +147,11 @@ components:
     backgroundColor: "{colors.calico-low}"
     textColor: "{colors.walnut-ink}"
     rounded: "{rounded.extra-large}"
+  picker-row:
+    backgroundColor: "{colors.calico-high}"
+    textColor: "{colors.walnut-ink}"
+    typography: "{typography.title-medium}"
+    rounded: "{rounded.medium}"
   modal-surface:
     backgroundColor: "{colors.calico-high}"
     textColor: "{colors.walnut-ink}"
@@ -206,9 +211,9 @@ A muted, warm palette taken from hand-dyed cloth: mulberry thread on unbleached 
 
 ### Neutral
 - **Raw Calico** (`raw-calico`, `surface`): the screen background, the app bar and the tutorial player. **Dark Raw Calico** (`dark-raw-calico`).
-- **Calico Low** (`calico-low`, `surfaceContainerLow`): input groups, profile rows, and the profile picker sheet by Material default. **Dark Calico Low** (`dark-calico-low`).
+- **Calico Low** (`calico-low`, `surfaceContainerLow`): input groups, management profile rows, and the profile picker sheet by Material default. **Dark Calico Low** (`dark-calico-low`).
 - **Calico Mid** (`calico-mid`, `surfaceContainer`): the tutorial's fixed step bar and Material's dropdown menu. **Dark Calico Mid** (`dark-calico-mid`).
-- **Calico High** (`calico-high`, `surfaceContainerHigh`): the "Limites do cálculo" callout, the tutorial drawing frame, and dialogs. **Dark Calico High** (`dark-calico-high`).
+- **Calico High** (`calico-high`, `surfaceContainerHigh`): the "Limites do cálculo" callout, the tutorial drawing frame, dialogs, and the picker's profile rows, two tonal steps above their Calico Low sheet. **Dark Calico High** (`dark-calico-high`).
 - **Walnut Ink** (`walnut-ink`, `onSurface`): essential text. **Dark Walnut Ink** (`dark-walnut-ink`).
 - **Faded Walnut** (`faded-walnut`, `onSurfaceVariant`): supporting text on calico surfaces only, such as the waist source line, the step position and each tutorial step's "Detalhes".
 - **Basting Outline** (`basting-outline`): essential field boundaries. **Basting Faint** (`basting-faint`): decorative separators only.
@@ -253,13 +258,13 @@ Compact windows show one readable column with 16dp margins. Two panes appear onl
 
 ## Elevation & Depth
 
-The system is flat and depth comes from tone. Surfaces step through the calico container ramp, from Raw Calico (page) to Calico Low (groups and rows) to Calico Mid (the step bar) to Calico High (callout, drawing frame, dialogs). The cutting card steps out of the ramp onto Heather Wash, so the results never depend on one calico tone. No screen adds a shadow; only Material's own defaults on the FAB and menus remain.
+The system is flat and depth comes from tone. Surfaces step through the calico container ramp, from Raw Calico (page) to Calico Low (groups and rows) to Calico Mid (the step bar) to Calico High (callout, drawing frame, dialogs, picker rows). The cutting card steps out of the ramp onto Heather Wash, so the results never depend on one calico tone. No screen adds a shadow; only Material's own defaults on the FAB and menus remain.
 
 **The Swatch Stack Rule.** Group content with a tonal surface, never a shadow, and never nest one grouped surface inside another.
 
 ## Shapes
 
-Corners are softly rounded and generous. Input groups, profile rows and the limits callout use medium (16dp); the FAB and the tutorial drawing frame use large (16dp); the cutting card, dialogs and the picker sheet use extra-large (28dp). Buttons and disclosures have fully rounded pill ends. Outlined fields keep Material's small corner (8dp). The one recurring motif is the quarter arc from the drafting diagram, which mirrors the folded fabric.
+Corners are softly rounded and generous. Input groups, profile rows (in the list and the picker) and the limits callout use medium (16dp); the FAB and the tutorial drawing frame use large (16dp); the cutting card, dialogs and the picker sheet use extra-large (28dp). Buttons and disclosures have fully rounded pill ends. Outlined fields keep Material's small corner (8dp). The one recurring motif is the quarter arc from the drafting diagram, which mirrors the folded fabric.
 
 ## Components
 
@@ -290,7 +295,7 @@ Firm, pill-shaped and easy to trust under the thumb.
 
 ### Navigation
 - **Model:** hierarchical. The app opens on the calculator; profile management is the app bar's action and returns through "Voltar ao cálculo" or Back. "Usar perfil" opens the picker. There is no home screen, bottom bar, rail or drawer, and System Back and predictive Back are always respected. Leaving an edited profile asks "Descartar alterações?" first.
-- **Picker:** a Material modal bottom sheet (extra-large top corners, Calico Low by Material default) with the Headline Medium "Usar perfil", a "Cancelar seleção" text button, one row per profile ("Usar perfil: <nome> — <cintura> cm — <data>", Title Medium), and the filled "Novo perfil".
+- **Picker:** a Material modal bottom sheet (extra-large top corners, Calico Low by Material default) with the Headline Medium "Usar perfil", a "Cancelar seleção" text button, one row per profile ("Usar perfil: <nome> — <cintura> cm — <data>", Title Medium in Walnut Ink) on Calico High with medium corners, 16dp apart, so each row reads as its own tappable item on the Calico Low sheet in every scheme, and the filled "Novo perfil".
 
 ### Profile list and editor
 - **List:** the Headline Medium title, the on-device storage warning, then one Calico Low row per profile (medium corners) with the name in Title Medium, waist and date, any notes, and the "Ações: <nome>" text button. Empty, loading and load-error states are plain text, with a retry action on error.
@@ -319,7 +324,7 @@ Below the cutting card, 16dp apart in the page column:
 A full-screen player that replaces the calculator until it closes, one centred column at most 640dp wide on Raw Calico.
 - **Top:** a 64dp row with a 48dp close icon button ("Fechar tutorial") beside the step title in Title Large.
 - **Drawing:** the Rive animation in a Calico High frame with large corners (16dp) and 8dp padding, sized to the lesser of the column width less 32dp and 40% of the window height. Below it, one text button plays the step ("Reproduzir etapa", or "Reproduzir marcação" on the marking step) and then repeats it ("Repetir …"); "Pausar animação"/"Continuar animação" appears only while motion plays. The drawing stays pinned while the instructions scroll; in windows under 560dp tall, such as a landscape phone, it scrolls with them. Load failures show a plain sentence pointing to the written instructions.
-- **Instructions:** 16dp padding and 12dp between paragraphs. When system animations are off, "Movimento desativado no sistema…" sits visibly first; with animations on it does not appear. Each step then reads in three layers. First, one imperative lead in Title Medium, the action to take now, readable under the pinned drawing on a compact phone at 100% text. Second, the brief context that changes that action: on marking, the radii in key order (4dp apart, read as one key), which lines are references and which way each allowance moves; on cutting, which arcs to cut and not to cut and that the opening, closure allowances and waistband need separate instructions before cutting garment fabric; coincident lines; the common origin. Third, a collapsed "Detalhes" disclosure set in Body Medium and Faded Walnut: edge and grain conventions, the illustrative-fabric and not-actual-size notes, practice on paper or scrap pending validation, the construction boundary and how playback works. The unfolding lead names both unfold actions in order. The body never repeats the step title, and the radius values appear once, on the marking step.
+- **Instructions:** 16dp padding and 16dp between paragraphs. When system animations are off, "Movimento desativado no sistema…" sits visibly first; with animations on it does not appear. Each step then reads in three layers. First, one imperative lead in Title Medium, the action to take now, readable under the pinned drawing on a compact phone at 100% text. Second, the brief context that changes that action: on marking, the radii in key order (4dp apart, read as one key), which lines are references and which way each allowance moves; on cutting, which arcs to cut and not to cut and that the opening, closure allowances and waistband need separate instructions before cutting garment fabric; coincident lines; the common origin. Third, a collapsed "Detalhes" disclosure set in Body Medium and Faded Walnut: edge and grain conventions, the illustrative-fabric and not-actual-size notes, practice on paper or scrap pending validation, the construction boundary and how playback works. The unfolding lead names both unfold actions in order. The body never repeats the step title, and the radius values appear once, on the marking step.
 - **Step bar:** fixed at the bottom on Calico Mid with 16/8dp padding: "Anterior" (disabled on the first step), "Etapa n de 6" in Label Large and Faded Walnut, and a filled "Próximo" that becomes "Concluir" on the last step. Above 130% text the position moves above the buttons.
 - **Closing:** the close button, "Concluir", system Back and predictive Back all return to the results, with focus back on the tutorial button. The current step survives rotation and recreation.
 

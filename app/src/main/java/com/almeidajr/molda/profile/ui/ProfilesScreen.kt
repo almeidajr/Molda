@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -66,7 +67,11 @@ fun ProfilesContent(
         }
         state.loadError?.let {
             Text(it, color = MaterialTheme.colorScheme.error)
-            Button(onClick = onRetry, enabled = !state.isLoading) {
+            Button(
+                onClick = onRetry,
+                enabled = !state.isLoading,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
                 Text("Tentar carregar novamente")
             }
         }
@@ -171,7 +176,9 @@ private fun ProfileRowActions(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        TextButton(onClick = { expanded = true }, enabled = enabled) {
+        TextButton(onClick = {
+            expanded = true
+        }, enabled = enabled, modifier = Modifier.heightIn(min = 48.dp)) {
             Text("Ações: ${profile.measurements.name}")
         }
         DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
@@ -207,10 +214,18 @@ private fun ConfirmProfileDeletion(
             Text("A medida salva será excluída deste aparelho. O cálculo atual será mantido.")
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = enabled) { Text("Confirmar exclusão") }
+            TextButton(
+                onClick = onConfirm,
+                enabled = enabled,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Text("Confirmar exclusão")
+            }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("Cancelar")
+            }
         },
     )
 }
@@ -225,7 +240,6 @@ fun ProfilePicker(
     onCreate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val rowStyle = MaterialTheme.typography.titleMedium
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -236,7 +250,9 @@ fun ProfilePicker(
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.semantics { heading() },
             )
-            TextButton(onClick = onDismiss) { Text("Cancelar seleção") }
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("Cancelar seleção")
+            }
             when {
                 state.isLoading -> {
                     CircularProgressIndicator()
@@ -245,7 +261,9 @@ fun ProfilePicker(
 
                 state.loadError != null -> {
                     Text(state.loadError, color = MaterialTheme.colorScheme.error)
-                    TextButton(onClick = onRetry) { Text("Tentar carregar novamente") }
+                    TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text("Tentar carregar novamente")
+                    }
                 }
 
                 state.profiles.isEmpty() -> Text(
@@ -258,31 +276,42 @@ fun ProfilePicker(
                             it.measurements.waist == profile.measurements.waist &&
                             it.measurements.measurementDate == profile.measurements.measurementDate
                     } > 1
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ) {
-                        ListItem(
-                            colors = ListItemDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                            ),
-                            headlineContent = { Text(profileLabel(profile), style = rowStyle) },
-                            supportingContent = if (hasDuplicate &&
-                                profile.measurements.notes.isNotBlank()
-                            ) {
-                                { Text(profile.measurements.notes) }
-                            } else {
-                                null
-                            },
-                            modifier = Modifier.fillMaxWidth().clickable { onSelect(profile) },
-                        )
-                    }
+                    PickerRow(profile, showNotes = hasDuplicate, onSelect)
                 }
             }
             Button(
                 onClick = onCreate,
                 enabled = !state.isLoading && state.loadError == null && !state.isSaving,
+                modifier = Modifier.heightIn(min = 48.dp),
             ) { Text("Novo perfil") }
         }
+    }
+}
+
+@Composable
+private fun PickerRow(
+    profile: MeasurementProfile,
+    showNotes: Boolean,
+    onSelect: (MeasurementProfile) -> Unit,
+) {
+    // Two tonal steps above the sheet's surfaceContainerLow, so each row reads as its own item.
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    ) {
+        ListItem(
+            colors = ListItemDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
+            headlineContent = {
+                Text(profileLabel(profile), style = MaterialTheme.typography.titleMedium)
+            },
+            supportingContent = if (showNotes && profile.measurements.notes.isNotBlank()) {
+                { Text(profile.measurements.notes) }
+            } else {
+                null
+            },
+            modifier = Modifier.fillMaxWidth().clickable { onSelect(profile) },
+        )
     }
 }
