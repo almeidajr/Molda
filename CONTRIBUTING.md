@@ -156,6 +156,31 @@ invalid/corrected title edits and intermediate commits on normal, fork, and
 Dependabot PRs; verify read-only permissions and merge blocking. Record live
 validation evidence and any access limitations in the implementation issue.
 
+## Publishing a beta build or release
+
+Both are signed APKs published as GitHub Releases (see `GLOSSARY.md` and
+[ADR 0001](docs/adr/0001-builds-signed-in-ci.md)). The tag names the release
+being prepared. A [semver](https://semver.org/) `-beta.N` suffix makes it a beta
+build, published as a pre-release. From an up-to-date main whose CI passed:
+
+```sh
+git tag v1.0.0-beta.1
+git push origin v1.0.0-beta.1
+```
+
+Increase `N` for each beta build. Push the plain tag (`v1.0.0`) only after the
+release gates in `docs/roadmap.md` pass; the workflow cannot check them.
+
+The `Release` workflow uses the tag without its `v` as `versionName`, and the
+workflow run number as `versionCode`. It signs the APK with the
+`RELEASE_KEYSTORE_BASE64`, `RELEASE_KEYSTORE_PASSWORD`, and `RELEASE_KEY_ALIAS`
+secrets and attaches `molda-<tag>.apk`. Install the APK and smoke-test the
+calculator, profiles, and folding tutorial before sending testers the link.
+Record which beta build each practical trial used in its issue.
+Never replace the signing key: testers could only install a build signed with a
+new key after uninstalling, which deletes their profiles. Keep a backup of the
+keystore and its password outside GitHub.
+
 ## Repository governance
 
 Repository files provide CI, message validation, hooks, ignore rules, and weekly

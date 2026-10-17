@@ -36,3 +36,11 @@ Fabric retained beyond the intended finished hemline to finish the hem.
 
 **Finished skirt length**:
 The distance from the skirt's waist stitching line to its finished hemline, excluding waistband height and allowances.
+
+**Release**:
+The public launch of a version of Molda, allowed only after its release gates pass, such as a practical sewist trial.
+_Avoid_: Beta build
+
+**Beta build**:
+A version of Molda distributed to known testers before the release it leads up to, so they can use it and report what they observe.
+_Avoid_: Release, trial build
