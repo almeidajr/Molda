@@ -23,6 +23,13 @@ _Avoid_: Fabric folding before cutting
 A named collection of body measurements for one person, recorded on a measurement date and optionally accompanied by notes, for reuse in drafting calculations.
 _Avoid_: User account, client account
 
+**Length**:
+A finite, non-negative distance in centimetres, used for both body measurements and drafting assumptions.
+
+**Drafting assumption**:
+A value the sewist chooses rather than measures on the body, such as waist ease, seam and hem allowances, or finished skirt length.
+_Avoid_: Measurement
+
 **Waist ease (folga de cintura)**:
 The amount added to the person's waist circumference to obtain the intended waist circumference of the skirt at the stitching line.
 _Avoid_: Seam allowance
