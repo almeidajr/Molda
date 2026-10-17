@@ -84,7 +84,7 @@ internal fun DraftingFigure(card: List<CuttingCardGroup>, description: String) {
 
 /** A labelled show/hide toggle that starts collapsed and exposes its state. */
 @Composable
-private fun Disclosure(label: String, content: @Composable () -> Unit) {
+internal fun Disclosure(label: String, content: @Composable () -> Unit) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     TextButton(
         onClick = { isExpanded = !isExpanded },

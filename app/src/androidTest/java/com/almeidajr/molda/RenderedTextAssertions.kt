@@ -1,13 +1,16 @@
 package com.almeidajr.molda
 
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.toSize
 import java.util.Locale
 import org.junit.Assert.assertTrue
 
@@ -42,4 +45,22 @@ private fun assertContrast(context: String, contrast: Float, minimum: Float) {
     // Printed (logcat tag System.out) so each run's measured pairs can be read back per scheme.
     println("MoldaContrast $context contrast=${"%.2f".format(Locale.ROOT, contrast)}")
     assertTrue("$context contrast=$contrast", contrast >= minimum)
+}
+
+/** The node's laid-out bounds in root pixels, whether or not it is scrolled into view. */
+internal fun SemanticsNodeInteraction.layoutBounds(): Rect =
+    fetchSemanticsNode().layoutInfo.coordinates.let {
+        Rect(it.positionInRoot(), it.size.toSize())
+    }
+
+/** Returns the node's bounds in root pixels after checking no ancestor clips any of it. */
+internal fun SemanticsNodeInteraction.fullyVisibleBounds(context: String): Rect {
+    val unclipped = layoutBounds()
+    val visible = fetchSemanticsNode(context).boundsInRoot
+    assertTrue("$context has no size", unclipped.width > 0f && unclipped.height > 0f)
+    assertTrue(
+        "$context is clipped: $visible of $unclipped",
+        visible.width >= unclipped.width - 1f && visible.height >= unclipped.height - 1f,
+    )
+    return unclipped
 }

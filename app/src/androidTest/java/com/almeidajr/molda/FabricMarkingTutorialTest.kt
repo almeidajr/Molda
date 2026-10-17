@@ -123,9 +123,6 @@ class FabricMarkingTutorialTest {
             // Change the actual system preference while the tutorial is already open.
             shell("settings put global animator_duration_scale 0")
             composeRule.waitUntil(5_000) { !ValueAnimator.areAnimatorsEnabled() }
-            composeRule.onNodeWithText(
-                "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
-            ).performScrollTo().assertIsDisplayed()
             listOf(
                 "Dobra do tecido em Rive: etapa 1",
                 "Dobra do tecido em Rive: etapa 2",
@@ -141,6 +138,7 @@ class FabricMarkingTutorialTest {
                         .fetchSemanticsNodes().isNotEmpty()
                 }
                 val drawing = composeRule.onNodeWithContentDescription(description)
+                // Visible without opening "Detalhes", above the step's lead.
                 composeRule.onNodeWithText(
                     "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
                 ).performScrollTo().assertIsDisplayed()
@@ -258,9 +256,10 @@ class FabricMarkingTutorialTest {
         openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
         composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
         composeRule.onNodeWithText("Anterior").assertIsNotEnabled()
-        composeRule.onNodeWithText(
-            "Comece com papel ou retalho. Alise o tecido sem esticar e respeite o fio.",
-        )
+        composeRule.onNodeWithText("Alise o tecido sem esticar e respeite o fio.")
+            .assertIsDisplayed()
+        expandDetails()
+        composeRule.onNodeWithText("Comece com papel ou retalho.")
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Próximo").performClick()
         composeRule.onNodeWithText("Primeira dobra").assertIsDisplayed()
@@ -289,9 +288,17 @@ class FabricMarkingTutorialTest {
         openTutorial(listOf("80", "2", "60", "1", "2"))
         composeRule.onNodeWithText("Próximo").performClick()
         composeRule.onNodeWithText("Cortar os arcos").assertIsDisplayed()
-        composeRule.onNodeWithText("2. Corte da cintura: 12,05\u00A0cm")
+        composeRule.onNodeWithText(
+            "Corte o arco 2 e depois o arco 4, atravessando as quatro camadas alinhadas.",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("Não corte as linhas 1 e 3", substring = true)
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("4. Corte da barra: 75,05\u00A0cm")
+        composeRule.onNodeWithText(
+            "Para tecido da peça, abertura, margens do fechamento e cós pedem instruções " +
+                "à parte antes do corte.",
+        ).performScrollTo().assertIsDisplayed()
+        expandDetails()
+        composeRule.onNodeWithText("Pratique em papel ou retalho", substring = true)
             .performScrollTo().assertIsDisplayed()
         awaitText("Reproduzir etapa")
         playThenPause("Reproduzir etapa") {
@@ -305,6 +312,7 @@ class FabricMarkingTutorialTest {
         ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Próximo").assertDoesNotExist()
         composeRule.onNodeWithText("Concluir").assertIsDisplayed().assertIsEnabled()
+        expandDetails()
         composeRule.onNodeWithText(
             "O círculo desdobrado não é um molde completo e não garante caimento.",
         ).performScrollTo().assertIsDisplayed()
@@ -555,6 +563,11 @@ class FabricMarkingTutorialTest {
         composeRule.waitUntil(15_000) {
             composeRule.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    /** Opens the current step's collapsed "Detalhes" disclosure. */
+    private fun expandDetails() {
+        composeRule.onNodeWithText("Detalhes").performScrollTo().performClick()
     }
 
     private fun closeTutorial() {

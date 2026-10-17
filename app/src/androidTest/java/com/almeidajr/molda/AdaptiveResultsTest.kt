@@ -9,7 +9,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
@@ -30,7 +29,6 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.window.layout.FoldingFeature
@@ -87,9 +85,8 @@ class AdaptiveResultsTest {
             assertDiagramInCard(card, layout.isDiagramBeside, context)
             openTutorial()
             assertTutorialBarWhole(context)
-            // The instructions still have room to scroll into view.
-            composeRule.onNodeWithText("Comece com papel ou retalho", substring = true)
-                .performScrollTo().fullyVisibleBounds(context)
+            // The instructions still have room to scroll to their end, the details disclosure.
+            composeRule.onNodeWithText("Detalhes").performScrollTo().fullyVisibleBounds(context)
             // Saved state would otherwise reopen the player under the next size.
             composeRule.onNodeWithContentDescription("Fechar tutorial").performClick()
         }
@@ -327,24 +324,6 @@ class AdaptiveResultsTest {
             },
         )
         return this
-    }
-
-    /** The node's laid-out bounds in root pixels, whether or not it is scrolled into view. */
-    private fun SemanticsNodeInteraction.layoutBounds(): Rect =
-        fetchSemanticsNode().layoutInfo.coordinates.let {
-            Rect(it.positionInRoot(), it.size.toSize())
-        }
-
-    /** Returns the node's bounds in root pixels after checking no ancestor clips any of it. */
-    private fun SemanticsNodeInteraction.fullyVisibleBounds(context: String): Rect {
-        val unclipped = layoutBounds()
-        val visible = fetchSemanticsNode(context).boundsInRoot
-        assertTrue("$context has no size", unclipped.width > 0f && unclipped.height > 0f)
-        assertTrue(
-            "$context is clipped: $visible of $unclipped",
-            visible.width >= unclipped.width - 1f && visible.height >= unclipped.height - 1f,
-        )
-        return unclipped
     }
 
     private data class ResultsLayout(

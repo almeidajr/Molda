@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -195,161 +196,179 @@ internal fun tutorialPalette(colors: ColorScheme): Map<String, Color> = mapOf(
     "accent" to colors.tertiary,
 )
 
+/**
+ * One step's written lesson: the action to take now, the context that changes it, then the
+ * supporting detail behind a collapsed "Detalhes" disclosure.
+ */
 @Composable
 internal fun StepInstructions(radii: SkirtRadii, step: FoldingStep) {
+    Text(stepLead(step), style = MaterialTheme.typography.titleMedium)
     when (step) {
-        FoldingStep.Marking -> MarkingInstructions(radii)
-
-        FoldingStep.Cutting, FoldingStep.Unfolding -> {
-            CuttingInstructions(step)
-            MarkingInstructions(radii, unfolded = step == FoldingStep.Unfolding)
+        FoldingStep.Preparation -> {
+            Text(
+                "Prepare o tecido conforme seus cuidados e passe os vincos. Não force " +
+                    "um tecido torcido para alinhar as bordas.",
+            )
+            Text("Estampas direcionais e tecidos com pelo exigem outro estudo de disposição.")
         }
 
-        else -> FoldingInstructions(step)
+        FoldingStep.FirstFold -> Text("Alinhe sem esticar e alise as duas camadas.")
+
+        FoldingStep.SecondFold -> Text(
+            "Alinhe e alise as quatro camadas. O encontro das duas dobras fechadas, no " +
+                "canto superior esquerdo, é a origem de todos os raios; não use um canto " +
+                "com bordas abertas.",
+        )
+
+        FoldingStep.Marking -> MarkingContext(radii)
+
+        FoldingStep.Cutting -> {
+            Text(
+                "O arco 2 é o corte da cintura (tracejado); o 4, o corte da barra " +
+                    "(traço e ponto). Depois retire o miolo e a sobra externa.",
+            )
+            Text(
+                "Não corte as linhas 1 e 3: são referências de costura e barra acabada. " +
+                    "Não corte em linha reta pelas dobras; elas mantêm o círculo inteiro.",
+            )
+            coincidenceNotes(cuttingCard(radii)).forEach { Text(it) }
+            Text(
+                "Para tecido da peça, abertura, margens do fechamento e cós pedem instruções " +
+                    "à parte antes do corte.",
+            )
+        }
+
+        FoldingStep.Unfolding -> {
+            Text(
+                "Primeiro surge um semicírculo à direita; depois, um círculo inteiro com o " +
+                    "recorte central da cintura.",
+            )
+            Text(
+                "Centro do recorte da cintura: mesma origem de todos os raios, agora no " +
+                    "centro do círculo.",
+            )
+        }
+    }
+    Disclosure("Detalhes") {
+        // Supporting text, quieter than the lead and context through the smaller type.
+        ProvideTextStyle(
+            MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        ) {
+            stepDetails(step).forEach { Text(it) }
+            Text(
+                "A imagem parada mostra o resultado da etapa. Reproduza ou repita a etapa para " +
+                    "acompanhar o movimento em repetição contínua. Pause para observar; todas " +
+                    "as instruções também estão escritas, para seguir sem animação ou cores.",
+            )
+        }
     }
 }
 
+/** The one action to take now, short enough to read under the pinned drawing. */
+internal fun stepLead(step: FoldingStep): String = when (step) {
+    FoldingStep.Preparation -> "Alise o tecido sem esticar e respeite o fio."
+
+    FoldingStep.FirstFold ->
+        "Dobre no sentido do comprimento, levando a ourela esquerda até a direita."
+
+    FoldingStep.SecondFold ->
+        "Dobre transversalmente, levando as bordas cortadas de cima até as de baixo."
+
+    FoldingStep.Marking ->
+        "Prenda fita ou régua no encontro das duas dobras fechadas e marque cada arco " +
+            "com raio constante."
+
+    FoldingStep.Cutting ->
+        "Corte o arco 2 e depois o arco 4, atravessando as quatro camadas alinhadas."
+
+    FoldingStep.Unfolding ->
+        "Desfaça a segunda dobra, abrindo as duas camadas superiores para cima, e depois " +
+            "a primeira, levando a camada de cima para a esquerda; alise sem esticar."
+}
+
+/** The current radii in key order, then where each line sits and which are not cut. */
 @Composable
-private fun MarkingInstructions(radii: SkirtRadii, unfolded: Boolean = false) {
-    Text("Proporções calculadas; desenho não está em tamanho real.")
-    Text(
-        "Tamanho do tecido ilustrativo. Pressupõe tecido suficiente; a largura " +
-            "e o comprimento reais do tecido não foram verificados.",
-    )
-    if (unfolded) {
-        Text(
-            "Centro do recorte da cintura: mesma origem de todos os raios, agora no centro do círculo.",
-        )
-    } else {
-        Text(
-            "Origem comum: ponto no canto superior esquerdo, encontro das duas " +
-                "dobras fechadas. Com fita ou régua presa nesse ponto, marque cada arco " +
-                "mantendo seu raio constante.",
-        )
-    }
+private fun MarkingContext(radii: SkirtRadii) {
     val card = cuttingCard(radii)
-    card.flatMap { it.entries }.sortedBy { it.number }.forEach { entry ->
-        Text("${entry.number}. ${entry.label}: ${entry.value}")
-        Text(lineRole(entry.lineStyle))
+    // The four radii read as one key: closer together than the paragraphs around them.
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        card.flatMap { it.entries }.sortedBy { it.number }.forEach { entry ->
+            Text("${entry.number}. ${entry.label}: ${entry.value}")
+        }
     }
+    Text(
+        "As linhas 1 (contínua) e 3 (pontilhada) são referências de costura e do " +
+            "comprimento acabado, não de corte.",
+    )
+    Text(
+        "A linha 2 (tracejada) fica para dentro da 1, reservando a margem de cintura; " +
+            "a 4 (traço e ponto) fica para fora da 3, reservando a margem de barra.",
+    )
     coincidenceNotes(card).forEach { Text(it) }
-    Text(
-        "Antes de cortar tecido da peça, obtenha instruções separadas para " +
-            "abertura, margens do fechamento e cós. Esta demonstração não é um " +
-            "molde completo.",
+}
+
+/** Conventions, honest limits and practice notes that support the step but don't change it. */
+private fun stepDetails(step: FoldingStep): List<String> = when (step) {
+    FoldingStep.Preparation -> listOf(
+        "No desenho plano, as ourelas estão à esquerda e à direita (bordas pontilhadas); " +
+            "o fio é paralelo a elas. As bordas cortadas estão em cima e embaixo (tracejadas).",
+        "Comece com papel ou retalho.",
+        IllustrativeFabric,
+    )
+
+    FoldingStep.FirstFold -> listOf(
+        "Resultado: dobra fechada à esquerda (linha contínua); ourelas juntas à direita " +
+            "(pontilhadas); bordas cortadas em cima e embaixo (tracejadas).",
+        IllustrativeFabric,
+    )
+
+    FoldingStep.SecondFold -> listOf(
+        "Resultado: dobras fechadas em cima e à esquerda (linhas contínuas); bordas " +
+            "cortadas embaixo (tracejadas); ourelas à direita (pontilhadas).",
+        "Na próxima etapa, ampliamos esse mesmo quadrado, sem girá-lo. A origem continua " +
+            "no canto superior esquerdo.",
+        IllustrativeFabric,
+    )
+
+    FoldingStep.Marking -> listOf(ProportionalDrawing, ConstructionBoundary)
+
+    FoldingStep.Cutting -> listOf(
+        "A animação volta ao início apenas para repetir a demonstração; não desfaça os cortes.",
+        PracticeFirst,
+        ProportionalDrawing,
+        ConstructionBoundary,
+    )
+
+    FoldingStep.Unfolding -> listOf(
+        "O desenho foi reduzido uniformemente para caber o círculo, sem mudar as " +
+            "proporções. O quarto cortado começa abaixo e à direita da origem.",
+        "O círculo desdobrado não é um molde completo e não garante caimento.",
+        PracticeFirst,
+        ProportionalDrawing,
+        ConstructionBoundary,
     )
 }
 
-@Composable
-private fun FoldingInstructions(step: FoldingStep) {
-    Text(
-        "Tecido ilustrativo, sem tamanho real. Pressupõe tecido suficiente; " +
-            "largura e comprimento reais não foram verificados.",
-    )
-    when (step) {
-        FoldingStep.Preparation -> FabricPreparationInstructions()
+// Not `const`: ktlint then demands SCREAMING_SNAKE names, which Detekt's naming rule rejects.
+@Suppress("MayBeConstant")
+private val IllustrativeFabric =
+    "Tecido ilustrativo, sem tamanho real. Pressupõe tecido suficiente; largura e " +
+        "comprimento reais não foram verificados."
 
-        FoldingStep.FirstFold -> {
-            Text(
-                "Dobre no sentido do comprimento: leve a ourela esquerda até a direita. " +
-                    "Alinhe sem esticar e alise as duas camadas.",
-            )
-            Text(
-                "Resultado: dobra fechada à esquerda (linha contínua); ourelas juntas à " +
-                    "direita (pontilhadas); bordas cortadas em cima e embaixo (tracejadas).",
-            )
-        }
+@Suppress("MayBeConstant")
+private val ProportionalDrawing =
+    "Proporções calculadas; desenho não está em tamanho real. O tamanho do tecido é " +
+        "ilustrativo: pressupõe tecido suficiente, e a largura e o comprimento reais do " +
+        "tecido não foram verificados."
 
-        FoldingStep.SecondFold -> {
-            Text(
-                "Dobre transversalmente: leve as bordas cortadas de cima até as de " +
-                    "baixo. Alinhe e alise as quatro camadas.",
-            )
-            Text(
-                "Resultado: dobras fechadas em cima e à esquerda (linhas contínuas); " +
-                    "bordas cortadas embaixo (tracejadas); ourelas à direita (pontilhadas).",
-            )
-            Text(
-                "O ponto no canto superior esquerdo é o encontro das duas dobras " +
-                    "fechadas: origem de todos os raios. Não use um canto com bordas " +
-                    "abertas.",
-            )
-            Text(
-                "Na próxima etapa, ampliamos esse mesmo quadrado, sem girá-lo. A origem " +
-                    "continua no canto superior esquerdo.",
-            )
-        }
+@Suppress("MayBeConstant")
+private val PracticeFirst =
+    "Pratique em papel ou retalho; a sequência ainda aguarda validação prática por uma " +
+        "pessoa que costura."
 
-        FoldingStep.Marking, FoldingStep.Cutting, FoldingStep.Unfolding -> Unit
-    }
-    Text(
-        "A imagem parada mostra o resultado da etapa. Reproduza para acompanhar " +
-            "o movimento em repetição contínua. Pause para observar; o texto permite " +
-            "seguir sem animação ou cores.",
-    )
-}
-
-@Composable
-private fun FabricPreparationInstructions() {
-    Text("Comece com papel ou retalho. Alise o tecido sem esticar e respeite o fio.")
-    Text(
-        "No desenho plano, as ourelas estão à esquerda e à direita (bordas " +
-            "pontilhadas); o fio é paralelo a elas. As bordas cortadas estão em " +
-            "cima e embaixo (tracejadas).",
-    )
-    Text(
-        "Prepare o tecido conforme seus cuidados e passe os vincos. Não force " +
-            "um tecido torcido para alinhar as bordas. Estampas direcionais e " +
-            "tecidos com pelo exigem outro estudo de disposição.",
-    )
-}
-
-@Composable
-private fun CuttingInstructions(step: FoldingStep) {
-    Text(
-        "Pratique em papel ou retalho; a sequência ainda aguarda validação prática por uma pessoa que costura.",
-    )
-    if (step == FoldingStep.Cutting) {
-        Text(
-            "Mantenha as quatro camadas alinhadas. Corte primeiro o arco 2, " +
-                "da cintura (tracejado), e depois o arco 4, da barra (traço e ponto), " +
-                "atravessando as quatro camadas. Retire o miolo e a sobra externa.",
-        )
-        Text(
-            "Não corte as linhas 1 e 3: são referências de costura e barra acabada. " +
-                "Não corte em linha reta pelas dobras; elas mantêm o círculo inteiro.",
-        )
-        Text(
-            "A animação volta ao início apenas para repetir a demonstração; não desfaça os cortes.",
-        )
-    } else {
-        Text(
-            "O desenho foi reduzido uniformemente para caber o círculo, sem mudar " +
-                "as proporções. O quarto cortado começa abaixo e à direita da origem.",
-        )
-        Text(
-            "Desfaça a segunda dobra: abra as duas camadas superiores para cima, " +
-                "abrindo um semicírculo à direita. Depois desfaça a primeira dobra, " +
-                "levando a camada de cima para a esquerda. Alise sem esticar: " +
-                "surge um círculo inteiro com o recorte central da cintura.",
-        )
-        Text("O círculo desdobrado não é um molde completo e não garante caimento.")
-    }
-    Text(
-        "A imagem parada mostra o resultado. Reproduza ou repita a etapa para " +
-            "acompanhar o movimento em repetição contínua. Pause para observar; " +
-            "todas as instruções também estão escritas.",
-    )
-}
-
-private fun lineRole(style: LineStyle): String = when (style) {
-    LineStyle.Solid -> "Linha contínua: referência de costura, não de corte."
-
-    LineStyle.Dashed ->
-        "Linha tracejada: fica para dentro da costura, reservando a margem de cintura."
-
-    LineStyle.Dotted -> "Linha pontilhada: referência do comprimento acabado."
-
-    LineStyle.DashDot ->
-        "Linha traço e ponto: fica para fora da barra acabada, reservando a margem de barra."
-}
+@Suppress("MayBeConstant")
+private val ConstructionBoundary =
+    "Antes de cortar tecido da peça, obtenha instruções separadas para abertura, margens " +
+        "do fechamento e cós. Esta demonstração não é um molde completo."

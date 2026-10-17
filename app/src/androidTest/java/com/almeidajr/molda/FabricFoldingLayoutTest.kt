@@ -1,8 +1,10 @@
 package com.almeidajr.molda
 
+import android.animation.ValueAnimator
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.SemanticsProperties.StateDescription
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.SemanticsMatcher
@@ -71,13 +73,11 @@ class FabricFoldingLayoutTest {
                 composeRule.waitUntil(15_000) {
                     composeRule.onAllNodes(hasText(playLabel)).fetchSemanticsNodes().isNotEmpty()
                 }
-                // Reading to the end of the instructions leaves the drawing's controls in view.
-                composeRule.onNodeWithText(
-                    if (index >= 3) "Antes de cortar tecido da peça" else "A imagem parada mostra",
-                    substring = true,
-                ).performScrollTo().assertIsDisplayed()
+                assertLeadAndStepBarInView(STEP_LEADS[index], index, context, fontScale)
+                readDetails(isMarkingOrLater = index >= 3)
+                // Reading to the end of the details leaves the drawing's controls in view.
                 composeRule.onNodeWithText(playLabel).assertIsDisplayed()
-                if (index >= 3) {
+                if (index in 3..4) {
                     composeRule.onNodeWithText("Margem de cintura zero: as linhas 1 e 2 coincidem.")
                         .performScrollTo().assertIsDisplayed()
                 }
@@ -106,6 +106,79 @@ class FabricFoldingLayoutTest {
             .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
         composeRule.onNodeWithText("Preparar o tecido").assertDoesNotExist()
         composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
+    }
+
+    private companion object {
+        val STEP_LEADS = listOf(
+            "Alise o tecido sem esticar e respeite o fio.",
+            "Dobre no sentido do comprimento, levando a ourela esquerda até a direita.",
+            "Dobre transversalmente, levando as bordas cortadas de cima até as de baixo.",
+            "Prenda fita ou régua no encontro das duas dobras fechadas e marque cada arco " +
+                "com raio constante.",
+            "Corte o arco 2 e depois o arco 4, atravessando as quatro camadas alinhadas.",
+            "Desfaça a segunda dobra, abrindo as duas camadas superiores para cima, e depois " +
+                "a primeira, levando a camada de cima para a esquerda; alise sem esticar.",
+        )
+    }
+
+    /**
+     * Before any scrolling, the step bar is whole and the step's lead sentence sits under the
+     * pinned drawing, so the action to take now is readable without hunting for it. At 100% text
+     * the whole lead fits. At 200% on a compact phone (320x640 dp) the pinned drawing, a wrapped
+     * title and the stacked step bar leave about three lead lines, fewer than the longer leads
+     * need, so there the lead must start in view with at least its first line whole. With system
+     * animations off, the motion note sits above the lead and takes that room at 200%, so there
+     * the note is the first instruction that must start in view.
+     */
+    private fun assertLeadAndStepBarInView(
+        lead: String,
+        index: Int,
+        context: String,
+        fontScale: Float,
+    ) {
+        val node = composeRule.onNodeWithText(lead)
+        if (fontScale > 1f) {
+            val firstInstruction = if (ValueAnimator.areAnimatorsEnabled()) {
+                node
+            } else {
+                composeRule.onNodeWithText(
+                    "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
+                )
+            }
+            val layouts = mutableListOf<TextLayoutResult>()
+            firstInstruction.performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
+                assertTrue(it(layouts))
+            }
+            val unclipped = firstInstruction.layoutBounds()
+            val visible = firstInstruction.fetchSemanticsNode().boundsInRoot
+            // Printed (logcat tag System.out) so each window's visible share can be read back.
+            println("MoldaLead $context visible=${visible.height} of ${unclipped.height}")
+            assertTrue(
+                "$context first instruction does not start in view with its first line whole: " +
+                    "$visible of $unclipped",
+                visible.top <= unclipped.top + 1f &&
+                    visible.height >= layouts.single().getLineBottom(0) - 1f,
+            )
+        } else {
+            node.fullyVisibleBounds("$context lead")
+        }
+        listOf("Anterior", "Etapa ${index + 1} de 6", if (index == 5) "Concluir" else "Próximo")
+            .forEach { composeRule.onNodeWithText(it).fullyVisibleBounds("$context $it") }
+    }
+
+    /** The supporting detail starts collapsed under a labelled 48dp disclosure, then reads to the end. */
+    private fun readDetails(isMarkingOrLater: Boolean) {
+        composeRule.onNodeWithText("Detalhes").performScrollTo()
+            .assertHeightIsAtLeast(48.dp)
+            .assert(SemanticsMatcher.expectValue(StateDescription, "Recolhido"))
+            .performClick()
+            .assert(SemanticsMatcher.expectValue(StateDescription, "Expandido"))
+        if (isMarkingOrLater) {
+            composeRule.onNodeWithText("Antes de cortar tecido da peça", substring = true)
+                .performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNodeWithText("A imagem parada mostra", substring = true)
+            .performScrollTo().assertIsDisplayed()
     }
 
     private fun openTutorial(dark: Boolean, fontScale: Float) {
