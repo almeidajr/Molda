@@ -208,7 +208,11 @@ private fun Destination(
         val list: @Composable () -> Unit = {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
                 if (!profileState.isCreating) {
-                    TextButton(onClick = { onManage(false) }) { Text("Voltar ao cálculo") }
+                    TextButton(onClick = {
+                        onManage(false)
+                    }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text("Voltar ao cálculo")
+                    }
                 }
                 ProfilesContent(profileState, profiles::load, requestEditor, profiles::delete)
             }
@@ -269,10 +273,12 @@ private fun DiscardDialog(onDismiss: () -> Unit, onDiscard: () -> Unit) {
         confirmButton = {
             TextButton(onClick = {
                 onDiscard()
-            }) { Text("Descartar") }
+            }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Descartar") }
         },
         dismissButton = {
-            TextButton(onClick = { onDismiss() }) { Text("Continuar editando") }
+            TextButton(onClick = {
+                onDismiss()
+            }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Continuar editando") }
         },
     )
 }

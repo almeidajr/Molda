@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -66,12 +67,18 @@ fun ProfileEditor(
         ProfileMutationError(state.saveError.takeIf { state.deleteId == null })
         state.loadError?.let {
             ProfileMutationError(it)
-            TextButton(onClick = onRetry) { Text("Tentar carregar novamente") }
+            TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("Tentar carregar novamente")
+            }
         }
-        Button(onClick = {
-            focus.clearFocus()
-            onSave()
-        }, enabled = !state.isSaving && !state.isLoading && state.loadError == null) {
+        Button(
+            onClick = {
+                focus.clearFocus()
+                onSave()
+            },
+            enabled = !state.isSaving && !state.isLoading && state.loadError == null,
+            modifier = Modifier.heightIn(min = 48.dp),
+        ) {
             Text(
                 when {
                     state.isSaving -> "Salvando…"
@@ -80,10 +87,14 @@ fun ProfileEditor(
                 },
             )
         }
-        TextButton(onClick = {
-            focus.clearFocus()
-            onCancel()
-        }, enabled = !state.isSaving) { Text("Cancelar") }
+        TextButton(
+            onClick = {
+                focus.clearFocus()
+                onCancel()
+            },
+            enabled = !state.isSaving,
+            modifier = Modifier.heightIn(min = 48.dp),
+        ) { Text("Cancelar") }
     }
     if (showCalendar) {
         ProfileDatePicker(
@@ -166,17 +177,27 @@ private fun ProfileDatePicker(
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = {
-                picker.selectedDateMillis?.let {
-                    onSelect(
-                        Instant.ofEpochMilli(
-                            it,
-                        ).atZone(ZoneOffset.UTC).toLocalDate().format(ProfileDateFormat),
-                    )
-                }
-            }, enabled = picker.selectedDateMillis != null) { Text("Confirmar data") }
+            TextButton(
+                onClick = {
+                    picker.selectedDateMillis?.let {
+                        onSelect(
+                            Instant.ofEpochMilli(
+                                it,
+                            ).atZone(ZoneOffset.UTC).toLocalDate().format(ProfileDateFormat),
+                        )
+                    }
+                },
+                enabled = picker.selectedDateMillis != null,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Text("Confirmar data")
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar calendário") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("Cancelar calendário")
+            }
+        },
     ) { DatePicker(state = picker) }
 }
 
