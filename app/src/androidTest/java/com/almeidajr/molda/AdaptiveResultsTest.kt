@@ -1,9 +1,13 @@
 package com.almeidajr.molda
 
-import android.content.pm.ActivityInfo
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
@@ -54,6 +58,9 @@ class AdaptiveResultsTest {
 
     // ForcedSize can shrink density to fit, so pixel checks use the density the content sees.
     private var pixelsPerDp = 1f
+
+    // ForcedSize may leave part of the window empty, so folds are placed across the content.
+    private var contentBounds = Rect.Zero
 
     @Test
     fun forcedSizes_keepCuttingCardInReadableResultsPane_andTutorialBarWhole() {
@@ -146,9 +153,8 @@ class AdaptiveResultsTest {
 
     @Test
     fun halfOpenedVerticalHinge_splitsPanesAtFold_andKeepsTutorialPlayerOnOneSide() {
-        // A landscape phone is wide enough for both sides of an off-centre fold to hold a pane.
-        useLandscape()
-        showCalculator(size = null, fontScale = 1f)
+        // Wide enough on any device for both sides of an off-centre fold to hold a pane.
+        showCalculator(DpSize(1000.dp, 800.dp), fontScale = 1f)
         // Off centre, so panes that ignored the fold would put the card across it.
         val hinge = publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
         calculateReferenceCase()
@@ -158,9 +164,6 @@ class AdaptiveResultsTest {
         assertTrue("inputs cross the fold", waist.right <= hinge.left)
         assertTrue("card crosses the fold", card.left >= hinge.right)
         openTutorial()
-        // The player's new hinge collector starts empty: the test publisher, unlike a device,
-        // does not replay the current fold.
-        publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
         val player = listOf("Anterior", "Etapa 1 de 6", "Próximo", "Preparar o tecido")
             .map { composeRule.onNodeWithText(it).fullyVisibleBounds(it) } +
             composeRule.onNodeWithContentDescription("Fechar tutorial").fullyVisibleBounds("close")
@@ -172,8 +175,7 @@ class AdaptiveResultsTest {
 
     @Test
     fun flatVerticalHinge_tutorialPlayerSpansFullWidth() {
-        // Wide enough for the calculator's panes to fit beside the fold, so the window stays whole.
-        useLandscape()
+        // Whether the calculator behind it has one column or two, a flat fold splits neither.
         showCalculator(size = null, fontScale = 1f)
         calculateReferenceCase()
         openTutorial()
@@ -189,22 +191,16 @@ class AdaptiveResultsTest {
         )
     }
 
-    private fun useLandscape() {
-        composeRule.runOnUiThread {
-            composeRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
-        composeRule.waitUntil(10_000) {
-            composeRule.activity.window.decorView.run { width > height }
-        }
-    }
-
     private fun showCalculator(size: DpSize?, fontScale: Float) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                     val content: @Composable () -> Unit = {
                         pixelsPerDp = LocalDensity.current.density
-                        MoldaTheme { SkirtCalculatorRoute() }
+                        Box(
+                            Modifier.fillMaxSize()
+                                .onGloballyPositioned { contentBounds = it.boundsInWindow() },
+                        ) { MoldaTheme { SkirtCalculatorRoute() } }
                     }
                     if (size == null) {
                         content()
@@ -219,7 +215,7 @@ class AdaptiveResultsTest {
         }
     }
 
-    /** Publishes a fold across the window, half-opened by default, and returns its bounds. */
+    /** Publishes a fold across the content, half-opened by default, and returns its bounds. */
     private fun publishHinge(
         orientation: FoldingFeature.Orientation,
         centerFraction: Float = 0.5f,
@@ -227,13 +223,13 @@ class AdaptiveResultsTest {
     ): Rect {
         // The publisher does not replay, so the content must be collecting first.
         composeRule.waitForIdle()
-        val window = composeRule.activity.window.decorView
+        val content = contentBounds
         val feature = FoldingFeature(
             activity = composeRule.activity,
             center = if (orientation == FoldingFeature.Orientation.VERTICAL) {
-                (window.width * centerFraction).toInt()
+                (content.left + content.width * centerFraction).toInt()
             } else {
-                (window.height * centerFraction).toInt()
+                (content.top + content.height * centerFraction).toInt()
             },
             state = state,
             orientation = orientation,

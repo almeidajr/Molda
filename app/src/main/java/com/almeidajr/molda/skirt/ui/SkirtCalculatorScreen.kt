@@ -23,9 +23,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -126,7 +128,11 @@ private fun RevealCalculationOutcome(
     bringRequesters: Map<MeasurementField, BringIntoViewRequester>,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
+    // Saved so returning from the tutorial keeps the scroll position instead of revealing again.
+    var revealedAttempt by rememberSaveable { mutableIntStateOf(state.calculationAttempt) }
     LaunchedEffect(state.calculationAttempt) {
+        if (state.calculationAttempt == revealedAttempt) return@LaunchedEffect
+        revealedAttempt = state.calculationAttempt
         if (state.radii != null) {
             // Clearing focus alone leaves the keyboard covering the radii after IME Done.
             keyboard?.hide()

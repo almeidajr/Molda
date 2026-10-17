@@ -134,6 +134,8 @@ width, with a 24dp gap and a 640dp maximum readable pane width. This is a
 content-fit rule, not a device-type test. Inputs sit beside results; a profile
 list may sit beside its active editor. Avoid hinges and preserve drafts when
 window size or orientation changes. Large text can return the layout to one pane.
+One column spans a flat fold and keeps to one side of a half-open or separating
+one; two panes split at the fold, or share one side when they cannot fit beside it.
 The cutting card follows the results pane. The tutorial player is one column of
 at most 640dp that keeps to one side of a half-open or separating vertical
 fold, spans a flat one, and keeps above or below a horizontal one. When its window is under 560dp tall, the drawing scrolls with the

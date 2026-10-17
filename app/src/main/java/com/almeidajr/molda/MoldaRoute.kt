@@ -99,7 +99,9 @@ fun MoldaRoute(
         showManagement =
             false
     }
-    HingeSafeContent(modifier.fillMaxSize()) {
+    val tutorialRadii = calculatorState.radii?.takeIf { showTutorial }
+    // The player is one column even on a wide window: keep it off a book-posture fold only.
+    HingeSafeContent(modifier.fillMaxSize(), isSingleColumn = tutorialRadii != null) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val wide = maxWidth >= minimumTwoPaneWidth(LocalDensity.current.fontScale)
             Scaffold(
@@ -117,12 +119,8 @@ fun MoldaRoute(
             ) { padding ->
                 // Keep bottom actions reachable while storage feedback is visible.
                 val contentModifier = Modifier.padding(padding).padding(bottom = snackbarInset)
-                val tutorialRadii = calculatorState.radii?.takeIf { showTutorial }
                 if (tutorialRadii != null) {
-                    // One column has no pane split: keep it off a book-posture fold, span a flat one.
-                    HingeSafeContent(contentModifier, avoidVerticalHinges = true) {
-                        FabricFoldingPlayer(tutorialRadii, { showTutorial = false })
-                    }
+                    FabricFoldingPlayer(tutorialRadii, { showTutorial = false }, contentModifier)
                 } else {
                     destinations.SaveableStateProvider("destination") {
                         Destination(

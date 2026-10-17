@@ -115,7 +115,9 @@ accessibility and human-feedback verification.
 - Compact windows show one column. Sufficiently wide windows show calculator
   inputs beside results and may show profile lists beside their editor.
   Adapt to available window space and text size, constrain readable widths,
-  avoid fold hinges, and preserve the current draft when resizing.
+  avoid fold hinges, and preserve the current draft when resizing. One column
+  spans a flat fold and keeps to one side of a half-open or separating one; two
+  panes split at the fold, or share one side when they cannot fit beside it.
 - Keep the agreed hierarchical navigation; no home screen, bottom navigation
   bar, rail or drawer is needed. The full-screen tutorial player keeps to one
   side of a half-open or separating fold but spans a flat one, and the cutting

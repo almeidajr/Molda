@@ -93,14 +93,15 @@ private fun ReadablePane(content: @Composable () -> Unit) {
 
 /**
  * Places [content] on one side of any hinge that would split it. Material scenes exclude
- * vertical hinges; compact and tabletop layouts need a safe region too. Single-pane content
- * such as the tutorial player sets [avoidVerticalHinges] so a half-open or separating vertical
- * fold never splits it, while a flat fold keeps the full width.
+ * vertical hinges; compact and tabletop layouts need a safe region too. One column (narrow
+ * content, or [isSingleColumn] content such as the tutorial player) moves off a half-open or
+ * separating vertical fold but spans a flat one; two panes move only when they cannot sit
+ * beside the fold.
  */
 @Composable
 internal fun HingeSafeContent(
     modifier: Modifier,
-    avoidVerticalHinges: Boolean = false,
+    isSingleColumn: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val hinges = currentWindowAdaptiveInfoV2().windowPosture.hingeList
@@ -118,12 +119,13 @@ internal fun HingeSafeContent(
             if (hinge.isVertical && bounds.left > area.left && bounds.right < area.right) {
                 val left = bounds.left - area.left
                 val right = area.right - bounds.right
-                val shouldAvoid = if (avoidVerticalHinges) {
-                    hinge.splitsSingleColumn
-                } else {
-                    !area.fitsPanesBeside(left, right, minimumWidth, spacerWidth)
-                }
-                if (shouldAvoid) {
+                val isTwoPane = !isSingleColumn && area.width >= minimumWidth * 2 + spacerWidth
+                if (hinge.displacesContent(
+                        isTwoPane,
+                        minOf(left, right),
+                        minimumWidth + spacerWidth,
+                    )
+                ) {
                     area = if (left >= right) {
                         area.copy(right = bounds.left)
                     } else {
@@ -153,11 +155,12 @@ internal fun HingeSafeContent(
 /** A half-open (book posture) or physically separating fold splits one column; a flat one does not. */
 private val HingeInfo.splitsSingleColumn: Boolean get() = isSeparating || !isFlat
 
-/** Whether a pane of [minimumWidth] plus the pane gap fits on each side of a vertical hinge. */
-private fun Rect.fitsPanesBeside(
-    left: Float,
-    right: Float,
-    minimumWidth: Float,
-    spacerWidth: Float,
-): Boolean =
-    minOf(left, right) >= minimumWidth + spacerWidth && width >= minimumWidth * 2 + spacerWidth
+/**
+ * Whether content must move off this vertical hinge: two panes when the [narrowerSide] cannot
+ * hold a pane plus its gap ([paneWidth]), one column when the fold would split it.
+ */
+private fun HingeInfo.displacesContent(
+    isTwoPane: Boolean,
+    narrowerSide: Float,
+    paneWidth: Float,
+): Boolean = if (isTwoPane) narrowerSide < paneWidth else splitsSingleColumn

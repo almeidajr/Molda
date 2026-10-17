@@ -3,7 +3,7 @@ package com.almeidajr.molda
 import android.animation.ValueAnimator
 import android.graphics.Color
 import android.os.SystemClock
-import androidx.compose.ui.graphics.toArgb
+import androidx.activity.compose.setContent
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,11 +21,19 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.skirt.domain.SkirtCalculation
+import com.almeidajr.molda.skirt.domain.SkirtMeasurements
+import com.almeidajr.molda.skirt.domain.SkirtRadii
+import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
+import com.almeidajr.molda.skirt.ui.FoldingStep
 import com.almeidajr.molda.skirt.ui.MeasurementField
+import com.almeidajr.molda.skirt.ui.TutorialAnimation
+import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.io.FileInputStream
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -130,11 +138,11 @@ class FabricMarkingTutorialTest {
                 composeRule.onNodeWithText(
                     "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
                 ).performScrollTo().assertIsDisplayed()
-                fun frame(): List<Int> {
-                    val pixels = drawing.captureToImage().toPixelMap()
-                    return (0 until pixels.height step 4).flatMap { y ->
-                        (0 until pixels.width step 4).map { x -> pixels[x, y].toArgb() }
-                    }
+                // Every pixel: at low density the dashes are one pixel wide and a sampling grid
+                // can miss them all.
+                fun frame(): IntArray {
+                    val image = drawing.captureToImage()
+                    return IntArray(image.width * image.height).also { image.readPixels(it) }
                 }
                 composeRule.waitUntil(10_000) {
                     frame().count { maxOf(Color.red(it), Color.green(it), Color.blue(it)) < 128 } >
@@ -340,20 +348,36 @@ class FabricMarkingTutorialTest {
     @Test
     fun cuttingAndUnfoldingPixels_preserveCurrentRadiiAndCoincidentAllowances() {
         listOf(
-            listOf("80", "2", "60", "1", "2") to listOf(0.173892, 0.160568, 0.973352, 1.0),
-            listOf("80", "2", "120", "1", "2") to listOf(0.096635, 0.089230, 0.985191, 1.0),
-            listOf("80", "2", "60", "0", "0") to listOf(0.178653, 1.0),
-        ).forEach { (inputs, ratios) ->
-            openTutorial(inputs)
-            composeRule.onNodeWithText("Próximo").performClick()
+            SkirtMeasurements(80.0, 2.0, 60.0, 1.0, 2.0) to
+                listOf(0.173892, 0.160568, 0.973352, 1.0),
+            SkirtMeasurements(80.0, 2.0, 120.0, 1.0, 2.0) to
+                listOf(0.096635, 0.089230, 0.985191, 1.0),
+            SkirtMeasurements(80.0, 2.0, 60.0, 0.0, 0.0) to listOf(0.178653, 1.0),
+        ).forEach { (measurements, ratios) ->
+            val radii = (calculateSkirtRadii(measurements) as SkirtCalculation.Success).radii
+            showDrawing(radii, FoldingStep.Cutting)
             assertCircularDrawing("Corte proporcional em Rive", ratios, unfolded = false)
-            composeRule.onNodeWithText("Próximo").performClick()
+            showDrawing(radii, FoldingStep.Unfolding)
             assertCircularDrawing(
                 "Círculo desdobrado proporcional em Rive",
                 ratios,
                 unfolded = true,
             )
-            closeTutorial()
+        }
+    }
+
+    /**
+     * Shows one step's still drawing at a fixed size. The player sizes it by window height, which
+     * on a short low-density screen leaves the unfolded waist lines closer than one pixel apart.
+     */
+    private fun showDrawing(radii: SkirtRadii, step: FoldingStep) {
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent {
+                // The full width of the narrowest phone; the still frame ignores motion.
+                MoldaTheme {
+                    TutorialAnimation(radii, step, motionEnabled = false, drawingSize = 288.dp)
+                }
+            }
         }
     }
 
@@ -398,14 +422,14 @@ class FabricMarkingTutorialTest {
 
     private fun assertCompletedFrameAfterReplay(
         description: String,
-        completed: List<Int>,
-        frame: () -> List<Int>,
+        completed: IntArray,
+        frame: () -> IntArray,
     ) {
         val start = SystemClock.elapsedRealtime()
         composeRule.waitUntil(5_000) {
             assertTrue(
                 "$description must retain the completed diagram with motion disabled",
-                completed == frame(),
+                completed.contentEquals(frame()),
             )
             SystemClock.elapsedRealtime() - start >= 500
         }
