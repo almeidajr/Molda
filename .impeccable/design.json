@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-16T00:00:00Z",
+  "generatedAt": "2026-10-17T00:00:00Z",
   "title": "Design System: Molda",
   "extensions": {
     "colorMeta": {
@@ -56,7 +56,7 @@
       "name": "Tonal Button",
       "kind": "button",
       "refersTo": "button-tonal",
-      "description": "The prominent secondary path just after the cutting card: Tutorial de dobra do tecido.",
+      "description": "The prominent secondary path, Tutorial de dobra do tecido, leading the wrapping action row under the cutting card beside Editar medidas.",
       "html": "<button class=\"ds-btn-tonal\">Tutorial de dobra do tecido</button>",
       "css": ".ds-btn-tonal { background: #F2DBF3; color: #514154; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; padding: 10px 24px; border: none; border-radius: 9999px; cursor: pointer; } .ds-btn-tonal:hover { background: #EACFEB; } .ds-btn-tonal:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
     },
@@ -88,9 +88,24 @@
       "name": "Cutting Card",
       "kind": "card",
       "refersTo": "cutting-card",
-      "description": "The four radii on Heather Wash with 28dp corners: reference and cutting groups, each value once with its line number, stroke sample and label.",
-      "html": "<section class=\"ds-cut\"><h2>Raios para o molde</h2><h3>Linhas de referência</h3><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>1</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>Costura da cintura</p><p class=\"ds-cut-value\">13,05&nbsp;cm</p></div><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>3</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"2 5\"/></svg>Barra acabada</p><p class=\"ds-cut-value\">73,05&nbsp;cm</p></div><h3>Linhas de corte</h3><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>2</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"12 6\"/></svg>Corte da cintura</p><p class=\"ds-cut-value\">12,05&nbsp;cm</p></div><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>4</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"12 5 2 5\"/></svg>Corte da barra</p><p class=\"ds-cut-value\">75,05&nbsp;cm</p></div></section>",
-      "css": ".ds-cut { background: #F2DBF3; color: #514154; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px; font-family: Roboto, system-ui, sans-serif; } .ds-cut h2 { margin: 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-cut h3 { margin: 8px 0 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-cut-entry { display: flex; flex-direction: column; gap: 4px; } .ds-cut-key { margin: 0; display: flex; align-items: center; gap: 8px; font: 400 16px/24px Roboto, system-ui, sans-serif; color: #4E4539; } .ds-cut-key span { font: 500 14px/20px Roboto, system-ui, sans-serif; color: #514154; } .ds-cut-key svg { color: #514154; } .ds-cut-value { margin: 0; font: 500 24px/32px Roboto, system-ui, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }"
+      "description": "The answer on Heather Wash with 28dp corners: reference and cutting groups, each value once with its line number, stroke sample and label, then the drafting diagram under \"Diagrama das linhas\" on the same surface (beside the radii when two 260dp columns fit). The radius rows are the diagram's key. Every text and stroke on it is On Heather Wash; labels and the note are quieter by type size only.",
+      "html": "<section class=\"ds-cut\"><h2>Raios para o molde</h2><h3>Linhas de referência</h3><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>1</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>Costura da cintura</p><p class=\"ds-cut-value\">13,05&nbsp;cm</p></div><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>3</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"2 5\"/></svg>Barra acabada</p><p class=\"ds-cut-value\">73,05&nbsp;cm</p></div><h3>Linhas de corte</h3><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>2</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"12 6\"/></svg>Corte da cintura</p><p class=\"ds-cut-value\">12,05&nbsp;cm</p></div><div class=\"ds-cut-entry\"><p class=\"ds-cut-key\"><span>4</span><svg width=\"40\" height=\"16\" aria-hidden=\"true\"><line x1=\"0\" y1=\"8\" x2=\"40\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"12 5 2 5\"/></svg>Corte da barra</p><p class=\"ds-cut-value\">75,05&nbsp;cm</p></div><h3>Diagrama das linhas</h3><div class=\"ds-cut-figure\" role=\"img\" aria-label=\"Diagrama esquemático, sem escala; linhas 2, 1, 3 e 4 do centro para fora\"></div><p class=\"ds-cut-note\">Esquema sem escala, não é molde para impressão.</p></section>",
+      "css": ".ds-cut { background: #F2DBF3; color: #514154; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px; font-family: Roboto, system-ui, sans-serif; } .ds-cut h2 { margin: 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-cut h3 { margin: 8px 0 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-cut-entry { display: flex; flex-direction: column; gap: 4px; } .ds-cut-key { margin: 0; display: flex; align-items: center; gap: 8px; font: 400 16px/24px Roboto, system-ui, sans-serif; } .ds-cut-key span { font: 500 14px/20px Roboto, system-ui, sans-serif; } .ds-cut-value { margin: 0; font: 500 24px/32px Roboto, system-ui, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-cut-figure { aspect-ratio: 1; max-width: 400px; } .ds-cut-note { margin: -8px 0 0; font: 400 14px/20px Roboto, system-ui, sans-serif; }"
+    },
+    {
+      "name": "Results Action Row",
+      "kind": "button",
+      "refersTo": "button-tonal",
+      "description": "One wrapping row under the cutting card: the tonal tutorial button, then the Editar medidas text button 8dp after it; at large text the second wraps below the first.",
+      "html": "<div class=\"ds-actions\"><button class=\"ds-btn-tonal\">Tutorial de dobra do tecido</button><button class=\"ds-btn-text\">Editar medidas</button></div>",
+      "css": ".ds-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }"
+    },
+    {
+      "name": "Measurement Summary",
+      "kind": "custom",
+      "description": "Medidas utilizadas (cm): a Title Medium heading, then the inputs as one wrapping Body Medium line in On Surface; the unit is stated once and a non-breaking space keeps each value with its label.",
+      "html": "<section class=\"ds-summary\"><h3>Medidas utilizadas (cm)</h3><p>Circunferência da cintura:&nbsp;80,00 · Folga de cintura:&nbsp;2,00 · Comprimento acabado:&nbsp;60,00 · Margem de costura da cintura:&nbsp;1,00 · Margem de barra:&nbsp;2,00</p></section>",
+      "css": ".ds-summary { display: flex; flex-direction: column; gap: 4px; color: #201B13; font-family: Roboto, system-ui, sans-serif; } .ds-summary h3 { margin: 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-summary p { margin: 0; font: 400 14px/20px Roboto, system-ui, sans-serif; }"
     },
     {
       "name": "Boundary Callout",
@@ -104,7 +119,7 @@
       "name": "Disclosure",
       "kind": "button",
       "refersTo": "button-text",
-      "description": "Text button that shows or hides the drafting steps or formulas; starts collapsed and exposes its state.",
+      "description": "Text button that shows or hides the drafting steps or formulas; starts collapsed and exposes its state. The two disclosures sit 8dp apart as one pair after the limits callout.",
       "html": "<button class=\"ds-disclosure\" aria-expanded=\"false\">Fórmulas<svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z\"/></svg></button>",
       "css": ".ds-disclosure { display: inline-flex; align-items: center; gap: 4px; background: transparent; color: #784F82; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; padding: 10px 12px; border: none; border-radius: 9999px; cursor: pointer; } .ds-disclosure svg { flex: none; } .ds-disclosure[aria-expanded=\"true\"] svg { transform: scaleY(-1); } .ds-disclosure:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
     },
@@ -127,9 +142,9 @@
     {
       "name": "Drafting Diagram",
       "kind": "custom",
-      "description": "Square quarter-circle sketch up to 400dp, arcs told apart by stroke pattern and number labels, never colour; its text equivalent omits the radius values, which the cutting card states once (owner-confirmed).",
-      "html": "<svg class=\"ds-diagram\" width=\"220\" height=\"220\" viewBox=\"0 0 220 220\" role=\"img\" aria-label=\"Diagrama: 1 costura da cintura, 2 corte da cintura, 3 barra acabada, 4 corte da barra\"><g fill=\"none\" stroke=\"#201B13\" stroke-width=\"2\"><path d=\"M76 16 A60 60 0 0 1 16 76\"/><path d=\"M60 16 A44 44 0 0 1 16 60\" stroke-dasharray=\"12 6\"/><path d=\"M180 16 A164 164 0 0 1 16 180\" stroke-dasharray=\"2 5\"/><path d=\"M206 16 A190 190 0 0 1 16 206\" stroke-dasharray=\"12 5 2 5\"/></g><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"#201B13\"/><g font-family=\"Roboto, sans-serif\" font-size=\"14\" font-weight=\"500\" fill=\"#201B13\"><text x=\"66\" y=\"58\">1</text><text x=\"36\" y=\"58\">2</text><text x=\"150\" y=\"112\">3</text><text x=\"100\" y=\"190\">4</text></g></svg>",
-      "css": ".ds-diagram { display: block; background: #FFF8F3; border-radius: 16px; }"
+      "description": "Square quarter-circle sketch up to 400dp drawn on the cutting card's own surface in its on-container ink, arcs told apart by stroke pattern and number labels, never colour; no separate key, since the card's radius rows are the key; its text equivalent omits the radius values, which the cutting card states once (owner-confirmed).",
+      "html": "<svg class=\"ds-diagram\" width=\"220\" height=\"220\" viewBox=\"0 0 220 220\" role=\"img\" aria-label=\"Diagrama: 1 costura da cintura, 2 corte da cintura, 3 barra acabada, 4 corte da barra\"><g fill=\"none\" stroke=\"#514154\" stroke-width=\"2\"><path d=\"M76 16 A60 60 0 0 1 16 76\"/><path d=\"M60 16 A44 44 0 0 1 16 60\" stroke-dasharray=\"12 6\"/><path d=\"M180 16 A164 164 0 0 1 16 180\" stroke-dasharray=\"2 5\"/><path d=\"M206 16 A190 190 0 0 1 16 206\" stroke-dasharray=\"12 5 2 5\"/></g><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"#514154\"/><g font-family=\"Roboto, sans-serif\" font-size=\"14\" font-weight=\"500\" fill=\"#514154\"><text x=\"66\" y=\"58\">1</text><text x=\"36\" y=\"58\">2</text><text x=\"150\" y=\"112\">3</text><text x=\"100\" y=\"190\">4</text></g></svg>",
+      "css": ".ds-diagram { display: block; background: #F2DBF3; }"
     }
   ],
   "narrative": {
@@ -145,6 +160,7 @@
     "rules": [
       { "name": "The Dynamic-First Rule", "body": "Always read colors from `MaterialTheme.colorScheme` roles; never hard-code a hex value in a screen. The dyed-fabric palette exists in `ui/theme/Color.kt` only as the fallback scheme.", "section": "colors" },
       { "name": "The Not-By-Color Rule", "body": "No meaning travels on color alone. Reference and cutting lines, errors and states also carry a label, a line style or text.", "section": "colors" },
+      { "name": "The On-Its-Container Rule", "body": "Text and strokes take the on-role of the surface they sit on: everything on the cutting card is On Heather Wash (onSecondaryContainer), quieter only through type, never a borrowed onSurfaceVariant. Text at least 4.5:1, meaningful graphics at least 3:1, in light, dark and dynamic schemes.", "section": "colors" },
       { "name": "The Equal Radii Rule", "body": "All four radii share Headline Small. No result is bolder than another; the labels say which is a reference line and which is a cutting line.", "section": "typography" },
       { "name": "The Never-Truncate Rule", "body": "Never truncate drafting values, errors or essential action labels. Keep the value and its \"cm\" together with a non-breaking space, format with pt-BR decimal commas, and avoid fixed-height text containers.", "section": "typography" },
       { "name": "The Fits-Or-Stacks Rule", "body": "If two panes would squeeze either one below 360dp at the current font scale, stack them.", "section": "layout" },
@@ -158,12 +174,15 @@
       "Do put formulas and drafting steps behind disclosures that start collapsed and announce their state.",
       "Do keep the tutorial's step bar fixed and fully visible on every step, at every text size.",
       "Do distinguish diagram lines by stroke pattern and number labels, and provide the text equivalent.",
+      "Do keep the diagram on the cutting card's own surface, under \"Diagrama das linhas\", directly after or beside the radii.",
+      "Do put the tutorial and \"Editar medidas\" in one wrapping action row under the card, then the summary, the limits and the disclosures.",
       "Do keep touch targets at 48dp or more and check layouts at 200% text size."
     ],
     "donts": [
       "Don't add drop shadows, nested cards or decorative elevation.",
       "Don't add a home screen, bottom navigation bar, rail or drawer, or a second FAB. The top app bar holds a title and an action; it is not navigation.",
-      "Don't repeat a radius value in the diagram, its key or its text equivalent.",
+      "Don't repeat a radius value in the diagram or its text equivalent, and don't add a separate diagram key; the card's radius rows are the key.",
+      "Don't wrap the diagram in a second container inside the card.",
       "Don't make one radius more prominent than the others.",
       "Don't signal reference versus cutting, or error versus valid, by color alone.",
       "Don't use the legacy Compose Material Icons library. Use Material Symbols XML vectors tinted by the theme.",

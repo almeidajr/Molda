@@ -48,8 +48,9 @@ accessibility and human-feedback verification.
   hide the keyboard and bring the whole cutting card into view on the same
   screen. The card presents all four labelled radii once, distinguishes
   stitching/reference dimensions from cutting dimensions, and pairs each value
-  with its diagram number and line style. "Tutorial de dobra do tecido" and
-  "Editar medidas" follow it.
+  with its diagram number and line style. The drafting diagram sits on the
+  same card, after the radii or beside them when both fit. "Tutorial de dobra
+  do tecido" and "Editar medidas" follow it in one action row.
 - Keep construction boundaries beside results in one callout. Put the drafting
   explanation ("Como levar os raios ao papel") and the formulas behind
   disclosures that start collapsed, so they remain available for checking.
@@ -153,10 +154,12 @@ accessibility and human-feedback verification.
 - Use two clearly labelled groups on the cutting card: "Linhas de referência"
   (waist stitching radius and finished hem radius) and "Linhas de corte" (waist
   and hem cutting radii). Keep all four values equally readable, in centimetres
-  with two decimal places, each shown and announced once. Then include the
-  tutorial entry, "Editar medidas", a compact summary of all five calculation
-  inputs under "Medidas utilizadas (cm)", the construction-limits callout, the
-  diagram with its line key, and the collapsed drafting explanation and formulas.
+  with two decimal places, each shown and announced once. The diagram follows
+  on the card under "Diagrama das linhas"; the radius rows serve as its key.
+  Then include one action row with the tutorial entry and "Editar medidas", a
+  one-line summary of all five calculation inputs under "Medidas utilizadas
+  (cm)", the construction-limits callout, and the collapsed drafting
+  explanation and formulas.
 - The diagram's text equivalent describes every line but no longer repeats the
   radius values, which the card states once. The product owner confirmed this
   departure from the earlier "lists all dimensions" contract.
