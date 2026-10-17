@@ -7,7 +7,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -19,6 +22,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.espresso.Espresso.closeSoftKeyboard
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.skirt.ui.MeasurementField
@@ -56,9 +60,7 @@ class FabricMarkingTutorialTest {
                     composeRule.onAllNodes(hasText(label))
                         .fetchSemanticsNodes().isNotEmpty()
                 }
-                val drawing = composeRule.onNodeWithContentDescription(
-                    description,
-                ).performScrollTo()
+                val drawing = composeRule.onNodeWithContentDescription(description)
                 // Native rendering starts after Compose exposes the drawing's semantics.
                 composeRule.waitUntil(10_000) {
                     val image = drawing.captureToImage()
@@ -89,9 +91,7 @@ class FabricMarkingTutorialTest {
                 composeRule.onNodeWithText("Pausar animação")
                     .performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.mainClock.autoAdvance = true
-                composeRule.onNodeWithText("Próximo").performScrollTo().let {
-                    if (index == 5) it.assertIsNotEnabled() else it.performClick()
-                }
+                advanceOrAssertConcluir(index)
             }
         } finally {
             shell("settings put global animator_duration_scale 0")
@@ -126,13 +126,10 @@ class FabricMarkingTutorialTest {
                     )
                         .fetchSemanticsNodes().isNotEmpty()
                 }
-                val drawing = composeRule.onNodeWithContentDescription(
-                    description,
-                ).performScrollTo()
+                val drawing = composeRule.onNodeWithContentDescription(description)
                 composeRule.onNodeWithText(
                     "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
                 ).performScrollTo().assertIsDisplayed()
-                drawing.performScrollTo()
                 fun frame(): List<Int> {
                     val pixels = drawing.captureToImage().toPixelMap()
                     return (0 until pixels.height step 4).flatMap { y ->
@@ -145,19 +142,16 @@ class FabricMarkingTutorialTest {
                 }
                 val completed = frame()
                 val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
-                composeRule.onNodeWithText(playLabel).performScrollTo().performClick()
-                drawing.performScrollTo()
+                composeRule.onNodeWithText(playLabel).performClick()
                 assertCompletedFrameAfterReplay(description, completed, ::frame)
-                composeRule.onNodeWithText("Próximo").performScrollTo().let {
-                    if (index == 5) it.assertIsNotEnabled() else it.performClick()
-                }
+                advanceOrAssertConcluir(index)
             }
             shell("settings put global animator_duration_scale 1")
             composeRule.waitUntil(5_000) { ValueAnimator.areAnimatorsEnabled() }
             composeRule.onNodeWithText(
                 "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
             ).assertDoesNotExist()
-            composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().assertIsDisplayed()
+            composeRule.onNodeWithText("Reproduzir etapa").assertIsDisplayed()
         } finally {
             shell(
                 if (originalScale == "null") {
@@ -185,7 +179,6 @@ class FabricMarkingTutorialTest {
                     .fetchSemanticsNodes().isNotEmpty()
             }
             val drawing = composeRule.onNodeWithContentDescription("Marcação proporcional em Rive")
-                .performScrollTo()
             composeRule.waitUntil(10_000) {
                 val pixels = drawing.captureToImage().toPixelMap()
                 val scale = pixels.width / 448.0
@@ -215,13 +208,13 @@ class FabricMarkingTutorialTest {
             }
             if (inputs[3] == "0") {
                 composeRule.onNodeWithText(
-                    "Margem de cintura zero: linhas 1 e 2 coincidem.",
+                    "Margem de cintura zero: as linhas 1 e 2 coincidem.",
                 ).performScrollTo().assertIsDisplayed()
                 composeRule.onNodeWithText(
-                    "Margem de barra zero: linhas 3 e 4 coincidem.",
+                    "Margem de barra zero: as linhas 3 e 4 coincidem.",
                 ).performScrollTo().assertIsDisplayed()
             }
-            composeRule.onNodeWithText("Fechar tutorial").performScrollTo().performClick()
+            closeTutorial()
         }
     }
 
@@ -239,10 +232,10 @@ class FabricMarkingTutorialTest {
             "Marcação proporcional em Rive",
         ).assertIsDisplayed()
         composeRule.onNodeWithText(
-            "1. Costura da cintura: 13,05 cm",
+            "1. Costura da cintura: 13,05\u00A0cm",
         ).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Reproduzir marcação").performScrollTo().performClick()
-        composeRule.onNodeWithText("Fechar tutorial").performScrollTo().performClick()
+        playThenPause("Reproduzir marcação")
+        closeTutorial()
         composeRule.onNodeWithText(
             "Como levar os raios ao papel",
         ).performScrollTo().assertIsDisplayed()
@@ -256,52 +249,92 @@ class FabricMarkingTutorialTest {
     fun foldingSteps_canBeReadReplayedAndRevisited_beforeMarkingCurrentRadii() {
         openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
         composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
-        composeRule.onNodeWithText("Anterior").performScrollTo().assertIsNotEnabled()
+        composeRule.onNodeWithText("Anterior").assertIsNotEnabled()
         composeRule.onNodeWithText(
             "Comece com papel ou retalho. Alise o tecido sem esticar e respeite o fio.",
         )
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+        composeRule.onNodeWithText("Próximo").performClick()
         composeRule.onNodeWithText("Primeira dobra").assertIsDisplayed()
-        composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().performClick()
-        composeRule.onNodeWithText("Repetir etapa").performScrollTo().performClick()
-        composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+        awaitText("Reproduzir etapa")
+        playThenPause("Reproduzir etapa") {
+            composeRule.onNodeWithText("Repetir etapa")
+                .performSemanticsAction(SemanticsActions.OnClick)
+        }
+        composeRule.onNodeWithText("Próximo").performClick()
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
-        composeRule.onNodeWithText("Anterior").performScrollTo().performClick()
+        composeRule.onNodeWithText("Anterior").performClick()
         composeRule.onNodeWithText("Primeira dobra").assertIsDisplayed()
-        composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().assertIsDisplayed()
-        repeat(2) { composeRule.onNodeWithText("Próximo").performScrollTo().performClick() }
+        awaitText("Reproduzir etapa")
+        composeRule.onNodeWithText("Reproduzir etapa").assertIsDisplayed()
+        repeat(2) { composeRule.onNodeWithText("Próximo").performClick() }
         composeRule.onNodeWithText("Marcar os raios").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "1. Costura da cintura: 13,05 cm",
+            "1. Costura da cintura: 13,05\u00A0cm",
         ).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Anterior").performScrollTo().performClick()
+        composeRule.onNodeWithText("Anterior").performClick()
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
     }
 
     @Test
     fun cuttingAndUnfolding_completeSequence_withConstructionBoundariesAndReplay() {
         openTutorial(listOf("80", "2", "60", "1", "2"))
-        composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
-        composeRule.onNodeWithText("Cortar os arcos").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("2. Corte da cintura: 12,05 cm")
+        composeRule.onNodeWithText("Próximo").performClick()
+        composeRule.onNodeWithText("Cortar os arcos").assertIsDisplayed()
+        composeRule.onNodeWithText("2. Corte da cintura: 12,05\u00A0cm")
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("4. Corte da barra: 75,05 cm")
+        composeRule.onNodeWithText("4. Corte da barra: 75,05\u00A0cm")
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().performClick()
-        composeRule.onNodeWithText("Repetir etapa").performScrollTo().performClick()
-        composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
-        composeRule.onNodeWithText("Desdobrar o círculo").performScrollTo().assertIsDisplayed()
+        awaitText("Reproduzir etapa")
+        playThenPause("Reproduzir etapa") {
+            composeRule.onNodeWithText("Repetir etapa")
+                .performSemanticsAction(SemanticsActions.OnClick)
+        }
+        composeRule.onNodeWithText("Próximo").performClick()
+        composeRule.onNodeWithText("Desdobrar o círculo").assertIsDisplayed()
         composeRule.onNodeWithText(
             "Centro do recorte da cintura: mesma origem de todos os raios, agora no centro do círculo.",
         ).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Próximo").performScrollTo().assertIsNotEnabled()
+        composeRule.onNodeWithText("Próximo").assertDoesNotExist()
+        composeRule.onNodeWithText("Concluir").assertIsDisplayed().assertIsEnabled()
         composeRule.onNodeWithText(
             "O círculo desdobrado não é um molde completo e não garante caimento.",
         ).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Anterior").performScrollTo().performClick()
-        composeRule.onNodeWithText("Cortar os arcos").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Reproduzir etapa").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Anterior").performClick()
+        composeRule.onNodeWithText("Cortar os arcos").assertIsDisplayed()
+        awaitText("Reproduzir etapa")
+        composeRule.onNodeWithText("Reproduzir etapa").assertIsDisplayed()
+    }
+
+    @Test
+    fun back_closesPlayer_returningKeyboardFocusToEntry_withResultsUnchanged() {
+        openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+        composeRule.onNodeWithText("Próximo").performClick()
+        composeRule.onNodeWithText("Etapa 2 de 6").assertIsDisplayed()
+        // Touch mode leaves buttons unfocusable; keyboard users are the ones who need focus back.
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        try {
+            instrumentation.setInTouchMode(false)
+            pressBack()
+            composeRule.onNodeWithText("Etapa 2 de 6").assertDoesNotExist()
+            composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
+                .assertIsFocused()
+        } finally {
+            instrumentation.setInTouchMode(true)
+        }
+        composeRule.onNodeWithContentDescription(
+            "Linha 1, linha contínua. Costura da cintura: 13,05\u00A0cm",
+        ).assertExists()
+        composeRule.onNodeWithText(MeasurementField.Waist.label).assertTextContains("80")
+    }
+
+    @Test
+    fun recreation_keepsCurrentStep() {
+        openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+        repeat(2) { composeRule.onNodeWithText("Próximo").performClick() }
+        composeRule.activityRule.scenario.recreate()
+        composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
+        composeRule.onNodeWithText("Etapa 3 de 6").assertIsDisplayed()
     }
 
     @Test
@@ -312,15 +345,15 @@ class FabricMarkingTutorialTest {
             listOf("80", "2", "60", "0", "0") to listOf(0.178653, 1.0),
         ).forEach { (inputs, ratios) ->
             openTutorial(inputs)
-            composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+            composeRule.onNodeWithText("Próximo").performClick()
             assertCircularDrawing("Corte proporcional em Rive", ratios, unfolded = false)
-            composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+            composeRule.onNodeWithText("Próximo").performClick()
             assertCircularDrawing(
                 "Círculo desdobrado proporcional em Rive",
                 ratios,
                 unfolded = true,
             )
-            composeRule.onNodeWithText("Fechar tutorial").performScrollTo().performClick()
+            closeTutorial()
         }
     }
 
@@ -395,7 +428,7 @@ class FabricMarkingTutorialTest {
             composeRule.onAllNodes(hasContentDescription(description))
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        val drawing = composeRule.onNodeWithContentDescription(description).performScrollTo()
+        val drawing = composeRule.onNodeWithContentDescription(description)
         // Include partially covered stroke pixels when software MSAA downsamples thin lines.
         composeRule.waitUntil(10_000) {
             val pixels = drawing.captureToImage().toPixelMap()
@@ -443,9 +476,48 @@ class FabricMarkingTutorialTest {
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
         composeRule.onNodeWithText("Tutorial de dobra do tecido").performScrollTo().performClick()
         if (advanceToMarking) {
-            repeat(3) {
-                composeRule.onNodeWithText("Próximo").performScrollTo().performClick()
+            repeat(3) { composeRule.onNodeWithText("Próximo").performClick() }
+        }
+    }
+
+    private fun awaitText(text: String) {
+        composeRule.waitUntil(15_000) {
+            composeRule.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun closeTutorial() {
+        composeRule.onNodeWithContentDescription("Fechar tutorial").performClick()
+    }
+
+    private fun advanceOrAssertConcluir(index: Int) {
+        if (index == 5) {
+            composeRule.onNodeWithText("Concluir").assertIsDisplayed()
+        } else {
+            composeRule.onNodeWithText("Próximo").performClick()
+        }
+    }
+
+    /**
+     * Starts playback, runs [whilePlaying], then pauses. A playing Rive loop awaits every frame,
+     * so Compose never idles while the test clock auto-advances; the clock is held meanwhile.
+     */
+    private fun playThenPause(playLabel: String, whilePlaying: () -> Unit = {}) {
+        composeRule.mainClock.autoAdvance = false
+        try {
+            composeRule.onNodeWithText(playLabel).performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.mainClock.advanceTimeByFrame()
+            whilePlaying()
+            composeRule.mainClock.advanceTimeByFrame()
+            // With system motion off nothing plays, so there is no pause control.
+            val pause = composeRule.onAllNodes(hasText("Pausar animação")).fetchSemanticsNodes()
+            if (pause.isNotEmpty()) {
+                composeRule.onNodeWithText("Pausar animação")
+                    .performSemanticsAction(SemanticsActions.OnClick)
+                composeRule.mainClock.advanceTimeByFrame()
             }
+        } finally {
+            composeRule.mainClock.autoAdvance = true
         }
     }
 }

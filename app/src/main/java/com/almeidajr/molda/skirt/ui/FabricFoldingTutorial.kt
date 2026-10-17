@@ -1,34 +1,32 @@
 package com.almeidajr.molda.skirt.ui
 
-import android.animation.ValueAnimator
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.unit.min
 import app.rive.Fit
 import app.rive.RenderBackend
 import app.rive.Result
@@ -42,114 +40,73 @@ import app.rive.rememberViewModelInstanceResult
 import com.almeidajr.molda.R
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
-private enum class FoldingStep(val title: String, val artboard: String) {
-    Preparation("Preparar o tecido", "Preparation"),
-    FirstFold("Primeira dobra", "First fold"),
-    SecondFold("Segunda dobra", "Second fold"),
-    Marking("Marcar os raios", "Marking"),
-    Cutting("Cortar os arcos", "Cutting"),
-    Unfolding("Desdobrar o círculo", "Unfolding"),
-}
-
 @Composable
-internal fun FabricFoldingTutorial(radii: SkirtRadii) {
-    var open by rememberSaveable(radii) { mutableStateOf(false) }
-    TextButton(onClick = {
-        open = true
-    }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Tutorial de dobra do tecido") }
-    if (open) {
-        var step by rememberSaveable(radii) { mutableStateOf(FoldingStep.Preparation) }
-        val scrollState = key(step) { rememberScrollState() }
-        Dialog(onDismissRequest = { open = false }) {
-            Surface(shape = MaterialTheme.shapes.large) {
-                Column(
-                    Modifier.verticalScroll(scrollState).padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text("Etapa ${step.ordinal + 1} de ${FoldingStep.entries.size}")
-                    Text(
-                        step.title,
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.semantics { heading() },
+internal fun TutorialAnimation(
+    radii: SkirtRadii,
+    step: FoldingStep,
+    motionEnabled: Boolean,
+    drawingSize: Dp,
+) {
+    // Vulkan avoids blank frames on software GLES drivers; Rive falls back when unavailable.
+    val worker = rememberRiveWorkerOrNull(renderBackend = RenderBackend.Vulkan)
+    val file = worker?.let {
+        rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), it)
+    }
+    var replay by remember(motionEnabled) { mutableIntStateOf(0) }
+    var paused by remember(motionEnabled) { mutableStateOf(false) }
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // The artboard is a white sheet; the frame around it follows the theme.
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            modifier = Modifier.width(drawingSize).heightIn(min = drawingSize),
+        ) {
+            Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
+                when (file) {
+                    null -> Text(
+                        "Não foi possível iniciar a animação. As instruções escritas continuam disponíveis.",
                     )
-                    key(step) {
-                        TutorialAnimation(radii, step)
-                        when (step) {
-                            FoldingStep.Marking -> MarkingInstructions(radii)
 
-                            FoldingStep.Cutting, FoldingStep.Unfolding -> {
-                                CuttingInstructions(step)
-                                MarkingInstructions(radii, unfolded = step == FoldingStep.Unfolding)
-                            }
+                    is Result.Loading -> Text("Carregando animação…")
 
-                            else -> FoldingInstructions(step)
-                        }
-                    }
-                    TextButton(
-                        modifier = Modifier.heightIn(min = 48.dp),
-                        onClick = { step = FoldingStep.entries[step.ordinal - 1] },
-                        enabled = step != FoldingStep.Preparation,
-                    ) { Text("Anterior") }
-                    TextButton(
-                        modifier = Modifier.heightIn(min = 48.dp),
-                        onClick = { step = FoldingStep.entries[step.ordinal + 1] },
-                        enabled = step != FoldingStep.Unfolding,
-                    ) { Text("Próximo") }
-                    TextButton(onClick = {
-                        open = false
-                    }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Fechar tutorial") }
+                    is Result.Error -> Text(
+                        "Não foi possível abrir a animação. Consulte as instruções abaixo.",
+                    )
+
+                    is Result.Success -> TutorialDrawing(
+                        file.value,
+                        radii,
+                        step,
+                        motionEnabled && replay > 0,
+                        replay,
+                        paused,
+                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun TutorialAnimation(radii: SkirtRadii, step: FoldingStep) {
-    var motionEnabled by remember { mutableStateOf(ValueAnimator.areAnimatorsEnabled()) }
-    DisposableEffect(Unit) {
-        val listener = ValueAnimator.DurationScaleChangeListener { scale ->
-            motionEnabled = scale > 0f
-        }
-        ValueAnimator.registerDurationScaleChangeListener(listener)
-        motionEnabled = ValueAnimator.areAnimatorsEnabled()
-        onDispose { ValueAnimator.unregisterDurationScaleChangeListener(listener) }
-    }
-    // Vulkan avoids blank frames on software GLES drivers; Rive falls back when unavailable.
-    val worker = rememberRiveWorkerOrNull(renderBackend = RenderBackend.Vulkan)
-    if (worker == null) {
-        Text("Não foi possível iniciar a animação. As instruções escritas continuam disponíveis.")
-        return
-    }
-    when (val result = rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), worker)) {
-        is Result.Loading -> Text("Carregando animação…")
-
-        is Result.Error -> Text("Não foi possível abrir a animação. Consulte as instruções abaixo.")
-
-        is Result.Success -> {
-            var replay by remember(motionEnabled) { mutableIntStateOf(0) }
-            var paused by remember(motionEnabled) { mutableStateOf(false) }
-            TutorialDrawing(result.value, radii, step, motionEnabled && replay > 0, replay, paused)
-            if (!motionEnabled) {
-                Text("Movimento desativado no sistema. O desenho mostra o resultado da etapa.")
-            }
-            TextButton(onClick = {
-                replay++
-                paused = false
-            }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(
-                    if (step == FoldingStep.Marking) {
-                        if (replay == 0) "Reproduzir marcação" else "Repetir marcação"
-                    } else {
-                        if (replay == 0) "Reproduzir etapa" else "Repetir etapa"
-                    },
-                )
-            }
-            if (motionEnabled && replay > 0) {
-                TextButton(
-                    onClick = { paused = !paused },
-                    modifier = Modifier.heightIn(min = 48.dp),
-                ) { Text(if (paused) "Continuar animação" else "Pausar animação") }
+        if (file is Result.Success) {
+            FlowRow(horizontalArrangement = Arrangement.Center) {
+                TextButton(onClick = {
+                    replay++
+                    paused = false
+                }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(
+                        if (step == FoldingStep.Marking) {
+                            if (replay == 0) "Reproduzir marcação" else "Repetir marcação"
+                        } else {
+                            if (replay == 0) "Reproduzir etapa" else "Repetir etapa"
+                        },
+                    )
+                }
+                if (motionEnabled && replay > 0) {
+                    TextButton(
+                        onClick = { paused = !paused },
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    ) { Text(if (paused) "Continuar animação" else "Pausar animação") }
+                }
             }
         }
     }
@@ -164,11 +121,7 @@ private fun TutorialDrawing(
     replay: Int,
     paused: Boolean,
 ) {
-    val artboard =
-        rememberArtboardResult(
-            file,
-            step.artboard,
-        )
+    val artboard = rememberArtboardResult(file, step.artboard)
     if (artboard !is Result.Success) {
         Text("Preparando desenho. As instruções escritas continuam disponíveis.")
         return
@@ -227,6 +180,20 @@ private fun TutorialDrawing(
 }
 
 @Composable
+internal fun StepInstructions(radii: SkirtRadii, step: FoldingStep) {
+    when (step) {
+        FoldingStep.Marking -> MarkingInstructions(radii)
+
+        FoldingStep.Cutting, FoldingStep.Unfolding -> {
+            CuttingInstructions(step)
+            MarkingInstructions(radii, unfolded = step == FoldingStep.Unfolding)
+        }
+
+        else -> FoldingInstructions(step)
+    }
+}
+
+@Composable
 private fun MarkingInstructions(radii: SkirtRadii, unfolded: Boolean = false) {
     Text("Proporções calculadas; desenho não está em tamanho real.")
     Text(
@@ -244,20 +211,12 @@ private fun MarkingInstructions(radii: SkirtRadii, unfolded: Boolean = false) {
                 "mantendo seu raio constante.",
         )
     }
-    Text("1. Costura da cintura: ${formatRadius(radii.waistStitching)}")
-    Text("Linha contínua: referência de costura, não de corte.")
-    Text("2. Corte da cintura: ${formatRadius(radii.waistCutting)}")
-    Text("Linha tracejada: fica para dentro da costura, reservando a margem de cintura.")
-    Text("3. Barra acabada: ${formatRadius(radii.finishedHem)}")
-    Text("Linha pontilhada: referência do comprimento acabado.")
-    Text("4. Corte da barra: ${formatRadius(radii.hemCutting)}")
-    Text("Linha traço e ponto: fica para fora da barra acabada, reservando a margem de barra.")
-    if (radii.waistCutting ==
-        radii.waistStitching
-    ) {
-        Text("Margem de cintura zero: linhas 1 e 2 coincidem.")
+    val card = cuttingCard(radii)
+    card.flatMap { it.entries }.sortedBy { it.number }.forEach { entry ->
+        Text("${entry.number}. ${entry.label}: ${entry.value}")
+        Text(lineRole(entry.lineStyle))
     }
-    if (radii.hemCutting == radii.finishedHem) Text("Margem de barra zero: linhas 3 e 4 coincidem.")
+    coincidenceNotes(card).forEach { Text(it) }
     Text(
         "Antes de cortar tecido da peça, obtenha instruções separadas para " +
             "abertura, margens do fechamento e cós. Esta demonstração não é um " +
@@ -365,4 +324,16 @@ private fun CuttingInstructions(step: FoldingStep) {
             "acompanhar o movimento em repetição contínua. Pause para observar; " +
             "todas as instruções também estão escritas.",
     )
+}
+
+private fun lineRole(style: LineStyle): String = when (style) {
+    LineStyle.Solid -> "Linha contínua: referência de costura, não de corte."
+
+    LineStyle.Dashed ->
+        "Linha tracejada: fica para dentro da costura, reservando a margem de cintura."
+
+    LineStyle.Dotted -> "Linha pontilhada: referência do comprimento acabado."
+
+    LineStyle.DashDot ->
+        "Linha traço e ponto: fica para fora da barra acabada, reservando a margem de barra."
 }
