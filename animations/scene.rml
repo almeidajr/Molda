@@ -1,81 +1,258 @@
 <Rive version="1" kind="fragment">
-  <Artboard defaultStateMachineId="0:7" viewModelId="0:40" viewModelInstanceId="0:49" width="448" height="448" name="Marking" id="0:2" styleId="0:5">
-    <LayoutComponentStyle id="0:5" />
+  <Artboard name="Marking" id="0:2" width="448" height="448" x="0" defaultStateMachineId="0:1009" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:1015">
+    <LayoutComponentStyle id="0:1015" />
+    <Node x="24" y="24" name="Line numbers">
+      <Node x="68.50" y="11.76" name="Line 1 number" id="0:1005">
+        <DataBindContext sourcePathIds="0:40-0:41" propertyKey="13" converterId="0:81" />
+        <DataBindContext sourcePathIds="0:40-0:41" propertyKey="14" converterId="0:82" />
+        <Node name="Glyph scale" scaleX="1.3" scaleY="1.3">
+          <Shape name="Numeral 1">
+            <PointsPath>
+              <StraightVertex x="-3" y="-4.5" />
+              <StraightVertex x="1" y="-7" />
+              <StraightVertex x="1" y="7" />
+            </PointsPath>
+            <Stroke thickness="2.4" cap="round" join="round">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+            </Stroke>
+          </Shape>
+          <Shape name="Number disc">
+            <Ellipse width="22" height="22" />
+            <Fill>
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node x="10.88" y="63.07" name="Line 2 number" id="0:1006">
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="13" converterId="0:83" />
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="14" converterId="0:84" />
+        <Node name="Glyph scale" scaleX="1.3" scaleY="1.3">
+          <Shape name="Numeral 2">
+            <PointsPath>
+              <CubicDetachedVertex x="-4.5" y="-3" inRotation="1.5707963267948966" inDistance="0" outRotation="-1.5707963267948966" outDistance="2.6" />
+              <CubicDetachedVertex x="0" y="-7" inRotation="3.141592653589793" inDistance="2.6" outRotation="0" outDistance="2.6" />
+              <CubicDetachedVertex x="4.5" y="-2.8" inRotation="-1.5707963267948966" inDistance="2.4" outRotation="2.3036114285814033" outDistance="3.2" />
+              <StraightVertex x="-4.5" y="7" />
+              <StraightVertex x="4.5" y="7" />
+            </PointsPath>
+            <Stroke thickness="2.4" cap="round" join="round">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+            </Stroke>
+          </Shape>
+          <Shape name="Number disc">
+            <Ellipse width="22" height="22" />
+            <Fill>
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node x="383.39" y="65.81" name="Line 3 number" id="0:1007">
+        <DataBindContext sourcePathIds="0:40-0:43" propertyKey="13" converterId="0:81" />
+        <DataBindContext sourcePathIds="0:40-0:43" propertyKey="14" converterId="0:82" />
+        <Node name="Glyph scale" scaleX="1.3" scaleY="1.3">
+          <Shape name="Numeral 3">
+            <PointsPath>
+              <CubicDetachedVertex x="-4.2" y="-4.8" inRotation="0" inDistance="0" outRotation="-1.05" outDistance="2.2" />
+              <CubicDetachedVertex x="0" y="-7" inRotation="3.141592653589793" inDistance="2.4" outRotation="0" outDistance="2.4" />
+              <CubicDetachedVertex x="4" y="-3.6" inRotation="-1.5707963267948966" inDistance="1.8" outRotation="1.5707963267948966" outDistance="1.8" />
+              <CubicDetachedVertex x="-0.8" y="-0.2" inRotation="0" inDistance="3" outRotation="0" outDistance="3.4" />
+              <CubicDetachedVertex x="4.6" y="3.6" inRotation="-1.5707963267948966" inDistance="2.0" outRotation="1.5707963267948966" outDistance="2.0" />
+              <CubicDetachedVertex x="0" y="7" inRotation="0" inDistance="2.6" outRotation="3.141592653589793" outDistance="2.6" />
+              <CubicDetachedVertex x="-4.6" y="4.6" inRotation="1.05" inDistance="2.2" outRotation="0" outDistance="0" />
+            </PointsPath>
+            <Stroke thickness="2.4" cap="round" join="round">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+            </Stroke>
+          </Shape>
+          <Shape name="Number disc">
+            <Ellipse width="22" height="22" />
+            <Fill>
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node x="67.99" y="394.18" name="Line 4 number" id="0:1008">
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="13" converterId="0:83" />
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="14" converterId="0:84" />
+        <Node name="Glyph scale" scaleX="1.3" scaleY="1.3">
+          <Shape name="Numeral 4">
+            <PointsPath>
+              <StraightVertex x="2.5" y="7" />
+              <StraightVertex x="2.5" y="-7" />
+              <StraightVertex x="-4.8" y="3" />
+              <StraightVertex x="4.8" y="3" />
+            </PointsPath>
+            <Stroke thickness="2.4" cap="round" join="round">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+            </Stroke>
+          </Shape>
+          <Shape name="Number disc">
+            <Ellipse width="22" height="22" />
+            <Fill>
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+          </Shape>
+        </Node>
+      </Node>
+    </Node>
     <Shape x="24" y="24" name="Common marking origin">
-      <Ellipse width="8" height="8" />
+      <Ellipse width="10" height="10" />
       <Fill>
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
       </Fill>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="waistStitching">
+    <Shape x="24" y="24" rotation="1.57079632679" name="1 waistStitching">
       <Ellipse width="139" height="139">
         <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="2">
-        <SolidColor colorValue="FF202020" />
-        <TrimPath start="0" end="0.25" id="0:61" />
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1001" />
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="waistCutting">
+    <Shape x="24" y="24" rotation="1.57079632679" name="2 waistCutting">
       <Ellipse width="128" height="128">
         <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="2">
-        <SolidColor colorValue="FF202020" />
-        <TrimPath start="0" end="0.25" id="0:62" />
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1002" />
         <DashPath>
-          <Dash length="10" />
-          <Dash length="5" />
+          <Dash length="18" />
+          <Dash length="9" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="finishedHem">
+    <Shape x="24" y="24" rotation="1.57079632679" name="3 finishedHem">
       <Ellipse width="778" height="778">
         <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="2">
-        <SolidColor colorValue="FF202020" />
-        <TrimPath start="0" end="0.25" id="0:63" />
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1003" />
         <DashPath>
-          <Dash length="2" />
-          <Dash length="5" />
+          <Dash length="3" />
+          <Dash length="7" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="hemCutting">
+    <Shape x="24" y="24" rotation="1.57079632679" name="4 hemCutting">
       <Ellipse width="800" height="800">
         <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="2">
-        <SolidColor colorValue="FF202020" />
-        <TrimPath start="0" end="0.25" id="0:64" />
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1004" />
         <DashPath>
-          <Dash length="12" />
-          <Dash length="4" />
-          <Dash length="2" />
-          <Dash length="4" />
+          <Dash length="18" />
+          <Dash length="7" />
+          <Dash length="3" />
+          <Dash length="7" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" name="Folded fabric">
+    <Shape x="24" y="24" name="Top closed fold">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="408" y="0" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" name="Left closed fold">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="0" y="408" />
+      </PointsPath>
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+      </Stroke>
+    </Shape>
+    <Shape x="432" y="24" name="Matched selvedges">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="0" y="408" />
+      </PointsPath>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <DashPath>
+          <Dash length="3" />
+          <Dash length="7" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="432" name="Matched raw ends">
+      <PointsPath>
+        <StraightVertex x="0" y="0" />
+        <StraightVertex x="408" y="0" />
+      </PointsPath>
+      <Stroke thickness="2">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <DashPath>
+          <Dash length="18" />
+          <Dash length="9" />
+        </DashPath>
+      </Stroke>
+    </Shape>
+    <Shape x="24" y="24" name="Folded quarter (illustrative size)">
       <Rectangle width="408" height="408" originX="0" originY="0" />
       <Fill>
-        <SolidColor colorValue="FFF6EDD9" />
+        <SolidColor colorValue="FFF2DBF3">
+          <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+        </SolidColor>
       </Fill>
     </Shape>
-    <StateMachine name="Marking" id="0:7">
+    <StateMachine name="Marking" id="0:1009">
       <StateMachineLayer name="Reveal">
         <AnyState x="200" y="-120" />
         <ExitState x="400" y="-120" />
         <EntryState>
-          <StateTransition stateToId="0:13" />
+          <StateTransition stateToId="0:1012" />
         </EntryState>
-        <AnimationState x="200" animationId="0:9" id="0:13">
-          <StateTransition stateToId="0:12">
+        <AnimationState x="200" animationId="0:1010" id="0:1012">
+          <StateTransition stateToId="0:1013">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -86,8 +263,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:6" id="0:12" reset="true">
-          <StateTransition stateToId="0:13">
+        <AnimationState x="400" animationId="0:1011" id="0:1013" reset="true">
+          <StateTransition stateToId="0:1012">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -97,7 +274,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:901">
+          <StateTransition stateToId="0:1014">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -108,8 +285,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="600" animationId="0:6" id="0:901" reset="true">
-          <StateTransition stateToId="0:13">
+        <AnimationState x="600" animationId="0:1011" id="0:1014" reset="true">
+          <StateTransition stateToId="0:1012">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -119,7 +296,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:12">
+          <StateTransition stateToId="0:1013">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -132,60 +309,122 @@
         </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:9">
-      <KeyedObject objectId="0:61">
+    <LinearAnimation duration="1" name="Ready" id="0:1010">
+      <KeyedObject objectId="0:1001">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0.25" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:62">
+      <KeyedObject objectId="0:1002">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0.25" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:63">
+      <KeyedObject objectId="0:1003">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0.25" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:64">
+      <KeyedObject objectId="0:1004">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0.25" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1005">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1006">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1007">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1008">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation duration="180" name="Mark radii" id="0:6" loopValue="pingPong">
-      <KeyedObject objectId="0:61">
+    <LinearAnimation duration="180" name="Mark radii" id="0:1011" loopValue="pingPong">
+      <KeyedObject objectId="0:1001">
         <KeyedProperty property="end">
-          <KeyFrameDouble value="0" interpolationType="linear" />
-          <KeyFrameDouble value="0.25" frame="120" />
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0.25" frame="50" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:62">
-        <KeyedProperty property="end">
-          <KeyFrameDouble value="0" interpolationType="linear" />
-          <KeyFrameDouble value="0.25" frame="120" />
+      <KeyedObject objectId="0:1005">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="40" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="50" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:63">
+      <KeyedObject objectId="0:1002">
         <KeyedProperty property="end">
-          <KeyFrameDouble value="0" interpolationType="linear" />
-          <KeyFrameDouble value="0.25" frame="120" />
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="23" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0.25" frame="73" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:64">
+      <KeyedObject objectId="0:1006">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="63" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="73" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1003">
         <KeyedProperty property="end">
-          <KeyFrameDouble value="0" interpolationType="linear" />
-          <KeyFrameDouble value="0.25" frame="120" />
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="46" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0.25" frame="96" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1007">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="86" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="96" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1004">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="70" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0.25" frame="120" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1008">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="110" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="120" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <Shape name="Drawing background">
-      <Rectangle width="448" height="448" originX="0" originY="0" />
-      <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
-      </Fill>
-    </Shape>
   </Artboard>
   <ViewModel defaultInstanceId="0:49" name="Marking" id="0:40">
     <ViewModelPropertyBoolean name="play" id="0:45" />
@@ -194,6 +433,10 @@
     <ViewModelPropertyNumber name="waistCutting" id="0:42" />
     <ViewModelPropertyNumber name="finishedHem" id="0:43" />
     <ViewModelPropertyNumber name="hemCutting" id="0:44" />
+    <ViewModelPropertyColor name="ink" id="0:47" />
+    <ViewModelPropertyColor name="fabric" id="0:48" />
+    <ViewModelPropertyColor name="fabricFold" id="0:50" />
+    <ViewModelPropertyColor name="accent" id="0:51" />
     <ViewModelInstance exports="true" name="Default" id="0:49">
       <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="0:45" />
       <ViewModelInstanceTrigger viewModelPropertyId="0:46" />
@@ -201,92 +444,136 @@
       <ViewModelInstanceNumber propertyValue="128" viewModelPropertyId="0:42" />
       <ViewModelInstanceNumber propertyValue="778" viewModelPropertyId="0:43" />
       <ViewModelInstanceNumber propertyValue="800" viewModelPropertyId="0:44" />
+      <ViewModelInstanceColor propertyValue="FF514154" viewModelPropertyId="0:47" />
+      <ViewModelInstanceColor propertyValue="FFF2DBF3" viewModelPropertyId="0:48" />
+      <ViewModelInstanceColor propertyValue="FFD1E9C9" viewModelPropertyId="0:50" />
+      <ViewModelInstanceColor propertyValue="FF4F644A" viewModelPropertyId="0:51" />
     </ViewModelInstance>
   </ViewModel>
-  <Artboard name="Preparation" id="0:101" width="448" height="448" defaultStateMachineId="0:102" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:103" x="500">
-    <LayoutComponentStyle id="0:103" />
-    <Node id="0:110" name="Grain guide" opacity="1">
-      <Shape x="220" y="40" name="Lengthwise grain">
+  <DataConverterOperationValue operationType="multiply" operationValue="0.5000000" name="half" id="0:80" />
+  <DataConverterOperationValue operationType="multiply" operationValue="0.4927924" name="oddX" id="0:81" />
+  <DataConverterOperationValue operationType="multiply" operationValue="0.0845912" name="oddY" id="0:82" />
+  <DataConverterOperationValue operationType="multiply" operationValue="0.0849836" name="evenX" id="0:83" />
+  <DataConverterOperationValue operationType="multiply" operationValue="0.4927249" name="evenY" id="0:84" />
+  <Artboard name="Preparation" id="0:101" width="448" height="448" x="500" defaultStateMachineId="0:1018" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:1024">
+    <LayoutComponentStyle id="0:1024" />
+    <Node x="224" y="224" name="Lengthwise grain">
+      <Node name="Grain arrowheads" id="0:1017">
+        <Shape x="0" y="-150" name="Top arrowhead">
+          <PointsPath>
+            <StraightVertex x="-9" y="14" />
+            <StraightVertex x="0" y="0" />
+            <StraightVertex x="9" y="14" />
+          </PointsPath>
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF514154">
+              <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+            </SolidColor>
+          </Stroke>
+        </Shape>
+        <Shape x="0" y="150" name="Bottom arrowhead">
+          <PointsPath>
+            <StraightVertex x="-9" y="-14" />
+            <StraightVertex x="0" y="0" />
+            <StraightVertex x="9" y="-14" />
+          </PointsPath>
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF514154">
+              <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+            </SolidColor>
+          </Stroke>
+        </Shape>
+      </Node>
+      <Shape x="0" y="0" name="Grain line">
         <PointsPath>
-          <StraightVertex x="0" y="0" />
-          <StraightVertex x="0" y="368" />
+          <StraightVertex x="0" y="-150" />
+          <StraightVertex x="0" y="150" />
         </PointsPath>
-        <Stroke thickness="3">
-          <SolidColor colorValue="FF202020" />
-          <DashPath>
-            <Dash length="2" />
-            <Dash length="5" />
-          </DashPath>
+        <Stroke thickness="3" cap="round">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+          <TrimPath start="0" end="1" id="0:1016" />
         </Stroke>
       </Shape>
     </Node>
-    <Shape x="24" y="24" name="Raw ends outline">
+    <Shape x="24" y="24" name="Top raw end">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="400" y="0" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="10" />
-          <Dash length="5" />
+          <Dash length="18" />
+          <Dash length="9" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="424.0" name="Raw ends outline">
+    <Shape x="24" y="424" name="Bottom raw end">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="400" y="0" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="10" />
-          <Dash length="5" />
+          <Dash length="18" />
+          <Dash length="9" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" name="Left selvage">
+    <Shape x="24" y="24" name="Left selvedge">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="0" y="400" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="2" />
-          <Dash length="5" />
+          <Dash length="3" />
+          <Dash length="7" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="424" y="24" name="Right selvage">
+    <Shape x="424" y="24" name="Right selvedge">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="0" y="400" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="2" />
-          <Dash length="5" />
+          <Dash length="3" />
+          <Dash length="7" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" name="Flat fabric">
+    <Shape x="24" y="24" name="Flat fabric (illustrative size)">
       <Rectangle width="400" height="400" originX="0" originY="0" />
       <Fill>
-        <SolidColor colorValue="FFF6EDD9" />
+        <SolidColor colorValue="FFF2DBF3">
+          <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+        </SolidColor>
       </Fill>
     </Shape>
-    <StateMachine name="Preparation" id="0:102">
+    <StateMachine name="Preparation" id="0:1018">
       <StateMachineLayer name="Reveal">
         <AnyState x="200" y="-120" />
         <ExitState x="400" y="-120" />
         <EntryState>
-          <StateTransition stateToId="0:104" />
+          <StateTransition stateToId="0:1021" />
         </EntryState>
-        <AnimationState x="200" animationId="0:106" id="0:104">
-          <StateTransition stateToId="0:105">
+        <AnimationState x="200" animationId="0:1019" id="0:1021">
+          <StateTransition stateToId="0:1022">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -297,8 +584,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:107" id="0:105" reset="true">
-          <StateTransition stateToId="0:104">
+        <AnimationState x="400" animationId="0:1020" id="0:1022" reset="true">
+          <StateTransition stateToId="0:1021">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -308,7 +595,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:902">
+          <StateTransition stateToId="0:1023">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -319,8 +606,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="600" animationId="0:107" id="0:902" reset="true">
-          <StateTransition stateToId="0:104">
+        <AnimationState x="600" animationId="0:1020" id="0:1023" reset="true">
+          <StateTransition stateToId="0:1021">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -330,7 +617,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:105">
+          <StateTransition stateToId="0:1022">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -343,140 +630,181 @@
         </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:106">
-      <KeyedObject objectId="0:110">
+    <LinearAnimation duration="1" name="Ready" id="0:1019">
+      <KeyedObject objectId="0:1016">
+        <KeyedProperty property="start">
+          <KeyFrameDouble value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1016">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1017">
         <KeyedProperty property="opacity">
           <KeyFrameDouble value="1" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation duration="180" name="Preparation" id="0:107" loopValue="pingPong">
-      <KeyedObject objectId="0:110">
+    <LinearAnimation duration="180" name="Preparation" id="0:1020" loopValue="pingPong">
+      <KeyedObject objectId="0:1016">
+        <KeyedProperty property="start">
+          <KeyFrameDouble value="0.5" frame="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0" frame="90" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1016">
+        <KeyedProperty property="end">
+          <KeyFrameDouble value="0.5" frame="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="90" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1017">
         <KeyedProperty property="opacity">
-          <KeyFrameDouble value="0" interpolationType="linear" />
-          <KeyFrameDouble value="1" frame="120" />
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="84" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="114" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <Shape name="Drawing background">
-      <Rectangle width="448" height="448" originX="0" originY="0" />
-      <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
-      </Fill>
-    </Shape>
   </Artboard>
-  <Artboard name="First fold" id="0:201" width="448" height="448" defaultStateMachineId="0:202" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:203" x="1000">
-    <LayoutComponentStyle id="0:203" />
+  <Artboard name="First fold" id="0:201" width="448" height="448" x="1000" defaultStateMachineId="0:1026" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:1032">
+    <LayoutComponentStyle id="0:1032" />
     <Shape x="224" y="24" name="Closed lengthwise fold">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="0" y="400" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
       </Stroke>
     </Shape>
-    <Node x="224" y="24" id="0:210" name="Left half brought right" scaleX="1">
-      <Shape x="200" y="0" name="Moving selvage">
+    <Node x="224" y="24" id="0:1025" name="Left half brought right" scaleX="1">
+      <Shape x="200" y="0" name="Moving selvedge">
         <PointsPath>
           <StraightVertex x="0" y="0" />
           <StraightVertex x="0" y="400" />
         </PointsPath>
         <Stroke thickness="3">
-          <SolidColor colorValue="FF202020" />
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
           <DashPath>
-            <Dash length="2" />
-            <Dash length="5" />
+            <Dash length="3" />
+            <Dash length="7" />
           </DashPath>
         </Stroke>
       </Shape>
-      <Shape x="0" y="0" name="Moving raw ends">
+      <Shape x="0" y="0" name="Moving top raw end">
         <PointsPath>
           <StraightVertex x="0" y="0" />
           <StraightVertex x="200" y="0" />
         </PointsPath>
         <Stroke thickness="3">
-          <SolidColor colorValue="FF202020" />
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
           <DashPath>
-            <Dash length="10" />
-            <Dash length="5" />
+            <Dash length="18" />
+            <Dash length="9" />
           </DashPath>
         </Stroke>
       </Shape>
-      <Shape x="0" y="400.0" name="Moving raw ends">
+      <Shape x="0" y="400" name="Moving bottom raw end">
         <PointsPath>
           <StraightVertex x="0" y="0" />
           <StraightVertex x="200" y="0" />
         </PointsPath>
         <Stroke thickness="3">
-          <SolidColor colorValue="FF202020" />
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
           <DashPath>
-            <Dash length="10" />
-            <Dash length="5" />
+            <Dash length="18" />
+            <Dash length="9" />
           </DashPath>
         </Stroke>
       </Shape>
       <Shape x="0" y="0" name="Moving layer">
         <Rectangle width="200" height="400" originX="0" originY="0" />
         <Fill>
-          <SolidColor colorValue="FFE4D3AE" />
+          <SolidColor colorValue="FFD1E9C9">
+            <DataBindContext sourcePathIds="0:40-0:50" propertyKey="37" />
+          </SolidColor>
         </Fill>
       </Shape>
     </Node>
-    <Shape x="424" y="24" name="Right selvage">
+    <Shape x="424" y="24" name="Right selvedge">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="0" y="400" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="2" />
-          <Dash length="5" />
+          <Dash length="3" />
+          <Dash length="7" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="224" y="24" name="Raw ends">
+    <Shape x="224" y="24" name="Top raw end">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="200" y="0" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="10" />
-          <Dash length="5" />
+          <Dash length="18" />
+          <Dash length="9" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="224" y="424.0" name="Raw ends">
+    <Shape x="224" y="424" name="Bottom raw end">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="200" y="0" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="10" />
-          <Dash length="5" />
+          <Dash length="18" />
+          <Dash length="9" />
         </DashPath>
       </Stroke>
     </Shape>
     <Shape x="224" y="24" name="Retained half">
       <Rectangle width="200" height="400" originX="0" originY="0" />
       <Fill>
-        <SolidColor colorValue="FFF6EDD9" />
+        <SolidColor colorValue="FFF2DBF3">
+          <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+        </SolidColor>
       </Fill>
     </Shape>
-    <StateMachine name="First fold" id="0:202">
+    <StateMachine name="First fold" id="0:1026">
       <StateMachineLayer name="Reveal">
         <AnyState x="200" y="-120" />
         <ExitState x="400" y="-120" />
         <EntryState>
-          <StateTransition stateToId="0:204" />
+          <StateTransition stateToId="0:1029" />
         </EntryState>
-        <AnimationState x="200" animationId="0:206" id="0:204">
-          <StateTransition stateToId="0:205">
+        <AnimationState x="200" animationId="0:1027" id="0:1029">
+          <StateTransition stateToId="0:1030">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -487,8 +815,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:207" id="0:205" reset="true">
-          <StateTransition stateToId="0:204">
+        <AnimationState x="400" animationId="0:1028" id="0:1030" reset="true">
+          <StateTransition stateToId="0:1029">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -498,7 +826,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:903">
+          <StateTransition stateToId="0:1031">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -509,8 +837,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="600" animationId="0:207" id="0:903" reset="true">
-          <StateTransition stateToId="0:204">
+        <AnimationState x="600" animationId="0:1028" id="0:1031" reset="true">
+          <StateTransition stateToId="0:1029">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -520,7 +848,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:205">
+          <StateTransition stateToId="0:1030">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -533,37 +861,43 @@
         </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:206">
-      <KeyedObject objectId="0:210">
+    <LinearAnimation duration="1" name="Ready" id="0:1027">
+      <KeyedObject objectId="0:1025">
         <KeyedProperty property="scaleX">
           <KeyFrameDouble value="1" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation duration="180" name="First fold" id="0:207" loopValue="pingPong">
-      <KeyedObject objectId="0:210">
+    <LinearAnimation duration="180" name="First fold" id="0:1028" loopValue="pingPong">
+      <KeyedObject objectId="0:1025">
         <KeyedProperty property="scaleX">
-          <KeyFrameDouble value="-1" interpolationType="linear" />
-          <KeyFrameDouble value="1" frame="120" />
+          <KeyFrameDouble value="-1" frame="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="120" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <Shape name="Drawing background">
-      <Rectangle width="448" height="448" originX="0" originY="0" />
+  </Artboard>
+  <Artboard name="Second fold" id="0:301" width="448" height="448" x="1500" defaultStateMachineId="0:1035" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:1041">
+    <LayoutComponentStyle id="0:1041" />
+    <Shape x="224" y="224" name="Common closed corner" id="0:1034">
+      <Ellipse width="12" height="12" />
       <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
       </Fill>
     </Shape>
-  </Artboard>
-  <Artboard name="Second fold" id="0:301" width="448" height="448" defaultStateMachineId="0:302" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:303" x="1500">
-    <LayoutComponentStyle id="0:303" />
     <Shape x="224" y="224" name="Closed lengthwise fold">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="0" y="200" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
       </Stroke>
     </Shape>
     <Shape x="224" y="224" name="Closed crosswise fold">
@@ -572,35 +906,35 @@
         <StraightVertex x="200" y="0" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
       </Stroke>
     </Shape>
-    <Shape x="224" y="224" name="Common closed corner">
-      <Ellipse width="10" height="10" />
-      <Fill>
-        <SolidColor colorValue="FF202020" />
-      </Fill>
-    </Shape>
-    <Node x="224" y="224" id="0:310" name="Top half brought down" scaleY="1">
+    <Node x="224" y="224" id="0:1033" name="Top half brought down" scaleY="1">
       <Shape x="0" y="0" name="Moving closed fold">
         <PointsPath>
           <StraightVertex x="0" y="0" />
           <StraightVertex x="0" y="200" />
         </PointsPath>
         <Stroke thickness="3">
-          <SolidColor colorValue="FF202020" />
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
         </Stroke>
       </Shape>
-      <Shape x="200" y="0" name="Moving selvages">
+      <Shape x="200" y="0" name="Moving selvedges">
         <PointsPath>
           <StraightVertex x="0" y="0" />
           <StraightVertex x="0" y="200" />
         </PointsPath>
         <Stroke thickness="3">
-          <SolidColor colorValue="FF202020" />
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
           <DashPath>
-            <Dash length="2" />
-            <Dash length="5" />
+            <Dash length="3" />
+            <Dash length="7" />
           </DashPath>
         </Stroke>
       </Shape>
@@ -610,30 +944,36 @@
           <StraightVertex x="200" y="0" />
         </PointsPath>
         <Stroke thickness="3">
-          <SolidColor colorValue="FF202020" />
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
           <DashPath>
-            <Dash length="10" />
-            <Dash length="5" />
+            <Dash length="18" />
+            <Dash length="9" />
           </DashPath>
         </Stroke>
       </Shape>
       <Shape x="0" y="0" name="Moving two layers">
         <Rectangle width="200" height="200" originX="0" originY="0" />
         <Fill>
-          <SolidColor colorValue="FFE4D3AE" />
+          <SolidColor colorValue="FFD1E9C9">
+            <DataBindContext sourcePathIds="0:40-0:50" propertyKey="37" />
+          </SolidColor>
         </Fill>
       </Shape>
     </Node>
-    <Shape x="424" y="224" name="Matched selvages">
+    <Shape x="424" y="224" name="Matched selvedges">
       <PointsPath>
         <StraightVertex x="0" y="0" />
         <StraightVertex x="0" y="200" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="2" />
-          <Dash length="5" />
+          <Dash length="3" />
+          <Dash length="7" />
         </DashPath>
       </Stroke>
     </Shape>
@@ -643,28 +983,32 @@
         <StraightVertex x="200" y="0" />
       </PointsPath>
       <Stroke thickness="3">
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
         <DashPath>
-          <Dash length="10" />
-          <Dash length="5" />
+          <Dash length="18" />
+          <Dash length="9" />
         </DashPath>
       </Stroke>
     </Shape>
     <Shape x="224" y="224" name="Retained two layers">
       <Rectangle width="200" height="200" originX="0" originY="0" />
       <Fill>
-        <SolidColor colorValue="FFF6EDD9" />
+        <SolidColor colorValue="FFF2DBF3">
+          <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+        </SolidColor>
       </Fill>
     </Shape>
-    <StateMachine name="Second fold" id="0:302">
+    <StateMachine name="Second fold" id="0:1035">
       <StateMachineLayer name="Reveal">
         <AnyState x="200" y="-120" />
         <ExitState x="400" y="-120" />
         <EntryState>
-          <StateTransition stateToId="0:304" />
+          <StateTransition stateToId="0:1038" />
         </EntryState>
-        <AnimationState x="200" animationId="0:306" id="0:304">
-          <StateTransition stateToId="0:305">
+        <AnimationState x="200" animationId="0:1036" id="0:1038">
+          <StateTransition stateToId="0:1039">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -675,8 +1019,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:307" id="0:305" reset="true">
-          <StateTransition stateToId="0:304">
+        <AnimationState x="400" animationId="0:1037" id="0:1039" reset="true">
+          <StateTransition stateToId="0:1038">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -686,7 +1030,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:904">
+          <StateTransition stateToId="0:1040">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -697,8 +1041,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="600" animationId="0:307" id="0:904" reset="true">
-          <StateTransition stateToId="0:304">
+        <AnimationState x="600" animationId="0:1037" id="0:1040" reset="true">
+          <StateTransition stateToId="0:1038">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -708,7 +1052,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:305">
+          <StateTransition stateToId="0:1039">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -721,117 +1065,395 @@
         </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:306">
-      <KeyedObject objectId="0:310">
+    <LinearAnimation duration="1" name="Ready" id="0:1036">
+      <KeyedObject objectId="0:1033">
         <KeyedProperty property="scaleY">
           <KeyFrameDouble value="1" />
         </KeyedProperty>
       </KeyedObject>
-    </LinearAnimation>
-    <LinearAnimation duration="180" name="Second fold" id="0:307" loopValue="pingPong">
-      <KeyedObject objectId="0:310">
-        <KeyedProperty property="scaleY">
-          <KeyFrameDouble value="-1" interpolationType="linear" />
-          <KeyFrameDouble value="1" frame="120" />
+      <KeyedObject objectId="0:1034">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <Shape name="Drawing background">
-      <Rectangle width="448" height="448" originX="0" originY="0" />
-      <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
-      </Fill>
-    </Shape>
+    <LinearAnimation duration="180" name="Second fold" id="0:1037" loopValue="pingPong">
+      <KeyedObject objectId="0:1033">
+        <KeyedProperty property="scaleY">
+          <KeyFrameDouble value="-1" frame="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="120" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1034">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="104" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="1" frame="120" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
   </Artboard>
-  <Artboard defaultStateMachineId="0:507" viewModelId="0:40" viewModelInstanceId="0:49" width="448" height="448" name="Cutting" id="0:501" styleId="0:502" x="2000">
-    <LayoutComponentStyle id="0:502" />
+  <Artboard name="Cutting" id="0:501" width="448" height="448" x="2000" defaultStateMachineId="0:1055" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:1065">
+    <LayoutComponentStyle id="0:1065" />
+    <Node x="24" y="24" name="Line numbers">
+      <Node x="68.50" y="11.76" name="Line 1 number" id="0:1051">
+        <DataBindContext sourcePathIds="0:40-0:41" propertyKey="13" converterId="0:81" />
+        <DataBindContext sourcePathIds="0:40-0:41" propertyKey="14" converterId="0:82" />
+        <Node name="Glyph scale" scaleX="1.3" scaleY="1.3">
+          <Shape name="Numeral 1">
+            <PointsPath>
+              <StraightVertex x="-3" y="-4.5" />
+              <StraightVertex x="1" y="-7" />
+              <StraightVertex x="1" y="7" />
+            </PointsPath>
+            <Stroke thickness="2.4" cap="round" join="round">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+            </Stroke>
+          </Shape>
+          <Shape name="Number disc">
+            <Ellipse width="22" height="22" />
+            <Fill>
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node x="10.88" y="63.07" name="Line 2 number" id="0:1052">
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="13" converterId="0:83" />
+        <DataBindContext sourcePathIds="0:40-0:42" propertyKey="14" converterId="0:84" />
+        <Node name="Glyph scale" scaleX="1.3" scaleY="1.3">
+          <Shape name="Numeral 2">
+            <PointsPath>
+              <CubicDetachedVertex x="-4.5" y="-3" inRotation="1.5707963267948966" inDistance="0" outRotation="-1.5707963267948966" outDistance="2.6" />
+              <CubicDetachedVertex x="0" y="-7" inRotation="3.141592653589793" inDistance="2.6" outRotation="0" outDistance="2.6" />
+              <CubicDetachedVertex x="4.5" y="-2.8" inRotation="-1.5707963267948966" inDistance="2.4" outRotation="2.3036114285814033" outDistance="3.2" />
+              <StraightVertex x="-4.5" y="7" />
+              <StraightVertex x="4.5" y="7" />
+            </PointsPath>
+            <Stroke thickness="2.4" cap="round" join="round">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+            </Stroke>
+          </Shape>
+          <Shape name="Number disc">
+            <Ellipse width="22" height="22" />
+            <Fill>
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node x="383.39" y="65.81" name="Line 3 number" id="0:1053">
+        <DataBindContext sourcePathIds="0:40-0:43" propertyKey="13" converterId="0:81" />
+        <DataBindContext sourcePathIds="0:40-0:43" propertyKey="14" converterId="0:82" />
+        <Node name="Glyph scale" scaleX="1.3" scaleY="1.3">
+          <Shape name="Numeral 3">
+            <PointsPath>
+              <CubicDetachedVertex x="-4.2" y="-4.8" inRotation="0" inDistance="0" outRotation="-1.05" outDistance="2.2" />
+              <CubicDetachedVertex x="0" y="-7" inRotation="3.141592653589793" inDistance="2.4" outRotation="0" outDistance="2.4" />
+              <CubicDetachedVertex x="4" y="-3.6" inRotation="-1.5707963267948966" inDistance="1.8" outRotation="1.5707963267948966" outDistance="1.8" />
+              <CubicDetachedVertex x="-0.8" y="-0.2" inRotation="0" inDistance="3" outRotation="0" outDistance="3.4" />
+              <CubicDetachedVertex x="4.6" y="3.6" inRotation="-1.5707963267948966" inDistance="2.0" outRotation="1.5707963267948966" outDistance="2.0" />
+              <CubicDetachedVertex x="0" y="7" inRotation="0" inDistance="2.6" outRotation="3.141592653589793" outDistance="2.6" />
+              <CubicDetachedVertex x="-4.6" y="4.6" inRotation="1.05" inDistance="2.2" outRotation="0" outDistance="0" />
+            </PointsPath>
+            <Stroke thickness="2.4" cap="round" join="round">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+            </Stroke>
+          </Shape>
+          <Shape name="Number disc">
+            <Ellipse width="22" height="22" />
+            <Fill>
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node x="67.99" y="394.18" name="Line 4 number" id="0:1054">
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="13" converterId="0:83" />
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="14" converterId="0:84" />
+        <Node name="Glyph scale" scaleX="1.3" scaleY="1.3">
+          <Shape name="Numeral 4">
+            <PointsPath>
+              <StraightVertex x="2.5" y="7" />
+              <StraightVertex x="2.5" y="-7" />
+              <StraightVertex x="-4.8" y="3" />
+              <StraightVertex x="4.8" y="3" />
+            </PointsPath>
+            <Stroke thickness="2.4" cap="round" join="round">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+            </Stroke>
+          </Shape>
+          <Shape name="Number disc">
+            <Ellipse width="22" height="22" />
+            <Fill>
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+          </Shape>
+        </Node>
+      </Node>
+    </Node>
     <Shape x="24" y="24" name="Common marking origin">
-      <Ellipse width="8" height="8" />
+      <Ellipse width="10" height="10" />
       <Fill>
-        <SolidColor colorValue="FF202020" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
       </Fill>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="waistStitching">
+    <Shape x="24" y="24" rotation="1.57079632679" name="1 waistStitching">
       <Ellipse width="139" height="139">
         <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="2">
-        <SolidColor colorValue="FF202020" />
-        <TrimPath start="0" end="0.25" id="0:503" />
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1058" />
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="waistCutting">
+    <Shape x="24" y="24" rotation="1.57079632679" name="2 waistCutting">
       <Ellipse width="128" height="128">
         <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="2">
-        <SolidColor colorValue="FF202020" />
-        <TrimPath start="0" end="0.25" id="0:504" />
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1059" />
         <DashPath>
-          <Dash length="10" />
-          <Dash length="5" />
+          <Dash length="18" />
+          <Dash length="9" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="finishedHem">
+    <Shape x="24" y="24" rotation="1.57079632679" name="3 finishedHem">
       <Ellipse width="778" height="778">
         <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="2">
-        <SolidColor colorValue="FF202020" />
-        <TrimPath start="0" end="0.25" id="0:505" />
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1060" />
         <DashPath>
-          <Dash length="2" />
-          <Dash length="5" />
+          <Dash length="3" />
+          <Dash length="7" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="hemCutting">
+    <Shape x="24" y="24" rotation="1.57079632679" name="4 hemCutting">
       <Ellipse width="800" height="800">
         <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="2">
-        <SolidColor colorValue="FF202020" />
-        <TrimPath start="0" end="0.25" id="0:506" />
+      <Stroke thickness="3">
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1061" />
         <DashPath>
-          <Dash length="12" />
-          <Dash length="4" />
-          <Dash length="2" />
-          <Dash length="4" />
+          <Dash length="18" />
+          <Dash length="7" />
+          <Dash length="3" />
+          <Dash length="7" />
         </DashPath>
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="Cut follows hemCutting">
-      <Ellipse width="800" height="800">
-        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
-        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
-      </Ellipse>
-      <Stroke thickness="6">
-        <SolidColor colorValue="FF365E79" />
-        <TrimPath start="0" end="0.25" id="0:513" />
-      </Stroke>
-    </Shape>
-    <Shape x="24" y="24" rotation="1.57079632679" name="Cut follows waistCutting">
+    <Shape x="24" y="24" rotation="1.57079632679" name="Cut follows line 2" id="0:1044">
       <Ellipse width="128" height="128">
         <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
         <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
       </Ellipse>
-      <Stroke thickness="6">
-        <SolidColor colorValue="FF365E79" />
-        <TrimPath start="0" end="0.25" id="0:512" />
+      <Stroke thickness="7" cap="round">
+        <SolidColor colorValue="FF4F644A">
+          <DataBindContext sourcePathIds="0:40-0:51" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1042" />
       </Stroke>
     </Shape>
-    <Shape x="24" y="24" name="Folded fabric" id="0:514" opacity="0">
-      <Rectangle width="408" height="408" originX="0" originY="0" />
-      <Fill>
-        <SolidColor colorValue="FFF6EDD9" />
-      </Fill>
+    <Shape x="24" y="24" rotation="1.57079632679" name="Cut follows line 4" id="0:1045">
+      <Ellipse width="800" height="800">
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+        <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+      </Ellipse>
+      <Stroke thickness="7" cap="round">
+        <SolidColor colorValue="FF4F644A">
+          <DataBindContext sourcePathIds="0:40-0:51" propertyKey="37" />
+        </SolidColor>
+        <TrimPath start="0" end="0.25" id="0:1043" />
+      </Stroke>
     </Shape>
-    <Node x="24" y="24" name="Cut fabric">
+    <Node x="24" y="24" name="Central scrap" id="0:1046">
+      <Shape x="0" y="0" name="Scrap top fold">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="64" y="0">
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="24" converterId="0:80" />
+          </StraightVertex>
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="0" name="Scrap left fold">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="0" y="64">
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="25" converterId="0:80" />
+          </StraightVertex>
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+        </Stroke>
+      </Shape>
+      <Shape name="Central scrap fabric">
+        <Ellipse width="128" height="128">
+          <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+          <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+        </Ellipse>
+        <Fill>
+          <SolidColor colorValue="FFF2DBF3">
+            <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+          </SolidColor>
+        </Fill>
+        <ClippingShape sourceId="0:1048" />
+      </Shape>
+      <Shape id="0:1048" name="Central scrap mask">
+        <Rectangle width="408" height="408" originX="0" originY="0" />
+      </Shape>
+    </Node>
+    <Node x="24" y="24" name="Outer scrap" id="0:1047">
+      <Shape x="0" y="0" name="Scrap top fold">
+        <PointsPath>
+          <StraightVertex x="400" y="0">
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="24" converterId="0:80" />
+          </StraightVertex>
+          <StraightVertex x="408" y="0" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="0" name="Scrap left fold">
+        <PointsPath>
+          <StraightVertex x="0" y="400">
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="25" converterId="0:80" />
+          </StraightVertex>
+          <StraightVertex x="0" y="408" />
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+        </Stroke>
+      </Shape>
+      <Shape x="408" y="0" name="Matched selvedges">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="0" y="408" />
+        </PointsPath>
+        <Stroke thickness="2">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+          <DashPath>
+            <Dash length="3" />
+            <Dash length="7" />
+          </DashPath>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="408" name="Matched raw ends">
+        <PointsPath>
+          <StraightVertex x="0" y="0" />
+          <StraightVertex x="408" y="0" />
+        </PointsPath>
+        <Stroke thickness="2">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+          <DashPath>
+            <Dash length="18" />
+            <Dash length="9" />
+          </DashPath>
+        </Stroke>
+      </Shape>
+      <Shape name="Outer scrap fabric">
+        <Rectangle width="408" height="408" originX="0" originY="0" />
+        <Ellipse width="800" height="800">
+          <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+          <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+        </Ellipse>
+        <Fill fillRule="evenOdd">
+          <SolidColor colorValue="FFF2DBF3">
+            <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+          </SolidColor>
+        </Fill>
+        <ClippingShape sourceId="0:1049" />
+      </Shape>
+      <Shape id="0:1049" name="Outer scrap mask">
+        <Rectangle width="408" height="408" originX="0" originY="0" />
+      </Shape>
+    </Node>
+    <Node x="24" y="24" name="Retained quarter">
+      <Shape x="0" y="0" name="Retained top fold">
+        <PointsPath>
+          <StraightVertex x="64" y="0">
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="24" converterId="0:80" />
+          </StraightVertex>
+          <StraightVertex x="400" y="0">
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="24" converterId="0:80" />
+          </StraightVertex>
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+        </Stroke>
+      </Shape>
+      <Shape x="0" y="0" name="Retained left fold">
+        <PointsPath>
+          <StraightVertex x="0" y="64">
+            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="25" converterId="0:80" />
+          </StraightVertex>
+          <StraightVertex x="0" y="400">
+            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="25" converterId="0:80" />
+          </StraightVertex>
+        </PointsPath>
+        <Stroke thickness="3">
+          <SolidColor colorValue="FF514154">
+            <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+          </SolidColor>
+        </Stroke>
+      </Shape>
       <Shape name="Retained quarter after circular cuts">
         <Ellipse width="800" height="800">
           <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
@@ -842,23 +1464,25 @@
           <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
         </Ellipse>
         <Fill fillRule="evenOdd">
-          <SolidColor colorValue="FFF6EDD9" />
+          <SolidColor colorValue="FFF2DBF3">
+            <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+          </SolidColor>
         </Fill>
-        <ClippingShape sourceId="0:515" />
+        <ClippingShape sourceId="0:1050" />
       </Shape>
-      <Shape id="0:515" name="Retained quarter mask">
+      <Shape id="0:1050" name="Retained quarter mask">
         <Rectangle width="408" height="408" originX="0" originY="0" />
       </Shape>
     </Node>
-    <StateMachine name="Cutting" id="0:507">
+    <StateMachine name="Cutting" id="0:1055">
       <StateMachineLayer name="Reveal">
         <AnyState x="200" y="-120" />
         <ExitState x="400" y="-120" />
         <EntryState>
-          <StateTransition stateToId="0:508" />
+          <StateTransition stateToId="0:1062" />
         </EntryState>
-        <AnimationState x="200" animationId="0:510" id="0:508">
-          <StateTransition stateToId="0:509">
+        <AnimationState x="200" animationId="0:1056" id="0:1062">
+          <StateTransition stateToId="0:1063">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -869,8 +1493,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:511" id="0:509" reset="true">
-          <StateTransition stateToId="0:508">
+        <AnimationState x="400" animationId="0:1057" id="0:1063" reset="true">
+          <StateTransition stateToId="0:1062">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -880,7 +1504,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:905">
+          <StateTransition stateToId="0:1064">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -891,8 +1515,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="600" animationId="0:511" id="0:905" reset="true">
-          <StateTransition stateToId="0:508">
+        <AnimationState x="600" animationId="0:1057" id="0:1064" reset="true">
+          <StateTransition stateToId="0:1062">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -902,7 +1526,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:509">
+          <StateTransition stateToId="0:1063">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -915,110 +1539,224 @@
         </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:510">
-      <KeyedObject objectId="0:512">
+    <LinearAnimation duration="1" name="Ready" id="0:1056">
+      <KeyedObject objectId="0:1042">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0.25" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:513">
+      <KeyedObject objectId="0:1043">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0.25" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:514">
+      <KeyedObject objectId="0:1044">
         <KeyedProperty property="opacity">
           <KeyFrameDouble value="0" />
         </KeyedProperty>
       </KeyedObject>
+      <KeyedObject objectId="0:1045">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1046">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1047">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1046">
+        <KeyedProperty property="x">
+          <KeyFrameDouble value="10" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1046">
+        <KeyedProperty property="y">
+          <KeyFrameDouble value="10" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1047">
+        <KeyedProperty property="x">
+          <KeyFrameDouble value="44" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1047">
+        <KeyedProperty property="y">
+          <KeyFrameDouble value="44" />
+        </KeyedProperty>
+      </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:511" name="Cut waist then hem" duration="210" loopValue="pingPong">
-      <KeyedObject objectId="0:512">
+    <LinearAnimation duration="210" name="Cut waist then hem" id="0:1057" loopValue="pingPong">
+      <KeyedObject objectId="0:1042">
         <KeyedProperty property="end">
-          <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
-          <KeyFrameDouble value="0.25" frame="60" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0.25" frame="50" interpolationType="linear" />
           <KeyFrameDouble value="0.25" frame="150" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:513">
+      <KeyedObject objectId="0:1043">
         <KeyedProperty property="end">
           <KeyFrameDouble value="0" frame="0" interpolationType="linear" />
-          <KeyFrameDouble value="0" frame="65" interpolationType="linear" />
-          <KeyFrameDouble value="0.25" frame="125" interpolationType="linear" />
+          <KeyFrameDouble value="0" frame="58" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0.25" frame="118" interpolationType="linear" />
           <KeyFrameDouble value="0.25" frame="150" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:514">
+      <KeyedObject objectId="0:1044">
         <KeyedProperty property="opacity">
           <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
-          <KeyFrameDouble value="1" frame="125" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="124" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.4" y1="0" x2="1" y2="1" />
+          </KeyFrameDouble>
           <KeyFrameDouble value="0" frame="150" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
+      <KeyedObject objectId="0:1045">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="124" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.4" y1="0" x2="1" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1046">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="124" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.4" y1="0" x2="1" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1047">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="124" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.4" y1="0" x2="1" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="0" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1046">
+        <KeyedProperty property="x">
+          <KeyFrameDouble value="24" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="24" frame="124" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="10" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1046">
+        <KeyedProperty property="y">
+          <KeyFrameDouble value="24" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="24" frame="124" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="10" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1047">
+        <KeyedProperty property="x">
+          <KeyFrameDouble value="24" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="24" frame="124" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="44" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:1047">
+        <KeyedProperty property="y">
+          <KeyFrameDouble value="24" frame="0" interpolationType="linear" />
+          <KeyFrameDouble value="24" frame="124" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0" y1="0" x2="0.3" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="44" frame="150" interpolationType="linear" />
+        </KeyedProperty>
+      </KeyedObject>
     </LinearAnimation>
-    <Shape name="Drawing background">
-      <Rectangle width="448" height="448" originX="0" originY="0" />
+  </Artboard>
+  <Artboard name="Unfolding" id="0:520" width="448" height="448" x="2500" defaultStateMachineId="0:1069" viewModelId="0:40" viewModelInstanceId="0:49" styleId="0:1095">
+    <LayoutComponentStyle id="0:1095" />
+    <Shape x="224" y="224" name="Waist cutout centre (common origin)">
+      <Ellipse width="8" height="8" />
       <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
+        <SolidColor colorValue="FF514154">
+          <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+        </SolidColor>
       </Fill>
     </Shape>
-  </Artboard>
-  <Artboard defaultStateMachineId="0:526" viewModelId="0:40" viewModelInstanceId="0:49" width="448" height="448" name="Unfolding" id="0:520" styleId="0:521" x="2500">
-    <LayoutComponentStyle id="0:521" />
     <Node x="224" y="224" scaleX=".5" scaleY=".5" name="Same radii uniformly fitted to full circle">
-      <Node id="0:531" scaleX="-1" name="Open lengthwise fold to left">
-        <Node scaleY="-1" name="Top left quarter" id="0:553">
-          <Shape x="0" y="0" rotation="1.57079632679" name="waistStitching">
+      <Node id="0:1066" scaleX="-1" name="Open lengthwise fold to left">
+        <Node name="Top left quarter" scaleY="-1" id="0:1068">
+          <Shape x="0" y="0" rotation="1.57079632679" name="1 waistStitching">
             <Ellipse width="139" height="139">
               <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
               <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
             </Ellipse>
-            <Stroke thickness="2">
-              <SolidColor colorValue="FF202020" />
-              <TrimPath start="0" end="0.25" id="0:533" />
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1073" />
             </Stroke>
           </Shape>
-          <Shape x="0" y="0" rotation="1.57079632679" name="waistCutting">
+          <Shape x="0" y="0" rotation="1.57079632679" name="2 waistCutting">
             <Ellipse width="128" height="128">
               <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
               <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
             </Ellipse>
-            <Stroke thickness="2">
-              <SolidColor colorValue="FF202020" />
-              <TrimPath start="0" end="0.25" id="0:534" />
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1074" />
               <DashPath>
-                <Dash length="10" />
-                <Dash length="5" />
+                <Dash length="18" />
+                <Dash length="9" />
               </DashPath>
             </Stroke>
           </Shape>
-          <Shape x="0" y="0" rotation="1.57079632679" name="finishedHem">
+          <Shape x="0" y="0" rotation="1.57079632679" name="3 finishedHem">
             <Ellipse width="778" height="778">
               <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
               <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
             </Ellipse>
-            <Stroke thickness="2">
-              <SolidColor colorValue="FF202020" />
-              <TrimPath start="0" end="0.25" id="0:535" />
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1075" />
               <DashPath>
-                <Dash length="2" />
-                <Dash length="5" />
+                <Dash length="3" />
+                <Dash length="7" />
               </DashPath>
             </Stroke>
           </Shape>
-          <Shape x="0" y="0" rotation="1.57079632679" name="hemCutting">
+          <Shape x="0" y="0" rotation="1.57079632679" name="4 hemCutting">
             <Ellipse width="800" height="800">
               <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
               <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
             </Ellipse>
-            <Stroke thickness="2">
-              <SolidColor colorValue="FF202020" />
-              <TrimPath start="0" end="0.25" id="0:536" />
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1076" />
               <DashPath>
-                <Dash length="12" />
-                <Dash length="4" />
-                <Dash length="2" />
-                <Dash length="4" />
+                <Dash length="18" />
+                <Dash length="7" />
+                <Dash length="3" />
+                <Dash length="7" />
               </DashPath>
             </Stroke>
           </Shape>
@@ -1032,66 +1770,76 @@
               <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
             </Ellipse>
             <Fill fillRule="evenOdd">
-              <SolidColor colorValue="FFF6EDD9" />
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
             </Fill>
-            <ClippingShape sourceId="0:532" />
+            <ClippingShape sourceId="0:1072" />
           </Shape>
-          <Shape id="0:532" name="Retained quarter mask">
+          <Shape id="0:1072" name="Retained quarter mask">
             <Rectangle width="408" height="408" originX="0" originY="0" />
           </Shape>
         </Node>
         <Node name="Bottom left quarter">
-          <Shape x="0" y="0" rotation="1.57079632679" name="waistStitching">
+          <Shape x="0" y="0" rotation="1.57079632679" name="1 waistStitching">
             <Ellipse width="139" height="139">
               <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
               <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
             </Ellipse>
-            <Stroke thickness="2">
-              <SolidColor colorValue="FF202020" />
-              <TrimPath start="0" end="0.25" id="0:538" />
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1078" />
             </Stroke>
           </Shape>
-          <Shape x="0" y="0" rotation="1.57079632679" name="waistCutting">
+          <Shape x="0" y="0" rotation="1.57079632679" name="2 waistCutting">
             <Ellipse width="128" height="128">
               <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
               <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
             </Ellipse>
-            <Stroke thickness="2">
-              <SolidColor colorValue="FF202020" />
-              <TrimPath start="0" end="0.25" id="0:539" />
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1079" />
               <DashPath>
-                <Dash length="10" />
-                <Dash length="5" />
+                <Dash length="18" />
+                <Dash length="9" />
               </DashPath>
             </Stroke>
           </Shape>
-          <Shape x="0" y="0" rotation="1.57079632679" name="finishedHem">
+          <Shape x="0" y="0" rotation="1.57079632679" name="3 finishedHem">
             <Ellipse width="778" height="778">
               <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
               <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
             </Ellipse>
-            <Stroke thickness="2">
-              <SolidColor colorValue="FF202020" />
-              <TrimPath start="0" end="0.25" id="0:540" />
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1080" />
               <DashPath>
-                <Dash length="2" />
-                <Dash length="5" />
+                <Dash length="3" />
+                <Dash length="7" />
               </DashPath>
             </Stroke>
           </Shape>
-          <Shape x="0" y="0" rotation="1.57079632679" name="hemCutting">
+          <Shape x="0" y="0" rotation="1.57079632679" name="4 hemCutting">
             <Ellipse width="800" height="800">
               <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
               <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
             </Ellipse>
-            <Stroke thickness="2">
-              <SolidColor colorValue="FF202020" />
-              <TrimPath start="0" end="0.25" id="0:541" />
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1081" />
               <DashPath>
-                <Dash length="12" />
-                <Dash length="4" />
-                <Dash length="2" />
-                <Dash length="4" />
+                <Dash length="18" />
+                <Dash length="7" />
+                <Dash length="3" />
+                <Dash length="7" />
               </DashPath>
             </Stroke>
           </Shape>
@@ -1105,140 +1853,162 @@
               <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
             </Ellipse>
             <Fill fillRule="evenOdd">
-              <SolidColor colorValue="FFF6EDD9" />
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
             </Fill>
-            <ClippingShape sourceId="0:537" />
+            <ClippingShape sourceId="0:1077" />
           </Shape>
-          <Shape id="0:537" name="Retained quarter mask">
+          <Shape id="0:1077" name="Retained quarter mask">
             <Rectangle width="408" height="408" originX="0" originY="0" />
           </Shape>
         </Node>
       </Node>
-      <Node id="0:542" scaleY="-1" name="Open crosswise fold upward">
-        <Shape x="0" y="0" rotation="1.57079632679" name="waistStitching">
-          <Ellipse width="139" height="139">
-            <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
-            <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
-          </Ellipse>
-          <Stroke thickness="2">
-            <SolidColor colorValue="FF202020" />
-            <TrimPath start="0" end="0.25" id="0:544" />
-          </Stroke>
-        </Shape>
-        <Shape x="0" y="0" rotation="1.57079632679" name="waistCutting">
-          <Ellipse width="128" height="128">
-            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
-            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
-          </Ellipse>
-          <Stroke thickness="2">
-            <SolidColor colorValue="FF202020" />
-            <TrimPath start="0" end="0.25" id="0:545" />
-            <DashPath>
-              <Dash length="10" />
-              <Dash length="5" />
-            </DashPath>
-          </Stroke>
-        </Shape>
-        <Shape x="0" y="0" rotation="1.57079632679" name="finishedHem">
-          <Ellipse width="778" height="778">
-            <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
-            <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
-          </Ellipse>
-          <Stroke thickness="2">
-            <SolidColor colorValue="FF202020" />
-            <TrimPath start="0" end="0.25" id="0:546" />
-            <DashPath>
-              <Dash length="2" />
-              <Dash length="5" />
-            </DashPath>
-          </Stroke>
-        </Shape>
-        <Shape x="0" y="0" rotation="1.57079632679" name="hemCutting">
-          <Ellipse width="800" height="800">
-            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
-            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
-          </Ellipse>
-          <Stroke thickness="2">
-            <SolidColor colorValue="FF202020" />
-            <TrimPath start="0" end="0.25" id="0:547" />
-            <DashPath>
-              <Dash length="12" />
-              <Dash length="4" />
-              <Dash length="2" />
-              <Dash length="4" />
-            </DashPath>
-          </Stroke>
-        </Shape>
-        <Shape name="Retained quarter after circular cuts">
-          <Ellipse width="800" height="800">
-            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
-            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
-          </Ellipse>
-          <Ellipse width="128" height="128">
-            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
-            <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
-          </Ellipse>
-          <Fill fillRule="evenOdd">
-            <SolidColor colorValue="FFF6EDD9" />
-          </Fill>
-          <ClippingShape sourceId="0:543" />
-        </Shape>
-        <Shape id="0:543" name="Retained quarter mask">
-          <Rectangle width="408" height="408" originX="0" originY="0" />
-        </Shape>
+      <Node id="0:1067" scaleY="-1" name="Open crosswise fold upward">
+        <Node name="Top right quarter">
+          <Shape x="0" y="0" rotation="1.57079632679" name="1 waistStitching">
+            <Ellipse width="139" height="139">
+              <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1083" />
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="2 waistCutting">
+            <Ellipse width="128" height="128">
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1084" />
+              <DashPath>
+                <Dash length="18" />
+                <Dash length="9" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="3 finishedHem">
+            <Ellipse width="778" height="778">
+              <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1085" />
+              <DashPath>
+                <Dash length="3" />
+                <Dash length="7" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape x="0" y="0" rotation="1.57079632679" name="4 hemCutting">
+            <Ellipse width="800" height="800">
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+            </Ellipse>
+            <Stroke thickness="3">
+              <SolidColor colorValue="FF514154">
+                <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+              </SolidColor>
+              <TrimPath start="0" end="0.25" id="0:1086" />
+              <DashPath>
+                <Dash length="18" />
+                <Dash length="7" />
+                <Dash length="3" />
+                <Dash length="7" />
+              </DashPath>
+            </Stroke>
+          </Shape>
+          <Shape name="Retained quarter after circular cuts">
+            <Ellipse width="800" height="800">
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
+            </Ellipse>
+            <Ellipse width="128" height="128">
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
+              <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
+            </Ellipse>
+            <Fill fillRule="evenOdd">
+              <SolidColor colorValue="FFF2DBF3">
+                <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+              </SolidColor>
+            </Fill>
+            <ClippingShape sourceId="0:1082" />
+          </Shape>
+          <Shape id="0:1082" name="Retained quarter mask">
+            <Rectangle width="408" height="408" originX="0" originY="0" />
+          </Shape>
+        </Node>
       </Node>
       <Node name="Retained bottom right quarter">
-        <Shape x="0" y="0" rotation="1.57079632679" name="waistStitching">
+        <Shape x="0" y="0" rotation="1.57079632679" name="1 waistStitching">
           <Ellipse width="139" height="139">
             <DataBindContext sourcePathIds="0:40-0:41" propertyKey="20" />
             <DataBindContext sourcePathIds="0:40-0:41" propertyKey="21" />
           </Ellipse>
-          <Stroke thickness="2">
-            <SolidColor colorValue="FF202020" />
-            <TrimPath start="0" end="0.25" id="0:549" />
+          <Stroke thickness="3">
+            <SolidColor colorValue="FF514154">
+              <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+            </SolidColor>
+            <TrimPath start="0" end="0.25" id="0:1088" />
           </Stroke>
         </Shape>
-        <Shape x="0" y="0" rotation="1.57079632679" name="waistCutting">
+        <Shape x="0" y="0" rotation="1.57079632679" name="2 waistCutting">
           <Ellipse width="128" height="128">
             <DataBindContext sourcePathIds="0:40-0:42" propertyKey="20" />
             <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
           </Ellipse>
-          <Stroke thickness="2">
-            <SolidColor colorValue="FF202020" />
-            <TrimPath start="0" end="0.25" id="0:550" />
+          <Stroke thickness="3">
+            <SolidColor colorValue="FF514154">
+              <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+            </SolidColor>
+            <TrimPath start="0" end="0.25" id="0:1089" />
             <DashPath>
-              <Dash length="10" />
-              <Dash length="5" />
+              <Dash length="18" />
+              <Dash length="9" />
             </DashPath>
           </Stroke>
         </Shape>
-        <Shape x="0" y="0" rotation="1.57079632679" name="finishedHem">
+        <Shape x="0" y="0" rotation="1.57079632679" name="3 finishedHem">
           <Ellipse width="778" height="778">
             <DataBindContext sourcePathIds="0:40-0:43" propertyKey="20" />
             <DataBindContext sourcePathIds="0:40-0:43" propertyKey="21" />
           </Ellipse>
-          <Stroke thickness="2">
-            <SolidColor colorValue="FF202020" />
-            <TrimPath start="0" end="0.25" id="0:551" />
+          <Stroke thickness="3">
+            <SolidColor colorValue="FF514154">
+              <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+            </SolidColor>
+            <TrimPath start="0" end="0.25" id="0:1090" />
             <DashPath>
-              <Dash length="2" />
-              <Dash length="5" />
+              <Dash length="3" />
+              <Dash length="7" />
             </DashPath>
           </Stroke>
         </Shape>
-        <Shape x="0" y="0" rotation="1.57079632679" name="hemCutting">
+        <Shape x="0" y="0" rotation="1.57079632679" name="4 hemCutting">
           <Ellipse width="800" height="800">
             <DataBindContext sourcePathIds="0:40-0:44" propertyKey="20" />
             <DataBindContext sourcePathIds="0:40-0:44" propertyKey="21" />
           </Ellipse>
-          <Stroke thickness="2">
-            <SolidColor colorValue="FF202020" />
-            <TrimPath start="0" end="0.25" id="0:552" />
+          <Stroke thickness="3">
+            <SolidColor colorValue="FF514154">
+              <DataBindContext sourcePathIds="0:40-0:47" propertyKey="37" />
+            </SolidColor>
+            <TrimPath start="0" end="0.25" id="0:1091" />
             <DashPath>
-              <Dash length="12" />
-              <Dash length="4" />
-              <Dash length="2" />
-              <Dash length="4" />
+              <Dash length="18" />
+              <Dash length="7" />
+              <Dash length="3" />
+              <Dash length="7" />
             </DashPath>
           </Stroke>
         </Shape>
@@ -1252,24 +2022,26 @@
             <DataBindContext sourcePathIds="0:40-0:42" propertyKey="21" />
           </Ellipse>
           <Fill fillRule="evenOdd">
-            <SolidColor colorValue="FFF6EDD9" />
+            <SolidColor colorValue="FFF2DBF3">
+              <DataBindContext sourcePathIds="0:40-0:48" propertyKey="37" />
+            </SolidColor>
           </Fill>
-          <ClippingShape sourceId="0:548" />
+          <ClippingShape sourceId="0:1087" />
         </Shape>
-        <Shape id="0:548" name="Retained quarter mask">
+        <Shape id="0:1087" name="Retained quarter mask">
           <Rectangle width="408" height="408" originX="0" originY="0" />
         </Shape>
       </Node>
     </Node>
-    <StateMachine name="Unfolding" id="0:526">
+    <StateMachine name="Unfolding" id="0:1069">
       <StateMachineLayer name="Reveal">
         <AnyState x="200" y="-120" />
         <ExitState x="400" y="-120" />
         <EntryState>
-          <StateTransition stateToId="0:527" />
+          <StateTransition stateToId="0:1092" />
         </EntryState>
-        <AnimationState x="200" animationId="0:529" id="0:527">
-          <StateTransition stateToId="0:528">
+        <AnimationState x="200" animationId="0:1070" id="0:1092">
+          <StateTransition stateToId="0:1093">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -1280,8 +2052,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="400" animationId="0:530" id="0:528" reset="true">
-          <StateTransition stateToId="0:527">
+        <AnimationState x="400" animationId="0:1071" id="0:1093" reset="true">
+          <StateTransition stateToId="0:1092">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -1291,7 +2063,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:906">
+          <StateTransition stateToId="0:1094">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -1302,8 +2074,8 @@
             </TransitionViewModelCondition>
           </StateTransition>
         </AnimationState>
-        <AnimationState x="600" animationId="0:530" id="0:906" reset="true">
-          <StateTransition stateToId="0:527">
+        <AnimationState x="600" animationId="0:1071" id="0:1094" reset="true">
+          <StateTransition stateToId="0:1092">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyBoolean>
@@ -1313,7 +2085,7 @@
               <TransitionValueBooleanComparator value="false" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:528">
+          <StateTransition stateToId="0:1093">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
@@ -1326,51 +2098,51 @@
         </AnimationState>
       </StateMachineLayer>
     </StateMachine>
-    <LinearAnimation duration="1" name="Ready" id="0:529">
-      <KeyedObject objectId="0:542">
+    <LinearAnimation duration="1" name="Ready" id="0:1070">
+      <KeyedObject objectId="0:1067">
         <KeyedProperty property="scaleY">
           <KeyFrameDouble value="-1" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:553">
+      <KeyedObject objectId="0:1068">
         <KeyedProperty property="scaleY">
           <KeyFrameDouble value="-1" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:531">
+      <KeyedObject objectId="0:1066">
         <KeyedProperty property="scaleX">
           <KeyFrameDouble value="-1" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:530" name="Reverse the two folds" duration="240" loopValue="pingPong">
-      <KeyedObject objectId="0:542">
+    <LinearAnimation duration="240" name="Reverse the two folds" id="0:1071" loopValue="pingPong">
+      <KeyedObject objectId="0:1067">
         <KeyedProperty property="scaleY">
-          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
-          <KeyFrameDouble value="-1" frame="90" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="-1" frame="84" interpolationType="linear" />
           <KeyFrameDouble value="-1" frame="180" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:553">
+      <KeyedObject objectId="0:1068">
         <KeyedProperty property="scaleY">
-          <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
-          <KeyFrameDouble value="-1" frame="90" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble value="-1" frame="84" interpolationType="linear" />
           <KeyFrameDouble value="-1" frame="180" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:531">
+      <KeyedObject objectId="0:1066">
         <KeyedProperty property="scaleX">
           <KeyFrameDouble value="1" frame="0" interpolationType="linear" />
-          <KeyFrameDouble value="1" frame="90" interpolationType="linear" />
+          <KeyFrameDouble value="1" frame="96" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1" />
+          </KeyFrameDouble>
           <KeyFrameDouble value="-1" frame="180" interpolationType="linear" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <Shape name="Drawing background">
-      <Rectangle width="448" height="448" originX="0" originY="0" />
-      <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
-      </Fill>
-    </Shape>
   </Artboard>
 </Rive>

@@ -164,7 +164,7 @@ A muted, warm palette taken from hand-dyed cloth: mulberry thread on unbleached 
 - **Heather Plum** (`heather-plum`) / **Heather Wash** (`heather-wash`): the secondary role. Heather Wash, with **On Heather Wash** (`on-heather-wash`) text, is the cutting card and the tonal "Tutorial de dobra do tecido" button. It is a different role from the calico input groups, so the results read as their own page even when dynamic color replaces the palette.
 
 ### Tertiary
-- **Lichen Green** (`lichen-green`) / **Lichen Wash** (`lichen-wash`): set aside for diagram accents. The current diagram draws in Walnut Ink, which is a valid use; any lichen accent must sit alongside labels and line styles, never replace them.
+- **Lichen Green** (`lichen-green`) / **Lichen Wash** (`lichen-wash`): set aside for diagram accents. The cutting card's diagram draws in its own ink; the tutorial uses Lichen Wash for the layer being folded and Lichen Green for the cut trace while it plays. Any lichen accent sits alongside labels and line styles, never replacing them.
 
 ### Neutral
 - **Raw Calico** (`raw-calico`): the screen background and base surface. **Dark Raw Calico** (`dark-raw-calico`) in dark mode.
@@ -172,7 +172,7 @@ A muted, warm palette taken from hand-dyed cloth: mulberry thread on unbleached 
 - **Calico Mid** (`calico-mid`): the tutorial player's fixed step bar.
 - **Calico High** (`calico-high`): the "Limites do cálculo" callout, the frame around the tutorial drawing, and overlays, sheets and dialogs wherever Material defaults choose it.
 - **Walnut Ink** (`walnut-ink`): essential text and diagram strokes. **Dark Walnut Ink** (`dark-walnut-ink`) in dark mode.
-- **Faded Walnut** (`faded-walnut`): supporting text, guidance and secondary labels.
+- **Faded Walnut** (`faded-walnut`): supporting text, guidance and secondary labels on calico surfaces only. It is `onSurfaceVariant`, so it never sits on the Heather Wash cutting card.
 - **Basting Outline** (`basting-outline`): essential field boundaries. **Basting Faint** (`basting-faint`): decorative separators only.
 - **Snip Red** (`snip-red`) / **Snip Red Wash** (`snip-red-wash`): validation and failure feedback.
 
@@ -180,6 +180,8 @@ A muted, warm palette taken from hand-dyed cloth: mulberry thread on unbleached 
 **The Dynamic-First Rule.** Always read colors from `MaterialTheme.colorScheme` roles; never hard-code a hex value in a screen. The dyed-fabric palette exists in `ui/theme/Color.kt` only as the fallback scheme.
 
 **The Not-By-Color Rule.** No meaning travels on color alone. Reference and cutting lines, errors and states also carry a label, a line style or text.
+
+**The On-Its-Container Rule.** Text and strokes take the "on" role of the surface they sit on. Everything on the cutting card (heading, group titles, labels, values, stroke samples, diagram lines, numbers and the note) is On Heather Wash (`onSecondaryContainer`); quieter elements are quieter through type size and weight, never through a borrowed role such as `onSurfaceVariant`, which drops to grey-on-slate in dark mode. Checked pairs: text at least 4.5:1 and meaningful graphics at least 3:1 in light, dark and dynamic schemes.
 
 ## Typography
 
@@ -193,7 +195,7 @@ A muted, warm palette taken from hand-dyed cloth: mulberry thread on unbleached 
 - **Headline Medium** (400, 28/36sp): profile-screen headings. The calculator's title lives in its top app bar.
 - **Headline Small** (500, 24/32sp): each calculated radius value, with tabular figures where the system font has them. All four are the same size and weight.
 - **Title Large** (400, 22/28sp): the app bar title, section headings such as "Medida do corpo", "Escolhas da peça" and "Margens de corte", the cutting card's "Raios para o molde" and each tutorial step title. They are marked as headings in semantics.
-- **Title Medium** (500, 16/24sp): profile names and component titles, including the cutting card's "Linhas de referência" and "Linhas de corte" groups.
+- **Title Medium** (500, 16/24sp): profile names and component titles, including the cutting card's "Linhas de referência", "Linhas de corte" and "Diagrama das linhas" headings.
 - **Body Large** (400, 16/24sp): field text and explanations.
 - **Body Medium** (400, 14/20sp): supporting text and field errors.
 - **Label Large** (500, 14/20sp): action labels, line numbers on the card and diagram, and the tutorial's "Etapa n de 6".
@@ -228,7 +230,7 @@ Firm, pill-shaped and easy to trust under the thumb.
 - **Shape:** fully rounded ends (`rounded.full`), at least 48dp tall, and the button grows with its text.
 - **Primary:** a filled Mulberry Dye button with an On-Mulberry label, used for the single main action on a page ("Calcular", "Salvar"). "Calcular" stays enabled for incomplete input so it can explain what needs fixing.
 - **Primary placement:** "Calcular" spans the full width at the end of the form.
-- **Tonal:** a Heather Wash button for the one prominent secondary path, "Tutorial de dobra do tecido", just after the cutting card.
+- **Tonal:** a Heather Wash button for the one prominent secondary path, "Tutorial de dobra do tecido". It leads the action row under the cutting card, with "Editar medidas" beside it.
 - **Text:** the dominant secondary action ("Perfis de medidas", "Usar perfil", "Editar medidas", "Anterior", "Cancelar", disclosures, dialog actions), with a Mulberry Dye label and Material ripple.
 - **Destructive:** named, explicit wording in a confirmation dialog, never an unlabelled icon.
 
@@ -245,10 +247,12 @@ Firm, pill-shaped and easy to trust under the thumb.
 ### Cutting card (signature)
 The answer as one surface, readable from arm's length at the cutting table.
 - **Surface:** Heather Wash with extra-large corners (28dp), 24dp padding and no shadow. Nothing inside it is a nested card.
-- **Content:** the heading "Raios para o molde", then "Linhas de referência" (lines 1 and 3) and "Linhas de corte" (lines 2 and 4). Each radius shows its diagram number, a stroke sample of its line style and its label in Body Large, Faded Walnut, above the value in Headline Small, On Heather Wash, such as "13,05 cm".
+- **Content:** the heading "Raios para o molde", then "Linhas de referência" (lines 1 and 3) and "Linhas de corte" (lines 2 and 4). Each radius shows its diagram number, a stroke sample of its line style and its label in Body Large, above the value in Headline Small, all in On Heather Wash, such as "13,05 cm". The drafting diagram follows under "Diagrama das linhas", drawn on the card's own surface, so each number and its line are read together.
+- **Arrangement:** on a compact window the diagram sits directly after the radii. When the card's content width holds two columns of 260dp × max(fontScale, 1) plus a 24dp gap, the diagram moves beside the radii. This is a content-fit rule like the panes.
+- **Key:** the radius rows are the diagram's only key. The drawing carries numbers only, with no second key beneath it.
 - **Once only:** each value appears on the card and nowhere else on the page until someone opens "Fórmulas", whose lines end in their results. TalkBack hears one merged announcement per radius, for example "Linha 1, linha contínua. Costura da cintura: 13,05 cm". The heading is a polite live region, so a successful calculation is announced once.
-- **Reveal:** a successful Calcular hides the keyboard and scrolls the whole card into view. Any input change removes it.
-- **After the card:** the tonal tutorial button, "Editar medidas", the "Medidas utilizadas (cm)" summary (the unit is stated once, in its heading) and the "Limites do cálculo" callout on Calico High.
+- **Reveal:** a successful Calcular hides the keyboard and scrolls the card into view; when the card is taller than the window, its top and all four radii come first. Any input change removes it.
+- **After the card:** one action row with the tonal tutorial button and the "Editar medidas" text button, which wraps to two lines at large text; the "Medidas utilizadas (cm)" summary as one wrapping line in Body Medium (the unit is stated once, in its heading, and a non-breaking space keeps each value with its label); the "Limites do cálculo" callout on Calico High; then the two disclosures, 8dp apart as one pair. The page column keeps 16dp between these blocks.
 
 ### Disclosures
 - **Style:** a text button with the label and a Material Symbols chevron that flips when open. The label wraps before the chevron shrinks.
@@ -267,7 +271,7 @@ The answer as one surface, readable from arm's length at the cutting table.
 - **Picker:** a Material modal bottom sheet (extra-large corners, Calico High).
 
 ### Drafting Diagram (signature)
-A square quarter-circle drawing on a Canvas that fills the width up to 400dp, in Walnut Ink with 2dp strokes. A compact key of number, stroke sample and label sits beneath it. The four arcs are numbered 1 to 4 and distinguished by line style: solid for the waist stitching line, a long dash (12/6) for waist cutting, a dot (2/5) for the finished hem, and dash-dot (12/5/2/5) for hem cutting. Arc spacing is schematic so small allowances stay visible. Waist and hem numbers sit at opposite ends of their arcs so 1 and 2 never collide. The figure is one TalkBack node whose text equivalent states the common centre, the order of the lines, each line's style and meaning, coincident lines, which way each allowance moves, and that it is not to scale. It deliberately omits the radius values, which are heard once, on the cutting card. The owner confirmed this departure from the earlier "lists all dimensions" contract.
+A square quarter-circle drawing on a Canvas that fills its column of the cutting card up to 400dp, in On Heather Wash (`onSecondaryContainer`) with 2dp strokes; number labels sit on Heather Wash discs. The cutting card's radius rows are its key. Coincidence notes and the "not to scale" line (Body Medium, same ink) sit 8dp under the drawing. The four arcs are numbered 1 to 4 and distinguished by line style: solid for the waist stitching line, a long dash (12/6) for waist cutting, a dot (2/5) for the finished hem, and dash-dot (12/5/2/5) for hem cutting. Arc spacing is schematic: the waist arcs are drawn wider than to scale so small allowances and lines 1 and 2 stay legible. Waist and hem numbers sit at opposite ends of their arcs so 1 and 2 never collide. The figure is one TalkBack node whose text equivalent states the common centre, the order of the lines, each line's style and meaning, coincident lines, which way each allowance moves, and that it is not to scale. It deliberately omits the radius values, which are heard once, on the cutting card. The owner confirmed this departure from the earlier "lists all dimensions" contract.
 
 ### Fabric Folding Tutorial (signature)
 A full-screen player that replaces the calculator until it closes, at most 640dp wide.
@@ -275,8 +279,10 @@ A full-screen player that replaces the calculator until it closes, at most 640dp
 - **Drawing:** the Rive animation in a Calico High frame with large (16dp) corners, with play, replay and pause text buttons. It stays pinned while the instructions scroll; in windows under 560dp tall, such as a landscape phone, it scrolls with them so the text keeps room.
 - **Step bar:** fixed at the bottom on Calico Mid: "Anterior" (disabled on the first step), "Etapa n de 6", and a filled "Próximo" that becomes "Concluir" on the last step. Above 130% text the position moves above the buttons.
 - **Closing:** the close button, "Concluir", system Back and predictive Back all return to the results, with focus back on the tutorial button. The current step survives rotation and recreation.
-- **Honesty:** the drawing keeps the proportions of the current radii and is labelled as not actual size. With system animations off, each step shows its final drawing.
-- **Known gap:** the Rive artboards paint a white sheet, so the still frame stays white in dark mode. Only the frame around it follows the theme until the animation file changes.
+- **Drawing colour:** the artboards are transparent, so the Calico High frame is the page. The app binds four view-model colours from the theme: fabric is Heather Wash (`secondaryContainer`) and every line, edge, numeral and dot is On Heather Wash (`onSecondaryContainer`), the cutting card's own pair; the layer being folded in a step is Lichen Wash (`tertiaryContainer`); the trace that follows a cut while it plays is Lichen Green (`tertiary`). Light, dark and dynamic schemes all resolve through these roles. Colour never carries meaning alone: shape, line pattern, numbers, motion and the written text say the same.
+- **Line key:** the cutting card's: 1 solid (waist stitching), 2 dashed (waist cutting), 3 dotted (finished hem), 4 dash-dot (hem cutting), numbered 1 to 4 on fabric-coloured discs at the arc ends while marking and cutting. The unfolded circle drops the numbers; its waist cutout is too small for them at that scale. Fabric edges keep the written conventions: closed folds solid, selvedges dotted, raw ends dashed, all straight and unnumbered.
+- **Motion:** each step moves once, in one clear way, with a gentle ease-in-out and no bounce: the grain arrow grows from the centre, each fold mirrors its layer over the crease, the four arcs sweep from the left fold in line order, cuts trace line 2 then line 4 before the two scraps lift away, and the circle opens one fold at a time. Each loop holds the completed pose, then reverses.
+- **Honesty:** the drawing keeps the proportions of the current radii and is labelled as not actual size. The fabric piece is illustrative, a fixed size distinct from the calculated arcs. Zero allowances draw coincident lines. With system animations off, each step's resting frame is its completed result.
 
 ## Do's and Don'ts
 
@@ -288,12 +294,15 @@ A full-screen player that replaces the calculator until it closes, at most 640dp
 - **Do** put formulas and drafting steps behind disclosures that start collapsed and announce their state.
 - **Do** keep the tutorial's step bar fixed and fully visible on every step, at every text size.
 - **Do** distinguish diagram lines by stroke pattern and number labels, and provide the text equivalent.
+- **Do** keep the diagram on the cutting card's own surface, under "Diagrama das linhas", directly after or beside the radii.
+- **Do** put the tutorial and "Editar medidas" in one wrapping action row under the card, then the summary, the limits and the disclosures.
 - **Do** keep touch targets at 48dp or more and check layouts at 200% text size.
 
 ### Don't:
 - **Don't** add drop shadows, nested cards or decorative elevation.
 - **Don't** add a home screen, bottom navigation bar, rail or drawer, or a second FAB. The top app bar holds a title and an action; it is not navigation.
-- **Don't** repeat a radius value in the diagram, its key or its text equivalent.
+- **Don't** repeat a radius value in the diagram or its text equivalent, and don't add a separate diagram key; the card's radius rows are the key.
+- **Don't** wrap the diagram in a second container inside the card.
 - **Don't** make one radius more prominent than the others.
 - **Don't** signal reference versus cutting, or error versus valid, by color alone.
 - **Don't** use the legacy Compose Material Icons library. Use Material Symbols XML vectors tinted by the theme.

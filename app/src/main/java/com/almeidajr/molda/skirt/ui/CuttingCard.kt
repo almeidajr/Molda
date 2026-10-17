@@ -116,6 +116,9 @@ fun diagramDescription(
         ).joinToString(" ")
 }
 
-/** "Label: value" lines for the inputs used, whose unit the summary heading states once. */
+/**
+ * "Label: value" items for the inputs used, whose unit the summary heading states once.
+ * A non-breaking space keeps each value on its label's line when the summary wraps.
+ */
 fun measurementSummary(inputs: Map<MeasurementField, Double>): List<String> =
-    inputs.map { (field, value) -> "${field.label.removeSuffix(" (cm)")}: ${formatDecimal(value)}" }
+    inputs.map { (field, value) -> "${field.label.removeSuffix(" (cm)")}: ${formatDecimal(value)}" }

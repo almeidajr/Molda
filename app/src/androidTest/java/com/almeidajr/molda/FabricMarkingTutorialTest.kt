@@ -4,6 +4,8 @@ import android.animation.ValueAnimator
 import android.graphics.Color
 import android.os.SystemClock
 import androidx.activity.compose.setContent
+import androidx.compose.material3.ColorScheme
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
@@ -33,7 +35,9 @@ import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.skirt.ui.FoldingStep
 import com.almeidajr.molda.skirt.ui.MeasurementField
 import com.almeidajr.molda.skirt.ui.TutorialAnimation
+import com.almeidajr.molda.skirt.ui.tutorialPalette
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import com.almeidajr.molda.ui.theme.moldaColorScheme
 import java.io.FileInputStream
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -55,6 +59,7 @@ class FabricMarkingTutorialTest {
             shell("settings put global animator_duration_scale 1")
             composeRule.waitUntil(5_000) { ValueAnimator.areAnimatorsEnabled() }
             openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+            val colors = drawingColors()
             listOf(
                 "Dobra do tecido em Rive: etapa 1",
                 "Dobra do tecido em Rive: etapa 2",
@@ -74,13 +79,13 @@ class FabricMarkingTutorialTest {
                     val image = drawing.captureToImage()
                     val frame = IntArray(image.width * image.height)
                     image.readPixels(frame)
-                    frame.count { Color.blue(it) in 150..239 && Color.red(it) > 200 } > 20
+                    frame.count(colors::isFabric) > 20
                 }
                 // Keep the rendered drawing onscreen while starting the infinite loop.
                 composeRule.mainClock.autoAdvance = false
                 composeRule.onNodeWithText(label)
                     .performSemanticsAction(SemanticsActions.OnClick)
-                assertContinuousPlayback(description, index == 3)
+                assertContinuousPlayback(description, index == 3, colors)
                 composeRule.onNodeWithText("Pausar animação")
                     .performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.mainClock.advanceTimeBy(160)
@@ -114,6 +119,7 @@ class FabricMarkingTutorialTest {
         try {
             shell("settings put global animator_duration_scale 1")
             openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+            val colors = drawingColors()
             // Change the actual system preference while the tutorial is already open.
             shell("settings put global animator_duration_scale 0")
             composeRule.waitUntil(5_000) { !ValueAnimator.areAnimatorsEnabled() }
@@ -145,8 +151,7 @@ class FabricMarkingTutorialTest {
                     return IntArray(image.width * image.height).also { image.readPixels(it) }
                 }
                 composeRule.waitUntil(10_000) {
-                    frame().count { maxOf(Color.red(it), Color.green(it), Color.blue(it)) < 128 } >
-                        10
+                    frame().count(colors::isInk) > 10
                 }
                 val completed = frame()
                 val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
@@ -180,6 +185,7 @@ class FabricMarkingTutorialTest {
             listOf("80", "2", "60", "0", "0") to listOf(0.178653, 1.0),
         ).forEach { (inputs, expectedRatios) ->
             openTutorial(inputs)
+            val colors = drawingColors()
             composeRule.waitUntil(15_000) {
                 composeRule.onAllNodes(
                     hasContentDescription("Marcação proporcional em Rive"),
@@ -194,14 +200,8 @@ class FabricMarkingTutorialTest {
                 val visibleRadii = mutableListOf<Double>()
                 for (y in 0 until pixels.height) {
                     for (x in 0 until pixels.width) {
-                        val color = pixels[x, y]
                         val angle = atan2(y - origin, x - origin)
-                        if (angle in 0.2..1.35 && maxOf(
-                                color.red,
-                                color.green,
-                                color.blue,
-                            ) < 0.5f
-                        ) {
+                        if (angle in 0.2..1.35 && colors.isInk(pixels[x, y].toArgb())) {
                             visibleRadii += hypot(x - origin, y - origin) / (400 * scale)
                         }
                     }
@@ -353,16 +353,21 @@ class FabricMarkingTutorialTest {
             SkirtMeasurements(80.0, 2.0, 120.0, 1.0, 2.0) to
                 listOf(0.096635, 0.089230, 0.985191, 1.0),
             SkirtMeasurements(80.0, 2.0, 60.0, 0.0, 0.0) to listOf(0.178653, 1.0),
-        ).forEach { (measurements, ratios) ->
+        ).forEachIndexed { index, (measurements, ratios) ->
             val radii = (calculateSkirtRadii(measurements) as SkirtCalculation.Success).radii
-            showDrawing(radii, FoldingStep.Cutting)
-            assertCircularDrawing("Corte proporcional em Rive", ratios, unfolded = false)
-            showDrawing(radii, FoldingStep.Unfolding)
-            assertCircularDrawing(
-                "Círculo desdobrado proporcional em Rive",
-                ratios,
-                unfolded = true,
-            )
+            // The drawing paints no sheet of its own, so the dark theme needs its own check.
+            (if (index == 0) listOf(false, true) else listOf(false)).forEach { darkTheme ->
+                val colors = drawingColors(darkTheme)
+                showDrawing(radii, FoldingStep.Cutting, darkTheme)
+                assertCircularDrawing("Corte proporcional em Rive", ratios, false, colors)
+                showDrawing(radii, FoldingStep.Unfolding, darkTheme)
+                assertCircularDrawing(
+                    "Círculo desdobrado proporcional em Rive",
+                    ratios,
+                    true,
+                    colors,
+                )
+            }
         }
     }
 
@@ -370,26 +375,33 @@ class FabricMarkingTutorialTest {
      * Shows one step's still drawing at a fixed size. The player sizes it by window height, which
      * on a short low-density screen leaves the unfolded waist lines closer than one pixel apart.
      */
-    private fun showDrawing(radii: SkirtRadii, step: FoldingStep) {
+    private fun showDrawing(radii: SkirtRadii, step: FoldingStep, darkTheme: Boolean) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 // The full width of the narrowest phone; the still frame ignores motion.
-                MoldaTheme {
+                MoldaTheme(darkTheme = darkTheme) {
                     TutorialAnimation(radii, step, motionEnabled = false, drawingSize = 288.dp)
                 }
             }
         }
     }
 
-    private fun assertContinuousPlayback(description: String, marking: Boolean) {
+    private fun assertContinuousPlayback(
+        description: String,
+        marking: Boolean,
+        colors: DrawingColors,
+    ) {
         val drawing = composeRule.onNodeWithContentDescription(description)
         val lateFrames = mutableSetOf<Int>()
         val replayLabel = if (marking) "Repetir marcação" else "Repetir etapa"
         var replayed = false
         val started = composeRule.mainClock.currentTime
-        composeRule.waitUntil(30_000) {
+        var elapsed = 0L
+        // Samples a fixed span of test-clock time. A wall-clock wait would only measure how
+        // fast the emulator renders those frames, and timed out on slow CI emulators.
+        while (elapsed <= 22_000) {
             composeRule.mainClock.advanceTimeBy(160)
-            val elapsed = composeRule.mainClock.currentTime - started
+            elapsed = composeRule.mainClock.currentTime - started
             if (elapsed > 1_000 && !replayed) {
                 // Invoke the accessible control without scrolling the drawing out of view.
                 composeRule.onNodeWithText(replayLabel)
@@ -400,7 +412,9 @@ class FabricMarkingTutorialTest {
                     val restarted = drawing.captureToImage().toPixelMap()
                     assertTrue(
                         "Replay must restart the fold, not only update its label",
-                        restarted[restarted.width / 4, restarted.height / 2].blue < 0.9f,
+                        colors.isFabric(
+                            restarted[restarted.width / 4, restarted.height / 2].toArgb(),
+                        ),
                     )
                 }
                 replayed = true
@@ -410,12 +424,13 @@ class FabricMarkingTutorialTest {
             image.readPixels(frame)
             assertTrue(
                 "$description: fabric must remain visible throughout playback " +
-                    "at ${elapsed}ms (${image.width}x${image.height})",
-                frame.count { Color.blue(it) in 150..239 && Color.red(it) > 200 } > 20,
+                    "at ${elapsed}ms (${image.width}x${image.height}); most frequent colours: " +
+                    frame.toList().groupingBy { Integer.toHexString(it) }.eachCount()
+                        .entries.sortedByDescending { it.value }.take(6),
+                frame.count(colors::isFabric) > 20,
             )
             // Even the longest step has completed two full cycles by 18 seconds.
             if (elapsed > 18_000) lateFrames += frame.contentHashCode()
-            elapsed > 22_000
         }
         assertTrue("$description must keep moving after two cycles", lateFrames.size > 3)
     }
@@ -447,6 +462,7 @@ class FabricMarkingTutorialTest {
         description: String,
         ratios: List<Double>,
         unfolded: Boolean,
+        colors: DrawingColors,
     ) {
         composeRule.waitUntil(15_000) {
             composeRule.onAllNodes(hasContentDescription(description))
@@ -470,10 +486,7 @@ class FabricMarkingTutorialTest {
                     for (x in 0 until pixels.width) {
                         val dx = (x - origin) * horizontal
                         val dy = (y - origin) * vertical
-                        val color = pixels[x, y]
-                        if (atan2(dy, dx) in 0.2..1.35 &&
-                            maxOf(color.red, color.green, color.blue) < 0.5f
-                        ) {
+                        if (atan2(dy, dx) in 0.2..1.35 && colors.isInk(pixels[x, y].toArgb())) {
                             visibleRadii += hypot(dx, dy) / outerRadius
                         }
                     }
@@ -483,13 +496,47 @@ class FabricMarkingTutorialTest {
                         3
                 }
             } &&
-                pixels[(origin + outerRadius * ratios.min() * 0.5).toInt(), origin.toInt()].red >
-                0.95f &&
-                pixels[
-                    (origin + outerRadius * 0.5).toInt(),
-                    (origin + outerRadius * 0.5).toInt(),
-                ].blue < 0.9f
+                // The waist cutout shows the player's frame through the drawing.
+                colors.isFrame(
+                    pixels[(origin + outerRadius * ratios.min() * 0.5).toInt(), origin.toInt()]
+                        .toArgb(),
+                ) &&
+                colors.isFabric(
+                    pixels[
+                        (origin + outerRadius * 0.5).toInt(),
+                        (origin + outerRadius * 0.5).toInt(),
+                    ].toArgb(),
+                )
         }
+    }
+
+    /** The colours the drawing binds under [darkTheme], as [MoldaTheme] resolves them. */
+    private fun drawingColors(
+        darkTheme: Boolean = composeRule.activity.resources.configuration.isNightModeActive,
+    ): DrawingColors = DrawingColors(moldaColorScheme(composeRule.activity, darkTheme, true))
+
+    /** Classifies captured pixels as the drawing's ink, fabric or the frame behind it. */
+    private class DrawingColors(scheme: ColorScheme) {
+        private val palette = tutorialPalette(scheme).mapValues { it.value.toArgb() }
+        private val ink = palette.getValue("ink")
+        private val fabric = palette.getValue("fabric")
+        private val frame = scheme.surfaceContainerHigh.toArgb()
+
+        // Summed channel difference allowed for rasterized solid fills.
+        private val tolerance = 12
+
+        fun isFabric(pixel: Int): Boolean = distance(pixel, fabric) <= tolerance ||
+            distance(pixel, palette.getValue("fabricFold")) <= tolerance
+
+        fun isFrame(pixel: Int): Boolean = distance(pixel, frame) <= tolerance
+
+        // Anti-aliased strokes blend into the fabric; count those nearer the ink.
+        fun isInk(pixel: Int): Boolean = distance(pixel, ink) * 2 < distance(ink, fabric)
+
+        private fun distance(first: Int, second: Int): Int =
+            abs(Color.red(first) - Color.red(second)) +
+                abs(Color.green(first) - Color.green(second)) +
+                abs(Color.blue(first) - Color.blue(second))
     }
 
     private fun openTutorial(inputs: List<String>, advanceToMarking: Boolean = true) {

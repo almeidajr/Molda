@@ -20,7 +20,7 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyChild
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasStateDescription
@@ -123,13 +123,13 @@ class SkirtCalculatorTest {
                 assertEquals(24.sp, style.fontSize)
                 assertEquals(32.sp, style.lineHeight)
                 node.assertReadableTextContrast("$radius dark=$dark dynamic=$dynamic")
-                // The diagram key repeats the label, so scope it to the card entry.
-                composeRule.onNode(
-                    hasText(radius.substringAfter(". ").substringBefore(":")) and
-                        hasAnyAncestor(hasContentDescription(radius)),
+                // A single match: the card's rows are the diagram's only key.
+                composeRule.onNodeWithText(
+                    radius.substringAfter(". ").substringBefore(":"),
                     useUnmergedTree = true,
                 ).assertReadableTextContrast("label $radius dark=$dark dynamic=$dynamic")
             }
+            assertResultsAreaContrast("dark=$dark dynamic=$dynamic")
             composeRule.onNodeWithText("Editar medidas").performScrollTo()
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
             composeRule.onNodeWithText(MeasurementField.Waist.label).assertIsFocused()
@@ -146,10 +146,12 @@ class SkirtCalculatorTest {
         }
         MeasurementField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
             composeRule.onNodeWithText(
-                "${field.label.removeSuffix(" (cm)")}: $value,00",
+                "${field.label.removeSuffix(" (cm)")}: $value,00",
+                substring = true,
             ).performScrollTo().assertIsDisplayed()
         }
-        composeRule.onNodeWithText("(cm): ", substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText("(cm):", substring = true).assertDoesNotExist()
+        assertResultsReadInOrder()
         composeRule.onNodeWithText("r = (80 + 2) / (2π) = 13,05 cm").assertDoesNotExist()
         composeRule.onNodeWithText("Fórmulas").performScrollTo().performClick()
         composeRule.onNodeWithText("r = (80 + 2) / (2π) = 13,05 cm")
@@ -577,6 +579,61 @@ class SkirtCalculatorTest {
         composeRule.waitForIdle()
         // No performScrollTo: the radii must already be on screen.
         REFERENCE_RADII.forEach { composeRule.onNodeWithContentDescription(it).assertIsDisplayed() }
+    }
+
+    /** Card with its diagram, the action row, summary, limits, then the two disclosures. */
+    private fun assertResultsReadInOrder() {
+        val card = composeRule.onNode(hasAnyChild(hasText("Raios para o molde")))
+            .getUnclippedBoundsInRoot()
+        val diagram = composeRule.onNodeWithContentDescription(
+            "Diagrama esquemático",
+            substring = true,
+        )
+            .getUnclippedBoundsInRoot()
+        assertTrue(
+            "diagram outside the card",
+            diagram.top >= card.top && diagram.bottom <= card.bottom,
+        )
+        val tutorial = composeRule.onNodeWithText("Tutorial de dobra do tecido")
+            .getUnclippedBoundsInRoot()
+        val edit = composeRule.onNodeWithText("Editar medidas").getUnclippedBoundsInRoot()
+        assertTrue("actions above the card", tutorial.top >= card.bottom && edit.top >= card.bottom)
+        val below = listOf(
+            "Medidas utilizadas (cm)",
+            "Limites do cálculo",
+            "Como levar os raios ao papel",
+            "Fórmulas",
+        ).map { composeRule.onNodeWithText(it).getUnclippedBoundsInRoot() }
+        (listOf(maxOf(tutorial.bottom, edit.bottom)) + below.map { it.top })
+            .zipWithNext().forEach { (upper, lower) ->
+                assertTrue("results out of order: $upper > $lower", upper <= lower)
+            }
+    }
+
+    /** Every other text and meaningful graphic in the results area, against its own surface. */
+    private fun assertResultsAreaContrast(scheme: String) {
+        listOf(
+            "Raios para o molde",
+            "Linhas de referência",
+            "Linhas de corte",
+            "Diagrama das linhas",
+            "Tutorial de dobra do tecido",
+            "Editar medidas",
+            "Medidas utilizadas (cm)",
+            "Folga de cintura:",
+            "Limites do cálculo",
+            "Para saia godê inteira",
+            "Como levar os raios ao papel",
+            "Fórmulas",
+        ).forEach { text ->
+            composeRule.onNodeWithText(text, substring = true, useUnmergedTree = true)
+                .performScrollTo().assertReadableTextContrast("$text $scheme")
+        }
+        // The arcs, number discs and the not-to-scale note share the card's ink.
+        composeRule.onNodeWithContentDescription("Diagrama esquemático", substring = true)
+            .performScrollTo().assertGraphicContrast("diagram $scheme")
+        composeRule.onNode(hasText("Fórmulas") and hasClickAction())
+            .performScrollTo().assertGraphicContrast("disclosure chevron $scheme")
     }
 
     private fun isKeyboardVisible(): Boolean =

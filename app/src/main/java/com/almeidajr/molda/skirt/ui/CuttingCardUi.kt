@@ -2,6 +2,7 @@ package com.almeidajr.molda.skirt.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,41 +16,97 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
+/**
+ * The answer as one surface: the four radii, then the drafting diagram they key into, so each
+ * number and its line are read together. The diagram moves beside the radii when both fit.
+ */
 @Composable
-internal fun CuttingCard(groups: List<CuttingCardGroup>, modifier: Modifier = Modifier) {
+internal fun CuttingCard(
+    groups: List<CuttingCardGroup>,
+    diagramDescription: String,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.secondaryContainer,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            Text(
-                "Raios para o molde",
-                style = MaterialTheme.typography.titleLarge,
-                // The heading appears once per successful calculation, announcing it once.
-                modifier = Modifier.semantics {
-                    heading()
-                    liveRegion = LiveRegionMode.Polite
-                },
-            )
-            groups.forEach { group ->
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text(
-                        group.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.semantics { heading() },
-                    )
-                    group.entries.forEach { CuttingCardRadius(it) }
+        BoxWithConstraints(Modifier.padding(24.dp)) {
+            val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+            val isSideBySide = maxWidth >= CardColumnMinWidth * fontScale * 2 + 24.dp
+            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                Text(
+                    "Raios para o molde",
+                    style = MaterialTheme.typography.titleLarge,
+                    // The heading appears once per successful calculation, announcing it once.
+                    modifier = Modifier.semantics {
+                        heading()
+                        liveRegion = LiveRegionMode.Polite
+                    },
+                )
+                if (isSideBySide) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                        // Traversal groups keep TalkBack on all four radii before the diagram
+                        // instead of zigzagging between the two columns row by row.
+                        Column(
+                            Modifier.weight(1f).semantics { isTraversalGroup = true },
+                            Arrangement.spacedBy(24.dp),
+                        ) {
+                            groups.forEach { RadiusGroup(it) }
+                        }
+                        DiagramSection(
+                            groups,
+                            diagramDescription,
+                            Modifier.weight(1f).semantics { isTraversalGroup = true },
+                        )
+                    }
+                } else {
+                    groups.forEach { RadiusGroup(it) }
+                    DiagramSection(groups, diagramDescription)
                 }
             }
         }
+    }
+}
+
+/** Narrowest column that keeps a radius row or the diagram readable beside the other. */
+private val CardColumnMinWidth = 260.dp
+
+@Composable
+private fun RadiusGroup(group: CuttingCardGroup) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            group.title,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        group.entries.forEach { CuttingCardRadius(it) }
+    }
+}
+
+/** The card's radius rows are the diagram's key, so the drawing carries numbers only. */
+@Composable
+private fun DiagramSection(
+    groups: List<CuttingCardGroup>,
+    description: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            "Diagrama das linhas",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        DraftingFigure(groups, description)
     }
 }
 
@@ -74,11 +131,10 @@ private fun CuttingCardRadius(entry: CuttingCardEntry) {
     }
 }
 
-/** A line's diagram number, stroke sample and label, shared by the card and the diagram key. */
+/** A line's diagram number, stroke sample and label: the key between a radius and its arc. */
 @Composable
-internal fun LineKey(entry: CuttingCardEntry, ink: Color, modifier: Modifier = Modifier) {
+private fun LineKey(entry: CuttingCardEntry, ink: Color) {
     Row(
-        modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -92,10 +148,7 @@ internal fun LineKey(entry: CuttingCardEntry, ink: Color, modifier: Modifier = M
                 pathEffect = linePathEffect(entry.lineStyle),
             )
         }
-        Text(
-            entry.label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        // Card ink, not onSurfaceVariant: the label is quieter through type, not off-role colour.
+        Text(entry.label, style = MaterialTheme.typography.bodyLarge, color = ink)
     }
 }

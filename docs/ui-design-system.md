@@ -77,7 +77,7 @@ hex values and contrast measurements belong in this document before implementati
 | surface / onSurface | Screen background, top app bar and essential text |
 | surfaceContainerLow | Grouped input surfaces |
 | surfaceContainer | Tutorial step bar |
-| surfaceContainerHigh | Calculation-limits callout; tutorial drawing frame; overlays where Material defaults select it |
+| surfaceContainerHigh | Calculation-limits callout; tutorial drawing frame, which shows through the transparent Rive artboards; overlays where Material defaults select it |
 | onSurfaceVariant | Supporting text and secondary labels |
 | outline | Essential field boundaries |
 | outlineVariant | Decorative separators |
@@ -162,9 +162,9 @@ Material component. Reuse the current Compose components and state ownership.
 | Secondary action | Tonal or text button for reuse/edit/cancel | Visible pressed/focus feedback; accessible name; destructive actions use explicit wording |
 | Profile row | Name, waist, measurement date; notes when needed to distinguish identical rows | Picker tap selects; management tap edits with separately labelled overflow; loading, empty, failure/Retry and ready list |
 | Profile picker | Material modal sheet, profile rows and creation action | Dismissal changes nothing; creation returns to picker without auto-selection; manual calculation remains available |
-| Cutting card | secondaryContainer, 28dp corners; "Raios para o molde" heading, reference and cutting groups, each radius with diagram number, line-style sample, label and value | Each value shown and announced once, outside the expanded formulas; heading announces a successful calculation once; Calculate hides the keyboard and brings the whole card into view; hidden after any input change; wide empty pane explains how to calculate |
-| Results follow-up | Tonal tutorial action, "Editar medidas", "Medidas utilizadas (cm)" summary with the unit stated once, "Limites do cálculo" callout | "Editar medidas" focuses waist; the callout keeps every honest limit |
-| Drafting diagram | Square sketch up to 400dp with labelled reference/cutting lines in distinct styles and a compact key | Text equivalent gives each line's number, style and meaning, the drawing order, coincident lines and allowance direction, but not the radius values, which the cutting card states once (a departure from the earlier "lists all dimensions" contract, confirmed by the owner); no color-only information or gesture-only controls |
+| Cutting card | secondaryContainer, 28dp corners; "Raios para o molde" heading, reference and cutting groups, each radius with diagram number, line-style sample, label and value; then the drafting diagram under "Diagrama das linhas", directly after the radii or beside them when two 260dp × max(fontScale, 1) columns fit | Each value shown and announced once, outside the expanded formulas; heading announces a successful calculation once; Calculate hides the keyboard and brings the whole card into view; hidden after any input change; wide empty pane explains how to calculate |
+| Results follow-up | One wrapping action row (tonal tutorial action, "Editar medidas"), then the "Medidas utilizadas (cm)" summary as one wrapping line with the unit stated once, then the "Limites do cálculo" callout | "Editar medidas" focuses waist; the callout keeps every honest limit |
+| Drafting diagram | Square sketch up to 400dp on the cutting card's own surface, with numbered reference/cutting lines in distinct styles; the card's radius rows are its key | Text equivalent gives each line's number, style and meaning, the drawing order, coincident lines and allowance direction, but not the radius values, which the cutting card states once (a departure from the earlier "lists all dimensions" contract, confirmed by the owner); no color-only information or gesture-only controls |
 | Disclosures | "Como levar os raios ao papel" and "Fórmulas" text buttons with a chevron; both start collapsed | Expose "Recolhido"/"Expandido"; 48dp target; content wraps and stays readable with scaled text; label wraps before the chevron shrinks |
 | Tutorial player | Full screen: close action and step title, pinned Rive drawing with play/replay/pause, scrolling instructions, fixed bar with "Anterior", "Etapa n de 6", "Próximo"/"Concluir" | "Anterior" disabled on step 1; "Concluir" closes; Back closes; focus returns to the entry; step survives recreation; reduced motion shows each step's final drawing; bar fully visible on every step at 200% text |
 | Feedback | Inline field/action errors, loading indicators and brief success snackbar | Announce results/errors without duplicate speech; success only after storage succeeds; errors persist until resolved |
@@ -223,10 +223,9 @@ meet the ADR threshold.
 
 ## Known gaps
 
-- The Rive artboards paint a white sheet, so the tutorial's still frame stays
-  white in dark mode; only the surfaceContainerHigh frame around it follows the
-  theme. Fixing it needs a change to the animation file, which the results
-  redesign left out of scope.
+- The tutorial drawing's line numbers are stroked vector numerals, not text, so
+  they do not follow the system font size; the written instructions carry every
+  number and value as scalable text.
 
 ## Validation status
 
