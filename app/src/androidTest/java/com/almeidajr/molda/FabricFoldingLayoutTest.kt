@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.ui.MeasurementField
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorRoute
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -186,7 +185,7 @@ class FabricFoldingLayoutTest {
             composeRule.activity.setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                     MoldaTheme(darkTheme = dark, dynamicColor = false) {
-                        SkirtCalculatorRoute()
+                        MoldaRoute()
                     }
                 }
             }

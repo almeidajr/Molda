@@ -36,7 +36,6 @@ import androidx.window.testing.layout.FoldingFeature
 import androidx.window.testing.layout.TestWindowLayoutInfo
 import androidx.window.testing.layout.WindowLayoutInfoPublisherRule
 import com.almeidajr.molda.skirt.ui.MeasurementField
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorRoute
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -208,7 +207,7 @@ class AdaptiveResultsTest {
                         Box(
                             Modifier.fillMaxSize()
                                 .onGloballyPositioned { contentBounds = it.boundsInWindow() },
-                        ) { MoldaTheme { SkirtCalculatorRoute() } }
+                        ) { MoldaTheme { MoldaRoute() } }
                     }
                     if (size == null) {
                         content()

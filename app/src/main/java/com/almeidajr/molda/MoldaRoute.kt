@@ -51,6 +51,9 @@ import com.almeidajr.molda.profile.ui.profileWaistText
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
+import com.almeidajr.molda.ui.adaptive.AdaptiveContent
+import com.almeidajr.molda.ui.adaptive.HingeSafeContent
+import com.almeidajr.molda.ui.adaptive.minimumTwoPaneWidth
 
 // Keep saveable destinations and their transitions together.
 @Suppress("LongMethod")

@@ -45,18 +45,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.almeidajr.molda.AdaptiveContent
-import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.ui.adaptive.AdaptiveContent
 import kotlinx.coroutines.launch
-
-@Composable
-fun SkirtCalculatorRoute(
-    modifier: Modifier = Modifier,
-    viewModel: SkirtCalculatorViewModel = viewModel(),
-) {
-    MoldaRoute(modifier = modifier, calculator = viewModel)
-}
 
 @Composable
 fun SkirtCalculatorScreen(

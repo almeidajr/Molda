@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import app.rive.runtime.kotlin.core.Rive
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorRoute
 import com.almeidajr.molda.ui.theme.MoldaTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,7 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MoldaTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    SkirtCalculatorRoute(
+                    MoldaRoute(
                         modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
                     )
                 }

@@ -45,7 +45,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.ui.MeasurementField
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorRoute
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -101,7 +100,7 @@ class SkirtCalculatorTest {
                 composeRule.activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
                         MoldaTheme(darkTheme = dark, dynamicColor = dynamic) {
-                            SkirtCalculatorRoute()
+                            MoldaRoute()
                         }
                     }
                 }
@@ -454,7 +453,7 @@ class SkirtCalculatorTest {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
-                    MoldaTheme { SkirtCalculatorRoute() }
+                    MoldaTheme { MoldaRoute() }
                 }
             }
         }
@@ -495,7 +494,7 @@ class SkirtCalculatorTest {
                 DeviceConfigurationOverride(
                     DeviceConfigurationOverride.ForcedSize(DpSize(1200.dp, height.dp)),
                 ) {
-                    MoldaTheme { SkirtCalculatorRoute() }
+                    MoldaTheme { MoldaRoute() }
                 }
             }
         }
@@ -524,7 +523,7 @@ class SkirtCalculatorTest {
                         DeviceConfigurationOverride.ForcedSize(
                             DpSize(width.intValue.dp, height.dp),
                         ),
-                    ) { MoldaTheme { SkirtCalculatorRoute() } }
+                    ) { MoldaTheme { MoldaRoute() } }
                 }
             }
         }
