@@ -6,6 +6,8 @@ import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtMeasurements
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +40,9 @@ internal fun parseMeasurement(text: String): Double? {
 
 private val DecimalMeasurement = Regex("[+-]?[0-9]+([,.][0-9]+)?")
 
-class SkirtCalculatorViewModel(private val savedState: SavedStateHandle) : ViewModel() {
+@HiltViewModel
+class SkirtCalculatorViewModel @Inject constructor(private val savedState: SavedStateHandle) :
+    ViewModel() {
     private val mutableState = MutableStateFlow(
         CalculatorState(
             inputs = MeasurementField.entries.associateWith { savedState[it.name] ?: "" },

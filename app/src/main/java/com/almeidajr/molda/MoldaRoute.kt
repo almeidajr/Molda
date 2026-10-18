@@ -30,17 +30,12 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
 import com.almeidajr.molda.profile.ui.ProfileEditor
 import com.almeidajr.molda.profile.ui.ProfilePicker
@@ -60,8 +55,8 @@ import com.almeidajr.molda.ui.adaptive.minimumTwoPaneWidth
 @Composable
 fun MoldaRoute(
     modifier: Modifier = Modifier,
-    calculator: SkirtCalculatorViewModel = viewModel(),
-    profiles: ProfilesViewModel = profileViewModel(),
+    calculator: SkirtCalculatorViewModel = hiltViewModel(),
+    profiles: ProfilesViewModel = hiltViewModel(),
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
@@ -168,18 +163,6 @@ fun MoldaRoute(
             }
         })
     }
-}
-
-@Composable
-private fun profileViewModel(): ProfilesViewModel {
-    val context = LocalContext.current.applicationContext
-    return viewModel(
-        factory = viewModelFactory {
-            initializer {
-                ProfilesViewModel(LocalProfileRepository(context), createSavedStateHandle())
-            }
-        },
-    )
 }
 
 @Composable

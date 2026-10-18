@@ -7,11 +7,13 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.skirt.ui.parseMeasurement
+import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.ResolverStyle
+import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,10 +43,11 @@ data class ProfilesState(
     val deleteId: Long? = null,
 )
 
-class ProfilesViewModel(
+@HiltViewModel
+class ProfilesViewModel @Inject constructor(
     private val repository: ProfileRepository,
     private val savedState: SavedStateHandle,
-    private val clock: Clock = Clock.systemDefaultZone(),
+    private val clock: Clock,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(
         ProfilesState(
@@ -79,10 +82,6 @@ class ProfilesViewModel(
                 }
             }
         }
-    }
-
-    override fun onCleared() {
-        (repository as? AutoCloseable)?.close()
     }
 
     fun startCreating() {
