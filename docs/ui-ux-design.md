@@ -39,8 +39,8 @@ accessibility and human-feedback verification.
 - Launch into the calculator under a top app bar titled "Saia godê inteira",
   whose labelled "Perfis de medidas" action opens the separate management
   screen. Place "Usar perfil" and the waist's source just above the waist input.
-  Do not introduce an additional home screen; the app bar is not a navigation
-  destination.
+  Superseded by [ADR 0003](adr/0003-top-level-navigation-shell.md): ~~Do not introduce an additional home screen; the app bar is not a navigation
+  destination.~~
 - Keep the five inputs in one form, grouped into body measurement, garment
   choices, and cutting allowances. Place brief guidance by the relevant fields;
   ease and allowances still require explicit values, including zero.
@@ -119,8 +119,8 @@ accessibility and human-feedback verification.
   avoid fold hinges, and preserve the current draft when resizing. One column
   spans a flat fold and keeps to one side of a half-open or separating one; two
   panes split at the fold, or share one side when they cannot fit beside it.
-- Keep the agreed hierarchical navigation; no home screen, bottom navigation
-  bar, rail or drawer is needed. The full-screen tutorial player keeps to one
+- Superseded by [ADR 0003](adr/0003-top-level-navigation-shell.md): ~~Keep the agreed hierarchical navigation; no home screen, bottom navigation
+  bar, rail or drawer is needed.~~ The full-screen tutorial player keeps to one
   side of a half-open or separating fold but spans a flat one, and the cutting
   card stays in the results pane.
 
