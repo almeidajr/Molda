@@ -3,8 +3,10 @@ package com.almeidajr.molda.profile.domain
 import com.almeidajr.molda.measurement.Length
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 
 /** The positive identity of a stored [MeasurementProfile]. */
+@Serializable
 @JvmInline
 value class ProfileId(val value: Long) {
     init {

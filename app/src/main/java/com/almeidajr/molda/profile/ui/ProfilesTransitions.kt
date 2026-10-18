@@ -2,7 +2,6 @@ package com.almeidajr.molda.profile.ui
 
 import com.almeidajr.molda.R
 import com.almeidajr.molda.profile.domain.MeasurementProfile
-import com.almeidajr.molda.profile.domain.ProfileDateFormat
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileValidation
 
@@ -25,10 +24,10 @@ internal fun ProfilesState.editing(id: ProfileId): ProfilesState {
     val inputs = mapOf(
         ProfileField.Name to measurements.name.text,
         ProfileField.Waist to profileWaistText(measurements.waist),
-        ProfileField.Date to measurements.measurementDate.format(ProfileDateFormat),
+        ProfileField.Date to profileDateText(measurements.measurementDate),
         ProfileField.Notes to measurements.notes,
     )
-    return opened(ProfileForm(inputs, inputs, isCreating = true, editingId = id.value))
+    return opened(ProfileForm(inputs, inputs, isEditorOpen = true, editingId = id))
 }
 
 internal fun ProfilesState.edited(field: ProfileField, text: String) = if (isSaving) {

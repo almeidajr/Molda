@@ -53,8 +53,16 @@ android {
         compose = true
     }
     testOptions {
-        // Robolectric's bundled Conscrypt loads a native library; this silences the JDK warning.
-        unitTests.all { it.jvmArgs("--enable-native-access=ALL-UNNAMED") }
+        // Lets Robolectric tests resolve the app's string resources.
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.jvmArgs(
+                // Robolectric's bundled Conscrypt loads a native library; this silences the JDK warning.
+                "--enable-native-access=ALL-UNNAMED",
+                // With app resources, Robolectric's application setup reflects into FileDescriptor.
+                "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED",
+            )
+        }
     }
     lint {
         warningsAsErrors = true
@@ -75,8 +83,12 @@ kotlin {
         // K2 reports unused variables and similar IDE-level diagnostics only with -Wextra.
         extraWarnings = true
         freeCompilerArgs.add("-Xreturn-value-checker=check")
-        // Room's generated Kotlin trips these -Wextra checks; Detekt's RedundantVisibilityModifier
-        // and VarCouldBeVal still enforce them on our sources.
+        // App-wide, because KSP output compiles in the same task and kotlinc cannot scope warning
+        // levels per source set. Room's generated ProfileDao_Impl and ProfileDatabase_Impl declare
+        // `public override` members (REDUNDANT_VISIBILITY_MODIFIER) and never-reassigned locals
+        // such as `var _argIndex` (CAN_BE_VAL), which -Wextra plus -Werror would fail. Detekt's
+        // RedundantVisibilityModifier and VarCouldBeVal (config/detekt.yml) still enforce both on
+        // our own sources. Drop these once the generated code lives in a module without -Wextra.
         freeCompilerArgs.addAll(
             "-Xwarning-level=REDUNDANT_VISIBILITY_MODIFIER:disabled",
             "-Xwarning-level=CAN_BE_VAL:disabled",

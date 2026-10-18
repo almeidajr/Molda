@@ -16,12 +16,15 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -79,6 +82,19 @@ class ProfilesViewModelTest {
     }
 
     @Test
+    fun load_whileStillLoading_keepsOneRepositoryCollector() = runTest {
+        storage.holdsFirstEmission = true
+        val profiles = profilesViewModel()
+
+        profiles.load()
+        profiles.load()
+        storage.emissionGate.complete(Unit)
+
+        assertEquals(1, storage.activeCollectors)
+        assertEquals(listOf(ana), profiles.state.value.profiles)
+    }
+
+    @Test
     fun save_newProfile_closesTheFormAndListsIt() = runTest {
         val profiles = profilesViewModel()
 
@@ -88,7 +104,7 @@ class ProfilesViewModelTest {
 
         val saved = profiles.state.value
         assertEquals(listOf("Ana", "Bia"), saved.profiles.map { it.measurements.name.text })
-        assertFalse(saved.isCreating)
+        assertFalse(saved.isEditorOpen)
         assertEquals(R.string.profile_saved, saved.savedMessage)
     }
 
@@ -132,7 +148,7 @@ class ProfilesViewModelTest {
 
         val failed = profiles.state.value
         assertEquals(R.string.profile_save_failed, failed.saveError)
-        assertTrue(failed.isCreating)
+        assertTrue(failed.isEditorOpen)
         assertEquals("Bia", failed.inputs[ProfileField.Name])
         assertEquals(listOf(ana), failed.profiles)
     }
@@ -146,7 +162,7 @@ class ProfilesViewModelTest {
 
         val deleted = profiles.state.value
         assertEquals(emptyList<MeasurementProfile>(), deleted.profiles)
-        assertFalse(deleted.isCreating)
+        assertFalse(deleted.isEditorOpen)
         assertEquals(R.string.profile_deleted, deleted.savedMessage)
     }
 
@@ -216,11 +232,18 @@ private class FakeProfiles : ProfileRepository {
     val stored = MutableStateFlow(listOf(ana))
     var failsLoad = false
     var failsCommands = false
+    var holdsFirstEmission = false
+    val emissionGate = CompletableDeferred<Unit>()
+    var activeCollectors = 0
+        private set
 
     override fun profiles(): Flow<List<MeasurementProfile>> = flow {
         check(!failsLoad) { "Controlled load failure" }
+        if (holdsFirstEmission) emissionGate.await()
         emitAll(stored)
     }
+        .onStart { activeCollectors++ }
+        .onCompletion { activeCollectors-- }
 
     override suspend fun create(measurements: ProfileMeasurements) = command {
         MeasurementProfile(ProfileId(stored.value.size + 1L), measurements)

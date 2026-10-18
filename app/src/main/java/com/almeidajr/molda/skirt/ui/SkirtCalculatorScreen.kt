@@ -37,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -102,7 +103,7 @@ fun SkirtCalculatorScreen(
                 onCalculate()
             },
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        ) { Text("Calcular") }
+        ) { Text(stringResource(R.string.skirt_calculate)) }
     }
     val outcome: @Composable () -> Unit = {
         CalculationOutcome(
@@ -146,9 +147,10 @@ private fun RevealCalculationOutcome(
 @Composable
 private fun MeasurementGroups(input: @Composable (SkirtDraftField) -> Unit) {
     listOf(
-        "Medida do corpo" to listOf(SkirtDraftField.Waist),
-        "Escolhas da peça" to listOf(SkirtDraftField.Ease, SkirtDraftField.FinishedLength),
-        "Margens de corte" to
+        R.string.skirt_group_body to listOf(SkirtDraftField.Waist),
+        R.string.skirt_group_choices to
+            listOf(SkirtDraftField.Ease, SkirtDraftField.FinishedLength),
+        R.string.skirt_group_allowances to
             listOf(SkirtDraftField.WaistSeamAllowance, SkirtDraftField.HemAllowance),
     ).forEach { (title, fields) ->
         Surface(
@@ -158,7 +160,7 @@ private fun MeasurementGroups(input: @Composable (SkirtDraftField) -> Unit) {
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
-                    title,
+                    stringResource(title),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.semantics { heading() },
                 )
@@ -168,14 +170,26 @@ private fun MeasurementGroups(input: @Composable (SkirtDraftField) -> Unit) {
     }
 }
 
-/** The form label of each draft field. */
-val SkirtDraftField.label: String
+/** The form label of each draft field, with its unit. */
+@get:StringRes
+val SkirtDraftField.label: Int
     get() = when (this) {
-        SkirtDraftField.Waist -> "Circunferência da cintura (cm)"
-        SkirtDraftField.Ease -> "Folga de cintura (cm)"
-        SkirtDraftField.FinishedLength -> "Comprimento acabado (cm)"
-        SkirtDraftField.WaistSeamAllowance -> "Margem de costura da cintura (cm)"
-        SkirtDraftField.HemAllowance -> "Margem de barra (cm)"
+        SkirtDraftField.Waist -> R.string.skirt_field_waist
+        SkirtDraftField.Ease -> R.string.skirt_field_ease
+        SkirtDraftField.FinishedLength -> R.string.skirt_field_finished_length
+        SkirtDraftField.WaistSeamAllowance -> R.string.skirt_field_waist_seam_allowance
+        SkirtDraftField.HemAllowance -> R.string.skirt_field_hem_allowance
+    }
+
+/** Each draft field's name in the measurement summary, whose heading states the unit. */
+@get:StringRes
+val SkirtDraftField.summaryLabel: Int
+    get() = when (this) {
+        SkirtDraftField.Waist -> R.string.skirt_summary_waist
+        SkirtDraftField.Ease -> R.string.skirt_summary_ease
+        SkirtDraftField.FinishedLength -> R.string.skirt_summary_finished_length
+        SkirtDraftField.WaistSeamAllowance -> R.string.skirt_summary_waist_seam_allowance
+        SkirtDraftField.HemAllowance -> R.string.skirt_summary_hem_allowance
     }
 
 @StringRes
@@ -192,32 +206,19 @@ private fun errorMessage(error: SkirtFieldError): Int = when (error) {
         R.string.skirt_error_seam_allowance_too_large
 }
 
-private fun measurementGuidance(field: SkirtDraftField): String = when (field) {
-    SkirtDraftField.Waist ->
-        "Meça a circunferência da cintura na posição desejada do cós, " +
-            "sem acrescentar folga ou margens."
-
-    SkirtDraftField.FinishedLength ->
-        "Meça o comprimento até a barra acabada, " +
-            "a partir da linha de costura da cintura; exclua a altura do cós. As margens são informadas separadamente."
-
-    SkirtDraftField.Ease ->
-        "Folga é o acréscimo à cintura para vestir; informe zero se não desejar folga."
-
-    SkirtDraftField.WaistSeamAllowance ->
-        "Tecido reservado para costurar a cintura; informe zero se não houver margem."
-
-    SkirtDraftField.HemAllowance ->
-        "Tecido reservado para acabar a barra; informe zero se não houver margem."
+@StringRes
+private fun measurementGuidance(field: SkirtDraftField): Int = when (field) {
+    SkirtDraftField.Waist -> R.string.skirt_guidance_waist
+    SkirtDraftField.FinishedLength -> R.string.skirt_guidance_finished_length
+    SkirtDraftField.Ease -> R.string.skirt_guidance_ease
+    SkirtDraftField.WaistSeamAllowance -> R.string.skirt_guidance_waist_seam_allowance
+    SkirtDraftField.HemAllowance -> R.string.skirt_guidance_hem_allowance
 }
 
 // The screen title lives in the top app bar.
 @Composable
 private fun CalculatorIntro() {
-    Text(
-        "Medidas em centímetros. Informe folga e margens explicitamente; " +
-            "zero é válido.",
-    )
+    Text(stringResource(R.string.skirt_intro))
 }
 
 @Composable
@@ -237,7 +238,7 @@ private fun CalculationOutcome(
     val draft = state.draft
     val radii = state.radii
     if (draft != null && radii != null) {
-        val card = cuttingCard(radii)
+        val card = cuttingCard(radii, LocalResources.current::getString)
         val description = diagramDescription(
             card,
             enteredValue(state.form.inputs, SkirtDraftField.WaistSeamAllowance),
@@ -268,11 +269,12 @@ private fun MeasurementInput(
         OutlinedTextField(
             value = state.form.inputs.getValue(field),
             onValueChange = { onEdit(field, it) },
-            label = { Text(field.label) },
+            label = { Text(stringResource(field.label)) },
             isError = error != null,
             supportingText = {
                 Text(
-                    error?.let { stringResource(errorMessage(it)) } ?: measurementGuidance(field),
+                    error?.let { stringResource(errorMessage(it)) }
+                        ?: stringResource(measurementGuidance(field)),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.semantics {
                         if (error != null) liveRegion = LiveRegionMode.Polite
@@ -305,13 +307,14 @@ private fun MeasurementInput(
 private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            sourceProfileName?.let { "Cintura copiada do perfil: $it" } ?: "Medida manual",
+            sourceProfileName?.let { stringResource(R.string.skirt_waist_from_profile, it) }
+                ?: stringResource(R.string.skirt_waist_manual),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         TextButton(onClick = onUseProfile, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text("Usar perfil")
+            Text(stringResource(R.string.profile_picker_title))
         }
     }
 }
@@ -329,16 +332,16 @@ private fun SkirtResults(
     ) {
         FabricFoldingTutorialEntry(onOpenTutorial)
         TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text("Editar medidas")
+            Text(stringResource(R.string.skirt_edit_measurements))
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            "Medidas utilizadas (cm)",
+            stringResource(R.string.skirt_used_measurements),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
-        val summary = measurementSummary(draft)
+        val summary = measurementSummary(draft, LocalResources.current::getString)
         // One wrapping line; TalkBack hears pauses instead of the visual separators.
         Text(
             summary.joinToString(" · "),
@@ -353,15 +356,11 @@ private fun SkirtResults(
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                "Limites do cálculo",
+                stringResource(R.string.skirt_limits_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(
-                "Para saia godê inteira em tecido plano, com cós e fechamento. " +
-                    "Não inclui divisão em painéis, margens do fechamento, molde do cós " +
-                    "ou metragem de tecido. O comprimento acabado exclui a altura do cós.",
-            )
+            Text(stringResource(R.string.skirt_limits_body))
         }
     }
 }
@@ -387,7 +386,7 @@ private fun AdaptiveCalculator(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (state.radii == null) Text("Preencha as medidas e toque em Calcular.")
+                if (state.radii == null) Text(stringResource(R.string.skirt_fill_and_calculate))
                 outcome()
             }
         },

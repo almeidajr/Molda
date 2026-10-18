@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -228,7 +229,9 @@ internal fun StepInstructions(radii: SkirtRadii, step: FoldingStep) {
                 "Não corte as linhas 1 e 3: são referências de costura e barra acabada. " +
                     "Não corte em linha reta pelas dobras; elas mantêm o círculo inteiro.",
             )
-            coincidenceNotes(cuttingCard(radii)).forEach { Text(it) }
+            coincidenceNotes(cuttingCard(radii, LocalResources.current::getString)).forEach {
+                Text(it)
+            }
             Text(
                 "Para tecido da peça, abertura, margens do fechamento e cós pedem instruções " +
                     "à parte antes do corte.",
@@ -288,7 +291,7 @@ internal fun stepLead(step: FoldingStep): String = when (step) {
 /** The current radii in key order, then where each line sits and which are not cut. */
 @Composable
 private fun MarkingContext(radii: SkirtRadii) {
-    val card = cuttingCard(radii)
+    val card = cuttingCard(radii, LocalResources.current::getString)
     // The four radii read as one key: closer together than the paragraphs around them.
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         card.flatMap { it.entries }.sortedBy { it.number }.forEach { entry ->

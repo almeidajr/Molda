@@ -21,6 +21,14 @@ data class SkirtDraft(
             "A skirt draft needs a positive waist and finished length"
         }
     }
+
+    fun lengthOf(field: SkirtDraftField): Length = when (field) {
+        SkirtDraftField.Waist -> waist
+        SkirtDraftField.Ease -> ease
+        SkirtDraftField.FinishedLength -> finishedLength
+        SkirtDraftField.WaistSeamAllowance -> waistSeamAllowance
+        SkirtDraftField.HemAllowance -> hemAllowance
+    }
 }
 
 /** The draft's fields, in form order. */

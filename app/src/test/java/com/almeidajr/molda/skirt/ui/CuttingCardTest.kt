@@ -9,8 +9,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 
+// Robolectric resolves the card's copy from the app's string resources.
+@RunWith(RobolectricTestRunner::class)
 class CuttingCardTest {
+    private val text: (Int) -> String = RuntimeEnvironment.getApplication()::getString
+
     private fun draft(
         waist: Double,
         ease: Double,
@@ -39,7 +46,7 @@ class CuttingCardTest {
 
     @Test
     fun cuttingCard_referenceMeasurements_groupsNumberedStyledRadii() {
-        val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0))
+        val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0), text)
 
         assertEquals(listOf("Linhas de referência", "Linhas de corte"), card.map { it.title })
         assertEquals(
@@ -59,7 +66,7 @@ class CuttingCardTest {
 
     @Test
     fun cuttingCard_zeroWaistAllowance_flagsOnlyWaistLinesAsCoincident() {
-        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 2.0))
+        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 2.0), text)
 
         assertEquals(
             mapOf(1 to 2, 2 to 1, 3 to null, 4 to null),
@@ -69,7 +76,7 @@ class CuttingCardTest {
 
     @Test
     fun cuttingCard_zeroHemAllowance_flagsOnlyHemLinesAsCoincident() {
-        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 1.0, 0.0))
+        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 1.0, 0.0), text)
 
         assertEquals(
             mapOf(1 to null, 2 to null, 3 to 4, 4 to 3),
@@ -86,7 +93,7 @@ class CuttingCardTest {
 
     @Test
     fun cuttingCard_largeMeasurements_keepFullValueWithUnit() {
-        val card = cuttingCard(radiiFor(10_000.0, 0.0, 5_000.0, 0.0, 0.0))
+        val card = cuttingCard(radiiFor(10_000.0, 0.0, 5_000.0, 0.0, 0.0), text)
 
         assertEquals(
             listOf("1591,55 cm", "6591,55 cm", "1591,55 cm", "6591,55 cm"),
@@ -96,7 +103,7 @@ class CuttingCardTest {
 
     @Test
     fun diagramDescription_keysEveryLineAndStatesLimits_withoutRepeatingRadii() {
-        val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0))
+        val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0), text)
 
         val description = diagramDescription(card, "1", "2,5")
 
@@ -118,7 +125,7 @@ class CuttingCardTest {
 
     @Test
     fun coincidenceNotes_zeroAllowances_noteEachCoincidentPairOnce() {
-        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 0.0))
+        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 0.0), text)
 
         val notes = listOf(
             "Margem de cintura zero: as linhas 1 e 2 coincidem.",
@@ -140,7 +147,7 @@ class CuttingCardTest {
                 "Margem de costura da cintura: 1,00",
                 "Margem de barra: 0,00",
             ),
-            measurementSummary(draft),
+            measurementSummary(draft, text),
         )
     }
 }

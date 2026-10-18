@@ -41,7 +41,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
-import com.almeidajr.molda.profile.domain.ProfileDateFormat
 import com.almeidajr.molda.profile.domain.parseProfileDate
 import java.time.Instant
 import java.time.LocalDate
@@ -186,9 +185,9 @@ private fun ProfileDatePicker(
                 onClick = {
                     picker.selectedDateMillis?.let {
                         onSelect(
-                            Instant.ofEpochMilli(
-                                it,
-                            ).atZone(ZoneOffset.UTC).toLocalDate().format(ProfileDateFormat),
+                            profileDateText(
+                                Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate(),
+                            ),
                         )
                     }
                 },

@@ -16,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,8 +55,8 @@ private val blankInputs = ProfileField.entries.associateWith { "" }
 data class ProfileForm(
     val inputs: Map<ProfileField, String> = blankInputs,
     val originalInputs: Map<ProfileField, String> = blankInputs,
-    val isCreating: Boolean = false,
-    val editingId: Long? = null,
+    val isEditorOpen: Boolean = false,
+    val editingId: ProfileId? = null,
 )
 
 data class ProfilesState(
@@ -70,9 +71,9 @@ data class ProfilesState(
     val deleteId: ProfileId? = null,
 ) {
     val inputs: Map<ProfileField, String> get() = form.inputs
-    val isCreating: Boolean get() = form.isCreating
+    val isEditorOpen: Boolean get() = form.isEditorOpen
     val isDirty: Boolean get() = form.inputs != form.originalInputs
-    val editingId: ProfileId? get() = form.editingId?.let(::ProfileId)
+    val editingId: ProfileId? get() = form.editingId
     val canMutate: Boolean get() = !isLoading && !isSaving && loadError == null
 }
 
@@ -88,6 +89,8 @@ class ProfilesViewModel @Inject constructor(
 
     val today: LocalDate get() = LocalDate.now(clock)
 
+    private var loadJob: Job? = null
+
     init {
         load()
     }
@@ -97,7 +100,9 @@ class ProfilesViewModel @Inject constructor(
         val current = mutableState.value
         if (!current.isLoading && current.loadError == null) return
         transition { it.loading() }
-        viewModelScope.launch {
+        // A retry while the first emission is pending replaces that collector.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             repository.profiles()
                 .map { Result.success(it) }
                 .catch { failure -> emit(Result.failure(failure)) }
@@ -105,7 +110,7 @@ class ProfilesViewModel @Inject constructor(
         }
     }
 
-    fun startCreating() = transition { it.opened(ProfileForm(isCreating = true)) }
+    fun startCreating() = transition { it.opened(ProfileForm(isEditorOpen = true)) }
 
     fun startEditing(id: ProfileId) = transition { it.editing(id) }
 
@@ -113,7 +118,7 @@ class ProfilesViewModel @Inject constructor(
 
     fun save() {
         val current = mutableState.value
-        if (!current.canMutate || !current.isCreating) return
+        if (!current.canMutate || !current.isEditorOpen) return
         val validation = validateProfile(
             name = current.inputs.getValue(ProfileField.Name),
             waist = current.inputs.getValue(ProfileField.Waist),

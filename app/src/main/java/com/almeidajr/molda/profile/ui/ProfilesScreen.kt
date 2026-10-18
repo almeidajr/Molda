@@ -44,6 +44,7 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileDateFormat
 import com.almeidajr.molda.profile.domain.ProfileId
 import java.math.BigDecimal
+import java.time.LocalDate
 
 @Composable
 fun ProfilesContent(
@@ -106,6 +107,8 @@ fun ProfileCreateAction(state: ProfilesState, onCreate: () -> Unit, modifier: Mo
 internal fun profileWaistText(waist: Length): String =
     BigDecimal.valueOf(waist.centimetres).stripTrailingZeros().toPlainString().replace('.', ',')
 
+internal fun profileDateText(date: LocalDate): String = date.format(ProfileDateFormat)
+
 @Composable
 private fun ProfileManagementRow(
     profile: MeasurementProfile,
@@ -143,7 +146,7 @@ private fun ProfileManagementRow(
                             stringResource(
                                 R.string.profile_summary,
                                 profileWaistText(profile.measurements.waist),
-                                profile.measurements.measurementDate.format(ProfileDateFormat),
+                                profileDateText(profile.measurements.measurementDate),
                             ),
                         )
                         if (profile.measurements.notes.isNotBlank()) {
@@ -308,7 +311,7 @@ private fun PickerRow(
                         R.string.profile_use_label,
                         profile.measurements.name.text,
                         profileWaistText(profile.measurements.waist),
-                        profile.measurements.measurementDate.format(ProfileDateFormat),
+                        profileDateText(profile.measurements.measurementDate),
                     ),
                     style = MaterialTheme.typography.titleMedium,
                 )

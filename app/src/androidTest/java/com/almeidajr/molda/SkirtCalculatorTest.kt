@@ -45,7 +45,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
-import com.almeidajr.molda.skirt.ui.label
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -67,12 +66,12 @@ class SkirtCalculatorTest {
         ).forEach { composeRule.onNodeWithText(it).performScrollTo().assertIsDisplayed() }
         composeRule.onNodeWithText("Calcular").performScrollTo().assertIsDisplayed()
         calculate()
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label).assertIsFocused()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assertIsFocused()
     }
 
     @Test
     fun calculatorForm_spansCalculateAndKeepsWaistSourceWithWaistField() {
-        val waist = composeRule.onNodeWithText(SkirtDraftField.Waist.label)
+        val waist = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
             .getUnclippedBoundsInRoot()
         val source = composeRule.onNodeWithText("Medida manual").getUnclippedBoundsInRoot()
         val useProfile = composeRule.onNodeWithText("Usar perfil").assertHeightIsAtLeast(48.dp)
@@ -86,7 +85,7 @@ class SkirtCalculatorTest {
         // The button spans the form, wider than the field inset inside its group.
         assertTrue(calculate.left < waist.left && calculate.right > waist.right)
         calculate()
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label).assertIsFocused()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assertIsFocused()
     }
 
     @Test
@@ -132,7 +131,7 @@ class SkirtCalculatorTest {
             assertResultsAreaContrast("dark=$dark dynamic=$dynamic")
             composeRule.onNodeWithText("Editar medidas").performScrollTo()
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
-            composeRule.onNodeWithText(SkirtDraftField.Waist.label).assertIsFocused()
+            composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assertIsFocused()
         }
     }
 
@@ -146,7 +145,7 @@ class SkirtCalculatorTest {
         }
         SkirtDraftField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
             composeRule.onNodeWithText(
-                "${field.label.removeSuffix(" (cm)")}: $value,00",
+                "${field.summaryLabelText}: $value,00",
                 substring = true,
             ).performScrollTo().assertIsDisplayed()
         }
@@ -162,7 +161,7 @@ class SkirtCalculatorTest {
         composeRule.onNodeWithText("r = (80 + 2) / (2π) = 13,05 cm").assertDoesNotExist()
         composeRule.onNodeWithText("Editar medidas").performScrollTo().performClick()
         composeRule.onNodeWithText(
-            SkirtDraftField.Waist.label,
+            SkirtDraftField.Waist.labelText,
         ).assertIsFocused().assertIsDisplayed()
     }
 
@@ -190,15 +189,15 @@ class SkirtCalculatorTest {
         composeRule.onNodeWithText("Informe um valor", substring = true).assertDoesNotExist()
         calculate()
         composeRule.onNodeWithText(
-            SkirtDraftField.Waist.label,
+            SkirtDraftField.Waist.labelText,
         ).assertIsFocused().assertIsDisplayed()
         edit(SkirtDraftField.Waist, "-1")
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label).performImeAction()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performImeAction()
         composeRule.onNodeWithText("Informe um valor maior que zero.").assertExists()
         edit(SkirtDraftField.Waist, "80,5")
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label).performImeAction()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performImeAction()
         composeRule.onNodeWithText("Informe um valor maior que zero.").assertDoesNotExist()
-        composeRule.onNodeWithText(SkirtDraftField.Ease.label).assertIsFocused()
+        composeRule.onNodeWithText(SkirtDraftField.Ease.labelText).assertIsFocused()
     }
 
     @Test
@@ -206,9 +205,9 @@ class SkirtCalculatorTest {
         val values = listOf("80,5", "0", "60", "0", "0")
         SkirtDraftField.entries.zip(values).forEach { (field, value) ->
             edit(field, value)
-            composeRule.onNodeWithText(field.label).performClick().performImeAction()
+            composeRule.onNodeWithText(field.labelText).performClick().performImeAction()
             if (field != SkirtDraftField.HemAllowance) {
-                composeRule.onNodeWithText(SkirtDraftField.entries[field.ordinal + 1].label)
+                composeRule.onNodeWithText(SkirtDraftField.entries[field.ordinal + 1].labelText)
                     .assertIsFocused().assertIsDisplayed()
             }
         }
@@ -220,7 +219,9 @@ class SkirtCalculatorTest {
     @Test
     fun untouchedFields_blurWithoutShowingErrors_andEveryEditWithdrawsResults() {
         edit(SkirtDraftField.Waist, "-1")
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label).performClick().performImeAction()
+        composeRule.onNodeWithText(
+            SkirtDraftField.Waist.labelText,
+        ).performClick().performImeAction()
         composeRule.onNodeWithText("Informe um valor maior que zero.").assertDoesNotExist()
         fillInputs(listOf("80", "0", "60", "0", "0"))
         SkirtDraftField.entries.forEach { field ->
@@ -251,12 +252,12 @@ class SkirtCalculatorTest {
         calculate()
         edit(SkirtDraftField.WaistSeamAllowance, "90")
         composeRule.onNodeWithText(
-            SkirtDraftField.WaistSeamAllowance.label,
+            SkirtDraftField.WaistSeamAllowance.labelText,
         ).performClick().performImeAction()
         composeRule.onNodeWithText("A margem deve ser menor", substring = true).assertExists()
         edit(SkirtDraftField.WaistSeamAllowance, "1")
         composeRule.onNodeWithText(
-            SkirtDraftField.WaistSeamAllowance.label,
+            SkirtDraftField.WaistSeamAllowance.labelText,
         ).performClick().performImeAction()
         composeRule.onNodeWithText("A margem deve ser menor", substring = true).assertDoesNotExist()
         composeRule.onNodeWithText("Raios para o molde").assertDoesNotExist()
@@ -264,10 +265,10 @@ class SkirtCalculatorTest {
 
     @Test
     fun keyboard_hardwareTabFollowsMeasurementOrder() {
-        composeRule.onNodeWithText(SkirtDraftField.Ease.label).performScrollTo().performClick()
+        composeRule.onNodeWithText(SkirtDraftField.Ease.labelText).performScrollTo().performClick()
             .performKeyInput { pressKey(Key.Tab) }
         composeRule.onNodeWithText(
-            SkirtDraftField.FinishedLength.label,
+            SkirtDraftField.FinishedLength.labelText,
         ).assertIsFocused().assertIsDisplayed()
     }
 
@@ -336,19 +337,19 @@ class SkirtCalculatorTest {
     @Test
     fun recreate_keepsInProgressMeasurements() {
         fillInputs(listOf("80,5", "0", "60", "1", "2"))
-        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.label).assertTextContains("2")
+        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.labelText).assertTextContains("2")
         composeRule.activityRule.scenario.recreate()
         SkirtDraftField.entries.zip(
             listOf("80,5", "0", "60", "1", "2"),
         ).forEach { (field, value) ->
-            composeRule.onNodeWithText(field.label).performScrollTo().assertTextContains(value)
+            composeRule.onNodeWithText(field.labelText).performScrollTo().assertTextContains(value)
         }
     }
 
     @Test
     fun keyboard_focusedFieldAndCalculateRemainUsable() {
         fillInputs(listOf("80", "2", "60", "1", "2"))
-        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.label)
+        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.labelText)
             .performScrollTo().performClick().assertIsDisplayed()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
         composeRule.onNodeWithContentDescription(REFERENCE_RADII.last())
@@ -365,15 +366,15 @@ class SkirtCalculatorTest {
     @Test
     fun doneOnLastField_hidesKeyboardAndShowsWholeCuttingCard() {
         fillInputsWithKeyboardOpen(listOf("80", "2", "60", "1", "2"))
-        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.label).performImeAction()
+        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.labelText).performImeAction()
         assertCuttingCardOnScreenWithoutKeyboard()
     }
 
     @Test
     fun calculate_withInvalidWaistAndKeyboardOpen_focusesAndRevealsWaist() {
         fillInputsWithKeyboardOpen(listOf("", "2", "60", "1", "2"))
-        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.label).performImeAction()
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label)
+        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.labelText).performImeAction()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
             .assertIsFocused().assertIsDisplayed()
         composeRule.onNodeWithText("Informe um valor", substring = true).assertIsDisplayed()
         composeRule.onNodeWithText("Raios para o molde").assertDoesNotExist()
@@ -503,7 +504,7 @@ class SkirtCalculatorTest {
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
         composeRule.onNodeWithText("Raios para o molde").assertIsDisplayed()
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label).assertIsDisplayed()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assertIsDisplayed()
         edit(SkirtDraftField.Waist, "90")
         composeRule.onNodeWithText("Raios para o molde").assertDoesNotExist()
         composeRule.onNodeWithText("Preencha as medidas e toque em Calcular.").assertIsDisplayed()
@@ -538,7 +539,7 @@ class SkirtCalculatorTest {
             font.floatValue = 2f
         }
         composeRule.onNodeWithText("Editar medidas").performScrollTo().performClick()
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label)
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
             .assertIsFocused().assertTextContains("80")
         // Android's keyboard can resize the viewport after Compose has become idle.
         composeRule.waitUntil(10_000) { isKeyboardVisible() }
@@ -568,7 +569,7 @@ class SkirtCalculatorTest {
 
     private fun fillInputsWithKeyboardOpen(values: List<String>) {
         fillInputs(values)
-        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.label)
+        composeRule.onNodeWithText(SkirtDraftField.HemAllowance.labelText)
             .performScrollTo().performClick()
         composeRule.waitUntil(10_000) { isKeyboardVisible() }
     }
@@ -641,7 +642,7 @@ class SkirtCalculatorTest {
             ?.isVisible(WindowInsetsCompat.Type.ime()) == true
 
     private fun edit(field: SkirtDraftField, value: String) {
-        composeRule.onNodeWithText(field.label).performScrollTo().performTextReplacement(value)
+        composeRule.onNodeWithText(field.labelText).performScrollTo().performTextReplacement(value)
     }
 
     private fun calculate() {

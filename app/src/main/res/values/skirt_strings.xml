@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="skirt_title">Saia godê inteira</string>
+    <string name="skirt_intro">Medidas em centímetros. Informe folga e margens explicitamente; zero é válido.</string>
+    <string name="skirt_calculate">Calcular</string>
+    <string name="skirt_fill_and_calculate">Preencha as medidas e toque em Calcular.</string>
+
+    <string name="skirt_group_body">Medida do corpo</string>
+    <string name="skirt_group_choices">Escolhas da peça</string>
+    <string name="skirt_group_allowances">Margens de corte</string>
+
+    <string name="skirt_field_waist">Circunferência da cintura (cm)</string>
+    <string name="skirt_field_ease">Folga de cintura (cm)</string>
+    <string name="skirt_field_finished_length">Comprimento acabado (cm)</string>
+    <string name="skirt_field_waist_seam_allowance">Margem de costura da cintura (cm)</string>
+    <string name="skirt_field_hem_allowance">Margem de barra (cm)</string>
+
+    <!-- The summary heading states the unit once, so these omit it. -->
+    <string name="skirt_summary_waist">Circunferência da cintura</string>
+    <string name="skirt_summary_ease">Folga de cintura</string>
+    <string name="skirt_summary_finished_length">Comprimento acabado</string>
+    <string name="skirt_summary_waist_seam_allowance">Margem de costura da cintura</string>
+    <string name="skirt_summary_hem_allowance">Margem de barra</string>
+
+    <string name="skirt_guidance_waist">Meça a circunferência da cintura na posição desejada do cós, sem acrescentar folga ou margens.</string>
+    <string name="skirt_guidance_finished_length">Meça o comprimento até a barra acabada, a partir da linha de costura da cintura; exclua a altura do cós. As margens são informadas separadamente.</string>
+    <string name="skirt_guidance_ease">Folga é o acréscimo à cintura para vestir; informe zero se não desejar folga.</string>
+    <string name="skirt_guidance_waist_seam_allowance">Tecido reservado para costurar a cintura; informe zero se não houver margem.</string>
+    <string name="skirt_guidance_hem_allowance">Tecido reservado para acabar a barra; informe zero se não houver margem.</string>
+
+    <string name="skirt_waist_from_profile">Cintura copiada do perfil: %1$s</string>
+    <string name="skirt_waist_manual">Medida manual</string>
+    <string name="skirt_edit_measurements">Editar medidas</string>
+    <string name="skirt_used_measurements">Medidas utilizadas (cm)</string>
+    <string name="skirt_limits_title">Limites do cálculo</string>
+    <string name="skirt_limits_body">Para saia godê inteira em tecido plano, com cós e fechamento. Não inclui divisão em painéis, margens do fechamento, molde do cós ou metragem de tecido. O comprimento acabado exclui a altura do cós.</string>
+
+    <string name="skirt_reference_lines">Linhas de referência</string>
+    <string name="skirt_cutting_lines">Linhas de corte</string>
+    <string name="skirt_line_waist_stitching">Costura da cintura</string>
+    <string name="skirt_line_finished_hem">Barra acabada</string>
+    <string name="skirt_line_waist_cutting">Corte da cintura</string>
+    <string name="skirt_line_hem_cutting">Corte da barra</string>
+</resources>

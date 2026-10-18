@@ -35,5 +35,8 @@ style:
     active: true
   RedundantExplicitType:
     active: true
+  # These two stand in for compiler checks app/build.gradle.kts disables for Room's code.
   RedundantVisibilityModifier:
+    active: true
+  VarCouldBeVal:
     active: true

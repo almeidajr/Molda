@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
@@ -51,6 +52,20 @@ import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.adaptive.AdaptiveContent
 import com.almeidajr.molda.ui.adaptive.HingeSafeContent
 import com.almeidajr.molda.ui.adaptive.minimumTwoPaneWidth
+import kotlinx.serialization.Serializable
+
+/** The editor to open once unsaved changes are discarded; [None] just closes the editor. */
+@Serializable
+private sealed interface PendingEditor {
+    @Serializable
+    data object None : PendingEditor
+
+    @Serializable
+    data object New : PendingEditor
+
+    @Serializable
+    data class Existing(val id: ProfileId) : PendingEditor
+}
 
 // Keep saveable destinations and their transitions together.
 @Suppress("LongMethod")
@@ -69,8 +84,8 @@ fun MoldaRoute(
     var showPicker by rememberSaveable { mutableStateOf(false) }
     var editorFromPicker by rememberSaveable { mutableStateOf(false) }
     var showDiscard by rememberSaveable { mutableStateOf(false) }
-    var pendingEditor by rememberSaveable { mutableStateOf<Long?>(null) }
-    // A null id requests a new profile, which pendingEditor saves as 0.
+    var pendingEditor by rememberSerializable { mutableStateOf<PendingEditor>(PendingEditor.None) }
+    // A null id requests a new profile.
     val requestEditor: (ProfileId?) -> Unit = { id ->
         requestProfileEditor(profileState, profiles, id) {
             pendingEditor = it
@@ -112,7 +127,7 @@ fun MoldaRoute(
                 },
                 floatingActionButtonPosition = if (wide) FabPosition.Start else FabPosition.End,
                 floatingActionButton = {
-                    if (showManagement && (!profileState.isCreating || wide)) {
+                    if (showManagement && (!profileState.isEditorOpen || wide)) {
                         ProfileCreateAction(profileState, { requestEditor(null) })
                     }
                 },
@@ -156,13 +171,23 @@ fun MoldaRoute(
     if (showDiscard) {
         DiscardDialog(onDismiss = {
             showDiscard = false
-            pendingEditor = null
+            pendingEditor = PendingEditor.None
         }, onDiscard = {
             showDiscard = false
-            if (pendingEditor == null) finishEditor() else profiles.cancel()
-            pendingEditor?.let { id ->
-                pendingEditor = null
-                if (id == 0L) profiles.startCreating() else profiles.startEditing(ProfileId(id))
+            val next = pendingEditor
+            pendingEditor = PendingEditor.None
+            when (next) {
+                PendingEditor.None -> finishEditor()
+
+                PendingEditor.New -> {
+                    profiles.cancel()
+                    profiles.startCreating()
+                }
+
+                is PendingEditor.Existing -> {
+                    profiles.cancel()
+                    profiles.startEditing(next.id)
+                }
             }
         })
     }
@@ -196,7 +221,7 @@ private fun Destination(
         }
         val list: @Composable () -> Unit = {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
-                if (!profileState.isCreating) {
+                if (!profileState.isEditorOpen) {
                     TextButton(onClick = {
                         onManage(false)
                     }, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -208,11 +233,11 @@ private fun Destination(
         }
         AdaptiveContent(
             modifier = modifier.imePadding(),
-            detailOpen = profileState.isCreating,
+            detailOpen = profileState.isEditorOpen,
             onBack = { if (!profileState.isSaving) cancelEditor() },
             primary = list,
             detail = {
-                if (profileState.isCreating) {
+                if (profileState.isEditorOpen) {
                     editor()
                 } else {
                     Text(
@@ -221,7 +246,7 @@ private fun Destination(
                     )
                 }
             },
-            compact = { if (profileState.isCreating) editor() else list() },
+            compact = { if (profileState.isEditorOpen) editor() else list() },
         )
     } else {
         Column(modifier) {
@@ -246,7 +271,12 @@ private fun CalculatorTopBar(onManageProfiles: () -> Unit) {
         title = {
             // TopAppBar measures the title as if its 16dp start inset were free, so a title that
             // wraps at large text would run under the action without this end padding.
-            Text("Saia godê inteira", Modifier.padding(end = 16.dp).semantics { heading() })
+            Text(
+                stringResource(R.string.skirt_title),
+                Modifier.padding(end = 16.dp).semantics {
+                    heading()
+                },
+            )
         },
         actions = {
             TextButton(onClick = onManageProfiles, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -305,7 +335,7 @@ private fun ProfileSaveFeedback(
     val message = state.savedMessage?.let { stringResource(it) }
     LaunchedEffect(message) {
         message?.let {
-            if (!state.isCreating && editorFromPicker) onReturnToPicker()
+            if (!state.isEditorOpen && editorFromPicker) onReturnToPicker()
             snackbar.showSnackbar(it)
             profiles.dismissMessage()
         }
@@ -323,7 +353,7 @@ private fun ProfileBackHandler(
     onLeave: () -> Unit,
 ) {
     BackHandler(enabled = showManagement && !showPicker && !WindowInsets.isImeVisible) {
-        if (state.isCreating) {
+        if (state.isEditorOpen) {
             if (!state.isSaving) onCancel()
         } else {
             onLeave()
@@ -335,11 +365,11 @@ private fun requestProfileEditor(
     state: ProfilesState,
     profiles: ProfilesViewModel,
     id: ProfileId?,
-    onDiscard: (Long) -> Unit,
+    onDiscard: (PendingEditor) -> Unit,
 ) {
     if (state.isSaving || state.isLoading || state.loadError != null) return
-    if (state.isCreating && state.isDirty) {
-        onDiscard(id?.value ?: 0L)
+    if (state.isEditorOpen && state.isDirty) {
+        onDiscard(id?.let(PendingEditor::Existing) ?: PendingEditor.New)
     } else if (id == null) {
         profiles.startCreating()
     } else {

@@ -36,7 +36,6 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.skirt.ui.FoldingStep
 import com.almeidajr.molda.skirt.ui.TutorialAnimation
-import com.almeidajr.molda.skirt.ui.label
 import com.almeidajr.molda.skirt.ui.tutorialPalette
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import com.almeidajr.molda.ui.theme.moldaColorScheme
@@ -248,7 +247,7 @@ class FabricMarkingTutorialTest {
             "Como levar os raios ao papel",
         ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(
-            SkirtDraftField.FinishedLength.label,
+            SkirtDraftField.FinishedLength.labelText,
         ).performScrollTo().performTextReplacement("70")
         composeRule.onNodeWithText("Tutorial de dobra do tecido").assertDoesNotExist()
     }
@@ -343,7 +342,7 @@ class FabricMarkingTutorialTest {
         composeRule.onNodeWithContentDescription(
             "Linha 1, linha contínua. Costura da cintura: 13,05\u00A0cm",
         ).assertExists()
-        composeRule.onNodeWithText(SkirtDraftField.Waist.label).assertTextContains("80")
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assertTextContains("80")
     }
 
     @Test
@@ -552,7 +551,9 @@ class FabricMarkingTutorialTest {
 
     private fun openTutorial(inputs: List<String>, advanceToMarking: Boolean = true) {
         SkirtDraftField.entries.zip(inputs).forEach { (field, value) ->
-            composeRule.onNodeWithText(field.label).performScrollTo().performTextReplacement(value)
+            composeRule.onNodeWithText(
+                field.labelText,
+            ).performScrollTo().performTextReplacement(value)
         }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
