@@ -148,6 +148,71 @@ results. No new home screen, bottom navigation, drawer or navigation rail is
 needed for the accepted destination hierarchy; the top app bar and the tutorial
 player do not change that.
 
+## Navigation shell (proposed)
+
+Status: **proposed — pending product-owner approval on
+[#87](https://github.com/almeidajr/Molda/issues/87)**. Nothing in this section is
+implemented. Once approved it supersedes the "calculator on launch", "no home
+screen, bottom navigation, drawer or navigation rail" and "Perfis de medidas
+app-bar action" lines above, following
+[ADR 0003](adr/0003-top-level-navigation-shell.md) and parent spec
+[#83](https://github.com/almeidajr/Molda/issues/83). The comps (compact and wide,
+light and dark, with annotations) accompany this proposal for review on #87.
+
+### Destinations
+
+| Order | Label | Material Symbol (unselected / selected) | Root screen | Back at root |
+| --- | --- | --- | --- | --- |
+| 1 | Moldes | `design_services` / filled | Catalog of pattern drafts; start destination | Exits the app |
+| 2 | Projetos | `folder` / filled | Empty state until projects ship | Switches to Moldes |
+| 3 | Guias | `menu_book` / filled | Library of guides | Switches to Moldes |
+| 4 | Perfis | `group` / filled | Measurement profiles (existing list-detail) | Switches to Moldes |
+
+Glyphs are Material Symbols Outlined, weight 400, 24dp, stored as XML vectors
+(`ic_<name>` and `ic_<name>_filled`) with no theme tint. The filled glyph marks
+the selected destination. `group` was chosen over a single avatar because
+profiles belong to the people someone sews for, not to an account.
+
+### Component contracts
+
+| Component | Content and interaction | States, accessibility and recovery |
+| --- | --- | --- |
+| Navigation suite | `NavigationSuiteScaffold` around the Navigation 3 `NavDisplay`. Compact (<600dp): short navigation bar, 64dp, `surfaceContainer`. Medium and expanded: collapsed wide navigation rail, 96dp, `surface`, items top-aligned, no FAB or menu in the rail. Labels always shown. | Selected item: `secondaryContainer` pill with the filled glyph in `onSecondaryContainer`, label in `secondary`; unselected in `onSurfaceVariant`. Selection is never colour alone (the pill measures 1.11–1.97:1 against its container): filled glyph, label colour and selected semantics carry it. Icons are decorative; the label is the accessible name. Keyboard: one focus group, arrow keys move, Enter or Space selects. Re-selecting pops to the root. Items ≥90 × 64dp. |
+| Top app bar (root screens) | 64dp, Title Large heading with the destination's name ("Moldes", "Projetos", "Guias", "Perfis de medidas"), then the About action: `info` icon button, 48dp, "Sobre o Molda". | Title wraps at large text and keeps 16dp from the action. After switching destination, focus lands on the title. |
+| Top app bar (pushed screens) | Up arrow (`arrow_back`, "Voltar") and the screen title; no About action. The skirt calculator no longer carries "Perfis de medidas". | Up and system Back pop the current destination's stack. |
+| Catalog / library entry | Whole-row target on `surfaceContainerLow`, 16dp corners, 16dp padding, ≥88dp tall: a 56dp `secondaryContainer` thumbnail (quarter-arc motif for the skirt, folded square for fabric folding, decorative), the name in Title Medium, one Body Medium sentence in `onSurfaceVariant`, and a decorative `chevron_right`. A one-sentence Body Medium intro sits above the entries. | One merged TalkBack node announced as a button. Only existing moldes and guides are listed; no "em breve" entries. Wide windows: an adaptive grid with a 320dp minimum column, at most 1040dp wide. In a list-detail pane, the selected entry fills with `secondaryContainer`, drops the chevron and is exposed as selected. |
+| Example label (guide) | Pinned with the drawing at the top of a guide opened from Guias: `surfaceContainerHighest`, 16dp corners, decorative `info` glyph, "Exemplo — não são as suas medidas" in Label Large, the example inputs ("Cintura 80, folga 2, comprimento 60, margens 1 e 2 (cm)") in Body Small, and the "Calcular a minha saia" text button. | Never scrolls away and never appears when the guide carries a calculation's radii. A neutral surface on purpose: `secondaryContainer` means "your result" and the tertiary roles belong to the drawing. "Calcular a minha saia" switches to Moldes and opens the calculator, keeping any draft. The guide keeps one filled action ("Próximo"). |
+| Guide player in the shell | The existing full-screen player, renamed "Guia de dobra do tecido" (entry button) and "Fechar guia" (close). From a result it opens on the Moldes stack with the calculated radii; from Guias it opens on the Guias stack with the example radii. | Compact: the navigation bar is hidden while the player is open (`NavigationSuiteScaffoldState.hide()`); the fixed step bar stays the only bottom control. Wide: the rail stays; from Guias the guide is the list-detail detail pane with no close button, and the placeholder reads "Escolha um guia na lista.". |
+| Projetos empty state | Start-aligned in the content column: 48dp `folder` glyph (decorative, `onSurfaceVariant`), Title Large "Nenhum projeto salvo", Body Large definition "Um projeto guarda, com um nome, as medidas, as escolhas e o resultado de um molde, mesmo que o perfil usado mude depois.", Body Large "Por enquanto, os moldes não salvam projetos: anote os raios antes de sair do cálculo.", and the filled "Ver moldes". | No dates or promises. "Ver moldes" switches to Moldes. Wide: one pane, at most 640dp, centred. |
+| Perfis root | The existing list, editor, picker and deletion flow. The title moves to the top app bar ("Perfis de medidas"); the in-content "Perfis de medidas (opcional)" heading and the "Voltar ao cálculo" button go; the storage warning starts with "Opcionais." | The "Novo perfil" FAB sits 16dp above the navigation bar on compact and at the start edge of the list pane in two panes. "Criar perfil" from the picker opens the editor on the Moldes stack, as #83 specifies. |
+| About screen | Pushed on the current destination's stack: up arrow, title "Sobre o Molda", "Molda" in Headline Medium, a Body Large description of the product and its limits, an offline/on-device line, a divider and one "Versão" list row with `versionName`. | The space below "Versão" is reserved for the GitHub Releases update check; nothing is drawn there until it ships. |
+
+### Layout per window size
+
+- **Compact (<600dp):** navigation bar; one column; 16dp margins.
+- **Medium (600–839dp):** rail; panes follow the existing content-fit rule
+  measured beside the rail (`360dp × max(fontScale, 1) × 2 + 24dp`), so a
+  medium window shows one pane.
+- **Expanded (≥840dp):** rail; two panes where the rule fits: Guias list beside
+  the guide, Perfis list beside the editor, calculator inputs beside the cutting
+  card.
+- **Foldables:** the rail stays at the start edge of the left half; two panes
+  split at a vertical fold, or share the larger side or stack when the left half
+  beside the rail cannot hold a pane. In tabletop posture content moves to the
+  larger half and no navigation item straddles the fold. A flat fold is no fold.
+
+### Accessibility checks for the shell
+
+Measured contrast in the fallback scheme (light / dark): bar labels
+`onSurfaceVariant` on `surfaceContainer` 8.08 / 9.65:1; selected label
+`secondary` on `surfaceContainer` 5.54 / 9.64:1; rail labels on `surface`
+8.94 / 10.92:1 and 6.13 / 10.90:1; selected glyph `onSecondaryContainer` on
+`secondaryContainer` 7.25:1; example label text on `surfaceContainerHighest`
+13.27 / 9.55:1 and supporting text 7.29 / 7.26:1; its `primary` action 5.03 /
+7.24:1. At 200% text the 12sp label becomes about 24sp, and "Projetos" is about
+90dp, the width of one bar item on a 360dp phone: labels never ellipsize or
+wrap mid-word, and this must be verified on a device before shipping.
+
 ## Reusable component contracts
 
 These are design contracts, not a requirement to create a wrapper for every
