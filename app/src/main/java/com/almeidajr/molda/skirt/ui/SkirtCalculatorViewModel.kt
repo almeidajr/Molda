@@ -2,6 +2,7 @@ package com.almeidajr.molda.skirt.ui
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.serialization.saved
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
@@ -16,94 +17,93 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.serialization.Serializable
+
+/** The calculator state that survives process death. */
+@Serializable
+data class CalculatorForm(
+    val inputs: Map<SkirtDraftField, String> = SkirtDraftField.entries.associateWith { "" },
+    val sourceProfileName: String? = null,
+    val hasAttemptedCalculation: Boolean = false,
+)
 
 /** [draft] and [radii] are both set after a successful calculation, and only then. */
 data class CalculatorState(
-    val inputs: Map<SkirtDraftField, String> = SkirtDraftField.entries.associateWith { "" },
+    val form: CalculatorForm = CalculatorForm(),
     val errors: Map<SkirtDraftField, SkirtFieldError> = emptyMap(),
     val hasNonfiniteResult: Boolean = false,
     val draft: SkirtDraft? = null,
     val radii: SkirtRadii? = null,
-    val sourceProfileName: String? = null,
-    val hasAttemptedCalculation: Boolean = false,
     val calculationAttempt: Int = 0,
 )
 
 @HiltViewModel
-class SkirtCalculatorViewModel @Inject constructor(private val savedState: SavedStateHandle) :
-    ViewModel() {
-    private val mutableState = MutableStateFlow(
-        CalculatorState(
-            inputs = SkirtDraftField.entries.associateWith { savedState[it.name] ?: "" },
-            sourceProfileName = savedState["sourceProfileName"],
-            hasAttemptedCalculation = savedState["hasAttemptedCalculation"] ?: false,
-        ),
-    )
+class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle) : ViewModel() {
+    private var savedForm by savedState.saved { CalculatorForm() }
+    private val mutableState = MutableStateFlow(CalculatorState(form = savedForm))
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
 
-    fun selectProfile(waist: String, name: String) {
-        edit(SkirtDraftField.Waist, waist)
-        savedState["sourceProfileName"] = name
-        mutableState.update { it.copy(sourceProfileName = name) }
-    }
+    fun selectProfile(waist: String, name: String) = transition { it.withProfileWaist(waist, name) }
 
-    fun edit(field: SkirtDraftField, text: String) {
-        savedState[field.name] = text
-        val isWaist = field == SkirtDraftField.Waist
-        if (isWaist) savedState["sourceProfileName"] = null
-        mutableState.update {
-            it.copy(
-                inputs = it.inputs + (field to text),
-                sourceProfileName = if (isWaist) null else it.sourceProfileName,
-                hasNonfiniteResult = false,
-                draft = null,
-                radii = null,
+    fun edit(field: SkirtDraftField, text: String) = transition { it.edited(field, text) }
+
+    fun blur(field: SkirtDraftField) = transition { it.blurred(field) }
+
+    fun calculate() = transition { it.calculated() }
+
+    // Main-thread only, so reading back the new value cannot race another transition.
+    private fun transition(next: (CalculatorState) -> CalculatorState) {
+        mutableState.value = next(mutableState.value)
+        savedForm = mutableState.value.form
+    }
+}
+
+private fun CalculatorState.withProfileWaist(waist: String, name: String): CalculatorState {
+    val edited = edited(SkirtDraftField.Waist, waist)
+    return edited.copy(form = edited.form.copy(sourceProfileName = name))
+}
+
+private fun CalculatorState.edited(field: SkirtDraftField, text: String): CalculatorState = copy(
+    form = form.copy(
+        inputs = form.inputs + (field to text),
+        sourceProfileName = if (field == SkirtDraftField.Waist) null else form.sourceProfileName,
+    ),
+    hasNonfiniteResult = false,
+    draft = null,
+    radii = null,
+)
+
+/** After the first calculation attempt, revalidates [field] as the user leaves it. */
+private fun CalculatorState.blurred(field: SkirtDraftField): CalculatorState {
+    if (!form.hasAttemptedCalculation) return this
+    val error = skirtFieldError(field, form.inputs.getValue(field))
+        ?: seamAllowanceError(field, form.inputs)
+    return copy(errors = if (error == null) errors - field else errors + (field to error))
+}
+
+private fun CalculatorState.calculated(): CalculatorState {
+    val attempt = copy(
+        form = form.copy(hasAttemptedCalculation = true),
+        calculationAttempt = calculationAttempt + 1,
+        errors = emptyMap(),
+        hasNonfiniteResult = false,
+        draft = null,
+        radii = null,
+    )
+    return when (val reading = readSkirtDraft(form.inputs)) {
+        is SkirtDraftReading.Invalid -> attempt.copy(errors = reading.errors)
+
+        is SkirtDraftReading.Valid -> when (val result = calculateSkirtRadii(reading.draft)) {
+            is SkirtCalculation.Success -> attempt.copy(draft = reading.draft, radii = result.radii)
+
+            SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching -> attempt.copy(
+                errors = mapOf(
+                    SkirtDraftField.WaistSeamAllowance to
+                        SkirtFieldError.SeamAllowanceNotSmallerThanWaistStitching,
+                ),
             )
-        }
-    }
 
-    fun blur(field: SkirtDraftField) {
-        mutableState.update { current ->
-            if (!current.hasAttemptedCalculation) return@update current
-            val error = skirtFieldError(field, current.inputs.getValue(field))
-                ?: seamAllowanceError(field, current.inputs)
-            current.copy(
-                errors = if (error == null) {
-                    current.errors - field
-                } else {
-                    current.errors + (field to error)
-                },
-            )
-        }
-    }
-
-    fun calculate() {
-        savedState["hasAttemptedCalculation"] = true
-        val current = mutableState.value.copy(
-            hasAttemptedCalculation = true,
-            calculationAttempt = mutableState.value.calculationAttempt + 1,
-            errors = emptyMap(),
-            hasNonfiniteResult = false,
-            draft = null,
-            radii = null,
-        )
-        mutableState.value = when (val reading = readSkirtDraft(current.inputs)) {
-            is SkirtDraftReading.Invalid -> current.copy(errors = reading.errors)
-
-            is SkirtDraftReading.Valid -> when (val result = calculateSkirtRadii(reading.draft)) {
-                is SkirtCalculation.Success ->
-                    current.copy(draft = reading.draft, radii = result.radii)
-
-                SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching -> current.copy(
-                    errors = mapOf(
-                        SkirtDraftField.WaistSeamAllowance to
-                            SkirtFieldError.SeamAllowanceNotSmallerThanWaistStitching,
-                    ),
-                )
-
-                SkirtCalculation.NonfiniteResult -> current.copy(hasNonfiniteResult = true)
-            }
+            SkirtCalculation.NonfiniteResult -> attempt.copy(hasNonfiniteResult = true)
         }
     }
 }

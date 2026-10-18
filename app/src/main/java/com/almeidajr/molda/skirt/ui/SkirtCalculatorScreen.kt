@@ -240,12 +240,12 @@ private fun CalculationOutcome(
         val card = cuttingCard(radii)
         val description = diagramDescription(
             card,
-            enteredValue(state.inputs, SkirtDraftField.WaistSeamAllowance),
-            enteredValue(state.inputs, SkirtDraftField.HemAllowance),
+            enteredValue(state.form.inputs, SkirtDraftField.WaistSeamAllowance),
+            enteredValue(state.form.inputs, SkirtDraftField.HemAllowance),
         )
         CuttingCard(card, description, modifier)
         SkirtResults(draft, onOpenTutorial, onEditMeasurements)
-        DraftingExplanation(state.inputs, radii)
+        DraftingExplanation(state.form.inputs, radii)
     }
 }
 
@@ -264,9 +264,9 @@ private fun MeasurementInput(
     val error = state.errors[field]
     var wasFocused by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (field == SkirtDraftField.Waist) WaistSource(state.sourceProfileName, onUseProfile)
+        if (field == SkirtDraftField.Waist) WaistSource(state.form.sourceProfileName, onUseProfile)
         OutlinedTextField(
-            value = state.inputs.getValue(field),
+            value = state.form.inputs.getValue(field),
             onValueChange = { onEdit(field, it) },
             label = { Text(field.label) },
             isError = error != null,
