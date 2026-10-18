@@ -74,4 +74,19 @@ class ProfileNavigationTest {
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Saia godê inteira").assertIsDisplayed()
     }
+
+    @Test
+    fun recreation_keepsOpenPickerAndDiscardConfirmation() {
+        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
+        composeRule.activityRule.scenario.recreate()
+        composeRule.onNodeWithText("Cancelar seleção").performScrollTo().performClick()
+        composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
+        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        composeRule.activityRule.scenario.recreate()
+        composeRule.onNodeWithText("Continuar editando").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+    }
 }
