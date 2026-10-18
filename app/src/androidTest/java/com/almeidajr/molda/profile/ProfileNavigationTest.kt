@@ -8,12 +8,14 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
@@ -56,5 +58,20 @@ class ProfileNavigationTest {
         composeRule.onNodeWithText("Voltar ao cálculo").performClick()
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
         composeRule.onNode(hasText("Usar perfil") and heading).assertIsDisplayed()
+    }
+
+    @Test
+    fun recreation_keepsDirtyProfileEditorAndItsWayBack() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
+        composeRule.activityRule.scenario.recreate()
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        composeRule.onNodeWithText("Descartar").performClick()
+        composeRule.onNodeWithText("Voltar ao cálculo").assertIsDisplayed()
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        composeRule.onNodeWithText("Saia godê inteira").assertIsDisplayed()
     }
 }

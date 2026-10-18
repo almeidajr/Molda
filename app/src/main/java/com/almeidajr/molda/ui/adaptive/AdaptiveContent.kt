@@ -35,6 +35,29 @@ import androidx.navigation3.ui.NavDisplay
 internal fun minimumTwoPaneWidth(fontScale: Float): Dp =
     360.dp * fontScale.coerceAtLeast(1f) * 2 + 24.dp
 
+/**
+ * A list-detail strategy for a window [maxWidth] wide: two readable panes beside each other when
+ * they fit, avoiding any hinge, otherwise one pane at a time.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+internal fun <T : Any> rememberReadableListDetailStrategy(
+    maxWidth: Dp,
+): ListDetailSceneStrategy<T> {
+    val base =
+        calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2(), HingePolicy.AlwaysAvoid)
+    val wide = maxWidth >= minimumTwoPaneWidth(LocalDensity.current.fontScale)
+    return rememberListDetailSceneStrategy(
+        directive = base.copy(
+            maxHorizontalPartitions = if (wide) 2 else 1,
+            maxVerticalPartitions = 1,
+            horizontalPartitionSpacerSize = if (wide) 24.dp else 0.dp,
+            defaultPanePreferredWidth = (maxWidth - 24.dp) / 2,
+        ),
+        backNavigationBehavior = BackNavigationBehavior.PopLatest,
+    )
+}
+
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun AdaptiveContent(
@@ -45,26 +68,13 @@ internal fun AdaptiveContent(
     detail: @Composable () -> Unit,
     compact: @Composable () -> Unit,
 ) {
-    val info = currentWindowAdaptiveInfoV2()
     val fontScale = LocalDensity.current.fontScale
     BoxWithConstraints(modifier.fillMaxSize()) {
-        val base = calculatePaneScaffoldDirective(info, HingePolicy.AlwaysAvoid)
-        val wide = maxWidth >= minimumTwoPaneWidth(fontScale)
-        val directive = base.copy(
-            maxHorizontalPartitions = if (wide) 2 else 1,
-            maxVerticalPartitions = 1,
-            horizontalPartitionSpacerSize = if (wide) 24.dp else 0.dp,
-            defaultPanePreferredWidth = (maxWidth - 24.dp) / 2,
-        )
-        if (wide) {
-            val strategy = rememberListDetailSceneStrategy<String>(
-                directive = directive,
-                backNavigationBehavior = BackNavigationBehavior.PopLatest,
-            )
+        if (maxWidth >= minimumTwoPaneWidth(fontScale)) {
             NavDisplay(
                 backStack = if (detailOpen) listOf("list", "detail") else listOf("list"),
                 onBack = onBack,
-                sceneStrategies = listOf(strategy),
+                sceneStrategies = listOf(rememberReadableListDetailStrategy(maxWidth)),
                 entryProvider = { key ->
                     NavEntry(
                         key,
@@ -85,7 +95,7 @@ internal fun AdaptiveContent(
 }
 
 @Composable
-private fun ReadablePane(content: @Composable () -> Unit) {
+internal fun ReadablePane(content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Box(Modifier.widthIn(max = 640.dp).fillMaxWidth()) { content() }
     }
