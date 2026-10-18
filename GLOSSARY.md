@@ -8,6 +8,22 @@ Molda supports sewing pattern drafting work. This glossary records the shared pr
 A tool that helps a sewist calculate dimensions used when drafting a sewing pattern from body measurements and explicit drafting assumptions.
 _Avoid_: Automatic pattern generator
 
+**Pattern draft (molde)**:
+A calculation for one garment that turns body measurements and drafting assumptions into the dimensions needed to draft that garment's pattern.
+_Avoid_: Calculator, garment, peça
+
+**Guide (guia)**:
+Step-by-step instruction that teaches one sewing technique without calculating anything itself; any pattern draft may refer to it.
+_Avoid_: Tutorial as a separate concept
+
+**Tool (ferramenta)**:
+A utility that works on a pattern draft's calculated result, such as checking whether the pattern fits the fabric.
+_Avoid_: Feature, utility screen
+
+**Project (projeto)**:
+A named, saved pattern draft that keeps the measurements, drafting assumptions and result used when it was saved, even if the measurement profile they came from later changes or is deleted.
+_Avoid_: Saved calculation, saved molde
+
 **Full-circle skirt (saia godê inteira)**:
 A skirt whose main body is drafted from a complete circle with an opening for the waist.
 
