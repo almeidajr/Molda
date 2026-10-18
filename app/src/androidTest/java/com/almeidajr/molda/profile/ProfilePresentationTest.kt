@@ -33,7 +33,6 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
@@ -62,9 +61,6 @@ class ProfilePresentationTest {
 
     @Before
     fun showIsolatedProfiles() {
-        // Earlier key events can leave the device out of touch mode, where an opened destination
-        // takes initial focus and raises the keyboard over these layout checks.
-        InstrumentationRegistry.getInstrumentation().setInTouchMode(true)
         composeRule.activity.deleteDatabase(databaseName)
         storage = LocalProfileRepository(composeRule.activity, databaseName)
         showContent()

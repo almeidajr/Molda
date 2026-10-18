@@ -1,8 +1,5 @@
 package com.almeidajr.molda
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -44,6 +41,8 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.scene.Scene
+import androidx.navigation3.scene.SceneDecoratorStrategy
 import androidx.navigation3.ui.NavDisplay
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
@@ -88,6 +87,16 @@ private data object ProfileManagementKey : NavKey
 /** The open profile editor; a null [id] is a new profile. */
 @Serializable
 private data class ProfileEditorKey(val id: ProfileId?) : NavKey
+
+/**
+ * Shows every destination under one scene key, so a destination replaces the previous one within
+ * a frame, without animation, as before the back stack. A scene change would keep the previous
+ * destination for an extra frame, and removing its focused button then would move initial focus
+ * into the new destination.
+ */
+private data class SameFrameScene<T : Any>(val scene: Scene<T>) : Scene<T> by scene {
+    override val key: Any get() = SameFrameScene::class
+}
 
 // Keep saveable destinations and their transitions together.
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -166,12 +175,9 @@ fun MoldaRoute(
                     },
                     // A narrow window shows one destination at a time, as a plain single pane.
                     sceneStrategies = if (wide) listOf(listDetail) else emptyList(),
-                    // Destinations switch instantly, as they did before the back stack.
-                    transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-                    popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-                    predictivePopTransitionSpec = {
-                        EnterTransition.None togetherWith ExitTransition.None
-                    },
+                    sceneDecoratorStrategies = listOf(
+                        SceneDecoratorStrategy { scene -> SameFrameScene(scene) },
+                    ),
                     entryProvider = entryProvider {
                         entry<SkirtCalculatorKey> {
                             CalculatorDestination(
