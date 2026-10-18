@@ -29,8 +29,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
+import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
@@ -299,12 +302,16 @@ private class FailingProfiles(
     private val records =
         listOf(
             MeasurementProfile(
-                1,
-                ProfileMeasurements("Existente", 80.0, measurementDate),
+                ProfileId(1),
+                ProfileMeasurements(ProfileName("Existente"), Length(80.0), measurementDate),
             ),
             MeasurementProfile(
-                2,
-                ProfileMeasurements("Outra pessoa", 95.0, LocalDate.of(2026, 10, 11)),
+                ProfileId(2),
+                ProfileMeasurements(
+                    ProfileName("Outra pessoa"),
+                    Length(95.0),
+                    LocalDate.of(2026, 10, 11),
+                ),
             ),
         )
     override suspend fun list(): List<MeasurementProfile> {
@@ -315,10 +322,10 @@ private class FailingProfiles(
     override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile {
         saveGate?.await()
         if (failSave) error("Controlled save failure")
-        return MeasurementProfile(3, measurements)
+        return MeasurementProfile(ProfileId(3), measurements)
     }
     override suspend fun update(profile: MeasurementProfile) = error("Controlled update failure")
-    override suspend fun delete(id: Long) {
+    override suspend fun delete(id: ProfileId) {
         deleteGate?.await()
         error("Controlled delete failure")
     }

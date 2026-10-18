@@ -6,8 +6,11 @@ import android.database.DatabaseErrorHandler
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
+import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,10 +39,10 @@ class LocalProfileRepository(
                 while (cursor.moveToNext()) {
                     add(
                         MeasurementProfile(
-                            cursor.getLong(cursor.getColumnIndexOrThrow("id")),
+                            ProfileId(cursor.getLong(cursor.getColumnIndexOrThrow("id"))),
                             ProfileMeasurements(
-                                cursor.getString(cursor.getColumnIndexOrThrow("name")),
-                                cursor.getDouble(cursor.getColumnIndexOrThrow("waist")),
+                                ProfileName(cursor.getString(cursor.getColumnIndexOrThrow("name"))),
+                                Length(cursor.getDouble(cursor.getColumnIndexOrThrow("waist"))),
                                 LocalDate.parse(
                                     cursor.getString(
                                         cursor.getColumnIndexOrThrow("measurement_date"),
@@ -56,29 +59,33 @@ class LocalProfileRepository(
 
     override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile =
         withContext(ioDispatcher) {
-            val checked = measurements.copy()
             MeasurementProfile(
-                database.writableDatabase.insertOrThrow("profiles", null, checked.toValues()),
-                checked,
+                ProfileId(
+                    database.writableDatabase.insertOrThrow(
+                        "profiles",
+                        null,
+                        measurements.toValues(),
+                    ),
+                ),
+                measurements,
             )
         }
 
     override suspend fun update(profile: MeasurementProfile): Unit = withContext(ioDispatcher) {
-        val checked = profile.copy(measurements = profile.measurements.copy())
         check(
             database.writableDatabase.update(
                 "profiles",
-                checked.measurements.toValues(),
+                profile.measurements.toValues(),
                 "id = ?",
-                arrayOf(checked.id.toString()),
+                arrayOf(profile.id.value.toString()),
             ) == 1,
         ) { "Profile no longer exists" }
     }
 
-    override suspend fun delete(id: Long): Unit = withContext(ioDispatcher) {
-        require(id > 0) { "Profile identity must be positive" }
+    override suspend fun delete(id: ProfileId): Unit = withContext(ioDispatcher) {
         check(
-            database.writableDatabase.delete("profiles", "id = ?", arrayOf(id.toString())) == 1,
+            database.writableDatabase.delete("profiles", "id = ?", arrayOf(id.value.toString())) ==
+                1,
         ) { "Profile no longer exists" }
     }
 
@@ -86,8 +93,8 @@ class LocalProfileRepository(
 }
 
 private fun ProfileMeasurements.toValues(): ContentValues = ContentValues().apply {
-    put("name", name)
-    put("waist", waist)
+    put("name", name.text)
+    put("waist", waist.centimetres)
     put("measurement_date", measurementDate.toString())
     put("notes", notes)
 }

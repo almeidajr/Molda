@@ -31,7 +31,10 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.data.LocalProfileRepository
+import com.almeidajr.molda.profile.domain.ProfileId
+import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -160,7 +163,7 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Cintura copiada do perfil: Ana")
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
-        runBlocking { assertEquals(2L, storage.list().single().id) }
+        runBlocking { assertEquals(ProfileId(2), storage.list().single().id) }
     }
 
     @Test
@@ -330,8 +333,8 @@ class MeasurementProfilesTest {
             .performScrollTo().assertIsDisplayed()
         runBlocking {
             val saved = storage.list().single().measurements
-            assertEquals("Ana", saved.name)
-            assertEquals(80.0, saved.waist, 0.0)
+            assertEquals(ProfileName("Ana"), saved.name)
+            assertEquals(Length(80.0), saved.waist)
             assertEquals(LocalDate.of(2026, 10, 12), saved.measurementDate)
         }
     }
@@ -386,7 +389,7 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("82,25")
         pick("Usar perfil: Ana — 80,123456789 cm — 12/10/2026")
-        runBlocking { assertEquals(2L, storage.list().single().id) }
+        runBlocking { assertEquals(ProfileId(2), storage.list().single().id) }
     }
 
     @Test
@@ -442,8 +445,8 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Margem de barra (cm)").performScrollTo().assertTextContains("2")
         runBlocking {
             val saved = storage.list().single().measurements
-            assertEquals("Teste reutilização", saved.name)
-            assertEquals(80.5, saved.waist, 0.0)
+            assertEquals(ProfileName("Teste reutilização"), saved.name)
+            assertEquals(Length(80.5), saved.waist)
             assertEquals("Medida no cós", saved.notes)
         }
     }

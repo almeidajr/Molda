@@ -1,18 +1,20 @@
 package com.almeidajr.molda.profile.ui
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.almeidajr.molda.measurement.validCentimetres
+import com.almeidajr.molda.R
 import com.almeidajr.molda.profile.domain.MeasurementProfile
-import com.almeidajr.molda.profile.domain.ProfileMeasurements
+import com.almeidajr.molda.profile.domain.ProfileDateFormat
+import com.almeidajr.molda.profile.domain.ProfileError
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.profile.domain.ProfileValidation
+import com.almeidajr.molda.profile.domain.validateProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
-import java.time.format.ResolverStyle
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,26 +23,42 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class ProfileField(val label: String) {
-    Name("Nome ou apelido"),
-    Waist("Cintura do perfil (cm)"),
-    Date("Data da medida (dd/mm/aaaa)"),
-    Notes("Observações (opcional)"),
+enum class ProfileField(@param:StringRes val label: Int) {
+    Name(R.string.profile_field_name),
+    Waist(R.string.profile_field_waist),
+    Date(R.string.profile_field_date),
+    Notes(R.string.profile_field_notes),
 }
+
+val ProfileError.field: ProfileField
+    get() = when (this) {
+        ProfileError.BlankName -> ProfileField.Name
+        ProfileError.InvalidWaist -> ProfileField.Waist
+        ProfileError.InvalidDate, ProfileError.FutureDate -> ProfileField.Date
+    }
+
+@get:StringRes
+val ProfileError.message: Int
+    get() = when (this) {
+        ProfileError.BlankName -> R.string.profile_error_blank_name
+        ProfileError.InvalidWaist -> R.string.profile_error_invalid_waist
+        ProfileError.InvalidDate -> R.string.profile_error_invalid_date
+        ProfileError.FutureDate -> R.string.profile_error_future_date
+    }
 
 data class ProfilesState(
     val profiles: List<MeasurementProfile> = emptyList(),
     val inputs: Map<ProfileField, String> = ProfileField.entries.associateWith { "" },
-    val errors: Map<ProfileField, String> = emptyMap(),
+    val errors: Map<ProfileField, ProfileError> = emptyMap(),
     val isCreating: Boolean = false,
     val isDirty: Boolean = false,
-    val editingId: Long? = null,
+    val editingId: ProfileId? = null,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
-    val loadError: String? = null,
-    val saveError: String? = null,
-    val savedMessage: String? = null,
-    val deleteId: Long? = null,
+    @param:StringRes val loadError: Int? = null,
+    @param:StringRes val saveError: Int? = null,
+    @param:StringRes val savedMessage: Int? = null,
+    val deleteId: ProfileId? = null,
 )
 
 @HiltViewModel
@@ -54,7 +72,7 @@ class ProfilesViewModel @Inject constructor(
             inputs = ProfileField.entries.associateWith { savedState[it.name] ?: "" },
             isCreating = savedState["isCreating"] ?: false,
             isDirty = savedState["isDirty"] ?: false,
-            editingId = savedState["editingId"],
+            editingId = savedState.get<Long>("editingId")?.let(::ProfileId),
         ),
     )
     val state: StateFlow<ProfilesState> = mutableState.asStateFlow()
@@ -76,8 +94,7 @@ class ProfilesViewModel @Inject constructor(
                 mutableState.update {
                     it.copy(
                         isLoading = false,
-                        loadError = "Não foi possível carregar os perfis. " +
-                            "Os dados não foram apagados. Tente novamente.",
+                        loadError = R.string.profile_load_failed,
                     )
                 }
             }
@@ -105,19 +122,19 @@ class ProfilesViewModel @Inject constructor(
         }
     }
 
-    fun startEditing(id: Long) {
+    fun startEditing(id: ProfileId) {
         if (!canMutate()) return
         val profile = mutableState.value.profiles.find { it.id == id } ?: return
         val measurements = profile.measurements
         val inputs = mapOf(
-            ProfileField.Name to measurements.name,
+            ProfileField.Name to measurements.name.text,
             ProfileField.Waist to profileWaistText(measurements.waist),
             ProfileField.Date to measurements.measurementDate.format(ProfileDateFormat),
             ProfileField.Notes to measurements.notes,
         )
         inputs.forEach { (field, text) -> savedState[field.name] = text }
         savedState["isCreating"] = true
-        savedState["editingId"] = id
+        savedState["editingId"] = id.value
         savedState["originalInputs"] = HashMap(inputs.mapKeys { it.key.name })
         savedState["isDirty"] = false
         mutableState.update {
@@ -155,19 +172,22 @@ class ProfilesViewModel @Inject constructor(
     fun save() {
         val current = mutableState.value
         if (!canMutate() || !current.isCreating) return
-        val waist = validCentimetres(current.inputs.getValue(ProfileField.Waist))
-        val date = parseProfileDate(current.inputs.getValue(ProfileField.Date))
-        val errors = profileErrors(current.inputs, waist, date, LocalDate.now(clock))
-        if (errors.isNotEmpty()) {
-            mutableState.update { it.copy(errors = errors) }
-            return
-        }
-        val measurements = ProfileMeasurements(
-            current.inputs.getValue(ProfileField.Name).trim(),
-            requireNotNull(waist),
-            requireNotNull(date),
-            current.inputs.getValue(ProfileField.Notes),
+        val validation = validateProfile(
+            name = current.inputs.getValue(ProfileField.Name),
+            waist = current.inputs.getValue(ProfileField.Waist),
+            measurementDate = current.inputs.getValue(ProfileField.Date),
+            notes = current.inputs.getValue(ProfileField.Notes),
+            today = today,
         )
+        val measurements = when (validation) {
+            is ProfileValidation.Invalid -> {
+                val errors = validation.errors.associateBy { error -> error.field }
+                mutableState.update { it.copy(errors = errors) }
+                return
+            }
+
+            is ProfileValidation.Valid -> validation.measurements
+        }
         mutableState.update { it.copy(isSaving = true, saveError = null, savedMessage = null) }
         viewModelScope.launch {
             try {
@@ -177,26 +197,14 @@ class ProfilesViewModel @Inject constructor(
                 clearSavedForm()
                 mutableState.update {
                     it.copy(
-                        profiles = if (current.editingId == null) {
-                            it.profiles + profile
-                        } else {
-                            it.profiles.map { saved ->
-                                if (saved.id ==
-                                    profile.id
-                                ) {
-                                    profile
-                                } else {
-                                    saved
-                                }
-                            }
-                        },
+                        profiles = it.profiles.withSaved(profile),
                         inputs = ProfileField.entries.associateWith { "" },
                         isCreating = false,
                         isDirty = false,
                         editingId = null,
                         isSaving = false,
                         errors = emptyMap(),
-                        savedMessage = "Perfil salvo neste aparelho.",
+                        savedMessage = R.string.profile_saved,
                     )
                 }
             } catch (cancelled: CancellationException) {
@@ -205,15 +213,14 @@ class ProfilesViewModel @Inject constructor(
                 mutableState.update {
                     it.copy(
                         isSaving = false,
-                        saveError = "Não foi possível salvar o perfil. " +
-                            "Confira os dados e tente novamente.",
+                        saveError = R.string.profile_save_failed,
                     )
                 }
             }
         }
     }
 
-    fun delete(id: Long) {
+    fun delete(id: ProfileId) {
         if (!canMutate() || mutableState.value.profiles.none { it.id == id }) return
         mutableState.update {
             it.copy(isSaving = true, saveError = null, savedMessage = null, deleteId = id)
@@ -237,7 +244,7 @@ class ProfilesViewModel @Inject constructor(
                     it.copy(
                         profiles = it.profiles.filterNot { profile -> profile.id == id },
                         isSaving = false,
-                        savedMessage = "Perfil excluído deste aparelho.",
+                        savedMessage = R.string.profile_deleted,
                         deleteId = null,
                     )
                 }
@@ -247,8 +254,7 @@ class ProfilesViewModel @Inject constructor(
                 mutableState.update {
                     it.copy(
                         isSaving = false,
-                        saveError = "Não foi possível excluir o perfil. " +
-                            "Os dados não foram apagados. Tente novamente.",
+                        saveError = R.string.profile_delete_failed,
                     )
                 }
             }
@@ -289,31 +295,17 @@ class ProfilesViewModel @Inject constructor(
     }
 }
 
-internal val ProfileDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern(
-    "dd/MM/uuuu",
-).withResolverStyle(ResolverStyle.STRICT)
-
-internal fun parseProfileDate(text: String): LocalDate? = try {
-    LocalDate.parse(text.trim(), ProfileDateFormat)
-} catch (_: DateTimeParseException) {
-    null
-}
-
-private fun profileErrors(
-    inputs: Map<ProfileField, String>,
-    waist: Double?,
-    date: LocalDate?,
-    today: LocalDate,
-): Map<ProfileField, String> = buildMap {
-    if (inputs.getValue(ProfileField.Name).isBlank()) {
-        put(ProfileField.Name, "Informe um nome ou apelido.")
+private fun List<MeasurementProfile>.withSaved(profile: MeasurementProfile) =
+    if (any { it.id == profile.id }) {
+        map {
+            if (it.id ==
+                profile.id
+            ) {
+                profile
+            } else {
+                it
+            }
+        }
+    } else {
+        this + profile
     }
-    if (waist == null || waist <= 0) {
-        put(ProfileField.Waist, "Informe uma cintura positiva e finita, como 80,5.")
-    }
-    if (date == null || date.year < 1) {
-        put(ProfileField.Date, "Informe uma data válida no formato dd/mm/aaaa.")
-    } else if (date.isAfter(today)) {
-        put(ProfileField.Date, "A medida já deve ter sido tomada. Corrija a data futura.")
-    }
-}

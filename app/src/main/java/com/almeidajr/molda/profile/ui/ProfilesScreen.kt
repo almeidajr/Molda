@@ -1,5 +1,6 @@
 package com.almeidajr.molda.profile.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,21 +31,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.almeidajr.molda.R
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
+import com.almeidajr.molda.profile.domain.ProfileDateFormat
+import com.almeidajr.molda.profile.domain.ProfileId
 import java.math.BigDecimal
 
 @Composable
 fun ProfilesContent(
     state: ProfilesState,
     onRetry: () -> Unit,
-    onStartEdit: (Long) -> Unit,
-    onDelete: (Long) -> Unit,
+    onStartEdit: (ProfileId) -> Unit,
+    onDelete: (ProfileId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val canMutate = !state.isLoading && state.loadError == null && !state.isSaving
@@ -53,33 +59,27 @@ fun ProfilesContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            "Perfis de medidas (opcional)",
+            stringResource(R.string.profile_management_title),
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.semantics { heading() },
         )
-        Text(
-            "Os perfis ficam só neste aparelho, sem backup ou sincronização. " +
-                "Você pode perdê-los ao limpar os dados do app ou trocar de aparelho.",
-        )
+        Text(stringResource(R.string.profile_local_only))
         if (state.isLoading) {
             CircularProgressIndicator()
-            Text("Carregando perfis…")
+            Text(stringResource(R.string.profile_loading))
         }
         state.loadError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error)
+            Text(stringResource(it), color = MaterialTheme.colorScheme.error)
             Button(
                 onClick = onRetry,
                 enabled = !state.isLoading,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                Text("Tentar carregar novamente")
+                Text(stringResource(R.string.profile_retry_load))
             }
         }
         if (!state.isLoading && state.loadError == null && state.profiles.isEmpty()) {
-            Text(
-                "Nenhum perfil salvo. Os perfis são opcionais; " +
-                    "você pode calcular com uma medida manual.",
-            )
+            Text(stringResource(R.string.profile_empty_management))
         }
         state.profiles.forEach { profile ->
             ProfileManagementRow(
@@ -100,25 +100,20 @@ fun ProfileCreateAction(state: ProfilesState, onCreate: () -> Unit, modifier: Mo
     ExtendedFloatingActionButton(
         onClick = { if (canMutate) onCreate() },
         modifier = modifier.semantics { if (!canMutate) disabled() },
-    ) { Text("Novo perfil") }
+    ) { Text(stringResource(R.string.profile_new)) }
 }
 
-internal fun profileWaistText(value: Double): String =
-    BigDecimal.valueOf(value).stripTrailingZeros().toPlainString().replace('.', ',')
-
-internal fun profileLabel(profile: MeasurementProfile): String =
-    "Usar perfil: ${profile.measurements.name} — " +
-        "${profileWaistText(profile.measurements.waist)} cm — " +
-        profile.measurements.measurementDate.format(ProfileDateFormat)
+internal fun profileWaistText(waist: Length): String =
+    BigDecimal.valueOf(waist.centimetres).stripTrailingZeros().toPlainString().replace('.', ',')
 
 @Composable
 private fun ProfileManagementRow(
     profile: MeasurementProfile,
     enabled: Boolean,
-    onStartEdit: (Long) -> Unit,
-    onDelete: (Long) -> Unit,
+    onStartEdit: (ProfileId) -> Unit,
+    onDelete: (ProfileId) -> Unit,
     isDeleting: Boolean,
-    deleteError: String?,
+    @StringRes deleteError: Int?,
 ) {
     var confirmDelete by remember(profile.id) { mutableStateOf(false) }
     if (confirmDelete) {
@@ -137,13 +132,19 @@ private fun ProfileManagementRow(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
                 headlineContent = {
-                    Text(profile.measurements.name, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        profile.measurements.name.text,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
                 },
                 supportingContent = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            "${profileWaistText(profile.measurements.waist)} cm — " +
+                            stringResource(
+                                R.string.profile_summary,
+                                profileWaistText(profile.measurements.waist),
                                 profile.measurements.measurementDate.format(ProfileDateFormat),
+                            ),
                         )
                         if (profile.measurements.notes.isNotBlank()) {
                             Text(profile.measurements.notes)
@@ -157,10 +158,10 @@ private fun ProfileManagementRow(
             ProfileRowActions(profile, enabled, onStartEdit) { confirmDelete = true }
         }
     }
-    if (isDeleting) Text("Excluindo ${profile.measurements.name}…")
+    if (isDeleting) Text(stringResource(R.string.profile_deleting, profile.measurements.name.text))
     deleteError?.let {
         Text(
-            it,
+            stringResource(it),
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
@@ -171,7 +172,7 @@ private fun ProfileManagementRow(
 private fun ProfileRowActions(
     profile: MeasurementProfile,
     enabled: Boolean,
-    onStartEdit: (Long) -> Unit,
+    onStartEdit: (ProfileId) -> Unit,
     onDelete: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -179,18 +180,18 @@ private fun ProfileRowActions(
         TextButton(onClick = {
             expanded = true
         }, enabled = enabled, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text("Ações: ${profile.measurements.name}")
+            Text(stringResource(R.string.profile_actions, profile.measurements.name.text))
         }
         DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
-                text = { Text("Editar perfil") },
+                text = { Text(stringResource(R.string.profile_edit)) },
                 onClick = {
                     expanded = false
                     onStartEdit(profile.id)
                 },
             )
             DropdownMenuItem(
-                text = { Text("Excluir perfil") },
+                text = { Text(stringResource(R.string.profile_delete)) },
                 onClick = {
                     expanded = false
                     onDelete()
@@ -209,22 +210,22 @@ private fun ConfirmProfileDeletion(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Excluir perfil ${profile.measurements.name}?") },
-        text = {
-            Text("A medida salva será excluída deste aparelho. O cálculo atual será mantido.")
+        title = {
+            Text(stringResource(R.string.profile_delete_title, profile.measurements.name.text))
         },
+        text = { Text(stringResource(R.string.profile_delete_body)) },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
                 enabled = enabled,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                Text("Confirmar exclusão")
+                Text(stringResource(R.string.profile_delete_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text("Cancelar")
+                Text(stringResource(R.string.profile_cancel))
             }
         },
     )
@@ -246,29 +247,27 @@ fun ProfilePicker(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                "Usar perfil",
+                stringResource(R.string.profile_picker_title),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.semantics { heading() },
             )
             TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text("Cancelar seleção")
+                Text(stringResource(R.string.profile_picker_cancel))
             }
             when {
                 state.isLoading -> {
                     CircularProgressIndicator()
-                    Text("Carregando perfis…")
+                    Text(stringResource(R.string.profile_loading))
                 }
 
                 state.loadError != null -> {
-                    Text(state.loadError, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(state.loadError), color = MaterialTheme.colorScheme.error)
                     TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text("Tentar carregar novamente")
+                        Text(stringResource(R.string.profile_retry_load))
                     }
                 }
 
-                state.profiles.isEmpty() -> Text(
-                    "Nenhum perfil salvo. Você pode calcular com uma medida manual.",
-                )
+                state.profiles.isEmpty() -> Text(stringResource(R.string.profile_empty_picker))
 
                 else -> state.profiles.forEach { profile ->
                     val hasDuplicate = state.profiles.count {
@@ -283,7 +282,7 @@ fun ProfilePicker(
                 onClick = onCreate,
                 enabled = !state.isLoading && state.loadError == null && !state.isSaving,
                 modifier = Modifier.heightIn(min = 48.dp),
-            ) { Text("Novo perfil") }
+            ) { Text(stringResource(R.string.profile_new)) }
         }
     }
 }
@@ -304,7 +303,15 @@ private fun PickerRow(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ),
             headlineContent = {
-                Text(profileLabel(profile), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    stringResource(
+                        R.string.profile_use_label,
+                        profile.measurements.name.text,
+                        profileWaistText(profile.measurements.waist),
+                        profile.measurements.measurementDate.format(ProfileDateFormat),
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                )
             },
             supportingContent = if (showNotes && profile.measurements.notes.isNotBlank()) {
                 { Text(profile.measurements.notes) }
