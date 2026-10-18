@@ -1,6 +1,7 @@
 package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
+import android.view.WindowInsets
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -8,12 +9,14 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
@@ -56,5 +59,59 @@ class ProfileNavigationTest {
         composeRule.onNodeWithText("Voltar ao cálculo").performClick()
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
         composeRule.onNode(hasText("Usar perfil") and heading).assertIsDisplayed()
+    }
+
+    @Test
+    fun recreation_keepsDirtyProfileEditorAndItsWayBack() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
+        composeRule.activityRule.scenario.recreate()
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        composeRule.onNodeWithText("Descartar").performClick()
+        composeRule.onNodeWithText("Voltar ao cálculo").assertIsDisplayed()
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        composeRule.onNodeWithText("Saia godê inteira").assertIsDisplayed()
+    }
+
+    @Test
+    fun recreation_keepsOpenPicker() {
+        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
+        composeRule.activityRule.scenario.recreate()
+        composeRule.onNodeWithText("Cancelar seleção").performScrollTo().performClick()
+        composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
+    }
+
+    @Test
+    fun recreation_keepsDiscardConfirmation() {
+        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        composeRule.activityRule.scenario.recreate()
+        composeRule.onNodeWithText("Continuar editando").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+    }
+
+    @Test
+    fun backWithKeyboardOpen_closesKeyboardAndKeepsProfileEditor() {
+        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performClick()
+        composeRule.waitUntil(5_000) { isKeyboardVisible() }
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        composeRule.waitUntil(5_000) { !isKeyboardVisible() }
+        composeRule.onNodeWithText("Nome ou apelido").assertIsDisplayed()
+    }
+
+    private fun isKeyboardVisible(): Boolean {
+        var isVisible = false
+        composeRule.runOnUiThread {
+            isVisible = composeRule.activity.window.decorView.rootWindowInsets
+                .isVisible(WindowInsets.Type.ime())
+        }
+        return isVisible
     }
 }
