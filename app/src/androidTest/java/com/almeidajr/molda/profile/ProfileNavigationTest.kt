@@ -1,6 +1,7 @@
 package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
+import android.view.WindowInsets
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -76,11 +77,15 @@ class ProfileNavigationTest {
     }
 
     @Test
-    fun recreation_keepsOpenPickerAndDiscardConfirmation() {
+    fun recreation_keepsOpenPicker() {
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
         composeRule.activityRule.scenario.recreate()
         composeRule.onNodeWithText("Cancelar seleção").performScrollTo().performClick()
         composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
+    }
+
+    @Test
+    fun recreation_keepsDiscardConfirmation() {
         composeRule.onNodeWithText("Perfis de medidas").performClick()
         composeRule.onNodeWithText("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
@@ -88,5 +93,25 @@ class ProfileNavigationTest {
         composeRule.activityRule.scenario.recreate()
         composeRule.onNodeWithText("Continuar editando").performClick()
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+    }
+
+    @Test
+    fun backWithKeyboardOpen_closesKeyboardAndKeepsProfileEditor() {
+        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performClick()
+        composeRule.waitUntil(5_000) { isKeyboardVisible() }
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        composeRule.waitUntil(5_000) { !isKeyboardVisible() }
+        composeRule.onNodeWithText("Nome ou apelido").assertIsDisplayed()
+    }
+
+    private fun isKeyboardVisible(): Boolean {
+        var isVisible = false
+        composeRule.runOnUiThread {
+            isVisible = composeRule.activity.window.decorView.rootWindowInsets
+                .isVisible(WindowInsets.Type.ime())
+        }
+        return isVisible
     }
 }
