@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -42,6 +43,7 @@ import app.rive.rememberRiveFile
 import app.rive.rememberRiveWorkerOrNull
 import app.rive.rememberViewModelInstanceResult
 import com.almeidajr.molda.R
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
 @Composable
@@ -144,18 +146,14 @@ private fun TutorialDrawing(
             LaunchedEffect(instance, radii, palette) {
                 palette.forEach { (name, color) -> instance.setColor(name, color.toArgb()) }
                 val markingDiameter = 800f
+
                 // Normalize before converting to Float; large valid centimetre values stay finite.
-                val waistDiameter =
-                    (markingDiameter * (radii.waistStitching / radii.hemCutting)).toFloat()
-                instance.setNumber("waistStitching", waistDiameter)
-                instance.setNumber(
-                    "waistCutting",
-                    (markingDiameter * (radii.waistCutting / radii.hemCutting)).toFloat(),
-                )
-                instance.setNumber(
-                    "finishedHem",
-                    (markingDiameter * (radii.finishedHem / radii.hemCutting)).toFloat(),
-                )
+                fun diameter(radius: Length) =
+                    (markingDiameter * (radius.centimetres / radii.hemCutting.centimetres))
+                        .toFloat()
+                instance.setNumber("waistStitching", diameter(radii.waistStitching))
+                instance.setNumber("waistCutting", diameter(radii.waistCutting))
+                instance.setNumber("finishedHem", diameter(radii.finishedHem))
                 instance.setNumber("hemCutting", markingDiameter)
                 ready = true
             }
@@ -231,7 +229,9 @@ internal fun StepInstructions(radii: SkirtRadii, step: FoldingStep) {
                 "Não corte as linhas 1 e 3: são referências de costura e barra acabada. " +
                     "Não corte em linha reta pelas dobras; elas mantêm o círculo inteiro.",
             )
-            coincidenceNotes(cuttingCard(radii)).forEach { Text(it) }
+            coincidenceNotes(cuttingCard(radii, LocalResources.current::getString)).forEach {
+                Text(it)
+            }
             Text(
                 "Para tecido da peça, abertura, margens do fechamento e cós pedem instruções " +
                     "à parte antes do corte.",
@@ -291,7 +291,7 @@ internal fun stepLead(step: FoldingStep): String = when (step) {
 /** The current radii in key order, then where each line sits and which are not cut. */
 @Composable
 private fun MarkingContext(radii: SkirtRadii) {
-    val card = cuttingCard(radii)
+    val card = cuttingCard(radii, LocalResources.current::getString)
     // The four radii read as one key: closer together than the paragraphs around them.
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         card.flatMap { it.entries }.sortedBy { it.number }.forEach { entry ->

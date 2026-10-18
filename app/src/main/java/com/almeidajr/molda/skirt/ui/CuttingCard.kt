@@ -1,5 +1,9 @@
 package com.almeidajr.molda.skirt.ui
 
+import com.almeidajr.molda.R
+import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.skirt.domain.SkirtDraft
+import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import java.util.Locale
 
@@ -27,45 +31,48 @@ data class CuttingCardEntry(
 
 data class CuttingCardGroup(val title: String, val entries: List<CuttingCardEntry>)
 
-/** Maps calculated radii to the reference-line group followed by the cutting-line group. */
+/**
+ * Maps calculated radii to the reference-line group followed by the cutting-line group,
+ * resolving its titles and labels with [text].
+ */
 @Suppress("MagicNumber") // Diagram numbers 1–4 are the fixed key shared with the diagram.
-fun cuttingCard(radii: SkirtRadii): List<CuttingCardGroup> {
+fun cuttingCard(radii: SkirtRadii, text: (Int) -> String): List<CuttingCardGroup> {
     val waistCoincides = radii.waistCutting == radii.waistStitching
     val hemCoincides = radii.hemCutting == radii.finishedHem
     return listOf(
         CuttingCardGroup(
-            "Linhas de referência",
+            text(R.string.skirt_reference_lines),
             listOf(
                 CuttingCardEntry(
                     1,
                     LineStyle.Solid,
-                    "Costura da cintura",
+                    text(R.string.skirt_line_waist_stitching),
                     formatCentimetres(radii.waistStitching),
                     2.takeIf { waistCoincides },
                 ),
                 CuttingCardEntry(
                     3,
                     LineStyle.Dotted,
-                    "Barra acabada",
+                    text(R.string.skirt_line_finished_hem),
                     formatCentimetres(radii.finishedHem),
                     4.takeIf { hemCoincides },
                 ),
             ),
         ),
         CuttingCardGroup(
-            "Linhas de corte",
+            text(R.string.skirt_cutting_lines),
             listOf(
                 CuttingCardEntry(
                     2,
                     LineStyle.Dashed,
-                    "Corte da cintura",
+                    text(R.string.skirt_line_waist_cutting),
                     formatCentimetres(radii.waistCutting),
                     1.takeIf { waistCoincides },
                 ),
                 CuttingCardEntry(
                     4,
                     LineStyle.DashDot,
-                    "Corte da barra",
+                    text(R.string.skirt_line_hem_cutting),
                     formatCentimetres(radii.hemCutting),
                     3.takeIf { hemCoincides },
                 ),
@@ -75,7 +82,7 @@ fun cuttingCard(radii: SkirtRadii): List<CuttingCardGroup> {
 }
 
 /** Two pt-BR decimals and "cm" joined by a non-breaking space, e.g. "13,05 cm". */
-fun formatCentimetres(value: Double): String = "${formatDecimal(value)} cm"
+fun formatCentimetres(length: Length): String = "${formatDecimal(length.centimetres)} cm"
 
 /** Two pt-BR decimals without grouping, e.g. "80,00". */
 fun formatDecimal(value: Double): String =
@@ -120,5 +127,7 @@ fun diagramDescription(
  * "Label: value" items for the inputs used, whose unit the summary heading states once.
  * A non-breaking space keeps each value on its label's line when the summary wraps.
  */
-fun measurementSummary(inputs: Map<MeasurementField, Double>): List<String> =
-    inputs.map { (field, value) -> "${field.label.removeSuffix(" (cm)")}: ${formatDecimal(value)}" }
+fun measurementSummary(draft: SkirtDraft, text: (Int) -> String): List<String> =
+    SkirtDraftField.entries.map { field ->
+        "${text(field.summaryLabel)}: ${formatDecimal(draft.lengthOf(field).centimetres)}"
+    }

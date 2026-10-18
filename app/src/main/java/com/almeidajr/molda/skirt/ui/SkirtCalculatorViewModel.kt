@@ -2,171 +2,121 @@ package com.almeidajr.molda.skirt.ui
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.serialization.saved
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
-import com.almeidajr.molda.skirt.domain.SkirtMeasurements
+import com.almeidajr.molda.skirt.domain.SkirtDraft
+import com.almeidajr.molda.skirt.domain.SkirtDraftField
+import com.almeidajr.molda.skirt.domain.SkirtDraftReading
+import com.almeidajr.molda.skirt.domain.SkirtFieldError
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
+import com.almeidajr.molda.skirt.domain.readSkirtDraft
+import com.almeidajr.molda.skirt.domain.skirtFieldError
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.serialization.Serializable
 
-enum class MeasurementField(val label: String, val requiresPositive: Boolean = false) {
-    Waist("Circunferência da cintura (cm)", true),
-    Ease("Folga de cintura (cm)"),
-    Length("Comprimento acabado (cm)", true),
-    WaistSeamAllowance("Margem de costura da cintura (cm)"),
-    HemAllowance("Margem de barra (cm)"),
-}
-
-data class CalculatorState(
-    val inputs: Map<MeasurementField, String> = MeasurementField.entries.associateWith { "" },
-    val errors: Map<MeasurementField, String> = emptyMap(),
-    val calculationError: String? = null,
-    val radii: SkirtRadii? = null,
+/** The calculator state that survives process death. */
+@Serializable
+data class CalculatorForm(
+    val inputs: Map<SkirtDraftField, String> = SkirtDraftField.entries.associateWith { "" },
     val sourceProfileName: String? = null,
     val hasAttemptedCalculation: Boolean = false,
+)
+
+/** [draft] and [radii] are both set after a successful calculation, and only then. */
+data class CalculatorState(
+    val form: CalculatorForm = CalculatorForm(),
+    val errors: Map<SkirtDraftField, SkirtFieldError> = emptyMap(),
+    val hasNonfiniteResult: Boolean = false,
+    val draft: SkirtDraft? = null,
+    val radii: SkirtRadii? = null,
     val calculationAttempt: Int = 0,
 )
 
-/** Accepts a decimal comma or point, without grouping, exponents or partial parsing. */
-internal fun parseMeasurement(text: String): Double? {
-    val trimmed = text.trim()
-    if (!DecimalMeasurement.matches(trimmed)) return null
-    return trimmed.replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
-}
-
-private val DecimalMeasurement = Regex("[+-]?[0-9]+([,.][0-9]+)?")
-
-class SkirtCalculatorViewModel(private val savedState: SavedStateHandle) : ViewModel() {
-    private val mutableState = MutableStateFlow(
-        CalculatorState(
-            inputs = MeasurementField.entries.associateWith { savedState[it.name] ?: "" },
-            sourceProfileName = savedState["sourceProfileName"],
-            hasAttemptedCalculation = savedState["hasAttemptedCalculation"] ?: false,
-        ),
-    )
+@HiltViewModel
+class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle) : ViewModel() {
+    private var savedForm by savedState.saved { CalculatorForm() }
+    private val mutableState = MutableStateFlow(CalculatorState(form = savedForm))
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
 
-    fun selectProfile(waist: String, name: String) {
-        edit(MeasurementField.Waist, waist)
-        savedState["sourceProfileName"] = name
-        mutableState.update { it.copy(sourceProfileName = name) }
-    }
+    fun selectProfile(waist: String, name: String) = transition { it.withProfileWaist(waist, name) }
 
-    fun edit(field: MeasurementField, text: String) {
-        savedState[field.name] = text
-        if (field == MeasurementField.Waist) savedState["sourceProfileName"] = null
-        mutableState.update {
-            it.copy(
-                inputs = it.inputs + (field to text),
-                sourceProfileName = if (field ==
-                    MeasurementField.Waist
-                ) {
-                    null
-                } else {
-                    it.sourceProfileName
-                },
-                calculationError = null,
-                radii = null,
-            )
-        }
-    }
+    fun edit(field: SkirtDraftField, text: String) = transition { it.edited(field, text) }
 
-    fun blur(field: MeasurementField) {
-        mutableState.update { current ->
-            if (!current.hasAttemptedCalculation) return@update current
-            val error =
-                measurementError(field, current.inputs.getValue(field))
-                    ?: cuttingMarginError(field, current.inputs)
-            current.copy(
-                errors = if (error ==
-                    null
-                ) {
-                    current.errors - field
-                } else {
-                    current.errors + (field to error)
-                },
-            )
-        }
-    }
+    fun blur(field: SkirtDraftField) = transition { it.blurred(field) }
 
-    fun calculate() {
-        savedState["hasAttemptedCalculation"] = true
-        val current = mutableState.value.copy(
-            hasAttemptedCalculation = true,
-            calculationAttempt = mutableState.value.calculationAttempt + 1,
-        )
-        val values = current.inputs.mapValues { parseMeasurement(it.value) }
-        val errors = MeasurementField.entries.mapNotNull { field ->
-            measurementError(field, current.inputs.getValue(field))?.let { field to it }
-        }.toMap()
-        if (errors.isNotEmpty()) {
-            mutableState.value =
-                current.copy(errors = errors, radii = null, calculationError = null)
-            return
-        }
-        val measurements = skirtMeasurements(values)
-        mutableState.value = when (val result = calculateSkirtRadii(measurements)) {
-            is SkirtCalculation.Success -> current.copy(
-                errors = emptyMap(),
-                calculationError = null,
-                radii = result.radii,
-            )
+    fun calculate() = transition { it.calculated() }
 
-            SkirtCalculation.NonpositiveWaistCutting -> current.copy(
-                errors = mapOf(
-                    MeasurementField.WaistSeamAllowance to
-                        "A margem deve ser menor que o raio de costura da cintura.",
-                ),
-                calculationError = null,
-                radii = null,
-            )
-
-            SkirtCalculation.NonfiniteResult, SkirtCalculation.InvalidMeasurements -> current.copy(
-                errors = emptyMap(),
-                calculationError = "Não foi possível calcular raios finitos. Revise as medidas.",
-                radii = null,
-            )
-        }
+    // Main-thread only, so reading back the new value cannot race another transition.
+    private fun transition(next: (CalculatorState) -> CalculatorState) {
+        mutableState.value = next(mutableState.value)
+        savedForm = mutableState.value.form
     }
 }
 
-private fun measurementError(field: MeasurementField, text: String): String? {
-    val value = parseMeasurement(text)
-    return when {
-        text.isBlank() -> "Informe um valor, inclusive zero para folgas e margens."
-        value == null -> "Informe um número finito, como 80,5, sem separador de milhar."
-        field.requiresPositive && value <= 0.0 -> "Informe um valor maior que zero."
-        value < 0.0 -> "Informe zero ou um valor positivo."
-        else -> null
-    }
+private fun CalculatorState.withProfileWaist(waist: String, name: String): CalculatorState {
+    val edited = edited(SkirtDraftField.Waist, waist)
+    return edited.copy(form = edited.form.copy(sourceProfileName = name))
 }
 
-private fun cuttingMarginError(
-    field: MeasurementField,
-    inputs: Map<MeasurementField, String>,
-): String? {
-    if (field != MeasurementField.WaistSeamAllowance ||
-        inputs.any { (inputField, text) -> measurementError(inputField, text) != null }
-    ) {
-        return null
-    }
-    val values = inputs.mapValues { parseMeasurement(it.value) }
-    return if (calculateSkirtRadii(skirtMeasurements(values)) ==
-        SkirtCalculation.NonpositiveWaistCutting
-    ) {
-        "A margem deve ser menor que o raio de costura da cintura."
-    } else {
-        null
-    }
+private fun CalculatorState.edited(field: SkirtDraftField, text: String): CalculatorState = copy(
+    form = form.copy(
+        inputs = form.inputs + (field to text),
+        sourceProfileName = if (field == SkirtDraftField.Waist) null else form.sourceProfileName,
+    ),
+    hasNonfiniteResult = false,
+    draft = null,
+    radii = null,
+)
+
+/** After the first calculation attempt, revalidates [field] as the user leaves it. */
+private fun CalculatorState.blurred(field: SkirtDraftField): CalculatorState {
+    if (!form.hasAttemptedCalculation) return this
+    val error = skirtFieldError(field, form.inputs.getValue(field))
+        ?: seamAllowanceError(field, form.inputs)
+    return copy(errors = if (error == null) errors - field else errors + (field to error))
 }
 
-private fun skirtMeasurements(values: Map<MeasurementField, Double?>): SkirtMeasurements =
-    SkirtMeasurements(
-        waist = requireNotNull(values[MeasurementField.Waist]),
-        ease = requireNotNull(values[MeasurementField.Ease]),
-        length = requireNotNull(values[MeasurementField.Length]),
-        waistSeamAllowance = requireNotNull(values[MeasurementField.WaistSeamAllowance]),
-        hemAllowance = requireNotNull(values[MeasurementField.HemAllowance]),
+private fun CalculatorState.calculated(): CalculatorState {
+    val attempt = copy(
+        form = form.copy(hasAttemptedCalculation = true),
+        calculationAttempt = calculationAttempt + 1,
+        errors = emptyMap(),
+        hasNonfiniteResult = false,
+        draft = null,
+        radii = null,
     )
+    return when (val reading = readSkirtDraft(form.inputs)) {
+        is SkirtDraftReading.Invalid -> attempt.copy(errors = reading.errors)
+
+        is SkirtDraftReading.Valid -> when (val result = calculateSkirtRadii(reading.draft)) {
+            is SkirtCalculation.Success -> attempt.copy(draft = reading.draft, radii = result.radii)
+
+            SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching -> attempt.copy(
+                errors = mapOf(
+                    SkirtDraftField.WaistSeamAllowance to
+                        SkirtFieldError.SeamAllowanceNotSmallerThanWaistStitching,
+                ),
+            )
+
+            SkirtCalculation.NonfiniteResult -> attempt.copy(hasNonfiniteResult = true)
+        }
+    }
+}
+
+private fun seamAllowanceError(
+    field: SkirtDraftField,
+    inputs: Map<SkirtDraftField, String>,
+): SkirtFieldError? {
+    val reading = readSkirtDraft(inputs)
+    return SkirtFieldError.SeamAllowanceNotSmallerThanWaistStitching.takeIf {
+        field == SkirtDraftField.WaistSeamAllowance &&
+            reading is SkirtDraftReading.Valid &&
+            calculateSkirtRadii(reading.draft) ==
+            SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching
+    }
+}

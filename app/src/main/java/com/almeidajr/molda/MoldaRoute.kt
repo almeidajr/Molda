@@ -27,20 +27,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.almeidajr.molda.profile.data.LocalProfileRepository
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
 import com.almeidajr.molda.profile.ui.ProfileEditor
 import com.almeidajr.molda.profile.ui.ProfilePicker
@@ -51,14 +49,31 @@ import com.almeidajr.molda.profile.ui.profileWaistText
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
+import com.almeidajr.molda.ui.adaptive.AdaptiveContent
+import com.almeidajr.molda.ui.adaptive.HingeSafeContent
+import com.almeidajr.molda.ui.adaptive.minimumTwoPaneWidth
+import kotlinx.serialization.Serializable
+
+/** The editor to open once unsaved changes are discarded; [None] just closes the editor. */
+@Serializable
+private sealed interface PendingEditor {
+    @Serializable
+    data object None : PendingEditor
+
+    @Serializable
+    data object New : PendingEditor
+
+    @Serializable
+    data class Existing(val id: ProfileId) : PendingEditor
+}
 
 // Keep saveable destinations and their transitions together.
 @Suppress("LongMethod")
 @Composable
 fun MoldaRoute(
     modifier: Modifier = Modifier,
-    calculator: SkirtCalculatorViewModel = viewModel(),
-    profiles: ProfilesViewModel = profileViewModel(),
+    calculator: SkirtCalculatorViewModel = hiltViewModel(),
+    profiles: ProfilesViewModel = hiltViewModel(),
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
@@ -69,10 +84,11 @@ fun MoldaRoute(
     var showPicker by rememberSaveable { mutableStateOf(false) }
     var editorFromPicker by rememberSaveable { mutableStateOf(false) }
     var showDiscard by rememberSaveable { mutableStateOf(false) }
-    var pendingEditor by rememberSaveable { mutableStateOf<Long?>(null) }
-    val requestEditor: (Long) -> Unit = { id ->
+    var pendingEditor by rememberSerializable { mutableStateOf<PendingEditor>(PendingEditor.None) }
+    // A null id requests a new profile.
+    val requestEditor: (ProfileId?) -> Unit = { id ->
         requestProfileEditor(profileState, profiles, id) {
-            pendingEditor = id
+            pendingEditor = it
             showDiscard = true
         }
     }
@@ -111,8 +127,8 @@ fun MoldaRoute(
                 },
                 floatingActionButtonPosition = if (wide) FabPosition.Start else FabPosition.End,
                 floatingActionButton = {
-                    if (showManagement && (!profileState.isCreating || wide)) {
-                        ProfileCreateAction(profileState, { requestEditor(0L) })
+                    if (showManagement && (!profileState.isEditorOpen || wide)) {
+                        ProfileCreateAction(profileState, { requestEditor(null) })
                     }
                 },
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -155,28 +171,26 @@ fun MoldaRoute(
     if (showDiscard) {
         DiscardDialog(onDismiss = {
             showDiscard = false
-            pendingEditor = null
+            pendingEditor = PendingEditor.None
         }, onDiscard = {
             showDiscard = false
-            if (pendingEditor == null) finishEditor() else profiles.cancel()
-            pendingEditor?.let { id ->
-                pendingEditor = null
-                if (id == 0L) profiles.startCreating() else profiles.startEditing(id)
+            val next = pendingEditor
+            pendingEditor = PendingEditor.None
+            when (next) {
+                PendingEditor.None -> finishEditor()
+
+                PendingEditor.New -> {
+                    profiles.cancel()
+                    profiles.startCreating()
+                }
+
+                is PendingEditor.Existing -> {
+                    profiles.cancel()
+                    profiles.startEditing(next.id)
+                }
             }
         })
     }
-}
-
-@Composable
-private fun profileViewModel(): ProfilesViewModel {
-    val context = LocalContext.current.applicationContext
-    return viewModel(
-        factory = viewModelFactory {
-            initializer {
-                ProfilesViewModel(LocalProfileRepository(context), createSavedStateHandle())
-            }
-        },
-    )
 }
 
 @Composable
@@ -188,7 +202,7 @@ private fun Destination(
     onUseProfile: () -> Unit,
     onOpenTutorial: () -> Unit,
     cancelEditor: () -> Unit,
-    requestEditor: (Long) -> Unit,
+    requestEditor: (ProfileId?) -> Unit,
     modifier: Modifier,
 ) {
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
@@ -207,11 +221,11 @@ private fun Destination(
         }
         val list: @Composable () -> Unit = {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
-                if (!profileState.isCreating) {
+                if (!profileState.isEditorOpen) {
                     TextButton(onClick = {
                         onManage(false)
                     }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text("Voltar ao cálculo")
+                        Text(stringResource(R.string.profile_back_to_calculator))
                     }
                 }
                 ProfilesContent(profileState, profiles::load, requestEditor, profiles::delete)
@@ -219,17 +233,20 @@ private fun Destination(
         }
         AdaptiveContent(
             modifier = modifier.imePadding(),
-            detailOpen = profileState.isCreating,
+            detailOpen = profileState.isEditorOpen,
             onBack = { if (!profileState.isSaving) cancelEditor() },
             primary = list,
             detail = {
-                if (profileState.isCreating) {
+                if (profileState.isEditorOpen) {
                     editor()
                 } else {
-                    Text("Selecione um perfil ou toque em Novo perfil.", Modifier.padding(16.dp))
+                    Text(
+                        stringResource(R.string.profile_select_or_create),
+                        Modifier.padding(16.dp),
+                    )
                 }
             },
-            compact = { if (profileState.isCreating) editor() else list() },
+            compact = { if (profileState.isEditorOpen) editor() else list() },
         )
     } else {
         Column(modifier) {
@@ -254,11 +271,16 @@ private fun CalculatorTopBar(onManageProfiles: () -> Unit) {
         title = {
             // TopAppBar measures the title as if its 16dp start inset were free, so a title that
             // wraps at large text would run under the action without this end padding.
-            Text("Saia godê inteira", Modifier.padding(end = 16.dp).semantics { heading() })
+            Text(
+                stringResource(R.string.skirt_title),
+                Modifier.padding(end = 16.dp).semantics {
+                    heading()
+                },
+            )
         },
         actions = {
             TextButton(onClick = onManageProfiles, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text("Perfis de medidas")
+                Text(stringResource(R.string.profile_manage))
             }
         },
     )
@@ -268,17 +290,21 @@ private fun CalculatorTopBar(onManageProfiles: () -> Unit) {
 private fun DiscardDialog(onDismiss: () -> Unit, onDiscard: () -> Unit) {
     AlertDialog(
         onDismissRequest = { onDismiss() },
-        title = { Text("Descartar alterações?") },
-        text = { Text("As alterações deste perfil ainda não foram salvas.") },
+        title = { Text(stringResource(R.string.profile_discard_title)) },
+        text = { Text(stringResource(R.string.profile_discard_body)) },
         confirmButton = {
             TextButton(onClick = {
                 onDiscard()
-            }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Descartar") }
+            }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.profile_discard))
+            }
         },
         dismissButton = {
             TextButton(onClick = {
                 onDismiss()
-            }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Continuar editando") }
+            }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.profile_keep_editing))
+            }
         },
     )
 }
@@ -292,7 +318,8 @@ private fun AppProfilePicker(
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilePicker(state, onDismiss, profiles::load, onSelect = {
-        calculator.selectProfile(profileWaistText(it.measurements.waist), it.measurements.name)
+        val measurements = it.measurements
+        calculator.selectProfile(profileWaistText(measurements.waist), measurements.name.text)
         onDismiss()
     }, onCreate = onCreate)
 }
@@ -305,9 +332,10 @@ private fun ProfileSaveFeedback(
     onReturnToPicker: () -> Unit,
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.savedMessage) {
-        state.savedMessage?.let {
-            if (!state.isCreating && editorFromPicker) onReturnToPicker()
+    val message = state.savedMessage?.let { stringResource(it) }
+    LaunchedEffect(message) {
+        message?.let {
+            if (!state.isEditorOpen && editorFromPicker) onReturnToPicker()
             snackbar.showSnackbar(it)
             profiles.dismissMessage()
         }
@@ -325,7 +353,7 @@ private fun ProfileBackHandler(
     onLeave: () -> Unit,
 ) {
     BackHandler(enabled = showManagement && !showPicker && !WindowInsets.isImeVisible) {
-        if (state.isCreating) {
+        if (state.isEditorOpen) {
             if (!state.isSaving) onCancel()
         } else {
             onLeave()
@@ -336,13 +364,13 @@ private fun ProfileBackHandler(
 private fun requestProfileEditor(
     state: ProfilesState,
     profiles: ProfilesViewModel,
-    id: Long,
-    onDiscard: () -> Unit,
+    id: ProfileId?,
+    onDiscard: (PendingEditor) -> Unit,
 ) {
     if (state.isSaving || state.isLoading || state.loadError != null) return
-    if (state.isCreating && state.isDirty) {
-        onDiscard()
-    } else if (id == 0L) {
+    if (state.isEditorOpen && state.isDirty) {
+        onDiscard(id?.let(PendingEditor::Existing) ?: PendingEditor.New)
+    } else if (id == null) {
         profiles.startCreating()
     } else {
         profiles.startEditing(id)

@@ -29,8 +29,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
+import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
@@ -40,6 +43,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -94,7 +103,7 @@ class ProfileFailuresTest {
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
         composeRule.onNodeWithText("Existente").assertIsDisplayed()
-        runBlocking { assertEquals(2, storage.list().size) }
+        runBlocking { assertEquals(2, storage.profiles().first().size) }
     }
 
     @Test
@@ -120,7 +129,7 @@ class ProfileFailuresTest {
     @Test
     fun updateAndDeleteFailures_keepSavedRecordsDraftAndCalculationWithoutSuccess() {
         val storage = FailingProfiles()
-        val original = runBlocking { storage.list() }
+        val original = runBlocking { storage.profiles().first() }
         showProfiles(storage)
         edit("Circunferência da cintura (cm)", "95")
         edit("Comprimento acabado (cm)", "60")
@@ -151,7 +160,7 @@ class ProfileFailuresTest {
             .performScrollTo().assertTextContains("95")
         composeRule.onNodeWithText("Comprimento acabado (cm)")
             .performScrollTo().assertTextContains("60")
-        runBlocking { assertEquals(original, storage.list()) }
+        runBlocking { assertEquals(original, storage.profiles().first()) }
     }
 
     @Test
@@ -296,30 +305,43 @@ private class FailingProfiles(
     val saveGate: CompletableDeferred<Unit>? = null,
     val measurementDate: LocalDate = LocalDate.of(2026, 10, 12),
 ) : ProfileRepository {
-    private val records =
+    // Emits again after each change, like the Room repository.
+    private val records = MutableStateFlow(
         listOf(
             MeasurementProfile(
-                1,
-                ProfileMeasurements("Existente", 80.0, measurementDate),
+                ProfileId(1),
+                ProfileMeasurements(ProfileName("Existente"), Length(80.0), measurementDate),
             ),
             MeasurementProfile(
-                2,
-                ProfileMeasurements("Outra pessoa", 95.0, LocalDate.of(2026, 10, 11)),
+                ProfileId(2),
+                ProfileMeasurements(
+                    ProfileName("Outra pessoa"),
+                    Length(95.0),
+                    LocalDate.of(2026, 10, 11),
+                ),
             ),
-        )
-    override suspend fun list(): List<MeasurementProfile> {
+        ),
+    )
+    override fun profiles(): Flow<List<MeasurementProfile>> = flow {
         loadGate?.await()
         if (failLoad) error("Controlled load failure")
-        return records
+        emitAll(records)
     }
-    override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile {
+    override suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile> {
         saveGate?.await()
-        if (failSave) error("Controlled save failure")
-        return MeasurementProfile(3, measurements)
+        return if (failSave) {
+            Result.failure(IllegalStateException("Controlled save failure"))
+        } else {
+            Result.success(
+                MeasurementProfile(ProfileId(3), measurements)
+                    .also { created -> records.update { it + created } },
+            )
+        }
     }
-    override suspend fun update(profile: MeasurementProfile) = error("Controlled update failure")
-    override suspend fun delete(id: Long) {
+    override suspend fun update(profile: MeasurementProfile): Result<Unit> =
+        Result.failure(IllegalStateException("Controlled update failure"))
+    override suspend fun delete(id: ProfileId): Result<Unit> {
         deleteGate?.await()
-        error("Controlled delete failure")
+        return Result.failure(IllegalStateException("Controlled delete failure"))
     }
 }

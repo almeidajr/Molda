@@ -26,9 +26,9 @@ Lint treats warnings as errors and there are no Detekt/Lint baselines: fix findi
 Single-activity Compose app organized by feature, each split into `domain` / `data` / `ui`:
 
 - `skirt/` — full-circle skirt calculator. `domain/CalculateSkirtRadii.kt` holds the pure math; `ui/` has the screen, `SkirtCalculatorViewModel`, and the Rive-driven `FabricFoldingTutorial`.
-- `profile/` — measurement profiles. `domain/ProfileRepository` is the boundary; `data/LocalProfileRepository` implements it with a hand-written `SQLiteOpenHelper` (no Room) on `Dispatchers.IO`.
+- `profile/` — measurement profiles. `domain/ProfileRepository` is the boundary; `data/LocalProfileRepository` implements it with Room 3 in `molda.db` (a `Flow` query plus commands returning `Result`). The schema is exported to `app/schemas/`; every schema change needs a real `Migration`, never destructive fallback (`docs/adr/0002`).
 
-Entry flow: `MainActivity` (calls `Rive.init`) → `SkirtCalculatorRoute` → `MoldaRoute.kt`, which owns cross-feature navigation state (profile management, picker, editor, discard dialog) via `rememberSaveable` flags, wires both ViewModels, and switches to two-pane layouts on wide windows / avoids hinges (`AdaptiveContent.kt`).
+Entry flow: `MainActivity` (calls `Rive.init`) → `MoldaRoute.kt`, which owns cross-feature navigation state (profile management, picker, editor, discard dialog) via `rememberSaveable` flags, wires both ViewModels, and switches to two-pane layouts on wide windows / avoids hinges (`ui/adaptive/AdaptiveContent.kt`).
 
 ## Rive animation
 

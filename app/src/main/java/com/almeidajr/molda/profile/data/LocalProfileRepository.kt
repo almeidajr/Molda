@@ -1,115 +1,59 @@
 package com.almeidajr.molda.profile.data
 
-import android.content.ContentValues
 import android.content.Context
-import android.database.DatabaseErrorHandler
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteException
-import android.database.sqlite.SQLiteOpenHelper
+import androidx.room3.Room
+import androidx.sqlite.driver.AndroidSQLiteDriver
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
+import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import java.time.LocalDate
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
-class LocalProfileRepository(
-    context: Context,
-    databaseName: String = "profiles.db",
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) : ProfileRepository,
+/** Room-backed profiles in [databaseName]; the old `profiles.db` is deliberately not read (docs/adr/0002). */
+class LocalProfileRepository(context: Context, databaseName: String = "molda.db") :
+    ProfileRepository,
     AutoCloseable {
-    private val database = ProfileDatabase(context.applicationContext, databaseName)
+    private val database = Room
+        .databaseBuilder<ProfileDatabase>(context.applicationContext, databaseName)
+        .setDriver(AndroidSQLiteDriver())
+        .build()
+    private val dao = database.profiles()
 
-    override suspend fun list(): List<MeasurementProfile> = withContext(ioDispatcher) {
-        database.readableDatabase.query(
-            "profiles",
-            arrayOf("id", "name", "waist", "measurement_date", "notes"),
-            null,
-            null,
-            null,
-            null,
-            "id ASC",
-        ).use { cursor ->
-            buildList {
-                while (cursor.moveToNext()) {
-                    add(
-                        MeasurementProfile(
-                            cursor.getLong(cursor.getColumnIndexOrThrow("id")),
-                            ProfileMeasurements(
-                                cursor.getString(cursor.getColumnIndexOrThrow("name")),
-                                cursor.getDouble(cursor.getColumnIndexOrThrow("waist")),
-                                LocalDate.parse(
-                                    cursor.getString(
-                                        cursor.getColumnIndexOrThrow("measurement_date"),
-                                    ),
-                                ),
-                                cursor.getString(cursor.getColumnIndexOrThrow("notes")),
-                            ),
-                        ),
-                    )
-                }
-            }
+    override fun profiles(): Flow<List<MeasurementProfile>> =
+        dao.profiles().map { rows -> rows.map { it.toProfile() } }
+
+    override suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile> =
+        resultOf {
+            MeasurementProfile(ProfileId(dao.insert(measurements.toEntity())), measurements)
+        }
+
+    override suspend fun update(profile: MeasurementProfile): Result<Unit> = resultOf {
+        check(dao.update(profile.measurements.toEntity(profile.id.value)) == 1) {
+            "Profile no longer exists"
         }
     }
 
-    override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile =
-        withContext(ioDispatcher) {
-            val checked = measurements.copy()
-            MeasurementProfile(
-                database.writableDatabase.insertOrThrow("profiles", null, checked.toValues()),
-                checked,
-            )
-        }
-
-    override suspend fun update(profile: MeasurementProfile): Unit = withContext(ioDispatcher) {
-        val checked = profile.copy(measurements = profile.measurements.copy())
-        check(
-            database.writableDatabase.update(
-                "profiles",
-                checked.measurements.toValues(),
-                "id = ?",
-                arrayOf(checked.id.toString()),
-            ) == 1,
-        ) { "Profile no longer exists" }
-    }
-
-    override suspend fun delete(id: Long): Unit = withContext(ioDispatcher) {
-        require(id > 0) { "Profile identity must be positive" }
-        check(
-            database.writableDatabase.delete("profiles", "id = ?", arrayOf(id.toString())) == 1,
-        ) { "Profile no longer exists" }
+    override suspend fun delete(id: ProfileId): Result<Unit> = resultOf {
+        check(dao.delete(id.value) == 1) { "Profile no longer exists" }
     }
 
     override fun close() = database.close()
 }
 
-private fun ProfileMeasurements.toValues(): ContentValues = ContentValues().apply {
-    put("name", name)
-    put("waist", waist)
-    put("measurement_date", measurementDate.toString())
-    put("notes", notes)
-}
+// Domain constructors validate every loaded row, so a malformed row fails the load.
+private fun ProfileEntity.toProfile() = MeasurementProfile(
+    ProfileId(id),
+    ProfileMeasurements(ProfileName(name), Length(waist), LocalDate.parse(measurementDate), notes),
+)
 
-private class ProfileDatabase(context: Context, name: String) :
-    SQLiteOpenHelper(
-        context,
-        name,
-        null,
-        1,
-        // Default corruption handling deletes records; preserve them and report the failure instead.
-        DatabaseErrorHandler { throw SQLiteException("Profile database is corrupt") },
-    ) {
-    override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL(
-            "CREATE TABLE profiles (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "name TEXT NOT NULL CHECK(length(trim(name)) > 0), " +
-                "waist REAL NOT NULL CHECK(waist > 0), measurement_date TEXT NOT NULL, " +
-                "notes TEXT NOT NULL)",
-        )
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int): Unit =
-        throw SQLiteException("Unsupported profile database version")
-}
+private fun ProfileMeasurements.toEntity(id: Long = 0) = ProfileEntity(
+    id = id,
+    name = name.text,
+    waist = waist.centimetres,
+    measurementDate = measurementDate.toString(),
+    notes = notes,
+)

@@ -32,14 +32,15 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
+import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
-internal fun DraftingExplanation(inputs: Map<MeasurementField, String>, radii: SkirtRadii) {
-    val seam = enteredValue(inputs, MeasurementField.WaistSeamAllowance)
-    val hem = enteredValue(inputs, MeasurementField.HemAllowance)
+internal fun DraftingExplanation(inputs: Map<SkirtDraftField, String>, radii: SkirtRadii) {
+    val seam = enteredValue(inputs, SkirtDraftField.WaistSeamAllowance)
+    val hem = enteredValue(inputs, SkirtDraftField.HemAllowance)
     // The pair reads as one set of toggles: 8dp between 48dp targets, not the page's 16dp.
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Disclosure("Como levar os raios ao papel") {
@@ -61,7 +62,7 @@ internal fun DraftingExplanation(inputs: Map<MeasurementField, String>, radii: S
 }
 
 /** A typed measurement as the user entered it, with a pt-BR decimal comma. */
-internal fun enteredValue(inputs: Map<MeasurementField, String>, field: MeasurementField): String =
+internal fun enteredValue(inputs: Map<SkirtDraftField, String>, field: SkirtDraftField): String =
     inputs.getValue(field).trim().replace('.', ',')
 
 /** The diagram, coincidences and limits as one figure that the text equivalent announces once. */
@@ -105,12 +106,12 @@ internal fun Disclosure(label: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun DraftingFormulas(inputs: Map<MeasurementField, String>, radii: SkirtRadii) {
-    val waist = enteredValue(inputs, MeasurementField.Waist)
-    val ease = enteredValue(inputs, MeasurementField.Ease)
-    val length = enteredValue(inputs, MeasurementField.Length)
-    val seam = enteredValue(inputs, MeasurementField.WaistSeamAllowance)
-    val hem = enteredValue(inputs, MeasurementField.HemAllowance)
+private fun DraftingFormulas(inputs: Map<SkirtDraftField, String>, radii: SkirtRadii) {
+    val waist = enteredValue(inputs, SkirtDraftField.Waist)
+    val ease = enteredValue(inputs, SkirtDraftField.Ease)
+    val length = enteredValue(inputs, SkirtDraftField.FinishedLength)
+    val seam = enteredValue(inputs, SkirtDraftField.WaistSeamAllowance)
+    val hem = enteredValue(inputs, SkirtDraftField.HemAllowance)
     Text("Valores em centímetros.")
     Text("Costura da cintura: r = (cintura + folga) / (2π)")
     Text("r = ($waist + $ease) / (2π) = ${formatCentimetres(radii.waistStitching)}")

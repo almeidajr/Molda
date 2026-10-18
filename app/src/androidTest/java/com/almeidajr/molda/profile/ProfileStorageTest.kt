@@ -1,14 +1,15 @@
 package com.almeidajr.molda.profile
 
 import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteException
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
+import com.almeidajr.molda.profile.domain.ProfileName
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -21,53 +22,36 @@ class ProfileStorageTest {
         val databaseName = "profiles-mutations-test.db"
         context.deleteDatabase(databaseName)
         try {
-            val original = ProfileMeasurements("Ana", 80.5, LocalDate.of(2026, 10, 12), "Antes")
+            val original =
+                ProfileMeasurements(
+                    ProfileName("Ana"),
+                    Length(80.5),
+                    LocalDate.of(2026, 10, 12),
+                    "Antes",
+                )
             val profiles = LocalProfileRepository(context, databaseName).use { storage ->
-                listOf(storage.create(original), storage.create(original))
+                listOf(storage.create(original).getOrThrow(), storage.create(original).getOrThrow())
             }
             val edited = profiles[0].copy(
                 measurements = ProfileMeasurements(
-                    "Ana atualizada",
-                    81.123456789,
+                    ProfileName("Ana atualizada"),
+                    Length(81.123456789),
                     LocalDate.of(2026, 10, 13),
                     "Depois",
                 ),
             )
             LocalProfileRepository(context, databaseName).use { storage ->
-                storage.update(edited)
+                storage.update(edited).getOrThrow()
             }
             LocalProfileRepository(context, databaseName).use { storage ->
-                assertEquals(listOf(edited, profiles[1]), storage.list())
-                storage.delete(edited.id)
+                assertEquals(listOf(edited, profiles[1]), storage.profiles().first())
+                storage.delete(edited.id).getOrThrow()
             }
             LocalProfileRepository(context, databaseName).use { storage ->
-                assertEquals(listOf(profiles[1]), storage.list())
+                assertEquals(listOf(profiles[1]), storage.profiles().first())
+                assertTrue(storage.update(edited).isFailure)
+                assertTrue(storage.delete(edited.id).isFailure)
             }
-        } finally {
-            context.deleteDatabase(databaseName)
-        }
-    }
-
-    @Test
-    fun corruptDatabase_loadFailsWithoutDeletingOrReplacingTheFile() = runBlocking {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val databaseName = "profiles-corrupt-test.db"
-        context.deleteDatabase(databaseName)
-        val file = context.getDatabasePath(databaseName)
-        file.parentFile?.mkdirs()
-        val corruptBytes = "corrupt profile records must remain untouched".toByteArray()
-        file.writeBytes(corruptBytes)
-        try {
-            LocalProfileRepository(context, databaseName).use { storage ->
-                var failed = false
-                try {
-                    storage.list()
-                } catch (_: SQLiteException) {
-                    failed = true
-                }
-                assertTrue("Corrupt records must produce a load failure", failed)
-            }
-            assertArrayEquals(corruptBytes, file.readBytes())
         } finally {
             context.deleteDatabase(databaseName)
         }
@@ -80,7 +64,13 @@ class ProfileStorageTest {
         context.deleteDatabase(databaseName)
         try {
             val original = LocalProfileRepository(context, databaseName).use { storage ->
-                storage.create(ProfileMeasurements("Ana", 80.5, LocalDate.of(2026, 10, 12)))
+                storage.create(
+                    ProfileMeasurements(
+                        ProfileName("Ana"),
+                        Length(80.5),
+                        LocalDate.of(2026, 10, 12),
+                    ),
+                ).getOrThrow()
             }
             listOf(
                 "UPDATE profiles SET waist = 1e999",
@@ -96,7 +86,7 @@ class ProfileStorageTest {
                 LocalProfileRepository(context, databaseName).use { storage ->
                     var failed = false
                     try {
-                        storage.list()
+                        storage.profiles().first()
                     } catch (_: IllegalArgumentException) {
                         failed = true
                     } catch (_: DateTimeParseException) {
@@ -112,7 +102,7 @@ class ProfileStorageTest {
                     db.execSQL("UPDATE profiles SET waist = 80.5, measurement_date = '2026-10-12'")
                 }
                 LocalProfileRepository(context, databaseName).use { storage ->
-                    assertEquals(listOf(original), storage.list())
+                    assertEquals(listOf(original), storage.profiles().first())
                 }
             }
         } finally {
@@ -127,14 +117,20 @@ class ProfileStorageTest {
         context.deleteDatabase(databaseName)
         try {
             val first =
-                ProfileMeasurements("Ana", 80.5, LocalDate.of(2026, 10, 12), "Medida no cós")
-            val second = ProfileMeasurements("Ana", 92.25, LocalDate.of(2026, 9, 1), "")
+                ProfileMeasurements(
+                    ProfileName("Ana"),
+                    Length(80.5),
+                    LocalDate.of(2026, 10, 12),
+                    "Medida no cós",
+                )
+            val second =
+                ProfileMeasurements(ProfileName("Ana"), Length(92.25), LocalDate.of(2026, 9, 1), "")
             val identities = LocalProfileRepository(context, databaseName).use { storage ->
-                listOf(storage.create(first), storage.create(second))
+                listOf(storage.create(first).getOrThrow(), storage.create(second).getOrThrow())
             }
             assertNotEquals(identities[0].id, identities[1].id)
             LocalProfileRepository(context, databaseName).use { storage ->
-                assertEquals(identities, storage.list())
+                assertEquals(identities, storage.profiles().first())
             }
         } finally {
             context.deleteDatabase(databaseName)

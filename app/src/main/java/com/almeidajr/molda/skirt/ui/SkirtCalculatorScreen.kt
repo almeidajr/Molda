@@ -1,5 +1,6 @@
 package com.almeidajr.molda.skirt.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -36,7 +37,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -45,33 +48,27 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.almeidajr.molda.AdaptiveContent
-import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.R
+import com.almeidajr.molda.skirt.domain.SkirtDraft
+import com.almeidajr.molda.skirt.domain.SkirtDraftField
+import com.almeidajr.molda.skirt.domain.SkirtFieldError
+import com.almeidajr.molda.ui.adaptive.AdaptiveContent
 import kotlinx.coroutines.launch
-
-@Composable
-fun SkirtCalculatorRoute(
-    modifier: Modifier = Modifier,
-    viewModel: SkirtCalculatorViewModel = viewModel(),
-) {
-    MoldaRoute(modifier = modifier, calculator = viewModel)
-}
 
 @Composable
 fun SkirtCalculatorScreen(
     state: CalculatorState,
-    onEdit: (MeasurementField, String) -> Unit,
+    onEdit: (SkirtDraftField, String) -> Unit,
     onCalculate: () -> Unit,
     modifier: Modifier = Modifier,
-    onBlur: (MeasurementField) -> Unit = {},
+    onBlur: (SkirtDraftField) -> Unit = {},
     onUseProfile: () -> Unit = {},
     onOpenTutorial: () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
-    val focusRequesters = remember { MeasurementField.entries.associateWith { FocusRequester() } }
+    val focusRequesters = remember { SkirtDraftField.entries.associateWith { FocusRequester() } }
     val bringRequesters =
-        remember { MeasurementField.entries.associateWith { BringIntoViewRequester() } }
+        remember { SkirtDraftField.entries.associateWith { BringIntoViewRequester() } }
     val scope = rememberCoroutineScope()
     val resultRequester = remember { BringIntoViewRequester() }
     RevealCalculationOutcome(state, resultRequester, focusRequesters, bringRequesters)
@@ -86,7 +83,7 @@ fun SkirtCalculatorScreen(
                 onUseProfile = onUseProfile,
                 onNext = {
                     focusRequesters.getValue(
-                        MeasurementField.entries[field.ordinal + 1],
+                        SkirtDraftField.entries[field.ordinal + 1],
                     ).requestFocus()
                 },
                 onDone = {
@@ -106,7 +103,7 @@ fun SkirtCalculatorScreen(
                 onCalculate()
             },
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        ) { Text("Calcular") }
+        ) { Text(stringResource(R.string.skirt_calculate)) }
     }
     val outcome: @Composable () -> Unit = {
         CalculationOutcome(
@@ -114,8 +111,8 @@ fun SkirtCalculatorScreen(
             onOpenTutorial,
             Modifier.bringIntoViewRequester(resultRequester),
         ) {
-            focusRequesters.getValue(MeasurementField.Waist).requestFocus()
-            scope.launch { bringRequesters.getValue(MeasurementField.Waist).bringIntoView() }
+            focusRequesters.getValue(SkirtDraftField.Waist).requestFocus()
+            scope.launch { bringRequesters.getValue(SkirtDraftField.Waist).bringIntoView() }
         }
     }
     AdaptiveCalculator(state, modifier, form, outcome)
@@ -126,8 +123,8 @@ fun SkirtCalculatorScreen(
 private fun RevealCalculationOutcome(
     state: CalculatorState,
     resultRequester: BringIntoViewRequester,
-    focusRequesters: Map<MeasurementField, FocusRequester>,
-    bringRequesters: Map<MeasurementField, BringIntoViewRequester>,
+    focusRequesters: Map<SkirtDraftField, FocusRequester>,
+    bringRequesters: Map<SkirtDraftField, BringIntoViewRequester>,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     // Saved so returning from the tutorial keeps the scroll position instead of revealing again.
@@ -140,7 +137,7 @@ private fun RevealCalculationOutcome(
             keyboard?.hide()
             resultRequester.bringIntoView()
         }
-        MeasurementField.entries.firstOrNull { it in state.errors }?.let { field ->
+        SkirtDraftField.entries.firstOrNull { it in state.errors }?.let { field ->
             focusRequesters.getValue(field).requestFocus()
             bringRequesters.getValue(field).bringIntoView()
         }
@@ -148,12 +145,13 @@ private fun RevealCalculationOutcome(
 }
 
 @Composable
-private fun MeasurementGroups(input: @Composable (MeasurementField) -> Unit) {
+private fun MeasurementGroups(input: @Composable (SkirtDraftField) -> Unit) {
     listOf(
-        "Medida do corpo" to listOf(MeasurementField.Waist),
-        "Escolhas da peça" to listOf(MeasurementField.Ease, MeasurementField.Length),
-        "Margens de corte" to
-            listOf(MeasurementField.WaistSeamAllowance, MeasurementField.HemAllowance),
+        R.string.skirt_group_body to listOf(SkirtDraftField.Waist),
+        R.string.skirt_group_choices to
+            listOf(SkirtDraftField.Ease, SkirtDraftField.FinishedLength),
+        R.string.skirt_group_allowances to
+            listOf(SkirtDraftField.WaistSeamAllowance, SkirtDraftField.HemAllowance),
     ).forEach { (title, fields) ->
         Surface(
             shape = MaterialTheme.shapes.medium,
@@ -162,7 +160,7 @@ private fun MeasurementGroups(input: @Composable (MeasurementField) -> Unit) {
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
-                    title,
+                    stringResource(title),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.semantics { heading() },
                 )
@@ -172,32 +170,55 @@ private fun MeasurementGroups(input: @Composable (MeasurementField) -> Unit) {
     }
 }
 
-private fun measurementGuidance(field: MeasurementField): String = when (field) {
-    MeasurementField.Waist ->
-        "Meça a circunferência da cintura na posição desejada do cós, " +
-            "sem acrescentar folga ou margens."
+/** The form label of each draft field, with its unit. */
+@get:StringRes
+val SkirtDraftField.label: Int
+    get() = when (this) {
+        SkirtDraftField.Waist -> R.string.skirt_field_waist
+        SkirtDraftField.Ease -> R.string.skirt_field_ease
+        SkirtDraftField.FinishedLength -> R.string.skirt_field_finished_length
+        SkirtDraftField.WaistSeamAllowance -> R.string.skirt_field_waist_seam_allowance
+        SkirtDraftField.HemAllowance -> R.string.skirt_field_hem_allowance
+    }
 
-    MeasurementField.Length ->
-        "Meça o comprimento até a barra acabada, " +
-            "a partir da linha de costura da cintura; exclua a altura do cós. As margens são informadas separadamente."
+/** Each draft field's name in the measurement summary, whose heading states the unit. */
+@get:StringRes
+val SkirtDraftField.summaryLabel: Int
+    get() = when (this) {
+        SkirtDraftField.Waist -> R.string.skirt_summary_waist
+        SkirtDraftField.Ease -> R.string.skirt_summary_ease
+        SkirtDraftField.FinishedLength -> R.string.skirt_summary_finished_length
+        SkirtDraftField.WaistSeamAllowance -> R.string.skirt_summary_waist_seam_allowance
+        SkirtDraftField.HemAllowance -> R.string.skirt_summary_hem_allowance
+    }
 
-    MeasurementField.Ease ->
-        "Folga é o acréscimo à cintura para vestir; informe zero se não desejar folga."
+@StringRes
+private fun errorMessage(error: SkirtFieldError): Int = when (error) {
+    SkirtFieldError.Blank -> R.string.skirt_error_blank
 
-    MeasurementField.WaistSeamAllowance ->
-        "Tecido reservado para costurar a cintura; informe zero se não houver margem."
+    SkirtFieldError.NotANumber -> R.string.skirt_error_not_a_number
 
-    MeasurementField.HemAllowance ->
-        "Tecido reservado para acabar a barra; informe zero se não houver margem."
+    SkirtFieldError.NotPositive -> R.string.skirt_error_not_positive
+
+    SkirtFieldError.Negative -> R.string.skirt_error_negative
+
+    SkirtFieldError.SeamAllowanceNotSmallerThanWaistStitching ->
+        R.string.skirt_error_seam_allowance_too_large
+}
+
+@StringRes
+private fun measurementGuidance(field: SkirtDraftField): Int = when (field) {
+    SkirtDraftField.Waist -> R.string.skirt_guidance_waist
+    SkirtDraftField.FinishedLength -> R.string.skirt_guidance_finished_length
+    SkirtDraftField.Ease -> R.string.skirt_guidance_ease
+    SkirtDraftField.WaistSeamAllowance -> R.string.skirt_guidance_waist_seam_allowance
+    SkirtDraftField.HemAllowance -> R.string.skirt_guidance_hem_allowance
 }
 
 // The screen title lives in the top app bar.
 @Composable
 private fun CalculatorIntro() {
-    Text(
-        "Medidas em centímetros. Informe folga e margens explicitamente; " +
-            "zero é válido.",
-    )
+    Text(stringResource(R.string.skirt_intro))
 }
 
 @Composable
@@ -207,32 +228,34 @@ private fun CalculationOutcome(
     modifier: Modifier = Modifier,
     onEditMeasurements: () -> Unit,
 ) {
-    state.calculationError?.let {
+    if (state.hasNonfiniteResult) {
         Text(
-            it,
+            stringResource(R.string.skirt_error_nonfinite_result),
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
         )
     }
-    state.radii?.let {
-        val card = cuttingCard(it)
+    val draft = state.draft
+    val radii = state.radii
+    if (draft != null && radii != null) {
+        val card = cuttingCard(radii, LocalResources.current::getString)
         val description = diagramDescription(
             card,
-            enteredValue(state.inputs, MeasurementField.WaistSeamAllowance),
-            enteredValue(state.inputs, MeasurementField.HemAllowance),
+            enteredValue(state.form.inputs, SkirtDraftField.WaistSeamAllowance),
+            enteredValue(state.form.inputs, SkirtDraftField.HemAllowance),
         )
         CuttingCard(card, description, modifier)
-        SkirtResults(state.inputs, onOpenTutorial, onEditMeasurements)
-        DraftingExplanation(state.inputs, it)
+        SkirtResults(draft, onOpenTutorial, onEditMeasurements)
+        DraftingExplanation(state.form.inputs, radii)
     }
 }
 
 @Composable
 private fun MeasurementInput(
-    field: MeasurementField,
+    field: SkirtDraftField,
     state: CalculatorState,
-    onEdit: (MeasurementField, String) -> Unit,
-    onBlur: (MeasurementField) -> Unit,
+    onEdit: (SkirtDraftField, String) -> Unit,
+    onBlur: (SkirtDraftField) -> Unit,
     onNext: () -> Unit,
     onDone: () -> Unit,
     onFocused: () -> Unit,
@@ -242,15 +265,16 @@ private fun MeasurementInput(
     val error = state.errors[field]
     var wasFocused by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (field == MeasurementField.Waist) WaistSource(state.sourceProfileName, onUseProfile)
+        if (field == SkirtDraftField.Waist) WaistSource(state.form.sourceProfileName, onUseProfile)
         OutlinedTextField(
-            value = state.inputs.getValue(field),
+            value = state.form.inputs.getValue(field),
             onValueChange = { onEdit(field, it) },
-            label = { Text(field.label) },
+            label = { Text(stringResource(field.label)) },
             isError = error != null,
             supportingText = {
                 Text(
-                    error ?: measurementGuidance(field),
+                    error?.let { stringResource(errorMessage(it)) }
+                        ?: stringResource(measurementGuidance(field)),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.semantics {
                         if (error != null) liveRegion = LiveRegionMode.Polite
@@ -261,7 +285,7 @@ private fun MeasurementInput(
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Decimal,
                 imeAction = if (field ==
-                    MeasurementField.HemAllowance
+                    SkirtDraftField.HemAllowance
                 ) {
                     ImeAction.Done
                 } else {
@@ -283,20 +307,21 @@ private fun MeasurementInput(
 private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            sourceProfileName?.let { "Cintura copiada do perfil: $it" } ?: "Medida manual",
+            sourceProfileName?.let { stringResource(R.string.skirt_waist_from_profile, it) }
+                ?: stringResource(R.string.skirt_waist_manual),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         TextButton(onClick = onUseProfile, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text("Usar perfil")
+            Text(stringResource(R.string.profile_picker_title))
         }
     }
 }
 
 @Composable
 private fun SkirtResults(
-    inputs: Map<MeasurementField, String>,
+    draft: SkirtDraft,
     onOpenTutorial: () -> Unit,
     onEditMeasurements: () -> Unit,
 ) {
@@ -307,18 +332,16 @@ private fun SkirtResults(
     ) {
         FabricFoldingTutorialEntry(onOpenTutorial)
         TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text("Editar medidas")
+            Text(stringResource(R.string.skirt_edit_measurements))
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            "Medidas utilizadas (cm)",
+            stringResource(R.string.skirt_used_measurements),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
-        val summary = measurementSummary(
-            inputs.mapValues { requireNotNull(parseMeasurement(it.value)) },
-        )
+        val summary = measurementSummary(draft, LocalResources.current::getString)
         // One wrapping line; TalkBack hears pauses instead of the visual separators.
         Text(
             summary.joinToString(" · "),
@@ -333,15 +356,11 @@ private fun SkirtResults(
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                "Limites do cálculo",
+                stringResource(R.string.skirt_limits_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(
-                "Para saia godê inteira em tecido plano, com cós e fechamento. " +
-                    "Não inclui divisão em painéis, margens do fechamento, molde do cós " +
-                    "ou metragem de tecido. O comprimento acabado exclui a altura do cós.",
-            )
+            Text(stringResource(R.string.skirt_limits_body))
         }
     }
 }
@@ -367,7 +386,7 @@ private fun AdaptiveCalculator(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (state.radii == null) Text("Preencha as medidas e toque em Calcular.")
+                if (state.radii == null) Text(stringResource(R.string.skirt_fill_and_calculate))
                 outcome()
             }
         },

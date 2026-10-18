@@ -1,7 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room3)
 }
 
 android {
@@ -48,6 +52,18 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        // Lets Robolectric tests resolve the app's string resources.
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.jvmArgs(
+                // Robolectric's bundled Conscrypt loads a native library; this silences the JDK warning.
+                "--enable-native-access=ALL-UNNAMED",
+                // With app resources, Robolectric's application setup reflects into FileDescriptor.
+                "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED",
+            )
+        }
+    }
     lint {
         warningsAsErrors = true
         abortOnError = true
@@ -67,7 +83,21 @@ kotlin {
         // K2 reports unused variables and similar IDE-level diagnostics only with -Wextra.
         extraWarnings = true
         freeCompilerArgs.add("-Xreturn-value-checker=check")
+        // App-wide, because KSP output compiles in the same task and kotlinc cannot scope warning
+        // levels per source set. Room's generated ProfileDao_Impl and ProfileDatabase_Impl declare
+        // `public override` members (REDUNDANT_VISIBILITY_MODIFIER) and never-reassigned locals
+        // such as `var _argIndex` (CAN_BE_VAL), which -Wextra plus -Werror would fail. Detekt's
+        // RedundantVisibilityModifier and VarCouldBeVal (config/detekt.yml) still enforce both on
+        // our own sources. Drop these once the generated code lives in a module without -Wextra.
+        freeCompilerArgs.addAll(
+            "-Xwarning-level=REDUNDANT_VISIBILITY_MODIFIER:disabled",
+            "-Xwarning-level=CAN_BE_VAL:disabled",
+        )
     }
+}
+
+room3 {
+    schemaDirectory("$projectDir/schemas")
 }
 
 detekt {
@@ -92,7 +122,18 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.room3.runtime)
+    ksp(libs.androidx.room3.compiler)
     testImplementation(libs.junit)
+    testImplementation(libs.konsist)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.lifecycle.viewmodel.testing)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

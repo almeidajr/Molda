@@ -1,5 +1,6 @@
 package com.almeidajr.molda.profile.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -39,6 +41,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
+import com.almeidajr.molda.profile.domain.parseProfileDate
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -68,7 +71,7 @@ fun ProfileEditor(
         state.loadError?.let {
             ProfileMutationError(it)
             TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text("Tentar carregar novamente")
+                Text(stringResource(R.string.profile_retry_load))
             }
         }
         Button(
@@ -80,11 +83,13 @@ fun ProfileEditor(
             modifier = Modifier.heightIn(min = 48.dp),
         ) {
             Text(
-                when {
-                    state.isSaving -> "Salvando…"
-                    state.editingId != null -> "Salvar alterações"
-                    else -> "Salvar perfil"
-                },
+                stringResource(
+                    when {
+                        state.isSaving -> R.string.profile_saving
+                        state.editingId != null -> R.string.profile_save_changes
+                        else -> R.string.profile_save_new
+                    },
+                ),
             )
         }
         TextButton(
@@ -94,7 +99,7 @@ fun ProfileEditor(
             },
             enabled = !state.isSaving,
             modifier = Modifier.heightIn(min = 48.dp),
-        ) { Text("Cancelar") }
+        ) { Text(stringResource(R.string.profile_cancel)) }
     }
     if (showCalendar) {
         ProfileDatePicker(
@@ -121,7 +126,7 @@ private fun ProfileMeasurementFields(
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
-                "Identificação e medidas",
+                stringResource(R.string.profile_editor_section),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.semantics { heading() },
             )
@@ -139,15 +144,14 @@ private fun ProfileMeasurementFields(
 @Composable
 private fun ProfileEditorHeading(isCreating: Boolean) {
     Text(
-        if (isCreating) "Novo perfil de medidas" else "Editar perfil de medidas",
+        stringResource(
+            if (isCreating) R.string.profile_editor_new else R.string.profile_editor_edit,
+        ),
         style = MaterialTheme.typography.headlineMedium,
         modifier = Modifier.semantics { heading() },
     )
     if (isCreating) {
-        Text(
-            "Os perfis ficam só neste aparelho, sem backup ou sincronização. " +
-                "Você pode perdê-los ao limpar os dados do app ou trocar de aparelho.",
-        )
+        Text(stringResource(R.string.profile_local_only))
     }
 }
 
@@ -169,7 +173,7 @@ private fun ProfileDatePicker(
     }
     val initial = parseProfileDate(text)
     val picker = rememberDatePickerState(
-        initialSelectedDateMillis = initial?.takeUnless { it.isAfter(today) || it.year < 1 }
+        initialSelectedDateMillis = initial?.takeUnless { it.isAfter(today) }
             ?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
         yearRange = 1..maxOf(2100, today.year),
         selectableDates = selectable,
@@ -181,21 +185,21 @@ private fun ProfileDatePicker(
                 onClick = {
                     picker.selectedDateMillis?.let {
                         onSelect(
-                            Instant.ofEpochMilli(
-                                it,
-                            ).atZone(ZoneOffset.UTC).toLocalDate().format(ProfileDateFormat),
+                            profileDateText(
+                                Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate(),
+                            ),
                         )
                     }
                 },
                 enabled = picker.selectedDateMillis != null,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                Text("Confirmar data")
+                Text(stringResource(R.string.profile_confirm_date))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text("Cancelar calendário")
+                Text(stringResource(R.string.profile_cancel_calendar))
             }
         },
     ) { DatePicker(state = picker) }
@@ -207,24 +211,27 @@ private fun ProfileDateField(
     onEdit: (ProfileField, String) -> Unit,
     onClick: () -> Unit,
 ) {
-    val error = state.errors[ProfileField.Date]
+    val error = state.errors[ProfileField.Date]?.message
     val enabled = !state.isSaving
     OutlinedTextField(
         value = state.inputs.getValue(ProfileField.Date),
         onValueChange = { onEdit(ProfileField.Date, it) },
-        label = { Text(ProfileField.Date.label) },
+        label = { Text(stringResource(ProfileField.Date.label)) },
         enabled = enabled,
         singleLine = true,
         isError = error != null,
         supportingText = {
             Text(
-                error ?: "Escolha a data em que a medida foi tomada, sem usar uma data futura.",
+                stringResource(error ?: R.string.profile_hint_date),
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
         trailingIcon = {
             IconButton(onClick = onClick, enabled = enabled) {
-                Icon(painterResource(R.drawable.ic_calendar), "Escolher data no calendário")
+                Icon(
+                    painterResource(R.drawable.ic_calendar),
+                    stringResource(R.string.profile_open_calendar),
+                )
             }
         },
         keyboardOptions = KeyboardOptions(
@@ -242,20 +249,22 @@ private fun ProfileInput(
     onEdit: (ProfileField, String) -> Unit,
 ) {
     val focus = LocalFocusManager.current
-    val error = state.errors[field]
+    val error = state.errors[field]?.message
     OutlinedTextField(
         value = state.inputs.getValue(field),
         onValueChange = { onEdit(field, it) },
-        label = { Text(field.label) },
+        label = { Text(stringResource(field.label)) },
         isError = error != null,
         supportingText = {
             Text(
-                error ?: when (field) {
-                    ProfileField.Name -> "Nomes repetidos são permitidos."
-                    ProfileField.Waist -> "Registre a circunferência da cintura em centímetros."
-                    ProfileField.Notes -> "Use observações para distinguir perfis com o mesmo nome."
-                    ProfileField.Date -> ""
-                },
+                stringResource(
+                    error ?: when (field) {
+                        ProfileField.Name -> R.string.profile_hint_name
+                        ProfileField.Waist -> R.string.profile_hint_waist
+                        ProfileField.Notes -> R.string.profile_hint_notes
+                        ProfileField.Date -> R.string.profile_hint_date
+                    },
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
@@ -277,10 +286,10 @@ private fun ProfileInput(
 }
 
 @Composable
-private fun ProfileMutationError(error: String?) {
+private fun ProfileMutationError(@StringRes error: Int?) {
     error?.let {
         Text(
-            it,
+            stringResource(it),
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )

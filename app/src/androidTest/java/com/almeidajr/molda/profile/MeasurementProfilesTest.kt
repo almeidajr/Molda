@@ -31,7 +31,10 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.data.LocalProfileRepository
+import com.almeidajr.molda.profile.domain.ProfileId
+import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -41,6 +44,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -115,7 +119,7 @@ class MeasurementProfilesTest {
         click("Ações: Ana")
         click("Excluir perfil")
         composeRule.onNodeWithText("Excluir perfil Ana?").assertIsDisplayed()
-        runBlocking { assertEquals(1, storage.list().size) }
+        runBlocking { assertEquals(1, storage.profiles().first().size) }
         click("Cancelar")
         composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
         click("Ações: Ana")
@@ -128,7 +132,7 @@ class MeasurementProfilesTest {
         }
         composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
         composeRule.onNodeWithText("Ana").assertIsDisplayed()
-        runBlocking { assertEquals(1, storage.list().size) }
+        runBlocking { assertEquals(1, storage.profiles().first().size) }
     }
 
     @Test
@@ -160,7 +164,7 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Cintura copiada do perfil: Ana")
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
-        runBlocking { assertEquals(2L, storage.list().single().id) }
+        runBlocking { assertEquals(ProfileId(2), storage.profiles().first().single().id) }
     }
 
     @Test
@@ -329,9 +333,9 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Informe uma cintura positiva e finita, como 80,5.")
             .performScrollTo().assertIsDisplayed()
         runBlocking {
-            val saved = storage.list().single().measurements
-            assertEquals("Ana", saved.name)
-            assertEquals(80.0, saved.waist, 0.0)
+            val saved = storage.profiles().first().single().measurements
+            assertEquals(ProfileName("Ana"), saved.name)
+            assertEquals(Length(80.0), saved.waist)
             assertEquals(LocalDate.of(2026, 10, 12), saved.measurementDate)
         }
     }
@@ -386,7 +390,7 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("82,25")
         pick("Usar perfil: Ana — 80,123456789 cm — 12/10/2026")
-        runBlocking { assertEquals(2L, storage.list().single().id) }
+        runBlocking { assertEquals(ProfileId(2), storage.profiles().first().single().id) }
     }
 
     @Test
@@ -441,9 +445,9 @@ class MeasurementProfilesTest {
         ).performScrollTo().assertTextContains("1")
         composeRule.onNodeWithText("Margem de barra (cm)").performScrollTo().assertTextContains("2")
         runBlocking {
-            val saved = storage.list().single().measurements
-            assertEquals("Teste reutilização", saved.name)
-            assertEquals(80.5, saved.waist, 0.0)
+            val saved = storage.profiles().first().single().measurements
+            assertEquals(ProfileName("Teste reutilização"), saved.name)
+            assertEquals(Length(80.5), saved.waist)
             assertEquals("Medida no cós", saved.notes)
         }
     }

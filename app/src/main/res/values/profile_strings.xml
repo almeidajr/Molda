@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_field_name">Nome ou apelido</string>
+    <string name="profile_field_waist">Cintura do perfil (cm)</string>
+    <string name="profile_field_date">Data da medida (dd/mm/aaaa)</string>
+    <string name="profile_field_notes">Observações (opcional)</string>
+    <string name="profile_hint_name">Nomes repetidos são permitidos.</string>
+    <string name="profile_hint_waist">Registre a circunferência da cintura em centímetros.</string>
+    <string name="profile_hint_date">Escolha a data em que a medida foi tomada, sem usar uma data futura.</string>
+    <string name="profile_hint_notes">Use observações para distinguir perfis com o mesmo nome.</string>
+
+    <string name="profile_error_blank_name">Informe um nome ou apelido.</string>
+    <string name="profile_error_invalid_waist">Informe uma cintura positiva e finita, como 80,5.</string>
+    <string name="profile_error_invalid_date">Informe uma data válida no formato dd/mm/aaaa.</string>
+    <string name="profile_error_future_date">A medida já deve ter sido tomada. Corrija a data futura.</string>
+    <string name="profile_load_failed">Não foi possível carregar os perfis. Os dados não foram apagados. Tente novamente.</string>
+    <string name="profile_save_failed">Não foi possível salvar o perfil. Confira os dados e tente novamente.</string>
+    <string name="profile_delete_failed">Não foi possível excluir o perfil. Os dados não foram apagados. Tente novamente.</string>
+    <string name="profile_saved">Perfil salvo neste aparelho.</string>
+    <string name="profile_deleted">Perfil excluído deste aparelho.</string>
+
+    <string name="profile_retry_load">Tentar carregar novamente</string>
+    <string name="profile_saving">Salvando…</string>
+    <string name="profile_save_changes">Salvar alterações</string>
+    <string name="profile_save_new">Salvar perfil</string>
+    <string name="profile_cancel">Cancelar</string>
+    <string name="profile_editor_section">Identificação e medidas</string>
+    <string name="profile_editor_new">Novo perfil de medidas</string>
+    <string name="profile_editor_edit">Editar perfil de medidas</string>
+    <string name="profile_local_only">Os perfis ficam só neste aparelho, sem backup ou sincronização. Você pode perdê-los ao limpar os dados do app ou trocar de aparelho.</string>
+    <string name="profile_confirm_date">Confirmar data</string>
+    <string name="profile_cancel_calendar">Cancelar calendário</string>
+    <string name="profile_open_calendar">Escolher data no calendário</string>
+
+    <string name="profile_management_title">Perfis de medidas (opcional)</string>
+    <string name="profile_loading">Carregando perfis…</string>
+    <string name="profile_empty_management">Nenhum perfil salvo. Os perfis são opcionais; você pode calcular com uma medida manual.</string>
+    <string name="profile_new">Novo perfil</string>
+    <string name="profile_summary">%1$s cm — %2$s</string>
+    <string name="profile_use_label">Usar perfil: %1$s — %2$s cm — %3$s</string>
+    <string name="profile_deleting">Excluindo %1$s…</string>
+    <string name="profile_actions">Ações: %1$s</string>
+    <string name="profile_edit">Editar perfil</string>
+    <string name="profile_delete">Excluir perfil</string>
+    <string name="profile_delete_title">Excluir perfil %1$s?</string>
+    <string name="profile_delete_body">A medida salva será excluída deste aparelho. O cálculo atual será mantido.</string>
+    <string name="profile_delete_confirm">Confirmar exclusão</string>
+    <string name="profile_picker_title">Usar perfil</string>
+    <string name="profile_picker_cancel">Cancelar seleção</string>
+    <string name="profile_empty_picker">Nenhum perfil salvo. Você pode calcular com uma medida manual.</string>
+
+    <string name="profile_back_to_calculator">Voltar ao cálculo</string>
+    <string name="profile_select_or_create">Selecione um perfil ou toque em Novo perfil.</string>
+    <string name="profile_manage">Perfis de medidas</string>
+    <string name="profile_discard_title">Descartar alterações?</string>
+    <string name="profile_discard_body">As alterações deste perfil ainda não foram salvas.</string>
+    <string name="profile_discard">Descartar</string>
+    <string name="profile_keep_editing">Continuar editando</string>
+</resources>
