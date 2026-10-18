@@ -55,7 +55,6 @@ import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.adaptive.HingeSafeContent
 import com.almeidajr.molda.ui.adaptive.ReadablePane
-import com.almeidajr.molda.ui.adaptive.minimumTwoPaneWidth
 import com.almeidajr.molda.ui.adaptive.rememberReadableListDetailStrategy
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
@@ -70,17 +69,37 @@ private data object FabricFoldingTutorialKey : NavKey
 @Serializable
 private data object ProfileManagementKey : NavKey
 
-/** The open profile editor; a null [id] is a new profile. */
+/** The profile an editor works on. */
 @Serializable
-private data class ProfileEditorKey(val id: ProfileId?) : NavKey
+private sealed interface EditedProfile {
+    @Serializable
+    data object New : EditedProfile
+
+    @Serializable
+    data class Existing(val id: ProfileId) : EditedProfile
+}
+
+/** The open profile editor. */
+@Serializable
+private data class ProfileEditorKey(val profile: EditedProfile) : NavKey
 
 /** The profile picker sheet over the calculator. */
 @Serializable
 private data object ProfilePickerKey : NavKey
 
-/** Asks to discard the dirty editor, then opens the [requested] editor or, if null, closes it. */
+/** What confirming the discard of a dirty editor does next. */
 @Serializable
-private data class DiscardChangesKey(val requested: ProfileEditorKey? = null) : NavKey
+private sealed interface AfterDiscard {
+    @Serializable
+    data object CloseEditor : AfterDiscard
+
+    @Serializable
+    data class OpenEditor(val profile: EditedProfile) : AfterDiscard
+}
+
+/** Asks to discard the dirty editor, then does [afterDiscard]. */
+@Serializable
+private data class DiscardChangesKey(val afterDiscard: AfterDiscard) : NavKey
 
 /**
  * Shows every destination under one scene key, so a destination replaces the previous one within
@@ -92,7 +111,7 @@ private data class SameFrameScene<T : Any>(val scene: Scene<T>) : Scene<T> by sc
     override val key: Any get() = SameFrameScene::class
 }
 
-// Keep saveable destinations and their transitions together.
+// The back stack and every transition that edits it read together in one place.
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Suppress("LongMethod")
 @Composable
@@ -108,41 +127,42 @@ fun MoldaRoute(
     LaunchedEffect(profileState.isEditorOpen, profileState.editingId, backStack.size) {
         syncProfileEditor(backStack, profileState.form)
     }
-    // A null id requests a new profile.
-    val requestEditor: (ProfileId?) -> Unit = { id ->
-        requestProfileEditor(profileState, profiles, id) {
-            backStack.add(DiscardChangesKey(ProfileEditorKey(id)))
+    val requestEditor: (EditedProfile) -> Unit = { profile ->
+        requestProfileEditor(profileState, profiles, profile) {
+            backStack.add(DiscardChangesKey(AfterDiscard.OpenEditor(profile)))
         }
     }
     val manageProfiles: () -> Unit = { backStack.add(ProfileManagementKey) }
     val snackbar = remember { SnackbarHostState() }
     var snackbarHeight by remember { mutableIntStateOf(0) }
     val snackbarInset = with(LocalDensity.current) { snackbarHeight.toDp() }
-    // An editor opened from the picker returns to it.
-    val returnToPicker: () -> Unit = {
+    // An editor opened from the picker returns to it; any other editor stays in management.
+    val returnToPickerIfOpen: () -> Unit = {
         val picker = backStack.indexOf(ProfilePickerKey)
-        if (picker >=
-            0
-        ) {
+        if (picker >= 0) {
             while (backStack.lastIndex > picker) backStack.removeAt(backStack.lastIndex)
         }
     }
     val finishEditor = {
         profiles.cancel()
-        returnToPicker()
+        returnToPickerIfOpen()
     }
     val cancelEditor: () -> Unit = {
-        if (profileState.isDirty) backStack.add(DiscardChangesKey()) else finishEditor()
+        if (profileState.isDirty) {
+            backStack.add(DiscardChangesKey(AfterDiscard.CloseEditor))
+        } else {
+            finishEditor()
+        }
     }
-    ProfileSaveFeedback(profiles, snackbar, returnToPicker)
+    ProfileSaveFeedback(profiles, snackbar, onEditorClosed = returnToPickerIfOpen)
     val isManaging = ProfileManagementKey in backStack
     val isTutorialOpen = backStack.last() == FabricFoldingTutorialKey
     // The player is one column even on a wide window: keep it off a book-posture fold only.
     HingeSafeContent(modifier.fillMaxSize(), isSingleColumn = isTutorialOpen) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val wide = maxWidth >= minimumTwoPaneWidth(LocalDensity.current.fontScale)
             val listDetail = rememberReadableListDetailStrategy<NavKey>(maxWidth)
-            val windowOverlay = remember { WindowOverlaySceneStrategy<NavKey>() }
+            val wide = listDetail != null
+            val overlayStrategy = remember { WindowOverlaySceneStrategy<NavKey>() }
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 snackbarHost = {
@@ -151,7 +171,7 @@ fun MoldaRoute(
                 floatingActionButtonPosition = if (wide) FabPosition.Start else FabPosition.End,
                 floatingActionButton = {
                     if (isManaging && (!profileState.isEditorOpen || wide)) {
-                        ProfileCreateAction(profileState, { requestEditor(null) })
+                        ProfileCreateAction(profileState, { requestEditor(EditedProfile.New) })
                     }
                 },
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -168,7 +188,7 @@ fun MoldaRoute(
                         }
                     },
                     // A narrow window shows one destination at a time, as a plain single pane.
-                    sceneStrategies = listOfNotNull(windowOverlay, listDetail.takeIf { wide }),
+                    sceneStrategies = listOfNotNull(overlayStrategy, listDetail),
                     sceneDecoratorStrategies = listOf(
                         SceneDecoratorStrategy { scene -> SameFrameScene(scene) },
                     ),
@@ -176,9 +196,9 @@ fun MoldaRoute(
                         entry<SkirtCalculatorKey> {
                             CalculatorDestination(
                                 calculator,
-                                manageProfiles,
-                                { backStack.add(ProfilePickerKey) },
-                                { backStack.add(FabricFoldingTutorialKey) },
+                                onManageProfiles = manageProfiles,
+                                onUseProfile = { backStack.add(ProfilePickerKey) },
+                                onOpenTutorial = { backStack.add(FabricFoldingTutorialKey) },
                             )
                         }
                         entry<FabricFoldingTutorialKey> {
@@ -221,7 +241,14 @@ fun MoldaRoute(
                         entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
                             DiscardDialog(onDismiss = { backStack.remove(key) }, onDiscard = {
                                 backStack.remove(key)
-                                discardEditor(profiles, key.requested, finishEditor)
+                                when (val afterDiscard = key.afterDiscard) {
+                                    AfterDiscard.CloseEditor -> finishEditor()
+
+                                    is AfterDiscard.OpenEditor -> {
+                                        profiles.cancel()
+                                        profiles.openEditor(afterDiscard.profile)
+                                    }
+                                }
                             })
                         }
                         entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) {
@@ -244,21 +271,15 @@ fun MoldaRoute(
     }
 }
 
-/** Drops the unsaved editor, then finishes editing or, if [next] is set, opens that editor. */
-private fun discardEditor(
-    profiles: ProfilesViewModel,
-    next: ProfileEditorKey?,
-    finish: () -> Unit,
-) {
-    if (next == null) return finish()
-    profiles.cancel()
-    val id = next.id
-    if (id == null) profiles.startCreating() else profiles.startEditing(id)
+private fun ProfilesViewModel.openEditor(profile: EditedProfile) = when (profile) {
+    EditedProfile.New -> startCreating()
+    is EditedProfile.Existing -> startEditing(profile.id)
 }
 
 /** Shows the editor [form] has open above profile management, and drops any other editor. */
 private fun syncProfileEditor(backStack: NavBackStack<NavKey>, form: ProfileForm) {
-    val editor = ProfileEditorKey(form.editingId).takeIf { form.isEditorOpen }
+    val profile = form.editingId?.let(EditedProfile::Existing) ?: EditedProfile.New
+    val editor = ProfileEditorKey(profile).takeIf { form.isEditorOpen }
     backStack.removeAll { it is ProfileEditorKey && it != editor }
     if (editor != null && backStack.lastOrNull() == ProfileManagementKey) backStack.add(editor)
 }
@@ -288,7 +309,7 @@ private fun CalculatorDestination(
 @Composable
 private fun ProfileList(
     profiles: ProfilesViewModel,
-    requestEditor: (ProfileId?) -> Unit,
+    requestEditor: (EditedProfile) -> Unit,
     onBackToCalculator: () -> Unit,
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
@@ -298,7 +319,12 @@ private fun ProfileList(
                 Text(stringResource(R.string.profile_back_to_calculator))
             }
         }
-        ProfilesContent(state, profiles::load, requestEditor, profiles::delete)
+        ProfilesContent(
+            state,
+            profiles::load,
+            { requestEditor(EditedProfile.Existing(it)) },
+            profiles::delete,
+        )
     }
 }
 
@@ -371,13 +397,13 @@ private fun AppProfilePicker(
 private fun ProfileSaveFeedback(
     profiles: ProfilesViewModel,
     snackbar: SnackbarHostState,
-    onReturnToPicker: () -> Unit,
+    onEditorClosed: () -> Unit,
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
     val message = state.savedMessage?.let { stringResource(it) }
     LaunchedEffect(message) {
         message?.let {
-            if (!state.isEditorOpen) onReturnToPicker()
+            if (!state.isEditorOpen) onEditorClosed()
             snackbar.showSnackbar(it)
             profiles.dismissMessage()
         }
@@ -387,15 +413,9 @@ private fun ProfileSaveFeedback(
 private fun requestProfileEditor(
     state: ProfilesState,
     profiles: ProfilesViewModel,
-    id: ProfileId?,
+    profile: EditedProfile,
     onDiscard: () -> Unit,
 ) {
     if (state.isSaving || state.isLoading || state.loadError != null) return
-    if (state.isEditorOpen && state.isDirty) {
-        onDiscard()
-    } else if (id == null) {
-        profiles.startCreating()
-    } else {
-        profiles.startEditing(id)
-    }
+    if (state.isEditorOpen && state.isDirty) onDiscard() else profiles.openEditor(profile)
 }

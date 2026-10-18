@@ -26,7 +26,7 @@ private data class WindowOverlayScene<T : Any>(
  * own modal bottom sheet or dialog and dismisses it by leaving the back stack, so the window keeps
  * its Material look and enter and exit motion. Place it before any non-overlay strategy.
  */
-class WindowOverlaySceneStrategy<T : Any> : SceneStrategy<T> {
+internal class WindowOverlaySceneStrategy<T : Any> : SceneStrategy<T> {
     override fun SceneStrategyScope<T>.calculateScene(entries: List<NavEntry<T>>): Scene<T>? {
         val last = entries.lastOrNull()?.takeIf { WindowOverlayKey in it.metadata } ?: return null
         return WindowOverlayScene(last.contentKey, last, entries.dropLast(1))
