@@ -42,6 +42,7 @@ import app.rive.rememberRiveFile
 import app.rive.rememberRiveWorkerOrNull
 import app.rive.rememberViewModelInstanceResult
 import com.almeidajr.molda.R
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
 @Composable
@@ -144,18 +145,14 @@ private fun TutorialDrawing(
             LaunchedEffect(instance, radii, palette) {
                 palette.forEach { (name, color) -> instance.setColor(name, color.toArgb()) }
                 val markingDiameter = 800f
+
                 // Normalize before converting to Float; large valid centimetre values stay finite.
-                val waistDiameter =
-                    (markingDiameter * (radii.waistStitching / radii.hemCutting)).toFloat()
-                instance.setNumber("waistStitching", waistDiameter)
-                instance.setNumber(
-                    "waistCutting",
-                    (markingDiameter * (radii.waistCutting / radii.hemCutting)).toFloat(),
-                )
-                instance.setNumber(
-                    "finishedHem",
-                    (markingDiameter * (radii.finishedHem / radii.hemCutting)).toFloat(),
-                )
+                fun diameter(radius: Length) =
+                    (markingDiameter * (radius.centimetres / radii.hemCutting.centimetres))
+                        .toFloat()
+                instance.setNumber("waistStitching", diameter(radii.waistStitching))
+                instance.setNumber("waistCutting", diameter(radii.waistCutting))
+                instance.setNumber("finishedHem", diameter(radii.finishedHem))
                 instance.setNumber("hemCutting", markingDiameter)
                 ready = true
             }

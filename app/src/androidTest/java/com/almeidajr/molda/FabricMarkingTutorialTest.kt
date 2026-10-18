@@ -28,13 +28,15 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
-import com.almeidajr.molda.skirt.domain.SkirtMeasurements
+import com.almeidajr.molda.skirt.domain.SkirtDraft
+import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.skirt.ui.FoldingStep
-import com.almeidajr.molda.skirt.ui.MeasurementField
 import com.almeidajr.molda.skirt.ui.TutorialAnimation
+import com.almeidajr.molda.skirt.ui.label
 import com.almeidajr.molda.skirt.ui.tutorialPalette
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import com.almeidajr.molda.ui.theme.moldaColorScheme
@@ -246,7 +248,7 @@ class FabricMarkingTutorialTest {
             "Como levar os raios ao papel",
         ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(
-            MeasurementField.Length.label,
+            SkirtDraftField.FinishedLength.label,
         ).performScrollTo().performTextReplacement("70")
         composeRule.onNodeWithText("Tutorial de dobra do tecido").assertDoesNotExist()
     }
@@ -341,7 +343,7 @@ class FabricMarkingTutorialTest {
         composeRule.onNodeWithContentDescription(
             "Linha 1, linha contínua. Costura da cintura: 13,05\u00A0cm",
         ).assertExists()
-        composeRule.onNodeWithText(MeasurementField.Waist.label).assertTextContains("80")
+        composeRule.onNodeWithText(SkirtDraftField.Waist.label).assertTextContains("80")
     }
 
     @Test
@@ -356,13 +358,14 @@ class FabricMarkingTutorialTest {
     @Test
     fun cuttingAndUnfoldingPixels_preserveCurrentRadiiAndCoincidentAllowances() {
         listOf(
-            SkirtMeasurements(80.0, 2.0, 60.0, 1.0, 2.0) to
+            SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)) to
                 listOf(0.173892, 0.160568, 0.973352, 1.0),
-            SkirtMeasurements(80.0, 2.0, 120.0, 1.0, 2.0) to
+            SkirtDraft(Length(80.0), Length(2.0), Length(120.0), Length(1.0), Length(2.0)) to
                 listOf(0.096635, 0.089230, 0.985191, 1.0),
-            SkirtMeasurements(80.0, 2.0, 60.0, 0.0, 0.0) to listOf(0.178653, 1.0),
-        ).forEachIndexed { index, (measurements, ratios) ->
-            val radii = (calculateSkirtRadii(measurements) as SkirtCalculation.Success).radii
+            SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(0.0), Length(0.0)) to
+                listOf(0.178653, 1.0),
+        ).forEachIndexed { index, (draft, ratios) ->
+            val radii = (calculateSkirtRadii(draft) as SkirtCalculation.Success).radii
             // The drawing paints no sheet of its own, so the dark theme needs its own check.
             (if (index == 0) listOf(false, true) else listOf(false)).forEach { darkTheme ->
                 val colors = drawingColors(darkTheme)
@@ -548,7 +551,7 @@ class FabricMarkingTutorialTest {
     }
 
     private fun openTutorial(inputs: List<String>, advanceToMarking: Boolean = true) {
-        MeasurementField.entries.zip(inputs).forEach { (field, value) ->
+        SkirtDraftField.entries.zip(inputs).forEach { (field, value) ->
             composeRule.onNodeWithText(field.label).performScrollTo().performTextReplacement(value)
         }
         closeSoftKeyboard()

@@ -35,7 +35,8 @@ import androidx.window.layout.FoldingFeature
 import androidx.window.testing.layout.FoldingFeature
 import androidx.window.testing.layout.TestWindowLayoutInfo
 import androidx.window.testing.layout.WindowLayoutInfoPublisherRule
-import com.almeidajr.molda.skirt.ui.MeasurementField
+import com.almeidajr.molda.skirt.domain.SkirtDraftField
+import com.almeidajr.molda.skirt.ui.label
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -75,7 +76,7 @@ class AdaptiveResultsTest {
             calculateReferenceCase()
             val card = cuttingCard().layoutBounds()
             assertTrue("$context card width", card.width <= 640.dp.value * pixelsPerDp + 1f)
-            val waist = composeRule.onNodeWithText(MeasurementField.Waist.label).layoutBounds()
+            val waist = composeRule.onNodeWithText(SkirtDraftField.Waist.label).layoutBounds()
             if (layout.isTwoPane) {
                 assertTrue("$context card beside inputs", card.left >= waist.right)
             } else {
@@ -165,7 +166,7 @@ class AdaptiveResultsTest {
         // Off centre, so panes that ignored the fold would put the card across it.
         val hinge = publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
         calculateReferenceCase()
-        val waist = composeRule.onNodeWithText(MeasurementField.Waist.label)
+        val waist = composeRule.onNodeWithText(SkirtDraftField.Waist.label)
             .performScrollTo().fullyVisibleBounds("waist")
         val card = cuttingCard().layoutBounds()
         assertTrue("inputs cross the fold", waist.right <= hinge.left)
@@ -249,7 +250,7 @@ class AdaptiveResultsTest {
     }
 
     private fun calculateReferenceCase() {
-        MeasurementField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
+        SkirtDraftField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
             composeRule.onNodeWithText(field.label).performScrollTo().performTextReplacement(value)
         }
         closeSoftKeyboard()

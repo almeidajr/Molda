@@ -26,7 +26,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.almeidajr.molda.skirt.ui.MeasurementField
+import com.almeidajr.molda.skirt.domain.SkirtDraftField
+import com.almeidajr.molda.skirt.ui.label
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -92,7 +93,7 @@ class FabricFoldingLayoutTest {
             }
             composeRule.onNodeWithText("Etapa 6 de 6").assertDoesNotExist()
             composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
-            composeRule.onNodeWithText(MeasurementField.Length.label).performScrollTo()
+            composeRule.onNodeWithText(SkirtDraftField.FinishedLength.label).performScrollTo()
                 .performTextReplacement("70")
             composeRule.onNodeWithText("Tutorial de dobra do tecido").assertDoesNotExist()
         }
@@ -190,7 +191,7 @@ class FabricFoldingLayoutTest {
                 }
             }
         }
-        MeasurementField.entries.zip(listOf("80", "2", "60", "0", "0"))
+        SkirtDraftField.entries.zip(listOf("80", "2", "60", "0", "0"))
             .forEach { (field, value) ->
                 composeRule.onNodeWithText(field.label).performScrollTo()
                     .performTextReplacement(value)

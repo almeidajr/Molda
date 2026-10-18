@@ -1,5 +1,8 @@
 package com.almeidajr.molda.skirt.ui
 
+import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.skirt.domain.SkirtDraft
+import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import java.util.Locale
 
@@ -75,7 +78,7 @@ fun cuttingCard(radii: SkirtRadii): List<CuttingCardGroup> {
 }
 
 /** Two pt-BR decimals and "cm" joined by a non-breaking space, e.g. "13,05 cm". */
-fun formatCentimetres(value: Double): String = "${formatDecimal(value)} cm"
+fun formatCentimetres(length: Length): String = "${formatDecimal(length.centimetres)} cm"
 
 /** Two pt-BR decimals without grouping, e.g. "80,00". */
 fun formatDecimal(value: Double): String =
@@ -120,5 +123,12 @@ fun diagramDescription(
  * "Label: value" items for the inputs used, whose unit the summary heading states once.
  * A non-breaking space keeps each value on its label's line when the summary wraps.
  */
-fun measurementSummary(inputs: Map<MeasurementField, Double>): List<String> =
-    inputs.map { (field, value) -> "${field.label.removeSuffix(" (cm)")}: ${formatDecimal(value)}" }
+fun measurementSummary(draft: SkirtDraft): List<String> = listOf(
+    SkirtDraftField.Waist to draft.waist,
+    SkirtDraftField.Ease to draft.ease,
+    SkirtDraftField.FinishedLength to draft.finishedLength,
+    SkirtDraftField.WaistSeamAllowance to draft.waistSeamAllowance,
+    SkirtDraftField.HemAllowance to draft.hemAllowance,
+).map { (field, length) ->
+    "${field.label.removeSuffix(" (cm)")}: ${formatDecimal(length.centimetres)}"
+}

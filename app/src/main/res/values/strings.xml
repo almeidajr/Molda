@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Molda</string>
+    <string name="skirt_error_blank">Informe um valor, inclusive zero para folgas e margens.</string>
+    <string name="skirt_error_not_a_number">Informe um número finito, como 80,5, sem separador de milhar.</string>
+    <string name="skirt_error_not_positive">Informe um valor maior que zero.</string>
+    <string name="skirt_error_negative">Informe zero ou um valor positivo.</string>
+    <string name="skirt_error_seam_allowance_too_large">A margem deve ser menor que o raio de costura da cintura.</string>
+    <string name="skirt_error_nonfinite_result">Não foi possível calcular raios finitos. Revise as medidas.</string>
 </resources>

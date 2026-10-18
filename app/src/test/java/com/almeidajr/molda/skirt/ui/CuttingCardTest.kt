@@ -1,7 +1,8 @@
 package com.almeidajr.molda.skirt.ui
 
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
-import com.almeidajr.molda.skirt.domain.SkirtMeasurements
+import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import org.junit.Assert.assertEquals
@@ -10,12 +11,35 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CuttingCardTest {
-    private fun radiiFor(measurements: SkirtMeasurements): SkirtRadii =
-        (calculateSkirtRadii(measurements) as SkirtCalculation.Success).radii
+    private fun draft(
+        waist: Double,
+        ease: Double,
+        finishedLength: Double,
+        waistSeamAllowance: Double,
+        hemAllowance: Double,
+    ) = SkirtDraft(
+        Length(waist),
+        Length(ease),
+        Length(finishedLength),
+        Length(waistSeamAllowance),
+        Length(hemAllowance),
+    )
+
+    private fun radiiFor(
+        waist: Double,
+        ease: Double,
+        finishedLength: Double,
+        waistSeamAllowance: Double,
+        hemAllowance: Double,
+    ): SkirtRadii = (
+        calculateSkirtRadii(
+            draft(waist, ease, finishedLength, waistSeamAllowance, hemAllowance),
+        ) as SkirtCalculation.Success
+        ).radii
 
     @Test
     fun cuttingCard_referenceMeasurements_groupsNumberedStyledRadii() {
-        val card = cuttingCard(radiiFor(SkirtMeasurements(80.0, 2.0, 60.0, 1.0, 2.0)))
+        val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0))
 
         assertEquals(listOf("Linhas de referência", "Linhas de corte"), card.map { it.title })
         assertEquals(
@@ -35,7 +59,7 @@ class CuttingCardTest {
 
     @Test
     fun cuttingCard_zeroWaistAllowance_flagsOnlyWaistLinesAsCoincident() {
-        val card = cuttingCard(radiiFor(SkirtMeasurements(80.0, 0.0, 60.0, 0.0, 2.0)))
+        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 2.0))
 
         assertEquals(
             mapOf(1 to 2, 2 to 1, 3 to null, 4 to null),
@@ -45,7 +69,7 @@ class CuttingCardTest {
 
     @Test
     fun cuttingCard_zeroHemAllowance_flagsOnlyHemLinesAsCoincident() {
-        val card = cuttingCard(radiiFor(SkirtMeasurements(80.0, 0.0, 60.0, 1.0, 0.0)))
+        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 1.0, 0.0))
 
         assertEquals(
             mapOf(1 to null, 2 to null, 3 to 4, 4 to 3),
@@ -55,14 +79,14 @@ class CuttingCardTest {
 
     @Test
     fun formatCentimetres_roundsToTwoDecimalCommaPlacesWithoutGrouping() {
-        assertEquals("12,39 cm", formatCentimetres(12.3859165977624))
-        assertEquals("0,50 cm", formatCentimetres(0.499))
-        assertEquals("1234567,89 cm", formatCentimetres(1_234_567.891))
+        assertEquals("12,39 cm", formatCentimetres(Length(12.3859165977624)))
+        assertEquals("0,50 cm", formatCentimetres(Length(0.499)))
+        assertEquals("1234567,89 cm", formatCentimetres(Length(1_234_567.891)))
     }
 
     @Test
     fun cuttingCard_largeMeasurements_keepFullValueWithUnit() {
-        val card = cuttingCard(radiiFor(SkirtMeasurements(10_000.0, 0.0, 5_000.0, 0.0, 0.0)))
+        val card = cuttingCard(radiiFor(10_000.0, 0.0, 5_000.0, 0.0, 0.0))
 
         assertEquals(
             listOf("1591,55 cm", "6591,55 cm", "1591,55 cm", "6591,55 cm"),
@@ -72,7 +96,7 @@ class CuttingCardTest {
 
     @Test
     fun diagramDescription_keysEveryLineAndStatesLimits_withoutRepeatingRadii() {
-        val card = cuttingCard(radiiFor(SkirtMeasurements(80.0, 2.0, 60.0, 1.0, 2.0)))
+        val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0))
 
         val description = diagramDescription(card, "1", "2,5")
 
@@ -94,7 +118,7 @@ class CuttingCardTest {
 
     @Test
     fun coincidenceNotes_zeroAllowances_noteEachCoincidentPairOnce() {
-        val card = cuttingCard(radiiFor(SkirtMeasurements(80.0, 0.0, 60.0, 0.0, 0.0)))
+        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 0.0))
 
         val notes = listOf(
             "Margem de cintura zero: as linhas 1 e 2 coincidem.",
@@ -106,7 +130,7 @@ class CuttingCardTest {
 
     @Test
     fun measurementSummary_statesValuesWithoutRepeatingTheUnit_andKeepsEachValueWithItsLabel() {
-        val inputs = MeasurementField.entries.zip(listOf(80.0, 2.0, 60.5, 1.0, 0.0)).toMap()
+        val draft = draft(80.0, 2.0, 60.5, 1.0, 0.0)
 
         assertEquals(
             listOf(
@@ -116,7 +140,7 @@ class CuttingCardTest {
                 "Margem de costura da cintura: 1,00",
                 "Margem de barra: 0,00",
             ),
-            measurementSummary(inputs),
+            measurementSummary(draft),
         )
     }
 }
