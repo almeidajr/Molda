@@ -1,5 +1,6 @@
 package com.almeidajr.molda.skirt.ui
 
+import androidx.annotation.StringRes
 import com.almeidajr.molda.R
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtDraft
@@ -8,11 +9,11 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import java.util.Locale
 
 /** Stroke patterns that tell the four drafting lines apart without relying on color. */
-enum class LineStyle(val description: String) {
-    Solid("linha contínua"),
-    Dashed("linha tracejada"),
-    Dotted("linha pontilhada"),
-    DashDot("traço e ponto"),
+enum class LineStyle(@param:StringRes val description: Int) {
+    Solid(R.string.skirt_line_style_solid),
+    Dashed(R.string.skirt_line_style_dashed),
+    Dotted(R.string.skirt_line_style_dotted),
+    DashDot(R.string.skirt_line_style_dash_dot),
 }
 
 /**
@@ -85,16 +86,20 @@ fun cuttingCard(radii: SkirtRadii, text: (Int) -> String): List<CuttingCardGroup
 fun formatCentimetres(length: Length): String = "${formatDecimal(length.centimetres)} cm"
 
 /** Two pt-BR decimals without grouping, e.g. "80,00". */
-fun formatDecimal(value: Double): String =
-    String.format(Locale.forLanguageTag("pt-BR"), "%.2f", value)
+fun formatDecimal(value: Double): String = String.format(PtBr, "%.2f", value)
 
 /** "Margem de … zero" notes for each pair of lines drawn at the same radius. */
-fun coincidenceNotes(card: List<CuttingCardGroup>): List<String> = card
+fun coincidenceNotes(card: List<CuttingCardGroup>, text: (Int) -> String): List<String> = card
     .flatMap { it.entries }
     .filter { entry -> entry.coincidentLine?.let { it > entry.number } == true }
     .map { entry ->
-        val allowance = if (entry.number == 1) "cintura" else "barra"
-        "Margem de $allowance zero: as linhas ${entry.number} e ${entry.coincidentLine} coincidem."
+        text(
+            if (entry.number == 1) {
+                R.string.skirt_waist_lines_coincide
+            } else {
+                R.string.skirt_hem_lines_coincide
+            },
+        )
     }
 
 /**
@@ -105,23 +110,26 @@ fun diagramDescription(
     card: List<CuttingCardGroup>,
     waistSeamAllowance: String,
     hemAllowance: String,
+    text: (Int) -> String,
 ): String {
     val key = card.flatMap { it.entries }.sortedBy { it.number }.map { entry ->
-        "Linha ${entry.number}, ${entry.lineStyle.description}: ${entry.label.lowercase()}."
+        text(R.string.skirt_diagram_line_key).format(
+            PtBr,
+            entry.number,
+            text(entry.lineStyle.description),
+            entry.label.lowercase(),
+        )
     }
+    val allowances =
+        text(R.string.skirt_allowance_directions).format(PtBr, waistSeamAllowance, hemAllowance)
     return (
-        listOf(
-            "Diagrama esquemático de um setor da saia godê inteira, sem escala.",
-            "Centro comum no canto superior esquerdo; do centro para fora, linhas 2, 1, 3 e 4.",
-        ) + key + coincidenceNotes(card) +
-            listOf(
-                "A margem de cintura de $waistSeamAllowance cm avança para dentro; " +
-                    "a margem de barra de $hemAllowance cm avança para fora.",
-                "Não é um molde completo, calibrado ou para impressão. " +
-                    "O cálculo não garante o caimento.",
-            )
+        listOf(text(R.string.skirt_diagram_summary), text(R.string.skirt_diagram_line_order)) +
+            key + coincidenceNotes(card, text) + allowances + text(R.string.skirt_diagram_limits)
         ).joinToString(" ")
 }
+
+/** The locale the copy is written in. */
+private val PtBr = Locale.forLanguageTag("pt-BR")
 
 /**
  * "Label: value" items for the inputs used, whose unit the summary heading states once.

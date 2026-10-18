@@ -23,7 +23,9 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -43,21 +45,14 @@ internal fun DraftingExplanation(inputs: Map<SkirtDraftField, String>, radii: Sk
     val hem = enteredValue(inputs, SkirtDraftField.HemAllowance)
     // The pair reads as one set of toggles: 8dp between 48dp targets, not the page's 16dp.
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Disclosure("Como levar os raios ao papel") {
-            Text(
-                "Cintura é a medida do corpo; folga é o acréscimo escolhido para vestir. " +
-                    "Margens são tecido reservado para costura e acabamento, não folga.",
-            )
-            Text(
-                "Transfira os raios ao papel a partir de um mesmo centro, o ponto no canto " +
-                    "superior esquerdo do diagrama. Do centro para fora: linhas 2, 1, 3 e 4.",
-            )
-            Text(
-                "A margem de cintura de $seam cm avança para dentro; " +
-                    "a margem de barra de $hem cm avança para fora.",
-            )
+        Disclosure(stringResource(R.string.skirt_explanation_title)) {
+            Text(stringResource(R.string.skirt_explanation_terms))
+            Text(stringResource(R.string.skirt_explanation_transfer))
+            Text(stringResource(R.string.skirt_allowance_directions, seam, hem))
         }
-        Disclosure("Fórmulas") { DraftingFormulas(inputs, radii) }
+        Disclosure(stringResource(R.string.skirt_formulas_title)) {
+            DraftingFormulas(inputs, radii)
+        }
     }
 }
 
@@ -73,9 +68,9 @@ internal fun DraftingFigure(card: List<CuttingCardGroup>, description: String) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         SkirtDiagram(card.flatMap { it.entries }.sortedBy { it.number })
-        coincidenceNotes(card).forEach { Text(it) }
+        coincidenceNotes(card, LocalResources.current::getString).forEach { Text(it) }
         Text(
-            "Esquema sem escala, não é molde para impressão. O cálculo não garante o caimento.",
+            stringResource(R.string.skirt_diagram_caption),
             style = MaterialTheme.typography.bodyMedium,
             // Drawn on the cutting card: its ink, quieter through the smaller type.
             color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -87,11 +82,12 @@ internal fun DraftingFigure(card: List<CuttingCardGroup>, description: String) {
 @Composable
 internal fun Disclosure(label: String, content: @Composable () -> Unit) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
+    val state = stringResource(
+        if (isExpanded) R.string.skirt_disclosure_expanded else R.string.skirt_disclosure_collapsed,
+    )
     TextButton(
         onClick = { isExpanded = !isExpanded },
-        modifier = Modifier.heightIn(min = 48.dp).semantics {
-            stateDescription = if (isExpanded) "Expandido" else "Recolhido"
-        },
+        modifier = Modifier.heightIn(min = 48.dp).semantics { stateDescription = state },
     ) {
         // Without the weight a wrapping label squeezes the chevron at large text sizes.
         Text(label, Modifier.weight(1f, fill = false))
@@ -112,24 +108,39 @@ private fun DraftingFormulas(inputs: Map<SkirtDraftField, String>, radii: SkirtR
     val length = enteredValue(inputs, SkirtDraftField.FinishedLength)
     val seam = enteredValue(inputs, SkirtDraftField.WaistSeamAllowance)
     val hem = enteredValue(inputs, SkirtDraftField.HemAllowance)
-    Text("Valores em centímetros.")
-    Text("Costura da cintura: r = (cintura + folga) / (2π)")
-    Text("r = ($waist + $ease) / (2π) = ${formatCentimetres(radii.waistStitching)}")
+    Text(stringResource(R.string.skirt_formulas_unit))
+    Text(stringResource(R.string.skirt_formula_waist_stitching))
     Text(
-        "Barra acabada = r + comprimento = r + $length = ${formatCentimetres(radii.finishedHem)}",
+        stringResource(
+            R.string.skirt_formula_waist_stitching_values,
+            waist,
+            ease,
+            formatCentimetres(radii.waistStitching),
+        ),
     )
     Text(
-        "Corte da cintura = r − margem de costura = r − $seam = " +
+        stringResource(
+            R.string.skirt_formula_finished_hem,
+            length,
+            formatCentimetres(radii.finishedHem),
+        ),
+    )
+    Text(
+        stringResource(
+            R.string.skirt_formula_waist_cutting,
+            seam,
             formatCentimetres(radii.waistCutting),
+        ),
     )
     Text(
-        "Corte da barra = r + comprimento + margem de barra = r + $length + $hem = " +
+        stringResource(
+            R.string.skirt_formula_hem_cutting,
+            length,
+            hem,
             formatCentimetres(radii.hemCutting),
+        ),
     )
-    Text(
-        "Use r sem arredondamento nos cálculos; " +
-            "apenas os resultados exibidos têm duas casas decimais.",
-    )
+    Text(stringResource(R.string.skirt_formulas_rounding))
 }
 
 @Composable

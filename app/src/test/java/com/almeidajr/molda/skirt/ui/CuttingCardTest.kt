@@ -105,7 +105,7 @@ class CuttingCardTest {
     fun diagramDescription_keysEveryLineAndStatesLimits_withoutRepeatingRadii() {
         val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0), text)
 
-        val description = diagramDescription(card, "1", "2,5")
+        val description = diagramDescription(card, "1", "2,5", text)
 
         listOf(
             "Linha 1, linha contínua: costura da cintura.",
@@ -131,8 +131,8 @@ class CuttingCardTest {
             "Margem de cintura zero: as linhas 1 e 2 coincidem.",
             "Margem de barra zero: as linhas 3 e 4 coincidem.",
         )
-        assertEquals(notes, coincidenceNotes(card))
-        notes.forEach { assertTrue(it in diagramDescription(card, "0", "0")) }
+        assertEquals(notes, coincidenceNotes(card, text))
+        notes.forEach { assertTrue(it in diagramDescription(card, "0", "0", text)) }
     }
 
     @Test

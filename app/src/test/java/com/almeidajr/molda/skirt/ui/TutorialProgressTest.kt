@@ -6,8 +6,15 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 
+// Robolectric resolves the step bar's copy from the app's string resources.
+@RunWith(RobolectricTestRunner::class)
 class TutorialProgressTest {
+    private val text: (Int) -> String = RuntimeEnvironment.getApplication()::getString
+
     @Test
     fun firstStep_offersNextButNotPrevious() {
         val first = TutorialProgress()
@@ -15,7 +22,7 @@ class TutorialProgressTest {
         assertEquals(FoldingStep.Preparation, first.step)
         assertFalse(first.canGoBack)
         assertFalse(first.isLastStep)
-        assertEquals("Próximo", first.forwardLabel)
+        assertEquals("Próximo", text(first.forwardLabel))
         assertEquals(first, first.previous())
     }
 
@@ -25,7 +32,7 @@ class TutorialProgressTest {
 
         assertTrue(last.canGoBack)
         assertTrue(last.isLastStep)
-        assertEquals("Concluir", last.forwardLabel)
+        assertEquals("Concluir", text(last.forwardLabel))
         assertNull(last.next())
     }
 
@@ -34,7 +41,7 @@ class TutorialProgressTest {
         val forward = generateSequence(TutorialProgress()) { it.next() }.toList()
 
         assertEquals(FoldingStep.entries, forward.map { it.step })
-        assertEquals((1..6).map { "Etapa $it de 6" }, forward.map { it.position })
+        assertEquals((1..6).toList(), forward.map { it.stepNumber })
         assertEquals(forward.dropLast(1), forward.drop(1).map { it.previous() })
     }
 
