@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -24,6 +25,7 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.almeidajr.molda.R
 
 /**
  * The answer as one surface: the four radii, then the drafting diagram they key into, so each
@@ -45,7 +47,7 @@ internal fun CuttingCard(
             val isSideBySide = maxWidth >= CardColumnMinWidth * fontScale * 2 + 24.dp
             Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 Text(
-                    "Raios para o molde",
+                    stringResource(R.string.skirt_card_title),
                     style = MaterialTheme.typography.titleLarge,
                     // The heading appears once per successful calculation, announcing it once.
                     modifier = Modifier.semantics {
@@ -102,7 +104,7 @@ private fun DiagramSection(
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            "Diagrama das linhas",
+            stringResource(R.string.skirt_diagram_title),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
@@ -113,13 +115,16 @@ private fun DiagramSection(
 @Composable
 private fun CuttingCardRadius(entry: CuttingCardEntry) {
     val ink = MaterialTheme.colorScheme.onSecondaryContainer
+    val description = stringResource(
+        R.string.skirt_card_radius_description,
+        entry.number,
+        stringResource(entry.lineStyle.description),
+        entry.label,
+        entry.value,
+    )
     Column(
         // One merged announcement replaces the separate number, sample, label and value.
-        Modifier.semantics(mergeDescendants = true) {
-            contentDescription =
-                "Linha ${entry.number}, ${entry.lineStyle.description}. " +
-                "${entry.label}: ${entry.value}"
-        },
+        Modifier.semantics(mergeDescendants = true) { contentDescription = description },
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         LineKey(entry, ink)

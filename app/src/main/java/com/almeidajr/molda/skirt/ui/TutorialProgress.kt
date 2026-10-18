@@ -1,15 +1,17 @@
 package com.almeidajr.molda.skirt.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.saveable.Saver
+import com.almeidajr.molda.R
 
 /** The fabric-folding tutorial's steps in order, each drawn by one Rive artboard. */
-enum class FoldingStep(val title: String, val artboard: String) {
-    Preparation("Preparar o tecido", "Preparation"),
-    FirstFold("Primeira dobra", "First fold"),
-    SecondFold("Segunda dobra", "Second fold"),
-    Marking("Marcar os raios", "Marking"),
-    Cutting("Cortar os arcos", "Cutting"),
-    Unfolding("Desdobrar o círculo", "Unfolding"),
+enum class FoldingStep(@param:StringRes val title: Int, val artboard: String) {
+    Preparation(R.string.tutorial_step_preparation, "Preparation"),
+    FirstFold(R.string.tutorial_step_first_fold, "First fold"),
+    SecondFold(R.string.tutorial_step_second_fold, "Second fold"),
+    Marking(R.string.tutorial_step_marking, "Marking"),
+    Cutting(R.string.tutorial_step_cutting, "Cutting"),
+    Unfolding(R.string.tutorial_step_unfolding, "Unfolding"),
 }
 
 /** Where the tutorial player is, and what its fixed step bar offers from there. */
@@ -19,9 +21,12 @@ data class TutorialProgress(val step: FoldingStep = FoldingStep.Preparation) {
     /** On the last step the forward action is Concluir, which finishes the tutorial. */
     val isLastStep: Boolean get() = step == FoldingStep.entries.last()
 
-    val position: String get() = "Etapa ${step.ordinal + 1} de ${FoldingStep.entries.size}"
+    /** The step's 1-based position among [FoldingStep.entries]. */
+    val stepNumber: Int get() = step.ordinal + 1
 
-    val forwardLabel: String get() = if (isLastStep) "Concluir" else "Próximo"
+    @get:StringRes
+    val forwardLabel: Int
+        get() = if (isLastStep) R.string.tutorial_finish else R.string.tutorial_next
 
     fun previous(): TutorialProgress =
         TutorialProgress(FoldingStep.entries[(step.ordinal - 1).coerceAtLeast(0)])

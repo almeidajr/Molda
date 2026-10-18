@@ -38,6 +38,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -77,7 +78,7 @@ internal fun FabricFoldingTutorialEntry(onOpen: () -> Unit, modifier: Modifier =
             onOpen()
         },
         modifier = modifier.heightIn(min = 48.dp).focusRequester(focusRequester),
-    ) { Text("Tutorial de dobra do tecido") }
+    ) { Text(stringResource(R.string.tutorial_open)) }
 }
 
 /**
@@ -100,7 +101,7 @@ internal fun FabricFoldingPlayer(
             val drawingSize = min(min(maxWidth, 640.dp) - 32.dp, maxHeight * DrawingHeightFraction)
             val isDrawingPinned = maxHeight >= PinnedDrawingMinHeight
             Column(Modifier.widthIn(max = 640.dp).fillMaxSize()) {
-                PlayerTopBar(progress.step.title, onClose)
+                PlayerTopBar(stringResource(progress.step.title), onClose)
                 key(progress.step) {
                     val animation: @Composable () -> Unit = {
                         TutorialAnimation(radii, progress.step, motionEnabled, drawingSize)
@@ -113,9 +114,7 @@ internal fun FabricFoldingPlayer(
                     ) {
                         if (!isDrawingPinned) animation()
                         if (!motionEnabled) {
-                            Text(
-                                "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
-                            )
+                            Text(stringResource(R.string.tutorial_motion_off))
                         }
                         StepInstructions(radii, progress.step)
                     }
@@ -138,7 +137,10 @@ private fun PlayerTopBar(title: String, onClose: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
-            Icon(painterResource(R.drawable.ic_close), contentDescription = "Fechar tutorial")
+            Icon(
+                painterResource(R.drawable.ic_close),
+                contentDescription = stringResource(R.string.tutorial_close),
+            )
         }
         Text(
             title,
@@ -153,7 +155,11 @@ private fun StepBar(progress: TutorialProgress, onPrevious: () -> Unit, onForwar
     val isStacked = LocalDensity.current.fontScale > StackedStepBarFontScale
     val position: @Composable (Modifier) -> Unit = {
         Text(
-            progress.position,
+            stringResource(
+                R.string.tutorial_position,
+                progress.stepNumber,
+                FoldingStep.entries.size,
+            ),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -168,12 +174,12 @@ private fun StepBar(progress: TutorialProgress, onPrevious: () -> Unit, onForwar
                     onClick = onPrevious,
                     enabled = progress.canGoBack,
                     modifier = Modifier.heightIn(min = 48.dp),
-                ) { Text("Anterior") }
+                ) { Text(stringResource(R.string.tutorial_previous)) }
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     if (!isStacked) position(Modifier)
                 }
                 Button(onClick = onForward, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(progress.forwardLabel)
+                    Text(stringResource(progress.forwardLabel))
                 }
             }
         }

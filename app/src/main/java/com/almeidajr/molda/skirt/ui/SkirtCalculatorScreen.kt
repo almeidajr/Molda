@@ -238,11 +238,13 @@ private fun CalculationOutcome(
     val draft = state.draft
     val radii = state.radii
     if (draft != null && radii != null) {
-        val card = cuttingCard(radii, LocalResources.current::getString)
+        val text: (Int) -> String = LocalResources.current::getString
+        val card = cuttingCard(radii, text)
         val description = diagramDescription(
             card,
             enteredValue(state.form.inputs, SkirtDraftField.WaistSeamAllowance),
             enteredValue(state.form.inputs, SkirtDraftField.HemAllowance),
+            text,
         )
         CuttingCard(card, description, modifier)
         SkirtResults(draft, onOpenTutorial, onEditMeasurements)
