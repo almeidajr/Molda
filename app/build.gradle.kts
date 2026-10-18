@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.room3)
 }
 
 android {
@@ -74,7 +75,17 @@ kotlin {
         // K2 reports unused variables and similar IDE-level diagnostics only with -Wextra.
         extraWarnings = true
         freeCompilerArgs.add("-Xreturn-value-checker=check")
+        // Room's generated Kotlin trips these -Wextra checks; Detekt's RedundantVisibilityModifier
+        // and VarCouldBeVal still enforce them on our sources.
+        freeCompilerArgs.addAll(
+            "-Xwarning-level=REDUNDANT_VISIBILITY_MODIFIER:disabled",
+            "-Xwarning-level=CAN_BE_VAL:disabled",
+        )
     }
+}
+
+room3 {
+    schemaDirectory("$projectDir/schemas")
 }
 
 detekt {
@@ -103,6 +114,8 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.room3.runtime)
+    ksp(libs.androidx.room3.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.konsist)
     testImplementation(libs.kotlinx.coroutines.test)

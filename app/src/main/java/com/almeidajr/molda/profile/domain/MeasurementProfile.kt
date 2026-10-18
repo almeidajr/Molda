@@ -2,6 +2,7 @@ package com.almeidajr.molda.profile.domain
 
 import com.almeidajr.molda.measurement.Length
 import java.time.LocalDate
+import kotlinx.coroutines.flow.Flow
 
 /** The positive identity of a stored [MeasurementProfile]. */
 @JvmInline
@@ -34,9 +35,11 @@ data class ProfileMeasurements(
 
 data class MeasurementProfile(val id: ProfileId, val measurements: ProfileMeasurements)
 
+/** Stored measurement profiles; commands report storage failures as [Result.failure]. */
 interface ProfileRepository {
-    suspend fun list(): List<MeasurementProfile>
-    suspend fun create(measurements: ProfileMeasurements): MeasurementProfile
-    suspend fun update(profile: MeasurementProfile)
-    suspend fun delete(id: ProfileId)
+    /** Every stored profile in creation order, emitted again after each change. */
+    fun profiles(): Flow<List<MeasurementProfile>>
+    suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile>
+    suspend fun update(profile: MeasurementProfile): Result<Unit>
+    suspend fun delete(id: ProfileId): Result<Unit>
 }

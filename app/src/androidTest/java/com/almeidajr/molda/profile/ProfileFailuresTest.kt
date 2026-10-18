@@ -43,6 +43,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -97,7 +100,7 @@ class ProfileFailuresTest {
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
         composeRule.onNodeWithText("Existente").assertIsDisplayed()
-        runBlocking { assertEquals(2, storage.list().size) }
+        runBlocking { assertEquals(2, storage.profiles().first().size) }
     }
 
     @Test
@@ -123,7 +126,7 @@ class ProfileFailuresTest {
     @Test
     fun updateAndDeleteFailures_keepSavedRecordsDraftAndCalculationWithoutSuccess() {
         val storage = FailingProfiles()
-        val original = runBlocking { storage.list() }
+        val original = runBlocking { storage.profiles().first() }
         showProfiles(storage)
         edit("Circunferência da cintura (cm)", "95")
         edit("Comprimento acabado (cm)", "60")
@@ -154,7 +157,7 @@ class ProfileFailuresTest {
             .performScrollTo().assertTextContains("95")
         composeRule.onNodeWithText("Comprimento acabado (cm)")
             .performScrollTo().assertTextContains("60")
-        runBlocking { assertEquals(original, storage.list()) }
+        runBlocking { assertEquals(original, storage.profiles().first()) }
     }
 
     @Test
@@ -314,19 +317,23 @@ private class FailingProfiles(
                 ),
             ),
         )
-    override suspend fun list(): List<MeasurementProfile> {
+    override fun profiles(): Flow<List<MeasurementProfile>> = flow {
         loadGate?.await()
         if (failLoad) error("Controlled load failure")
-        return records
+        emit(records)
     }
-    override suspend fun create(measurements: ProfileMeasurements): MeasurementProfile {
+    override suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile> {
         saveGate?.await()
-        if (failSave) error("Controlled save failure")
-        return MeasurementProfile(ProfileId(3), measurements)
+        return if (failSave) {
+            Result.failure(IllegalStateException("Controlled save failure"))
+        } else {
+            Result.success(MeasurementProfile(ProfileId(3), measurements))
+        }
     }
-    override suspend fun update(profile: MeasurementProfile) = error("Controlled update failure")
-    override suspend fun delete(id: ProfileId) {
+    override suspend fun update(profile: MeasurementProfile): Result<Unit> =
+        Result.failure(IllegalStateException("Controlled update failure"))
+    override suspend fun delete(id: ProfileId): Result<Unit> {
         deleteGate?.await()
-        error("Controlled delete failure")
+        return Result.failure(IllegalStateException("Controlled delete failure"))
     }
 }

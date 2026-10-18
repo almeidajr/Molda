@@ -20,6 +20,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -86,7 +87,7 @@ class ProfilesViewModel @Inject constructor(
         mutableState.update { it.copy(isLoading = true, loadError = null) }
         viewModelScope.launch {
             try {
-                val profiles = repository.list()
+                val profiles = repository.profiles().first()
                 mutableState.update { it.copy(profiles = profiles.toList(), isLoading = false) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -192,8 +193,8 @@ class ProfilesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val profile = current.editingId?.let { id ->
-                    MeasurementProfile(id, measurements).also { repository.update(it) }
-                } ?: repository.create(measurements)
+                    MeasurementProfile(id, measurements).also { repository.update(it).getOrThrow() }
+                } ?: repository.create(measurements).getOrThrow()
                 clearSavedForm()
                 mutableState.update {
                     it.copy(
@@ -227,7 +228,7 @@ class ProfilesViewModel @Inject constructor(
         }
         viewModelScope.launch {
             try {
-                repository.delete(id)
+                repository.delete(id).getOrThrow()
                 if (mutableState.value.editingId == id) {
                     clearSavedForm()
                     mutableState.update {
