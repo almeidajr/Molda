@@ -11,9 +11,10 @@ class DomainIsolationTest {
         Konsist
             .scopeFromProduction()
             .files
-            .withPackage("..domain..")
+            // The shared measurement package is as pure as a domain.
+            .withPackage("..domain..", "com.almeidajr.molda.measurement..")
             .assertFalse(
-                additionalMessage = "Domain code must not depend on Android, UI or data code.",
+                additionalMessage = "Pure code must not depend on Android, UI or data code.",
             ) { file ->
                 file.hasImport { import -> FORBIDDEN_IMPORT.matches(import.name) }
             }

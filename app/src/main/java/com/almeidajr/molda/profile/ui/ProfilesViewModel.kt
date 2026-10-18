@@ -3,10 +3,10 @@ package com.almeidajr.molda.profile.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.almeidajr.molda.measurement.validCentimetres
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.skirt.ui.parseMeasurement
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -155,7 +155,7 @@ class ProfilesViewModel @Inject constructor(
     fun save() {
         val current = mutableState.value
         if (!canMutate() || !current.isCreating) return
-        val waist = parseMeasurement(current.inputs.getValue(ProfileField.Waist))
+        val waist = validCentimetres(current.inputs.getValue(ProfileField.Waist))
         val date = parseProfileDate(current.inputs.getValue(ProfileField.Date))
         val errors = profileErrors(current.inputs, waist, date, LocalDate.now(clock))
         if (errors.isNotEmpty()) {

@@ -2,6 +2,9 @@ package com.almeidajr.molda.skirt.ui
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import com.almeidajr.molda.measurement.ParsedLength
+import com.almeidajr.molda.measurement.parseLength
+import com.almeidajr.molda.measurement.validCentimetres
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtMeasurements
 import com.almeidajr.molda.skirt.domain.SkirtRadii
@@ -30,15 +33,6 @@ data class CalculatorState(
     val hasAttemptedCalculation: Boolean = false,
     val calculationAttempt: Int = 0,
 )
-
-/** Accepts a decimal comma or point, without grouping, exponents or partial parsing. */
-internal fun parseMeasurement(text: String): Double? {
-    val trimmed = text.trim()
-    if (!DecimalMeasurement.matches(trimmed)) return null
-    return trimmed.replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
-}
-
-private val DecimalMeasurement = Regex("[+-]?[0-9]+([,.][0-9]+)?")
 
 @HiltViewModel
 class SkirtCalculatorViewModel @Inject constructor(private val savedState: SavedStateHandle) :
@@ -101,7 +95,7 @@ class SkirtCalculatorViewModel @Inject constructor(private val savedState: Saved
             hasAttemptedCalculation = true,
             calculationAttempt = mutableState.value.calculationAttempt + 1,
         )
-        val values = current.inputs.mapValues { parseMeasurement(it.value) }
+        val values = current.inputs.mapValues { validCentimetres(it.value) }
         val errors = MeasurementField.entries.mapNotNull { field ->
             measurementError(field, current.inputs.getValue(field))?.let { field to it }
         }.toMap()
@@ -137,12 +131,19 @@ class SkirtCalculatorViewModel @Inject constructor(private val savedState: Saved
 }
 
 private fun measurementError(field: MeasurementField, text: String): String? {
-    val value = parseMeasurement(text)
+    val parsed = parseLength(text)
     return when {
         text.isBlank() -> "Informe um valor, inclusive zero para folgas e margens."
-        value == null -> "Informe um número finito, como 80,5, sem separador de milhar."
-        field.requiresPositive && value <= 0.0 -> "Informe um valor maior que zero."
-        value < 0.0 -> "Informe zero ou um valor positivo."
+
+        parsed is ParsedLength.Malformed ->
+            "Informe um número finito, como 80,5, sem separador de milhar."
+
+        field.requiresPositive &&
+            (parsed !is ParsedLength.Valid || parsed.length.centimetres <= 0.0) ->
+            "Informe um valor maior que zero."
+
+        parsed is ParsedLength.Negative -> "Informe zero ou um valor positivo."
+
         else -> null
     }
 }
@@ -156,7 +157,7 @@ private fun cuttingMarginError(
     ) {
         return null
     }
-    val values = inputs.mapValues { parseMeasurement(it.value) }
+    val values = inputs.mapValues { validCentimetres(it.value) }
     return if (calculateSkirtRadii(skirtMeasurements(values)) ==
         SkirtCalculation.NonpositiveWaistCutting
     ) {

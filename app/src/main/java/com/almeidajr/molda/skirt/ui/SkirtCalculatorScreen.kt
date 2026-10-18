@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.almeidajr.molda.measurement.validCentimetres
 import com.almeidajr.molda.ui.adaptive.AdaptiveContent
 import kotlinx.coroutines.launch
 
@@ -307,7 +308,7 @@ private fun SkirtResults(
             modifier = Modifier.semantics { heading() },
         )
         val summary = measurementSummary(
-            inputs.mapValues { requireNotNull(parseMeasurement(it.value)) },
+            inputs.mapValues { requireNotNull(validCentimetres(it.value)) },
         )
         // One wrapping line; TalkBack hears pauses instead of the visual separators.
         Text(
