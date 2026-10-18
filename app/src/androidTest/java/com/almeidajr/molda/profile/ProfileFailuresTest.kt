@@ -44,8 +44,11 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -302,7 +305,8 @@ private class FailingProfiles(
     val saveGate: CompletableDeferred<Unit>? = null,
     val measurementDate: LocalDate = LocalDate.of(2026, 10, 12),
 ) : ProfileRepository {
-    private val records =
+    // Emits again after each change, like the Room repository.
+    private val records = MutableStateFlow(
         listOf(
             MeasurementProfile(
                 ProfileId(1),
@@ -316,18 +320,22 @@ private class FailingProfiles(
                     LocalDate.of(2026, 10, 11),
                 ),
             ),
-        )
+        ),
+    )
     override fun profiles(): Flow<List<MeasurementProfile>> = flow {
         loadGate?.await()
         if (failLoad) error("Controlled load failure")
-        emit(records)
+        emitAll(records)
     }
     override suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile> {
         saveGate?.await()
         return if (failSave) {
             Result.failure(IllegalStateException("Controlled save failure"))
         } else {
-            Result.success(MeasurementProfile(ProfileId(3), measurements))
+            Result.success(
+                MeasurementProfile(ProfileId(3), measurements)
+                    .also { created -> records.update { it + created } },
+            )
         }
     }
     override suspend fun update(profile: MeasurementProfile): Result<Unit> =
