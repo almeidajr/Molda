@@ -35,8 +35,4 @@ fun parseLength(text: String): ParsedLength {
     }
 }
 
-/** The centimetres of the valid [Length] typed as [text], or null when it is malformed or negative. */
-fun validCentimetres(text: String): Double? =
-    (parseLength(text) as? ParsedLength.Valid)?.length?.centimetres
-
 private val DecimalNumber = Regex("[+-]?[0-9]+([,.][0-9]+)?")
