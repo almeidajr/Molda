@@ -43,7 +43,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -212,6 +211,7 @@ private val LocalIsTwoPane = staticCompositionLocalOf { false }
 @Composable
 fun MoldaRoute(
     modifier: Modifier = Modifier,
+    versionName: String = "",
     calculator: SkirtCalculatorViewModel = hiltViewModel(),
     profiles: ProfilesViewModel = hiltViewModel(),
 ) {
@@ -329,10 +329,6 @@ fun MoldaRoute(
             )
         }
         entry<AboutKey> {
-            val context = LocalContext.current
-            val versionName = remember(context) {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
-            }
             AboutScreen(
                 versionName = versionName,
                 onUp = navigation::back,
