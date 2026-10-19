@@ -133,8 +133,12 @@ class ProfilesViewModel @Inject constructor(
         viewModelScope.launch {
             val measurements = validation.measurements
             val result = current.editingId
-                ?.let { id -> repository.update(MeasurementProfile(id, measurements)).map { null } }
-                ?: repository.create(measurements)
+                ?.let { id ->
+                    repository.update(MeasurementProfile(id, measurements)).map {
+                        ProfileSave.Updated
+                    }
+                }
+                ?: repository.create(measurements).map(ProfileSave::Created)
             transition { it.savedWith(result) }
         }
     }
