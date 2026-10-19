@@ -136,9 +136,10 @@ class ProjectJourneyTest {
             composeRule.onAllNodes(hasText(label) and isEnabled()).fetchSemanticsNodes()
                 .isNotEmpty()
         }
-        val node = composeRule.onAllNodes(hasText(label) and isEnabled())[0]
-        if (!node.isDisplayed()) node.performScrollTo()
-        node.performClick()
+        // Tap the label as a reader does: a small row's centre falls on its Ações button.
+        val text = composeRule.onAllNodes(hasText(label), useUnmergedTree = true)[0]
+        if (!text.isDisplayed()) text.performScrollTo()
+        text.performClick()
     }
 
     private fun showRoute() {
