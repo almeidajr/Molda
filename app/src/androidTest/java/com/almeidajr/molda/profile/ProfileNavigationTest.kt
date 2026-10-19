@@ -14,6 +14,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -107,7 +108,8 @@ class ProfileNavigationTest {
         composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
-        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+        val confirmation = composeRule.onNodeWithText("Descartar alterações?")
+        composeRule.waitUntil(5_000) { confirmation.isDisplayed() }
         clickInDialog("Descartar")
         composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
         composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
