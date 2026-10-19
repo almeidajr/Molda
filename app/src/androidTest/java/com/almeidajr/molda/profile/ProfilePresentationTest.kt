@@ -45,6 +45,7 @@ import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
+import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.showProfiles
@@ -71,7 +72,8 @@ class ProfilePresentationTest {
     @Before
     fun showIsolatedProfiles() {
         composeRule.activity.deleteDatabase(databaseName)
-        storage = LocalProfileRepository(composeRule.activity, databaseName)
+        storage =
+            LocalProfileRepository(openMoldaDatabase(composeRule.activity, databaseName).profiles())
         showContent()
         composeRule.showSkirtCalculator()
     }

@@ -39,11 +39,10 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
-import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileDateFormat
 import com.almeidajr.molda.profile.domain.ProfileId
-import java.math.BigDecimal
 import java.time.LocalDate
 
 @Composable
@@ -71,7 +70,7 @@ fun ProfilesContent(
                 enabled = !state.isLoading,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                Text(stringResource(R.string.profile_retry_load))
+                Text(stringResource(R.string.action_retry_load))
             }
         }
         if (!state.isLoading && state.loadError == null && state.profiles.isEmpty()) {
@@ -98,9 +97,6 @@ fun ProfileCreateAction(state: ProfilesState, onCreate: () -> Unit, modifier: Mo
         modifier = modifier.semantics { if (!canMutate) disabled() },
     ) { Text(stringResource(R.string.profile_new)) }
 }
-
-internal fun profileWaistText(waist: Length): String =
-    BigDecimal.valueOf(waist.centimetres).stripTrailingZeros().toPlainString().replace('.', ',')
 
 internal fun profileDateText(date: LocalDate): String = date.format(ProfileDateFormat)
 
@@ -140,7 +136,7 @@ private fun ProfileManagementRow(
                         Text(
                             stringResource(
                                 R.string.profile_summary,
-                                profileWaistText(profile.measurements.waist),
+                                lengthText(profile.measurements.waist),
                                 profileDateText(profile.measurements.measurementDate),
                             ),
                         )
@@ -178,7 +174,7 @@ private fun ProfileRowActions(
         TextButton(onClick = {
             expanded = true
         }, enabled = enabled, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.profile_actions, profile.measurements.name.text))
+            Text(stringResource(R.string.action_menu_for, profile.measurements.name.text))
         }
         DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
@@ -218,12 +214,12 @@ private fun ConfirmProfileDeletion(
                 enabled = enabled,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                Text(stringResource(R.string.profile_delete_confirm))
+                Text(stringResource(R.string.action_confirm_delete))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.profile_cancel))
+                Text(stringResource(R.string.action_cancel))
             }
         },
     )
@@ -261,7 +257,7 @@ fun ProfilePicker(
                 state.loadError != null -> {
                     Text(stringResource(state.loadError), color = MaterialTheme.colorScheme.error)
                     TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.profile_retry_load))
+                        Text(stringResource(R.string.action_retry_load))
                     }
                 }
 
@@ -305,7 +301,7 @@ private fun PickerRow(
                     stringResource(
                         R.string.profile_use_label,
                         profile.measurements.name.text,
-                        profileWaistText(profile.measurements.waist),
+                        lengthText(profile.measurements.waist),
                         profileDateText(profile.measurements.measurementDate),
                     ),
                     style = MaterialTheme.typography.titleMedium,

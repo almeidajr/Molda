@@ -2,12 +2,10 @@ package com.almeidajr.molda.profile.data
 
 import androidx.room3.ColumnInfo
 import androidx.room3.Dao
-import androidx.room3.Database
 import androidx.room3.Entity
 import androidx.room3.Insert
 import androidx.room3.PrimaryKey
 import androidx.room3.Query
-import androidx.room3.RoomDatabase
 import androidx.room3.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -34,10 +32,4 @@ internal interface ProfileDao {
 
     @Query("DELETE FROM profiles WHERE id = :id")
     suspend fun delete(id: Long): Int
-}
-
-// Every schema change after version 1 ships a Migration (docs/adr/0002).
-@Database(entities = [ProfileEntity::class], version = 1)
-internal abstract class ProfileDatabase : RoomDatabase() {
-    abstract fun profiles(): ProfileDao
 }

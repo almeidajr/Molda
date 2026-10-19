@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,7 +42,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -64,6 +64,8 @@ fun SkirtCalculatorScreen(
     onBlur: (SkirtDraftField) -> Unit = {},
     onUseProfile: () -> Unit = {},
     onOpenGuide: () -> Unit = {},
+    onSaveProject: () -> Unit = {},
+    onSaveAsNewProject: (() -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequesters = remember { SkirtDraftField.entries.associateWith { FocusRequester() } }
@@ -109,6 +111,8 @@ fun SkirtCalculatorScreen(
         CalculationOutcome(
             state,
             onOpenGuide,
+            onSaveProject,
+            onSaveAsNewProject,
             Modifier.bringIntoViewRequester(resultRequester),
         ) {
             focusRequesters.getValue(SkirtDraftField.Waist).requestFocus()
@@ -225,6 +229,8 @@ private fun CalculatorIntro() {
 private fun CalculationOutcome(
     state: CalculatorState,
     onOpenGuide: () -> Unit,
+    onSaveProject: () -> Unit,
+    onSaveAsNewProject: (() -> Unit)?,
     modifier: Modifier = Modifier,
     onEditMeasurements: () -> Unit,
 ) {
@@ -247,7 +253,7 @@ private fun CalculationOutcome(
             text,
         )
         CuttingCard(card, description, modifier)
-        SkirtResults(draft, onOpenGuide, onEditMeasurements)
+        SkirtResults(draft, onOpenGuide, onSaveProject, onSaveAsNewProject, onEditMeasurements)
         DraftingExplanation(state.form.inputs, radii)
     }
 }
@@ -267,7 +273,11 @@ private fun MeasurementInput(
     val error = state.errors[field]
     var wasFocused by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (field == SkirtDraftField.Waist) WaistSource(state.form.sourceProfileName, onUseProfile)
+        if (field ==
+            SkirtDraftField.Waist
+        ) {
+            WaistSource(state.form.source?.profileName, onUseProfile)
+        }
         OutlinedTextField(
             value = state.form.inputs.getValue(field),
             onValueChange = { onEdit(field, it) },
@@ -325,32 +335,38 @@ private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
 private fun SkirtResults(
     draft: SkirtDraft,
     onOpenGuide: () -> Unit,
+    onSaveProject: () -> Unit,
+    onSaveAsNewProject: (() -> Unit)?,
     onEditMeasurements: () -> Unit,
 ) {
-    // One action row under the card; at large text the second button wraps below the first.
+    // One action row under the card; at large text the buttons wrap onto further lines.
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         FabricFoldingGuideEntry(onOpenGuide)
+        // Editing a saved project offers updating it or keeping it and saving another.
+        OutlinedButton(onClick = onSaveProject, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(
+                stringResource(
+                    if (onSaveAsNewProject == null) {
+                        R.string.project_save
+                    } else {
+                        R.string.project_save_confirm
+                    },
+                ),
+            )
+        }
+        onSaveAsNewProject?.let {
+            OutlinedButton(onClick = it, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.project_save_as_new))
+            }
+        }
         TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.skirt_edit_measurements))
         }
     }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            stringResource(R.string.skirt_used_measurements),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        val summary = measurementSummary(draft, LocalResources.current::getString)
-        // One wrapping line; TalkBack hears pauses instead of the visual separators.
-        Text(
-            summary.joinToString(" · "),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.semantics { contentDescription = summary.joinToString("; ") },
-        )
-    }
+    UsedMeasurements(draft)
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,

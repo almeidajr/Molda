@@ -6,4 +6,10 @@
     <string name="skirt_error_negative">Informe zero ou um valor positivo.</string>
     <string name="skirt_error_seam_allowance_too_large">A margem deve ser menor que o raio de costura da cintura.</string>
     <string name="skirt_error_nonfinite_result">Não foi possível calcular raios finitos. Revise as medidas.</string>
+
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_retry_load">Tentar carregar novamente</string>
+    <string name="action_menu_for">Ações: %1$s</string>
+    <string name="action_confirm_delete">Confirmar exclusão</string>
+    <string name="status_saving">Salvando…</string>
 </resources>

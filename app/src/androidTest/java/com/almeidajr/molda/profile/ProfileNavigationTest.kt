@@ -173,6 +173,8 @@ class ProfileNavigationTest {
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithText("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
+        // The opening keyboard resizes the editor, so a tap racing it can miss Cancelar.
+        closeSoftKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
         composeRule.activityRule.scenario.recreate()
         clickInDialog("Continuar editando")

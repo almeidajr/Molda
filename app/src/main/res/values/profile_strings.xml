@@ -19,11 +19,8 @@
     <string name="profile_saved">Perfil salvo neste aparelho.</string>
     <string name="profile_deleted">Perfil excluído deste aparelho.</string>
 
-    <string name="profile_retry_load">Tentar carregar novamente</string>
-    <string name="profile_saving">Salvando…</string>
     <string name="profile_save_changes">Salvar alterações</string>
     <string name="profile_save_new">Salvar perfil</string>
-    <string name="profile_cancel">Cancelar</string>
     <string name="profile_editor_section">Identificação e medidas</string>
     <string name="profile_editor_new">Novo perfil de medidas</string>
     <string name="profile_editor_edit">Editar perfil de medidas</string>
@@ -39,12 +36,10 @@
     <string name="profile_summary">%1$s cm — %2$s</string>
     <string name="profile_use_label">Usar perfil: %1$s — %2$s cm — %3$s</string>
     <string name="profile_deleting">Excluindo %1$s…</string>
-    <string name="profile_actions">Ações: %1$s</string>
     <string name="profile_edit">Editar perfil</string>
     <string name="profile_delete">Excluir perfil</string>
     <string name="profile_delete_title">Excluir perfil %1$s?</string>
     <string name="profile_delete_body">A medida salva será excluída deste aparelho. O cálculo atual será mantido.</string>
-    <string name="profile_delete_confirm">Confirmar exclusão</string>
     <string name="profile_picker_title">Usar perfil</string>
     <string name="profile_picker_cancel">Cancelar seleção</string>
     <string name="profile_empty_picker">Nenhum perfil salvo. Você pode calcular com uma medida manual.</string>

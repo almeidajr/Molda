@@ -1,4 +1,4 @@
-package com.almeidajr.molda.profile.data
+package com.almeidajr.molda.data
 
 import kotlin.coroutines.cancellation.CancellationException
 

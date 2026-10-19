@@ -1,6 +1,7 @@
 package com.almeidajr.molda.profile.domain
 
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.measurement.MeasurementSource
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
@@ -33,6 +34,9 @@ data class ProfileMeasurements(
     init {
         require(waist.centimetres > 0.0) { "Profile waist must be positive" }
     }
+
+    /** This profile as the source of a measurement copied from it. */
+    val source: MeasurementSource get() = MeasurementSource(name.text, measurementDate)
 }
 
 data class MeasurementProfile(val id: ProfileId, val measurements: ProfileMeasurements)

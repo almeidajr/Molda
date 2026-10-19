@@ -4,11 +4,13 @@ import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.ParsedLength
 import com.almeidajr.molda.measurement.parseLength
 import kotlin.math.PI
+import kotlinx.serialization.Serializable
 
 /**
  * A full-circle skirt draft: the waist (a body measurement) plus the drafting assumptions.
  * The waist and finished length must be positive; zero ease and allowances are valid.
  */
+@Serializable
 data class SkirtDraft(
     val waist: Length,
     val ease: Length,
@@ -56,6 +58,7 @@ sealed interface SkirtDraftReading {
     data class Invalid(val errors: Map<SkirtDraftField, SkirtFieldError>) : SkirtDraftReading
 }
 
+@Serializable
 data class SkirtRadii(
     val waistStitching: Length,
     val finishedHem: Length,

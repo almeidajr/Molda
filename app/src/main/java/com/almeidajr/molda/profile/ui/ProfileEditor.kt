@@ -74,7 +74,7 @@ fun ProfileEditor(
         state.loadError?.let {
             ProfileMutationError(it)
             TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.profile_retry_load))
+                Text(stringResource(R.string.action_retry_load))
             }
         }
         Button(
@@ -88,7 +88,7 @@ fun ProfileEditor(
             Text(
                 stringResource(
                     when {
-                        state.isSaving -> R.string.profile_saving
+                        state.isSaving -> R.string.status_saving
                         state.editingId != null -> R.string.profile_save_changes
                         else -> R.string.profile_save_new
                     },
@@ -102,7 +102,7 @@ fun ProfileEditor(
             },
             enabled = !state.isSaving,
             modifier = Modifier.heightIn(min = 48.dp),
-        ) { Text(stringResource(R.string.profile_cancel)) }
+        ) { Text(stringResource(R.string.action_cancel)) }
     }
     if (showCalendar) {
         ProfileDatePicker(

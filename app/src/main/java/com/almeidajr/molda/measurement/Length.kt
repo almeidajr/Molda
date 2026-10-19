@@ -1,6 +1,10 @@
 package com.almeidajr.molda.measurement
 
+import java.math.BigDecimal
+import kotlinx.serialization.Serializable
+
 /** A finite, non-negative distance in centimetres. */
+@Serializable
 @JvmInline
 value class Length(val centimetres: Double) {
     init {
@@ -36,3 +40,7 @@ fun parseLength(text: String): ParsedLength {
 }
 
 private val DecimalNumber = Regex("[+-]?[0-9]+([,.][0-9]+)?")
+
+/** [length] as a user would type it: a decimal comma and no trailing zeros, e.g. "80,5". */
+fun lengthText(length: Length): String =
+    BigDecimal.valueOf(length.centimetres).stripTrailingZeros().toPlainString().replace('.', ',')

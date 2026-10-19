@@ -33,11 +33,10 @@ Spotless + ktlint and `.editorconfig` define formatting, including Kotlin build
 scripts. Apply formatting locally; CI only checks it. Detekt runs with type resolution for Kotlin
 analysis without its optional formatting rules, and the Kotlin compiler and
 Android Lint (all checks, including tests) treat warnings as errors; Kotlin also
-reports its extra checks (`-Wextra`), such as unused variables. Lint disables
-dependency update notices (`GradleDependency` and
-`NewerVersionAvailable`) because Dependabot handles reviewed upgrades,
-so a newly published release cannot break an unchanged PR. `SyntheticAccessor` is
-also disabled because R8 inlines those accessors. No baselines:
+reports its extra checks (`-Wextra`), such as unused variables. Lint keeps its
+dependency and Gradle update notices on: when a newer release is published,
+update the version (and the wrapper checksum for Gradle) instead of suppressing
+the notice. `SyntheticAccessor` is disabled because R8 inlines those accessors. No baselines:
 fix findings or explain a narrow suppression.
 Detekt currently uses a pinned 2.x alpha for the Gradle 9/JDK 25 toolchain;
 review compatibility when updating it.
