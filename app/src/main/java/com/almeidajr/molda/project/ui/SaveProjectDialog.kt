@@ -83,7 +83,7 @@ fun DeleteProjectDialog(
         onDismissRequest = onCancel,
         modifier = modifier,
         title = {
-            Text(stringResource(R.string.project_delete_title, deleting.project.name.text))
+            Text(stringResource(R.string.project_delete_title, deleting.name))
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

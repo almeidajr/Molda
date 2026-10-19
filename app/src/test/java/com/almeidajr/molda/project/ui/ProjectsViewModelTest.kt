@@ -1,5 +1,8 @@
 package com.almeidajr.molda.project.ui
 
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.testing.viewModelScenario
 import com.almeidajr.molda.R
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
@@ -16,6 +19,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
@@ -32,7 +36,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+// Robolectric supplies the real Bundle that saved state is parcelled through.
+@RunWith(RobolectricTestRunner::class)
 class ProjectsViewModelTest {
     private val storage = FakeProjects()
 
@@ -278,7 +286,7 @@ class ProjectsViewModelTest {
         projects.delete()
 
         val deleting = projects.state.value.deleting
-        assertEquals(saved, deleting?.project)
+        assertEquals(saved.id, deleting?.id)
         assertEquals(R.string.project_delete_failed, deleting?.error)
         assertFalse(deleting?.isBusy == true)
         assertEquals(listOf(saved), projects.state.value.projects)
@@ -295,7 +303,62 @@ class ProjectsViewModelTest {
         assertEquals(listOf(saved), projects.state.value.projects)
     }
 
-    private fun projectsViewModel() = ProjectsViewModel(storage, clock)
+    @Test
+    fun recreate_afterProcessDeath_keepsTheSaveDialogAndItsName() = runTest {
+        recreatedAfter { projects ->
+            projects.startSaving(fromProfile, patternName = "Saia godê", showsSaved = true)
+            projects.editName("Saia da formatura")
+        }.use { scenario ->
+            assertEquals(
+                ProjectSaving(fromProfile, "Saia da formatura", showsSaved = true),
+                scenario.viewModel.state.value.saving,
+            )
+        }
+    }
+
+    @Test
+    fun recreate_afterProcessDeath_keepsTheRenameDialogAndItsName() = runTest {
+        recreatedAfter { projects ->
+            projects.startRenaming(saved)
+            projects.editName("Saia da formatura")
+        }.use { scenario ->
+            scenario.viewModel.rename()
+
+            assertEquals(
+                ProjectName("Saia da formatura"),
+                scenario.viewModel.state.value.projects.single().name,
+            )
+        }
+    }
+
+    @Test
+    fun recreate_afterProcessDeath_keepsTheDeleteConfirmation() = runTest {
+        recreatedAfter { projects -> projects.startDeleting(saved) }.use { scenario ->
+            assertEquals("Saia antiga", scenario.viewModel.state.value.deleting?.name)
+
+            scenario.viewModel.delete()
+
+            assertEquals(emptyList<Project>(), scenario.viewModel.state.value.projects)
+        }
+    }
+
+    @Test
+    fun recreate_afterProcessDeath_duringAStorageCall_offersTheDialogAgain() = runTest {
+        storage.isCommandPending = true
+        recreatedAfter { projects -> projects.startDeleting(saved).also { projects.delete() } }
+            .use { scenario ->
+                assertFalse(scenario.viewModel.state.value.deleting?.isBusy ?: true)
+            }
+    }
+
+    /** A view model that went through [actions], then was recreated after process death. */
+    private fun recreatedAfter(actions: (ProjectsViewModel) -> Unit) =
+        viewModelScenario { ProjectsViewModel(storage, clock, createSavedStateHandle()) }.also {
+            actions(it.viewModel)
+            it.recreate()
+        }
+
+    private fun projectsViewModel() = ProjectsViewModel(storage, clock, SavedStateHandle())
 
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
 }
@@ -319,6 +382,9 @@ private class FakeProjects : ProjectRepository {
     val stored = MutableStateFlow(listOf(saved))
     var failsLoad = false
     var failsCommands = false
+
+    /** Whether commands never finish, as when the process dies during one. */
+    var isCommandPending = false
 
     override fun projects(): Flow<List<Project>> = flow {
         check(!failsLoad) { "Controlled load failure" }
@@ -354,8 +420,10 @@ private class FakeProjects : ProjectRepository {
         projects.filter { it.id != id }
     }
 
-    private fun command(change: (List<Project>) -> List<Project>): Result<Unit> =
-        if (failsCommands) {
+    private suspend fun command(change: (List<Project>) -> List<Project>): Result<Unit> =
+        if (isCommandPending) {
+            awaitCancellation()
+        } else if (failsCommands) {
             Result.failure(IllegalStateException("Controlled storage failure"))
         } else {
             Result.success(stored.update(change))

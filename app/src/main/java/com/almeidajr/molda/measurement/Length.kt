@@ -1,8 +1,10 @@
 package com.almeidajr.molda.measurement
 
 import java.math.BigDecimal
+import kotlinx.serialization.Serializable
 
 /** A finite, non-negative distance in centimetres. */
+@Serializable
 @JvmInline
 value class Length(val centimetres: Double) {
     init {

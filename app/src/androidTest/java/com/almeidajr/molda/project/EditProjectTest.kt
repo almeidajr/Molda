@@ -258,7 +258,7 @@ class EditProjectTest {
                 val projectsViewModel: ProjectsViewModel = viewModel(
                     key = "isolatedProjects",
                     factory = viewModelFactory {
-                        initializer { ProjectsViewModel(projects, clock) }
+                        initializer { ProjectsViewModel(projects, clock, createSavedStateHandle()) }
                     },
                 )
                 val calculator: SkirtCalculatorViewModel = viewModel()

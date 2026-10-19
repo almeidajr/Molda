@@ -32,6 +32,7 @@ value class ProjectName(val text: String) {
  * A full-circle skirt as it was saved: the draft (waist and drafting assumptions), the calculated
  * radii, and the profile the waist came from, or null when it was typed by hand.
  */
+@Serializable
 data class SkirtSnapshot(
     val draft: SkirtDraft,
     val radii: SkirtRadii,

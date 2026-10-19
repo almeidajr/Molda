@@ -1,7 +1,9 @@
 package com.almeidajr.molda.project.ui
 
 import androidx.annotation.StringRes
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.R
 import com.almeidajr.molda.project.domain.Project
@@ -21,8 +23,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
 /** A result being saved as a project, under the [name] typed so far. */
+@Serializable
 data class ProjectSaving(
     val snapshot: SkirtSnapshot,
     val name: String,
@@ -33,18 +37,24 @@ data class ProjectSaving(
     @param:StringRes val error: Int? = null,
 )
 
-/** A stored [project] being renamed to the [name] typed so far. */
+/** The stored project [id] being renamed to the [name] typed so far. */
+@Serializable
 data class ProjectRenaming(
-    val project: Project,
+    val id: ProjectId,
     val name: String,
     val hasBlankName: Boolean = false,
     val isBusy: Boolean = false,
     @param:StringRes val error: Int? = null,
 )
 
-/** A stored [project] whose deletion is being confirmed; a failure keeps it with [error]. */
+/**
+ * The stored project [id], called [name], whose deletion is being confirmed; a failure keeps it
+ * with [error].
+ */
+@Serializable
 data class ProjectDeleting(
-    val project: Project,
+    val id: ProjectId,
+    val name: String,
     val isBusy: Boolean = false,
     @param:StringRes val error: Int? = null,
 )
@@ -64,14 +74,30 @@ data class ProjectsState(
     val projectToShow: ProjectId? = null,
 )
 
+/** The open dialogs, kept through process death; a storage call they started is not. */
+@Serializable
+private data class ProjectDialogs(
+    val saving: ProjectSaving? = null,
+    val renaming: ProjectRenaming? = null,
+    val deleting: ProjectDeleting? = null,
+)
+
 // One command per project action the UI offers.
 @Suppress("TooManyFunctions")
 @HiltViewModel
 class ProjectsViewModel @Inject constructor(
     private val repository: ProjectRepository,
     private val clock: Clock,
+    savedState: SavedStateHandle,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(ProjectsState())
+    private var savedDialogs by savedState.saved { ProjectDialogs() }
+    private val mutableState = MutableStateFlow(
+        ProjectsState(
+            saving = savedDialogs.saving?.copy(isBusy = false),
+            renaming = savedDialogs.renaming?.copy(isBusy = false),
+            deleting = savedDialogs.deleting?.copy(isBusy = false),
+        ),
+    )
     val state: StateFlow<ProjectsState> = mutableState.asStateFlow()
 
     private var loadJob: Job? = null
@@ -160,7 +186,7 @@ class ProjectsViewModel @Inject constructor(
     fun onProjectShown() = transition { it.copy(projectToShow = null) }
 
     fun startRenaming(project: Project) = transition {
-        it.copy(renaming = ProjectRenaming(project, project.name.text))
+        it.copy(renaming = ProjectRenaming(project.id, project.name.text))
     }
 
     fun rename() {
@@ -168,7 +194,7 @@ class ProjectsViewModel @Inject constructor(
         val name = readProjectName(renaming.name)
             ?: return transition { it.copy(renaming = renaming.copy(hasBlankName = true)) }
         submit(
-            command = { repository.rename(renaming.project.id, name, clock.instant()) },
+            command = { repository.rename(renaming.id, name, clock.instant()) },
             progress = { state, isBusy, error ->
                 state.copy(renaming = state.renaming?.copy(isBusy = isBusy, error = error))
             },
@@ -178,13 +204,13 @@ class ProjectsViewModel @Inject constructor(
 
     /** Asks to confirm deleting [project]; nothing is deleted until [delete]. */
     fun startDeleting(project: Project) = transition {
-        it.copy(deleting = ProjectDeleting(project))
+        it.copy(deleting = ProjectDeleting(project.id, project.name.text))
     }
 
     fun delete() {
         val deleting = mutableState.value.deleting?.takeUnless { it.isBusy } ?: return
         submit(
-            command = { repository.delete(deleting.project.id) },
+            command = { repository.delete(deleting.id) },
             progress = { state, isBusy, error ->
                 state.copy(deleting = state.deleting?.copy(isBusy = isBusy, error = error))
             },
@@ -225,6 +251,8 @@ class ProjectsViewModel @Inject constructor(
 
     // Main-thread only, so reading back the new value cannot race another transition.
     private fun transition(next: (ProjectsState) -> ProjectsState) {
-        mutableState.value = next(mutableState.value)
+        val state = next(mutableState.value)
+        mutableState.value = state
+        savedDialogs = ProjectDialogs(state.saving, state.renaming, state.deleting)
     }
 }
