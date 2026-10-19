@@ -76,6 +76,7 @@ import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.adaptive.HingeSafeContent
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.adaptive.rememberReadableListDetailStrategy
+import com.almeidajr.molda.ui.navigation.CatalogSelection
 import com.almeidajr.molda.ui.navigation.LocalTitleFocus
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.NavigationLabel
@@ -305,8 +306,11 @@ fun MoldaRoute(
             }),
         ) {
             GuideLibrary(
-                isFabricFoldingOpen = (guias.last() == ExampleFabricFoldingGuideKey)
-                    .takeIf { LocalIsTwoPane.current },
+                fabricFoldingSelection = when {
+                    !LocalIsTwoPane.current -> CatalogSelection.None
+                    guias.last() == ExampleFabricFoldingGuideKey -> CatalogSelection.Selected
+                    else -> CatalogSelection.Unselected
+                },
                 onOpenFabricFolding = {
                     if (guias.last() != ExampleFabricFoldingGuideKey) {
                         navigation.push(ExampleFabricFoldingGuideKey)
@@ -458,8 +462,8 @@ fun MoldaRoute(
             HingeSafeContent(Modifier.fillMaxSize(), isSingleColumn = isGuideOpen) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     val listDetail = rememberReadableListDetailStrategy<NavKey>(maxWidth)
-                    val wide = listDetail != null
-                    val fabPosition = if (wide) FabPosition.Start else FabPosition.End
+                    val isTwoPane = listDetail != null
+                    val fabPosition = if (isTwoPane) FabPosition.Start else FabPosition.End
                     val overlayStrategy = remember { WindowOverlaySceneStrategy<NavKey>() }
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -471,7 +475,9 @@ fun MoldaRoute(
                         },
                         floatingActionButtonPosition = fabPosition,
                         floatingActionButton = {
-                            if (isManaging && (perfis.none { it is ProfileEditorKey } || wide)) {
+                            if (isManaging &&
+                                (perfis.none { it is ProfileEditorKey } || isTwoPane)
+                            ) {
                                 ProfileCreateAction(
                                     profileState,
                                     { requestEditor(EditedProfile.New) },
@@ -481,7 +487,7 @@ fun MoldaRoute(
                         contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     ) { padding ->
                         CompositionLocalProvider(
-                            LocalIsTwoPane provides wide,
+                            LocalIsTwoPane provides isTwoPane,
                             LocalTitleFocus provides titleFocus,
                         ) {
                             NavDisplay(

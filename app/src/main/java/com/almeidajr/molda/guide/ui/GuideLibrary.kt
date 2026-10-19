@@ -1,75 +1,45 @@
 package com.almeidajr.molda.guide.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
 import com.almeidajr.molda.ui.navigation.CatalogEntry
-import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
+import com.almeidajr.molda.ui.navigation.CatalogScreen
+import com.almeidajr.molda.ui.navigation.CatalogSelection
+import com.almeidajr.molda.ui.navigation.motifDashEffect
 
 /**
- * The Guias root: the library of guides, of which fabric folding is the first. When the library
- * is a list pane beside the guides, [isFabricFoldingOpen] is non-null and selects its entry.
+ * The Guias root: the library of guides, of which fabric folding is the first. Beside the guides,
+ * [fabricFoldingSelection] marks whether its entry is the one shown.
  */
 @Composable
 fun GuideLibrary(
-    isFabricFoldingOpen: Boolean?,
+    fabricFoldingSelection: CatalogSelection,
     onOpenFabricFolding: () -> Unit,
     onAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxSize()) {
-        MoldaTopAppBar(stringResource(R.string.navigation_guias), onAbout = onAbout)
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(320.dp),
-                modifier = Modifier.widthIn(max = 1040.dp).fillMaxWidth(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 8.dp,
-                    bottom = 16.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Text(
-                        stringResource(R.string.guide_library_intro),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                item {
-                    CatalogEntry(
-                        stringResource(R.string.guide_open),
-                        stringResource(R.string.guide_fabric_folding_description),
-                        onOpenFabricFolding,
-                        selected = isFabricFoldingOpen,
-                    ) { FoldedSquareMotif() }
-                }
-            }
+    CatalogScreen(
+        stringResource(R.string.navigation_guias),
+        stringResource(R.string.guide_library_intro),
+        onAbout,
+        modifier,
+    ) {
+        item {
+            CatalogEntry(
+                stringResource(R.string.guide_open),
+                stringResource(R.string.guide_fabric_folding_description),
+                onOpenFabricFolding,
+                selection = fabricFoldingSelection,
+            ) { FoldedSquareMotif() }
         }
     }
 }
@@ -103,9 +73,7 @@ private fun FoldedSquareMotif() {
                 style = Stroke(
                     width = 2 * unit,
                     join = StrokeJoin.Round,
-                    pathEffect = dashes?.let {
-                        PathEffect.dashPathEffect(it.map { dash -> dash * unit }.toFloatArray())
-                    },
+                    pathEffect = motifDashEffect(dashes, unit),
                 ),
             )
         }
