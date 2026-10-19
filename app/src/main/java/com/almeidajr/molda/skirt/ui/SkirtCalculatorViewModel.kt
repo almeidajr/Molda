@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.serialization.saved
 import com.almeidajr.molda.measurement.lengthText
+import com.almeidajr.molda.project.domain.MeasurementSource
+import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
@@ -55,6 +57,17 @@ data class CalculatorState(
 ) {
     /** Whether the inputs or their source differ from the loaded saved draft. */
     val isDirty: Boolean get() = form.loaded?.let { it != form.values } == true
+}
+
+/** The calculated result as a project snapshot, or null before a successful calculation. */
+fun CalculatorState.snapshot(): SkirtSnapshot? {
+    val draft = draft
+    val radii = radii
+    if (draft == null || radii == null) return null
+    val source = form.sourceProfileName?.let { name ->
+        form.sourceMeasurementDate?.let { MeasurementSource(name, LocalDate.parse(it)) }
+    }
+    return SkirtSnapshot(draft, radii, source)
 }
 
 @HiltViewModel
