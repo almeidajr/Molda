@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -46,7 +47,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import com.almeidajr.molda.R
+import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.skirt.domain.SkirtCalculation
+import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
+import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 
 // Not `const`: ktlint then demands SCREAMING_SNAKE names, which Detekt's naming rule rejects.
 // Leaves most of a short window to the instructions while the drawing stays pinned.
@@ -60,9 +65,25 @@ private val PinnedDrawingMinHeight = 560.dp
 @Suppress("MayBeConstant")
 private val StackedStepBarFontScale = 1.3f
 
-/** The tonal entry to the tutorial player; it takes focus back when the player closes. */
+/** The example draft of a guide opened from Guias, as its label lists it. */
+private val ExampleSkirtDraft = SkirtDraft(
+    waist = Length(80.0),
+    ease = Length(2.0),
+    finishedLength = Length(60.0),
+    waistSeamAllowance = Length(1.0),
+    hemAllowance = Length(2.0),
+)
+
+/** The radii a guide opened from Guias shows. */
+internal val ExampleSkirtRadii: SkirtRadii =
+    when (val result = calculateSkirtRadii(ExampleSkirtDraft)) {
+        is SkirtCalculation.Success -> result.radii
+        else -> error("The example skirt draft must calculate: $result")
+    }
+
+/** The tonal entry to the guide player; it takes focus back when the player closes. */
 @Composable
-internal fun FabricFoldingTutorialEntry(onOpen: () -> Unit, modifier: Modifier = Modifier) {
+internal fun FabricFoldingGuideEntry(onOpen: () -> Unit, modifier: Modifier = Modifier) {
     // Restored with the calculator when the player closes, so focus returns here.
     var hasOpened by rememberSaveable { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -78,21 +99,25 @@ internal fun FabricFoldingTutorialEntry(onOpen: () -> Unit, modifier: Modifier =
             onOpen()
         },
         modifier = modifier.heightIn(min = 48.dp).focusRequester(focusRequester),
-    ) { Text(stringResource(R.string.tutorial_open)) }
+    ) { Text(stringResource(R.string.guide_open)) }
 }
 
 /**
- * The full-screen fabric-folding tutorial: a pinned drawing, scrolling instructions and a
- * fixed step bar. Back and Concluir call [onClose]; the player never changes the calculation.
+ * The full-screen fabric-folding guide: a pinned drawing, scrolling instructions and a
+ * fixed step bar. Back and Concluir call [onClose], and so does the close button when
+ * [isCloseShown]; the player never changes the calculation. With [onCalculateOwn], the [radii] are
+ * an example: a pinned label says so and offers to calculate the user's own skirt.
  */
 @Composable
 internal fun FabricFoldingPlayer(
     radii: SkirtRadii,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    isCloseShown: Boolean = true,
+    onCalculateOwn: (() -> Unit)? = null,
 ) {
-    var progress by rememberSaveable(stateSaver = TutorialProgressSaver) {
-        mutableStateOf(TutorialProgress())
+    var progress by rememberSaveable(stateSaver = GuideProgressSaver) {
+        mutableStateOf(GuideProgress())
     }
     BackHandler(onBack = onClose)
     val motionEnabled = rememberSystemMotionEnabled()
@@ -101,10 +126,11 @@ internal fun FabricFoldingPlayer(
             val drawingSize = min(min(maxWidth, 640.dp) - 32.dp, maxHeight * DrawingHeightFraction)
             val isDrawingPinned = maxHeight >= PinnedDrawingMinHeight
             Column(Modifier.widthIn(max = 640.dp).fillMaxSize()) {
-                PlayerTopBar(stringResource(progress.step.title), onClose)
+                PlayerTopBar(stringResource(progress.step.title), onClose.takeIf { isCloseShown })
+                if (onCalculateOwn != null) ExampleLabel(onCalculateOwn)
                 key(progress.step) {
                     val animation: @Composable () -> Unit = {
-                        TutorialAnimation(radii, progress.step, motionEnabled, drawingSize)
+                        GuideAnimation(radii, progress.step, motionEnabled, drawingSize)
                     }
                     if (isDrawingPinned) animation()
                     Column(
@@ -114,7 +140,7 @@ internal fun FabricFoldingPlayer(
                     ) {
                         if (!isDrawingPinned) animation()
                         if (!motionEnabled) {
-                            Text(stringResource(R.string.tutorial_motion_off))
+                            Text(stringResource(R.string.guide_motion_off))
                         }
                         StepInstructions(radii, progress.step)
                     }
@@ -130,17 +156,20 @@ internal fun FabricFoldingPlayer(
 }
 
 @Composable
-private fun PlayerTopBar(title: String, onClose: () -> Unit) {
+private fun PlayerTopBar(title: String, onClose: (() -> Unit)?) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 4.dp),
+        Modifier.fillMaxWidth().heightIn(min = 64.dp)
+            .padding(start = if (onClose == null) 16.dp else 4.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
-            Icon(
-                painterResource(R.drawable.ic_close),
-                contentDescription = stringResource(R.string.tutorial_close),
-            )
+        if (onClose != null) {
+            IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
+                Icon(
+                    painterResource(R.drawable.ic_close),
+                    contentDescription = stringResource(R.string.guide_close),
+                )
+            }
         }
         Text(
             title,
@@ -150,13 +179,46 @@ private fun PlayerTopBar(title: String, onClose: () -> Unit) {
     }
 }
 
+/** Says the guide shows example dimensions, which ones, and how to calculate one's own. */
 @Composable
-private fun StepBar(progress: TutorialProgress, onPrevious: () -> Unit, onForward: () -> Unit) {
+private fun ExampleLabel(onCalculateOwn: () -> Unit) {
+    Surface(
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    ) {
+        Row(
+            Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(painterResource(R.drawable.ic_info), contentDescription = null)
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.guide_example_label),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                Text(
+                    stringResource(R.string.guide_example_inputs),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                // Text buttons pad their label by 12dp: pull it back to the text's start edge.
+                TextButton(
+                    onClick = onCalculateOwn,
+                    modifier = Modifier.heightIn(min = 48.dp).offset(x = (-12).dp),
+                ) { Text(stringResource(R.string.guide_calculate_own)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepBar(progress: GuideProgress, onPrevious: () -> Unit, onForward: () -> Unit) {
     val isStacked = LocalDensity.current.fontScale > StackedStepBarFontScale
     val position: @Composable (Modifier) -> Unit = {
         Text(
             stringResource(
-                R.string.tutorial_position,
+                R.string.guide_position,
                 progress.stepNumber,
                 FoldingStep.entries.size,
             ),
@@ -174,7 +236,7 @@ private fun StepBar(progress: TutorialProgress, onPrevious: () -> Unit, onForwar
                     onClick = onPrevious,
                     enabled = progress.canGoBack,
                     modifier = Modifier.heightIn(min = 48.dp),
-                ) { Text(stringResource(R.string.tutorial_previous)) }
+                ) { Text(stringResource(R.string.guide_previous)) }
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     if (!isStacked) position(Modifier)
                 }

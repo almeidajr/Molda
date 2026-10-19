@@ -49,7 +49,7 @@ import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
 @Composable
-internal fun TutorialAnimation(
+internal fun GuideAnimation(
     radii: SkirtRadii,
     step: FoldingStep,
     motionEnabled: Boolean,
@@ -74,13 +74,13 @@ internal fun TutorialAnimation(
         ) {
             Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
                 when (file) {
-                    null -> Text(stringResource(R.string.tutorial_animation_unavailable))
+                    null -> Text(stringResource(R.string.guide_animation_unavailable))
 
-                    is Result.Loading -> Text(stringResource(R.string.tutorial_animation_loading))
+                    is Result.Loading -> Text(stringResource(R.string.guide_animation_loading))
 
-                    is Result.Error -> Text(stringResource(R.string.tutorial_animation_error))
+                    is Result.Error -> Text(stringResource(R.string.guide_animation_error))
 
-                    is Result.Success -> TutorialDrawing(
+                    is Result.Success -> GuideDrawing(
                         file.value,
                         radii,
                         step,
@@ -106,7 +106,7 @@ internal fun TutorialAnimation(
                     ) {
                         Text(
                             stringResource(
-                                if (paused) R.string.tutorial_resume else R.string.tutorial_pause,
+                                if (paused) R.string.guide_resume else R.string.guide_pause,
                             ),
                         )
                     }
@@ -119,14 +119,14 @@ internal fun TutorialAnimation(
 /** The replay button's label: Marking names its marking, and a played step offers a repeat. */
 @StringRes
 private fun replayLabel(step: FoldingStep, hasPlayed: Boolean): Int = when {
-    step == FoldingStep.Marking && hasPlayed -> R.string.tutorial_replay_marking
-    step == FoldingStep.Marking -> R.string.tutorial_play_marking
-    hasPlayed -> R.string.tutorial_replay_step
-    else -> R.string.tutorial_play_step
+    step == FoldingStep.Marking && hasPlayed -> R.string.guide_replay_marking
+    step == FoldingStep.Marking -> R.string.guide_play_marking
+    hasPlayed -> R.string.guide_replay_step
+    else -> R.string.guide_play_step
 }
 
 @Composable
-private fun TutorialDrawing(
+private fun GuideDrawing(
     file: RiveFile,
     radii: SkirtRadii,
     step: FoldingStep,
@@ -136,17 +136,17 @@ private fun TutorialDrawing(
 ) {
     val artboard = rememberArtboardResult(file, step.artboard)
     if (artboard !is Result.Success) {
-        Text(stringResource(R.string.tutorial_drawing_preparing))
+        Text(stringResource(R.string.guide_drawing_preparing))
         return
     }
     when (val result = rememberViewModelInstanceResult(file)) {
-        is Result.Loading -> Text(stringResource(R.string.tutorial_measurements_loading))
+        is Result.Loading -> Text(stringResource(R.string.guide_measurements_loading))
 
-        is Result.Error -> Text(stringResource(R.string.tutorial_measurements_error))
+        is Result.Error -> Text(stringResource(R.string.guide_measurements_error))
 
         is Result.Success -> {
             val instance = result.value
-            val palette = tutorialPalette(MaterialTheme.colorScheme)
+            val palette = guidePalette(MaterialTheme.colorScheme)
             var ready by remember(instance, radii) { mutableStateOf(false) }
             LaunchedEffect(instance, radii, palette) {
                 palette.forEach { (name, color) -> instance.setColor(name, color.toArgb()) }
@@ -167,10 +167,10 @@ private fun TutorialDrawing(
                 if (play) instance.fireTrigger("restart")
             }
             val description = when (step) {
-                FoldingStep.Marking -> stringResource(R.string.tutorial_drawing_marking)
-                FoldingStep.Cutting -> stringResource(R.string.tutorial_drawing_cutting)
-                FoldingStep.Unfolding -> stringResource(R.string.tutorial_drawing_unfolding)
-                else -> stringResource(R.string.tutorial_drawing_fold, step.ordinal + 1)
+                FoldingStep.Marking -> stringResource(R.string.guide_drawing_marking)
+                FoldingStep.Cutting -> stringResource(R.string.guide_drawing_cutting)
+                FoldingStep.Unfolding -> stringResource(R.string.guide_drawing_unfolding)
+                else -> stringResource(R.string.guide_drawing_fold, step.ordinal + 1)
             }
             if (ready) {
                 Rive(
@@ -192,7 +192,7 @@ private fun TutorialDrawing(
  * The drawing's colour properties by view-model name. The cutting card's roles: fabric is its
  * paper and lines its ink, so the drawing reads on the light, dark and dynamic schemes alike.
  */
-internal fun tutorialPalette(colors: ColorScheme): Map<String, Color> = mapOf(
+internal fun guidePalette(colors: ColorScheme): Map<String, Color> = mapOf(
     "ink" to colors.onSecondaryContainer,
     "fabric" to colors.secondaryContainer,
     "fabricFold" to colors.tertiaryContainer,
@@ -209,29 +209,29 @@ internal fun StepInstructions(radii: SkirtRadii, step: FoldingStep) {
     Text(stringResource(stepLead(step)), style = MaterialTheme.typography.titleMedium)
     when (step) {
         FoldingStep.Preparation -> {
-            Text(stringResource(R.string.tutorial_preparation_care))
-            Text(stringResource(R.string.tutorial_preparation_layout))
+            Text(stringResource(R.string.guide_preparation_care))
+            Text(stringResource(R.string.guide_preparation_layout))
         }
 
-        FoldingStep.FirstFold -> Text(stringResource(R.string.tutorial_first_fold_context))
+        FoldingStep.FirstFold -> Text(stringResource(R.string.guide_first_fold_context))
 
-        FoldingStep.SecondFold -> Text(stringResource(R.string.tutorial_second_fold_context))
+        FoldingStep.SecondFold -> Text(stringResource(R.string.guide_second_fold_context))
 
         FoldingStep.Marking -> MarkingContext(radii)
 
         FoldingStep.Cutting -> {
-            Text(stringResource(R.string.tutorial_cutting_arcs))
-            Text(stringResource(R.string.tutorial_cutting_keep))
+            Text(stringResource(R.string.guide_cutting_arcs))
+            Text(stringResource(R.string.guide_cutting_keep))
             coincidenceNotes(cuttingCard(radii, text), text).forEach { Text(it) }
-            Text(stringResource(R.string.tutorial_cutting_garment))
+            Text(stringResource(R.string.guide_cutting_garment))
         }
 
         FoldingStep.Unfolding -> {
-            Text(stringResource(R.string.tutorial_unfolding_result))
-            Text(stringResource(R.string.tutorial_unfolding_center))
+            Text(stringResource(R.string.guide_unfolding_result))
+            Text(stringResource(R.string.guide_unfolding_center))
         }
     }
-    Disclosure(stringResource(R.string.tutorial_details)) {
+    Disclosure(stringResource(R.string.guide_details)) {
         // Supporting text, quieter than the lead and context through the smaller type.
         ProvideTextStyle(
             MaterialTheme.typography.bodyMedium.copy(
@@ -239,7 +239,7 @@ internal fun StepInstructions(radii: SkirtRadii, step: FoldingStep) {
             ),
         ) {
             stepDetails(step).forEach { Text(stringResource(it)) }
-            Text(stringResource(R.string.tutorial_details_motion))
+            Text(stringResource(R.string.guide_details_motion))
         }
     }
 }
@@ -247,12 +247,12 @@ internal fun StepInstructions(radii: SkirtRadii, step: FoldingStep) {
 /** The one action to take now, short enough to read under the pinned drawing. */
 @StringRes
 private fun stepLead(step: FoldingStep): Int = when (step) {
-    FoldingStep.Preparation -> R.string.tutorial_lead_preparation
-    FoldingStep.FirstFold -> R.string.tutorial_lead_first_fold
-    FoldingStep.SecondFold -> R.string.tutorial_lead_second_fold
-    FoldingStep.Marking -> R.string.tutorial_lead_marking
-    FoldingStep.Cutting -> R.string.tutorial_lead_cutting
-    FoldingStep.Unfolding -> R.string.tutorial_lead_unfolding
+    FoldingStep.Preparation -> R.string.guide_lead_preparation
+    FoldingStep.FirstFold -> R.string.guide_lead_first_fold
+    FoldingStep.SecondFold -> R.string.guide_lead_second_fold
+    FoldingStep.Marking -> R.string.guide_lead_marking
+    FoldingStep.Cutting -> R.string.guide_lead_cutting
+    FoldingStep.Unfolding -> R.string.guide_lead_unfolding
 }
 
 /** The current radii in key order, then where each line sits and which are not cut. */
@@ -266,47 +266,47 @@ private fun MarkingContext(radii: SkirtRadii) {
             Text("${entry.number}. ${entry.label}: ${entry.value}")
         }
     }
-    Text(stringResource(R.string.tutorial_marking_references))
-    Text(stringResource(R.string.tutorial_marking_allowances))
+    Text(stringResource(R.string.guide_marking_references))
+    Text(stringResource(R.string.guide_marking_allowances))
     coincidenceNotes(card, text).forEach { Text(it) }
 }
 
 /** Conventions, honest limits and practice notes that support the step but don't change it. */
 private fun stepDetails(step: FoldingStep): List<Int> = when (step) {
     FoldingStep.Preparation -> listOf(
-        R.string.tutorial_details_preparation,
-        R.string.tutorial_details_practice_material,
-        R.string.tutorial_illustrative_fabric,
+        R.string.guide_details_preparation,
+        R.string.guide_details_practice_material,
+        R.string.guide_illustrative_fabric,
     )
 
     FoldingStep.FirstFold -> listOf(
-        R.string.tutorial_details_first_fold,
-        R.string.tutorial_illustrative_fabric,
+        R.string.guide_details_first_fold,
+        R.string.guide_illustrative_fabric,
     )
 
     FoldingStep.SecondFold -> listOf(
-        R.string.tutorial_details_second_fold,
-        R.string.tutorial_details_same_square,
-        R.string.tutorial_illustrative_fabric,
+        R.string.guide_details_second_fold,
+        R.string.guide_details_same_square,
+        R.string.guide_illustrative_fabric,
     )
 
     FoldingStep.Marking -> listOf(
-        R.string.tutorial_proportional_drawing,
-        R.string.tutorial_construction_boundary,
+        R.string.guide_proportional_drawing,
+        R.string.guide_construction_boundary,
     )
 
     FoldingStep.Cutting -> listOf(
-        R.string.tutorial_details_cutting_replay,
-        R.string.tutorial_practice_first,
-        R.string.tutorial_proportional_drawing,
-        R.string.tutorial_construction_boundary,
+        R.string.guide_details_cutting_replay,
+        R.string.guide_practice_first,
+        R.string.guide_proportional_drawing,
+        R.string.guide_construction_boundary,
     )
 
     FoldingStep.Unfolding -> listOf(
-        R.string.tutorial_details_unfolding_scale,
-        R.string.tutorial_details_unfolding_limits,
-        R.string.tutorial_practice_first,
-        R.string.tutorial_proportional_drawing,
-        R.string.tutorial_construction_boundary,
+        R.string.guide_details_unfolding_scale,
+        R.string.guide_details_unfolding_limits,
+        R.string.guide_practice_first,
+        R.string.guide_proportional_drawing,
+        R.string.guide_construction_boundary,
     )
 }

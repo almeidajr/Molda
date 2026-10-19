@@ -63,7 +63,7 @@ fun SkirtCalculatorScreen(
     modifier: Modifier = Modifier,
     onBlur: (SkirtDraftField) -> Unit = {},
     onUseProfile: () -> Unit = {},
-    onOpenTutorial: () -> Unit = {},
+    onOpenGuide: () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequesters = remember { SkirtDraftField.entries.associateWith { FocusRequester() } }
@@ -108,7 +108,7 @@ fun SkirtCalculatorScreen(
     val outcome: @Composable () -> Unit = {
         CalculationOutcome(
             state,
-            onOpenTutorial,
+            onOpenGuide,
             Modifier.bringIntoViewRequester(resultRequester),
         ) {
             focusRequesters.getValue(SkirtDraftField.Waist).requestFocus()
@@ -127,7 +127,7 @@ private fun RevealCalculationOutcome(
     bringRequesters: Map<SkirtDraftField, BringIntoViewRequester>,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
-    // Saved so returning from the tutorial keeps the scroll position instead of revealing again.
+    // Saved so returning from the guide keeps the scroll position instead of revealing again.
     var revealedAttempt by rememberSaveable { mutableIntStateOf(state.calculationAttempt) }
     LaunchedEffect(state.calculationAttempt) {
         if (state.calculationAttempt == revealedAttempt) return@LaunchedEffect
@@ -224,7 +224,7 @@ private fun CalculatorIntro() {
 @Composable
 private fun CalculationOutcome(
     state: CalculatorState,
-    onOpenTutorial: () -> Unit,
+    onOpenGuide: () -> Unit,
     modifier: Modifier = Modifier,
     onEditMeasurements: () -> Unit,
 ) {
@@ -247,7 +247,7 @@ private fun CalculationOutcome(
             text,
         )
         CuttingCard(card, description, modifier)
-        SkirtResults(draft, onOpenTutorial, onEditMeasurements)
+        SkirtResults(draft, onOpenGuide, onEditMeasurements)
         DraftingExplanation(state.form.inputs, radii)
     }
 }
@@ -324,7 +324,7 @@ private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
 @Composable
 private fun SkirtResults(
     draft: SkirtDraft,
-    onOpenTutorial: () -> Unit,
+    onOpenGuide: () -> Unit,
     onEditMeasurements: () -> Unit,
 ) {
     // One action row under the card; at large text the second button wraps below the first.
@@ -332,7 +332,7 @@ private fun SkirtResults(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FabricFoldingTutorialEntry(onOpenTutorial)
+        FabricFoldingGuideEntry(onOpenGuide)
         TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.skirt_edit_measurements))
         }

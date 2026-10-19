@@ -25,11 +25,13 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -57,6 +59,7 @@ import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.profileWaistText
 import com.almeidajr.molda.project.ui.ProjectsScreen
+import com.almeidajr.molda.skirt.ui.ExampleSkirtRadii
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
@@ -91,8 +94,13 @@ private data object ProfileManagementKey : NavKey
 @Serializable
 private data object SkirtCalculatorKey : NavKey
 
+/** The fabric-folding guide on the calculated radii, opened from a result. */
 @Serializable
-private data object FabricFoldingTutorialKey : NavKey
+private data object FabricFoldingGuideKey : NavKey
+
+/** The fabric-folding guide on example dimensions, opened from Guias. */
+@Serializable
+private data object ExampleFabricFoldingGuideKey : NavKey
 
 /** About Molda, pushed on the stack of the destination whose root opened it. */
 @Serializable
@@ -172,6 +180,9 @@ private val TopLevelRoots: List<NavKey> = Destination.entries.map { it.root }
 /** Windows narrower than this show a navigation bar; wider ones show a rail. */
 private val NavigationRailMinWidth = 600.dp
 
+/** Whether the content shows list and detail panes side by side. */
+private val LocalIsTwoPane = staticCompositionLocalOf { false }
+
 // The back stacks and every transition that edits them read together in one place.
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -185,6 +196,7 @@ fun MoldaRoute(
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
     val navigation = rememberTopLevelBackStacks(TopLevelRoots)
     val moldes = navigation.stackOf(PatternCatalogKey)
+    val guias = navigation.stackOf(GuideLibraryKey)
     val perfis = navigation.stackOf(ProfileManagementKey)
     // ProfilesViewModel owns whether the editor is open (a save or delete also closes it).
     LaunchedEffect(profileState.isEditorOpen, profileState.editingId, perfis.size) {
@@ -234,7 +246,42 @@ fun MoldaRoute(
                 navigation.select(PatternCatalogKey)
             }, onAbout = openAbout)
         }
-        entry<GuideLibraryKey> { GuideLibrary(onAbout = openAbout) }
+        entry<GuideLibraryKey>(
+            metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
+                ReadablePane {
+                    Text(stringResource(R.string.guide_choose), Modifier.padding(16.dp))
+                }
+            }),
+        ) {
+            GuideLibrary(
+                isFabricFoldingOpen = (guias.last() == ExampleFabricFoldingGuideKey)
+                    .takeIf { LocalIsTwoPane.current },
+                onOpenFabricFolding = {
+                    if (guias.last() != ExampleFabricFoldingGuideKey) {
+                        guias.add(ExampleFabricFoldingGuideKey)
+                    }
+                },
+                onAbout = openAbout,
+            )
+        }
+        entry<ExampleFabricFoldingGuideKey>(metadata = ListDetailSceneStrategy.detailPane()) {
+            FabricFoldingPlayer(
+                ExampleSkirtRadii,
+                onClose = { guias.remove(ExampleFabricFoldingGuideKey) },
+                // Beside the list the guide is a pane, closed by choosing from the list or Back.
+                isCloseShown = !LocalIsTwoPane.current,
+                onCalculateOwn = {
+                    navigation.select(PatternCatalogKey)
+                    // Keeps the calculator and its draft, closing what is open above it.
+                    val calculatorIndex = moldes.indexOf(SkirtCalculatorKey)
+                    if (calculatorIndex < 0) {
+                        moldes.add(SkirtCalculatorKey)
+                    } else {
+                        moldes.subList(calculatorIndex + 1, moldes.size).clear()
+                    }
+                },
+            )
+        }
         entry<AboutKey> {
             val context = LocalContext.current
             val versionName = remember(context) {
@@ -252,12 +299,12 @@ fun MoldaRoute(
                 calculator,
                 onUp = navigation::back,
                 onUseProfile = { moldes.add(ProfilePickerKey) },
-                onOpenTutorial = { moldes.add(FabricFoldingTutorialKey) },
+                onOpenGuide = { moldes.add(FabricFoldingGuideKey) },
             )
         }
-        entry<FabricFoldingTutorialKey> {
+        entry<FabricFoldingGuideKey> {
             val close: () -> Unit = {
-                moldes.remove(FabricFoldingTutorialKey)
+                moldes.remove(FabricFoldingGuideKey)
             }
             val radii = calculatorState.radii
             if (radii != null) {
@@ -325,14 +372,15 @@ fun MoldaRoute(
     ProfileSaveFeedback(profiles, snackbar, onEditorClosed = returnToPickerIfOpen)
     val isManaging = navigation.selected == ProfileManagementKey &&
         navigation.current.last() !in setOf(AboutKey, LicencesKey)
-    val isTutorialOpen = navigation.current.last() == FabricFoldingTutorialKey
+    val isGuideOpen = navigation.current.last() == FabricFoldingGuideKey
+    val isAnyGuideOpen = isGuideOpen || navigation.current.last() == ExampleFabricFoldingGuideKey
     val density = LocalDensity.current
     BoxWithConstraints(modifier.fillMaxSize()) {
         val isCompact = maxWidth < NavigationRailMinWidth
         val suiteState = rememberNavigationSuiteScaffoldState()
         // The guide player's own step bar is the only bottom control on a compact window.
-        LaunchedEffect(isCompact && isTutorialOpen) {
-            if (isCompact && isTutorialOpen) suiteState.hide() else suiteState.show()
+        LaunchedEffect(isCompact && isAnyGuideOpen) {
+            if (isCompact && isAnyGuideOpen) suiteState.hide() else suiteState.show()
         }
         val suiteType = if (isCompact) {
             NavigationSuiteType.ShortNavigationBarCompact
@@ -347,7 +395,7 @@ fun MoldaRoute(
             state = suiteState,
         ) {
             // The player is one column even on a wide window: keep it off a book-posture fold only.
-            HingeSafeContent(Modifier.fillMaxSize(), isSingleColumn = isTutorialOpen) {
+            HingeSafeContent(Modifier.fillMaxSize(), isSingleColumn = isGuideOpen) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     val listDetail = rememberReadableListDetailStrategy<NavKey>(maxWidth)
                     val wide = listDetail != null
@@ -372,22 +420,28 @@ fun MoldaRoute(
                         },
                         contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     ) { padding ->
-                        NavDisplay(
-                            entries = navigation.entries(routes),
-                            // Keep bottom actions reachable while storage feedback is visible.
-                            modifier = Modifier.padding(padding).padding(bottom = snackbarInset),
-                            // A narrow window shows one destination at a time, in a single pane.
-                            sceneStrategies = listOfNotNull(overlayStrategy, listDetail),
-                            transitionSpec = { materialTransition(density, isForward = true) },
-                            popTransitionSpec = { materialTransition(density, isForward = false) },
-                            onBack = {
-                                if (navigation.current.last() !is ProfileEditorKey) {
-                                    navigation.back()
-                                } else if (!profileState.isSaving) {
-                                    cancelEditor()
-                                }
-                            },
-                        )
+                        CompositionLocalProvider(LocalIsTwoPane provides wide) {
+                            NavDisplay(
+                                entries = navigation.entries(routes),
+                                // Keep bottom actions reachable while storage feedback is visible.
+                                modifier = Modifier
+                                    .padding(padding)
+                                    .padding(bottom = snackbarInset),
+                                // A narrow window shows one destination at a time, in a single pane.
+                                sceneStrategies = listOfNotNull(overlayStrategy, listDetail),
+                                transitionSpec = { materialTransition(density, isForward = true) },
+                                popTransitionSpec = {
+                                    materialTransition(density, isForward = false)
+                                },
+                                onBack = {
+                                    if (navigation.current.last() !is ProfileEditorKey) {
+                                        navigation.back()
+                                    } else if (!profileState.isSaving) {
+                                        cancelEditor()
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -437,7 +491,7 @@ private fun CalculatorDestination(
     calculator: SkirtCalculatorViewModel,
     onUp: () -> Unit,
     onUseProfile: () -> Unit,
-    onOpenTutorial: () -> Unit,
+    onOpenGuide: () -> Unit,
 ) {
     val state by calculator.state.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize()) {
@@ -449,7 +503,7 @@ private fun CalculatorDestination(
             Modifier.weight(1f),
             onBlur = calculator::blur,
             onUseProfile = onUseProfile,
-            onOpenTutorial = onOpenTutorial,
+            onOpenGuide = onOpenGuide,
         )
     }
 }

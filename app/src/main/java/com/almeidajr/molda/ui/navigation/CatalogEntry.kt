@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
@@ -28,7 +29,8 @@ import com.almeidajr.molda.R
 /**
  * One whole-row entry of the Moldes catalog or the Guias library: a decorative thumbnail drawn by
  * [content], the [name], a one-sentence [description] and a decorative chevron, announced as one
- * button.
+ * button. In a list beside its detail, [selected] is non-null: the selected entry fills with the
+ * secondary container, drops the chevron and is exposed as selected.
  */
 @Composable
 fun CatalogEntry(
@@ -36,14 +38,18 @@ fun CatalogEntry(
     description: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    selected: Boolean? = null,
     content: @Composable () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     Surface(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().heightIn(min = 88.dp).semantics { role = Role.Button },
+        modifier = modifier.fillMaxWidth().heightIn(min = 88.dp).semantics {
+            role = Role.Button
+            if (selected != null) this.selected = selected
+        },
         shape = MaterialTheme.shapes.medium,
-        color = colors.surfaceContainerLow,
+        color = if (selected == true) colors.secondaryContainer else colors.surfaceContainerLow,
     ) {
         Row(
             Modifier.padding(16.dp),
@@ -67,11 +73,13 @@ fun CatalogEntry(
                     color = colors.onSurfaceVariant,
                 )
             }
-            Icon(
-                painterResource(R.drawable.ic_chevron_right),
-                contentDescription = null,
-                tint = colors.onSurfaceVariant,
-            )
+            if (selected != true) {
+                Icon(
+                    painterResource(R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    tint = colors.onSurfaceVariant,
+                )
+            }
         }
     }
 }

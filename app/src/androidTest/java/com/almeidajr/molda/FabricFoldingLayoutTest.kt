@@ -43,9 +43,9 @@ class FabricFoldingLayoutTest {
     fun openSkirtCalculator() = composeRule.showSkirtCalculator()
 
     @Test
-    fun fullTutorial_keepsStepBarAndDrawingInView_onEveryStep() {
+    fun fullGuide_keepsStepBarAndDrawingInView_onEveryStep() {
         listOf(false to 1f, true to 2f).forEach { (dark, fontScale) ->
-            openTutorial(dark, fontScale)
+            openGuide(dark, fontScale)
             listOf(
                 "Preparar o tecido",
                 "Primeira dobra",
@@ -95,20 +95,20 @@ class FabricFoldingLayoutTest {
                     .performClick()
             }
             composeRule.onNodeWithText("Etapa 6 de 6").assertDoesNotExist()
-            composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
+            composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
             composeRule.onNodeWithText(SkirtDraftField.FinishedLength.labelText).performScrollTo()
                 .performTextReplacement("70")
-            composeRule.onNodeWithText("Tutorial de dobra do tecido").assertDoesNotExist()
+            composeRule.onNodeWithText("Guia de dobra do tecido").assertDoesNotExist()
         }
     }
 
     @Test
     fun closeAction_isTallEnough_andReturnsToResults() {
-        openTutorial(dark = false, fontScale = 2f)
-        composeRule.onNodeWithContentDescription("Fechar tutorial")
+        openGuide(dark = false, fontScale = 2f)
+        composeRule.onNodeWithContentDescription("Fechar guia")
             .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
         composeRule.onNodeWithText("Preparar o tecido").assertDoesNotExist()
-        composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
+        composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
     }
 
     private companion object {
@@ -184,7 +184,7 @@ class FabricFoldingLayoutTest {
             .performScrollTo().assertIsDisplayed()
     }
 
-    private fun openTutorial(dark: Boolean, fontScale: Float) {
+    private fun openGuide(dark: Boolean, fontScale: Float) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
@@ -202,7 +202,7 @@ class FabricFoldingLayoutTest {
             }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
-        composeRule.onNodeWithText("Tutorial de dobra do tecido")
+        composeRule.onNodeWithText("Guia de dobra do tecido")
             .performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
     }
 }
