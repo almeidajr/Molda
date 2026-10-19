@@ -4,12 +4,17 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -182,6 +187,63 @@ class OpenProjectTest {
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Medidas de Ana, tiradas em 12/10/2026.").assertIsDisplayed()
     }
+
+    @Test
+    fun openedProject_rename_updatesItsTitleAndTheList() {
+        storeProject()
+        showRoute()
+        composeRule.selectDestination("Projetos")
+        click("Saia da formatura")
+
+        click("Ações: Saia da formatura")
+        click("Renomear projeto")
+        composeRule.onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
+            .performTextReplacement("Saia de verão")
+        click("Renomear")
+
+        composeRule.screenTitle("Saia de verão").assertIsDisplayed()
+        pressBack()
+        composeRule.onNodeWithText("Saia de verão").assertIsDisplayed()
+        composeRule.onNodeWithText("Saia da formatura").assertDoesNotExist()
+    }
+
+    @Test
+    fun openedProject_delete_returnsToTheList() {
+        storeProject()
+        showRoute()
+        composeRule.selectDestination("Projetos")
+        click("Saia da formatura")
+
+        click("Ações: Saia da formatura")
+        click("Excluir projeto")
+        click("Confirmar exclusão")
+
+        composeRule.screenTitle("Projetos").assertIsDisplayed()
+        composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
+    }
+
+    @Test
+    fun wideWindow_deletingTheOpenedProject_returnsToThePlaceholder() {
+        storeProject()
+        showRoute(DpSize(1600.dp, 1000.dp))
+        composeRule.selectDestination("Projetos")
+        click("Saia da formatura")
+        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
+
+        // The detail pane's own menu: the right-hand one of the two beside each other.
+        composeRule.onAllNodes(hasText("Ações: Saia da formatura")).assertCountEquals(2)
+            .fetchSemanticsNodes()
+            .maxBy { it.boundsInRoot.left }
+            .let { composeRule.onNode(hasText("Ações: Saia da formatura") and isAt(it.id)) }
+            .performClick()
+        click("Excluir projeto")
+        click("Confirmar exclusão")
+
+        composeRule.onNodeWithText("Escolha um projeto na lista.").assertIsDisplayed()
+        composeRule.screenTitle("Saia da formatura").assertDoesNotExist()
+    }
+
+    private fun isAt(id: Int) = SemanticsMatcher("node $id") { it.id == id }
 
     private fun storeProject() = runBlocking {
         projects.create(

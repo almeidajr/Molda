@@ -23,12 +23,15 @@ import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 
 /**
  * An opened project, read-only: its name as the title, where its measurements came from, then
- * the saved result, drawn by [content]. The up arrow shows only with [onUp].
+ * its rename and delete actions and the saved result, drawn by [content]. The up arrow shows
+ * only with [onUp].
  */
 @Composable
 fun ProjectScreen(
     project: Project,
     onUp: (() -> Unit)?,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -54,6 +57,7 @@ fun ProjectScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                ProjectActions(project, onRename, onDelete)
                 content()
             }
         }

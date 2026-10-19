@@ -351,6 +351,9 @@ fun MoldaRoute(
                     project,
                     // Beside the list the project is a pane, closed by choosing from the list or Back.
                     onUp = if (LocalIsTwoPane.current) null else navigation::back,
+                    // Deleting the open project closes it: OpenedProject no longer finds it.
+                    onRename = { projects.startRenaming(project) },
+                    onDelete = { projects.startDeleting(project) },
                 ) {
                     val snapshot = project.snapshot
                     SavedSkirtResult(snapshot.draft, snapshot.radii, onOpenGuide = {
