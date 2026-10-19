@@ -273,7 +273,11 @@ private fun MeasurementInput(
     val error = state.errors[field]
     var wasFocused by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (field == SkirtDraftField.Waist) WaistSource(state.form.sourceProfileName, onUseProfile)
+        if (field ==
+            SkirtDraftField.Waist
+        ) {
+            WaistSource(state.form.source?.profileName, onUseProfile)
+        }
         OutlinedTextField(
             value = state.form.inputs.getValue(field),
             onValueChange = { onEdit(field, it) },

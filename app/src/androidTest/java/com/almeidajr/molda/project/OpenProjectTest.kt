@@ -36,12 +36,12 @@ import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.data.LocalProjectRepository
-import com.almeidajr.molda.project.domain.MeasurementSource
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.ui.ProjectsViewModel

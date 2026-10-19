@@ -397,11 +397,7 @@ fun MoldaRoute(
                     onUp = if (LocalIsTwoPane.current) null else navigation::back,
                     onEdit = {
                         val snapshot = project.snapshot
-                        projectCalculator.load(
-                            snapshot.draft,
-                            snapshot.source?.profileName,
-                            snapshot.source?.measurementDate,
-                        )
+                        projectCalculator.load(snapshot.draft, snapshot.source)
                         navigation.push(ProjectEditorKey(key.id))
                     },
                     // Deleting the open project closes it: OpenedProject no longer finds it.
@@ -587,11 +583,7 @@ fun MoldaRoute(
         }
         if (target != null) {
             val measurements = profile.measurements
-            target.selectProfile(
-                lengthText(measurements.waist),
-                measurements.name.text,
-                measurements.measurementDate,
-            )
+            target.selectProfile(lengthText(measurements.waist), measurements.source)
             navigation.removeAll { it == PickerProfileEditorKey || it == ProfilePickerKey }
         }
     })
@@ -850,11 +842,7 @@ private fun AppProfilePicker(
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilePicker(state, onDismiss, profiles::load, onSelect = {
         val measurements = it.measurements
-        calculator.selectProfile(
-            lengthText(measurements.waist),
-            measurements.name.text,
-            measurements.measurementDate,
-        )
+        calculator.selectProfile(lengthText(measurements.waist), measurements.source)
         onDismiss()
     }, onCreate = onCreate)
 }

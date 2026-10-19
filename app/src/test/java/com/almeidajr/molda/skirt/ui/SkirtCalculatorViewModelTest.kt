@@ -5,7 +5,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
 import app.cash.turbine.test
 import com.almeidajr.molda.measurement.Length
-import com.almeidajr.molda.project.domain.MeasurementSource
+import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtFieldError
@@ -82,28 +82,23 @@ class SkirtCalculatorViewModelTest {
     fun selectProfile_usesTheProfileWaistUntilTheWaistIsEdited() = runTest {
         val calculator = SkirtCalculatorViewModel(SavedStateHandle())
 
-        calculator.selectProfile(
-            waist = "68,5",
-            name = "Ana",
-            measurementDate = LocalDate.of(2026, 10, 12),
-        )
+        calculator.selectProfile(waist = "68,5", ana)
 
         calculator.state.test {
             val selected = awaitItem().form
             assertEquals("68,5", selected.inputs[SkirtDraftField.Waist])
-            assertEquals("Ana", selected.sourceProfileName)
+            assertEquals(ana, selected.source)
 
             calculator.edit(SkirtDraftField.Waist, "70")
             val edited = awaitItem().form
-            assertNull(edited.sourceProfileName)
-            assertNull(edited.sourceMeasurementDate)
+            assertNull(edited.source)
         }
     }
 
     @Test
     fun recreate_afterProcessDeath_restoresTheForm() = runTest {
         viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
-            scenario.viewModel.selectProfile(waist = "70", name = "Ana", LocalDate.of(2026, 10, 12))
+            scenario.viewModel.selectProfile(waist = "70", ana)
             scenario.viewModel.edit(SkirtDraftField.Ease, "2")
             scenario.viewModel.calculate()
 
@@ -114,8 +109,7 @@ class SkirtCalculatorViewModelTest {
                     CalculatorForm(
                         inputs = SkirtDraftField.entries.associateWith { "" } +
                             mapOf(SkirtDraftField.Waist to "70", SkirtDraftField.Ease to "2"),
-                        sourceProfileName = "Ana",
-                        sourceMeasurementDate = "2026-10-12",
+                        source = ana,
                         hasAttemptedCalculation = true,
                     ),
                     awaitItem().form,
@@ -128,7 +122,7 @@ class SkirtCalculatorViewModelTest {
     fun load_savedDraft_fillsEveryInputAndItsSourceAndCalculates() = runTest {
         val calculator = SkirtCalculatorViewModel(SavedStateHandle())
 
-        calculator.load(savedDraft, "Ana", LocalDate.of(2026, 10, 12))
+        calculator.load(savedDraft, ana)
 
         calculator.state.test {
             val loaded = awaitItem()
@@ -142,8 +136,7 @@ class SkirtCalculatorViewModelTest {
                 ),
                 loaded.form.inputs,
             )
-            assertEquals("Ana", loaded.form.sourceProfileName)
-            assertEquals("2026-10-12", loaded.form.sourceMeasurementDate)
+            assertEquals(ana, loaded.form.source)
             assertEquals(savedDraft, loaded.draft)
             assertFalse(loaded.isDirty)
         }
@@ -153,7 +146,7 @@ class SkirtCalculatorViewModelTest {
     fun snapshot_ofSourceWithoutMeasurementDate_keepsTheProfileName() = runTest {
         val calculator = SkirtCalculatorViewModel(SavedStateHandle())
 
-        calculator.load(savedDraft, sourceProfileName = "Ana", sourceMeasurementDate = null)
+        calculator.load(savedDraft, MeasurementSource("Ana", measurementDate = null))
 
         calculator.state.test {
             assertEquals(MeasurementSource("Ana", null), awaitItem().snapshot()?.source)
@@ -163,7 +156,7 @@ class SkirtCalculatorViewModelTest {
     @Test
     fun isDirty_followsWhetherTheLoadedDraftDiffers() = runTest {
         val calculator = SkirtCalculatorViewModel(SavedStateHandle())
-        calculator.load(savedDraft, sourceProfileName = null, sourceMeasurementDate = null)
+        calculator.load(savedDraft, source = null)
 
         calculator.state.test {
             assertFalse(awaitItem().isDirty)
@@ -171,7 +164,7 @@ class SkirtCalculatorViewModelTest {
             assertTrue(awaitItem().isDirty)
             calculator.edit(SkirtDraftField.Ease, "2")
             assertFalse(awaitItem().isDirty)
-            calculator.selectProfile("70,125", "Ana", LocalDate.of(2026, 10, 12))
+            calculator.selectProfile("70,125", ana)
             assertTrue(awaitItem().isDirty)
         }
     }
@@ -186,7 +179,7 @@ class SkirtCalculatorViewModelTest {
     @Test
     fun recreate_afterProcessDeath_keepsTheLoadedDraftsChanges() = runTest {
         viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
-            scenario.viewModel.load(savedDraft, "Ana", LocalDate.of(2026, 10, 12))
+            scenario.viewModel.load(savedDraft, ana)
             scenario.viewModel.edit(SkirtDraftField.Ease, "3")
 
             scenario.recreate()
@@ -194,6 +187,8 @@ class SkirtCalculatorViewModelTest {
             scenario.viewModel.state.test { assertTrue(awaitItem().isDirty) }
         }
     }
+
+    private val ana = MeasurementSource("Ana", LocalDate.of(2026, 10, 12))
 
     private val savedDraft = SkirtDraft(
         waist = Length(70.125),

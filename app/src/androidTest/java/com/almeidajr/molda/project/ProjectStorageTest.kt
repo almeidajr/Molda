@@ -3,7 +3,7 @@ package com.almeidajr.molda.project
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.measurement.Length
-import com.almeidajr.molda.project.domain.MeasurementSource
+import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtDraft

@@ -2,7 +2,7 @@ package com.almeidajr.molda.project.data
 
 import com.almeidajr.molda.data.resultOf
 import com.almeidajr.molda.measurement.Length
-import com.almeidajr.molda.project.domain.MeasurementSource
+import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName

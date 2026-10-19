@@ -3,8 +3,8 @@ package com.almeidajr.molda.skirt.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.serialization.saved
+import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.measurement.lengthText
-import com.almeidajr.molda.project.domain.MeasurementSource
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
@@ -16,7 +16,6 @@ import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.skirt.domain.readSkirtDraft
 import com.almeidajr.molda.skirt.domain.skirtFieldError
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,9 +26,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CalculatorForm(
     val inputs: Map<SkirtDraftField, String> = SkirtDraftField.entries.associateWith { "" },
-    val sourceProfileName: String? = null,
-    /** The source profile's measurement date as ISO-8601 text, set with [sourceProfileName]. */
-    val sourceMeasurementDate: String? = null,
+    /** The profile the waist came from, or null when it was typed by hand. */
+    val source: MeasurementSource? = null,
     val hasAttemptedCalculation: Boolean = false,
     /** The values a saved draft was loaded with, or null when none was loaded. */
     val loaded: DraftValues? = null,
@@ -37,14 +35,10 @@ data class CalculatorForm(
 
 /** A form's inputs and the profile its waist came from. */
 @Serializable
-data class DraftValues(
-    val inputs: Map<SkirtDraftField, String>,
-    val sourceProfileName: String?,
-    val sourceMeasurementDate: String?,
-)
+data class DraftValues(val inputs: Map<SkirtDraftField, String>, val source: MeasurementSource?)
 
 private val CalculatorForm.values: DraftValues
-    get() = DraftValues(inputs, sourceProfileName, sourceMeasurementDate)
+    get() = DraftValues(inputs, source)
 
 /** [draft] and [radii] are both set after a successful calculation, and only then. */
 data class CalculatorState(
@@ -64,10 +58,7 @@ fun CalculatorState.snapshot(): SkirtSnapshot? {
     val draft = draft
     val radii = radii
     if (draft == null || radii == null) return null
-    val source = form.sourceProfileName?.let { name ->
-        MeasurementSource(name, form.sourceMeasurementDate?.let(LocalDate::parse))
-    }
-    return SkirtSnapshot(draft, radii, source)
+    return SkirtSnapshot(draft, radii, form.source)
 }
 
 @HiltViewModel
@@ -76,21 +67,20 @@ class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle)
     private val mutableState = MutableStateFlow(CalculatorState(form = savedForm))
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
 
-    fun selectProfile(waist: String, name: String, measurementDate: LocalDate) =
-        transition { it.withProfileWaist(waist, name, measurementDate) }
+    /** Uses the [waist] taken from the profile [source]. */
+    fun selectProfile(waist: String, source: MeasurementSource) =
+        transition { it.withProfileWaist(waist, source) }
 
-    /** Replaces the form with a saved [draft] and its source, then calculates it. */
-    fun load(draft: SkirtDraft, sourceProfileName: String?, sourceMeasurementDate: LocalDate?) =
-        transition {
-            val form = CalculatorForm(
-                inputs = SkirtDraftField.entries.associateWith { field ->
-                    lengthText(draft.lengthOf(field))
-                },
-                sourceProfileName = sourceProfileName,
-                sourceMeasurementDate = sourceMeasurementDate?.toString(),
-            )
-            CalculatorState(form.copy(loaded = form.values)).calculated()
-        }
+    /** Replaces the form with a saved [draft] and its [source], then calculates it. */
+    fun load(draft: SkirtDraft, source: MeasurementSource?) = transition {
+        val form = CalculatorForm(
+            inputs = SkirtDraftField.entries.associateWith { field ->
+                lengthText(draft.lengthOf(field))
+            },
+            source = source,
+        )
+        CalculatorState(form.copy(loaded = form.values)).calculated()
+    }
 
     fun edit(field: SkirtDraftField, text: String) = transition { it.edited(field, text) }
 
@@ -107,27 +97,16 @@ class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle)
 
 private fun CalculatorState.withProfileWaist(
     waist: String,
-    name: String,
-    measurementDate: LocalDate,
+    source: MeasurementSource,
 ): CalculatorState {
     val edited = edited(SkirtDraftField.Waist, waist)
-    return edited.copy(
-        form = edited.form.copy(
-            sourceProfileName = name,
-            sourceMeasurementDate = measurementDate.toString(),
-        ),
-    )
+    return edited.copy(form = edited.form.copy(source = source))
 }
 
 private fun CalculatorState.edited(field: SkirtDraftField, text: String): CalculatorState = copy(
     form = form.copy(
         inputs = form.inputs + (field to text),
-        sourceProfileName = if (field == SkirtDraftField.Waist) null else form.sourceProfileName,
-        sourceMeasurementDate = if (field == SkirtDraftField.Waist) {
-            null
-        } else {
-            form.sourceMeasurementDate
-        },
+        source = form.source.takeIf { field != SkirtDraftField.Waist },
     ),
     hasNonfiniteResult = false,
     draft = null,

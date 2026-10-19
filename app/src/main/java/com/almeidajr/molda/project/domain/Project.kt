@@ -1,5 +1,6 @@
 package com.almeidajr.molda.project.domain
 
+import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import java.time.Instant
@@ -26,12 +27,6 @@ value class ProjectName(val text: String) {
         }
     }
 }
-
-/**
- * The measurement profile a snapshot's waist came from, copied as plain values; the date is null
- * when it was not known.
- */
-data class MeasurementSource(val profileName: String, val measurementDate: LocalDate?)
 
 /**
  * A full-circle skirt as it was saved: the draft (waist and drafting assumptions), the calculated
