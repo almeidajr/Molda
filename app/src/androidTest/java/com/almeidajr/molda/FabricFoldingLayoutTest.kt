@@ -1,6 +1,7 @@
 package com.almeidajr.molda
 
 import android.animation.ValueAnimator
+import androidx.activity.BackEventCompat
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -109,6 +110,26 @@ class FabricFoldingLayoutTest {
             .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
         composeRule.onNodeWithText("Preparar o tecido").assertDoesNotExist()
         composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
+    }
+
+    @Test
+    fun predictiveBack_onGuide_previewsResultsBeneath_andCancelKeepsGuide() {
+        openGuide(dark = false, fontScale = 1f)
+        composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
+        val dispatcher = composeRule.activity.onBackPressedDispatcher
+        composeRule.runOnUiThread {
+            dispatcher.dispatchOnBackStarted(
+                BackEventCompat(0f, 400f, 0f, BackEventCompat.EDGE_LEFT),
+            )
+            dispatcher.dispatchOnBackProgressed(
+                BackEventCompat(200f, 400f, 0.5f, BackEventCompat.EDGE_LEFT),
+            )
+        }
+        composeRule.onNodeWithText("Preparar o tecido").assertExists()
+        composeRule.onNodeWithText("Guia de dobra do tecido").assertExists()
+        composeRule.runOnUiThread { dispatcher.dispatchOnBackCancelled() }
+        composeRule.onNodeWithText("Guia de dobra do tecido").assertDoesNotExist()
+        composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
     }
 
     private companion object {

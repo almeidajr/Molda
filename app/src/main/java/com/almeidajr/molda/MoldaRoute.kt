@@ -480,6 +480,9 @@ fun MoldaRoute(
                                 popTransitionSpec = {
                                     materialTransition(density, isForward = false)
                                 },
+                                predictivePopTransitionSpec = {
+                                    materialTransition(density, isForward = false)
+                                },
                                 onBack = {
                                     if (!navigation.current.last().isProfileEditor) {
                                         navigation.back()

@@ -1,7 +1,6 @@
 package com.almeidajr.molda.skirt.ui
 
 import android.animation.ValueAnimator
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -104,8 +103,9 @@ internal fun FabricFoldingGuideEntry(onOpen: () -> Unit, modifier: Modifier = Mo
 
 /**
  * The full-screen fabric-folding guide: a pinned drawing, scrolling instructions and a
- * fixed step bar. Back and Concluir call [onClose], and so does the close button when
- * [isCloseShown]; the player never changes the calculation. With [onCalculateOwn], the [radii] are
+ * fixed step bar. Concluir calls [onClose], and so does the close button when [isCloseShown];
+ * system Back is the host's, so it can preview the screen beneath. The player never changes the
+ * calculation. With [onCalculateOwn], the [radii] are
  * an example: a pinned label says so and offers to calculate the user's own skirt.
  */
 @Composable
@@ -119,7 +119,6 @@ internal fun FabricFoldingPlayer(
     var progress by rememberSaveable(stateSaver = GuideProgressSaver) {
         mutableStateOf(GuideProgress())
     }
-    BackHandler(onBack = onClose)
     val motionEnabled = rememberSystemMotionEnabled()
     Surface(modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
