@@ -28,9 +28,9 @@ import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 
 /** The Projetos root: until projects can be saved, an empty state that defines a project. */
 @Composable
-fun ProjectsScreen(onSeePatterns: () -> Unit, modifier: Modifier = Modifier) {
+fun ProjectsScreen(onSeePatterns: () -> Unit, onAbout: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize()) {
-        MoldaTopAppBar(stringResource(R.string.navigation_projetos))
+        MoldaTopAppBar(stringResource(R.string.navigation_projetos), onAbout = onAbout)
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             Column(
                 Modifier.widthIn(max = 640.dp).fillMaxWidth().verticalScroll(rememberScrollState())

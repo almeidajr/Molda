@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room3)
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 android {
@@ -128,6 +129,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.room3.runtime)
+    implementation(libs.aboutlibraries.compose.m3)
     ksp(libs.androidx.room3.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.konsist)

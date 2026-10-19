@@ -30,9 +30,9 @@ import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 
 /** The Moldes root: the catalog of pattern drafts, of which the full-circle skirt is the first. */
 @Composable
-fun PatternCatalog(onOpenSkirt: () -> Unit, modifier: Modifier = Modifier) {
+fun PatternCatalog(onOpenSkirt: () -> Unit, onAbout: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize()) {
-        MoldaTopAppBar(stringResource(R.string.navigation_moldes))
+        MoldaTopAppBar(stringResource(R.string.navigation_moldes), onAbout = onAbout)
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(320.dp),

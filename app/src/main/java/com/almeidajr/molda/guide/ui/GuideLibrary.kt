@@ -18,9 +18,9 @@ import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 
 /** The Guias root: the library of guides. Its entries arrive with the guides themselves (#89). */
 @Composable
-fun GuideLibrary(modifier: Modifier = Modifier) {
+fun GuideLibrary(onAbout: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize()) {
-        MoldaTopAppBar(stringResource(R.string.navigation_guias))
+        MoldaTopAppBar(stringResource(R.string.navigation_guias), onAbout = onAbout)
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             Text(
                 stringResource(R.string.guide_library_intro),

@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -42,6 +43,8 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import com.almeidajr.molda.about.ui.AboutScreen
+import com.almeidajr.molda.about.ui.LicencesScreen
 import com.almeidajr.molda.guide.ui.GuideLibrary
 import com.almeidajr.molda.pattern.ui.PatternCatalog
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -90,6 +93,14 @@ private data object SkirtCalculatorKey : NavKey
 
 @Serializable
 private data object FabricFoldingTutorialKey : NavKey
+
+/** About Molda, pushed on the stack of the destination whose root opened it. */
+@Serializable
+private data object AboutKey : NavKey
+
+/** The open-source licences, opened from About. */
+@Serializable
+private data object LicencesKey : NavKey
 
 /** The profile an editor works on. */
 @Serializable
@@ -213,16 +224,29 @@ fun MoldaRoute(
             navigation.select(destination.root)
         }
     }
+    val openAbout: () -> Unit = { navigation.current.add(AboutKey) }
     val routes = entryProvider {
         entry<PatternCatalogKey> {
-            PatternCatalog(onOpenSkirt = { moldes.add(SkirtCalculatorKey) })
+            PatternCatalog(onOpenSkirt = { moldes.add(SkirtCalculatorKey) }, onAbout = openAbout)
         }
         entry<ProjectsKey> {
             ProjectsScreen(onSeePatterns = {
                 navigation.select(PatternCatalogKey)
-            })
+            }, onAbout = openAbout)
         }
-        entry<GuideLibraryKey> { GuideLibrary() }
+        entry<GuideLibraryKey> { GuideLibrary(onAbout = openAbout) }
+        entry<AboutKey> {
+            val context = LocalContext.current
+            val versionName = remember(context) {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
+            }
+            AboutScreen(
+                versionName = versionName,
+                onUp = navigation::back,
+                onOpenLicences = { navigation.current.add(LicencesKey) },
+            )
+        }
+        entry<LicencesKey> { LicencesScreen(onUp = navigation::back) }
         entry<SkirtCalculatorKey> {
             CalculatorDestination(
                 calculator,
@@ -254,7 +278,7 @@ fun MoldaRoute(
             }),
         ) {
             Column(Modifier.fillMaxSize()) {
-                MoldaTopAppBar(stringResource(R.string.profile_manage))
+                MoldaTopAppBar(stringResource(R.string.profile_manage), onAbout = openAbout)
                 ProfilePane { ProfileList(profiles, requestEditor) }
             }
         }
@@ -299,7 +323,8 @@ fun MoldaRoute(
         }
     }
     ProfileSaveFeedback(profiles, snackbar, onEditorClosed = returnToPickerIfOpen)
-    val isManaging = navigation.selected == ProfileManagementKey
+    val isManaging = navigation.selected == ProfileManagementKey &&
+        navigation.current.last() !in setOf(AboutKey, LicencesKey)
     val isTutorialOpen = navigation.current.last() == FabricFoldingTutorialKey
     val density = LocalDensity.current
     BoxWithConstraints(modifier.fillMaxSize()) {
