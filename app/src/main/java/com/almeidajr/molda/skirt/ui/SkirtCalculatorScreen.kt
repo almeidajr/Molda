@@ -42,7 +42,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -345,20 +344,7 @@ private fun SkirtResults(
             Text(stringResource(R.string.skirt_edit_measurements))
         }
     }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            stringResource(R.string.skirt_used_measurements),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        val summary = measurementSummary(draft, LocalResources.current::getString)
-        // One wrapping line; TalkBack hears pauses instead of the visual separators.
-        Text(
-            summary.joinToString(" · "),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.semantics { contentDescription = summary.joinToString("; ") },
-        )
-    }
+    UsedMeasurements(draft)
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
