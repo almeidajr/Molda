@@ -26,7 +26,7 @@ fun MoldaTheme(
     )
 }
 
-/** The scheme [MoldaTheme] applies; device tests use it to know the tutorial's bound colours. */
+/** The scheme [MoldaTheme] applies; device tests use it to know the guide's bound colours. */
 internal fun moldaColorScheme(
     context: Context,
     darkTheme: Boolean,

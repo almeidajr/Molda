@@ -111,7 +111,7 @@ internal fun ReadablePane(content: @Composable () -> Unit) {
 /**
  * Places [content] on one side of any hinge that would split it. Material scenes exclude
  * vertical hinges; compact and tabletop layouts need a safe region too. One column (narrow
- * content, or [isSingleColumn] content such as the tutorial player) moves off a half-open or
+ * content, or [isSingleColumn] content such as the guide player) moves off a half-open or
  * separating vertical fold but spans a flat one; two panes move only when they cannot sit
  * beside the fold.
  */

@@ -12,12 +12,12 @@ import org.robolectric.RuntimeEnvironment
 
 // Robolectric resolves the step bar's copy from the app's string resources.
 @RunWith(RobolectricTestRunner::class)
-class TutorialProgressTest {
+class GuideProgressTest {
     private val text: (Int) -> String = RuntimeEnvironment.getApplication()::getString
 
     @Test
     fun firstStep_offersNextButNotPrevious() {
-        val first = TutorialProgress()
+        val first = GuideProgress()
 
         assertEquals(FoldingStep.Preparation, first.step)
         assertFalse(first.canGoBack)
@@ -28,7 +28,7 @@ class TutorialProgressTest {
 
     @Test
     fun lastStep_offersPreviousAndConcluirThatFinishes() {
-        val last = TutorialProgress(FoldingStep.Unfolding)
+        val last = GuideProgress(FoldingStep.Unfolding)
 
         assertTrue(last.canGoBack)
         assertTrue(last.isLastStep)
@@ -38,7 +38,7 @@ class TutorialProgressTest {
 
     @Test
     fun nextAndPrevious_walkEveryStepWithItsPosition() {
-        val forward = generateSequence(TutorialProgress()) { it.next() }.toList()
+        val forward = generateSequence(GuideProgress()) { it.next() }.toList()
 
         assertEquals(FoldingStep.entries, forward.map { it.step })
         assertEquals((1..6).toList(), forward.map { it.stepNumber })
@@ -49,15 +49,15 @@ class TutorialProgressTest {
     fun saver_restoresEveryStep() {
         val scope = SaverScope { true }
 
-        FoldingStep.entries.map(::TutorialProgress).forEach { progress ->
-            val saved = with(TutorialProgressSaver) { scope.save(progress) }
+        FoldingStep.entries.map(::GuideProgress).forEach { progress ->
+            val saved = with(GuideProgressSaver) { scope.save(progress) }
 
-            assertEquals(progress, saved?.let(TutorialProgressSaver::restore))
+            assertEquals(progress, saved?.let(GuideProgressSaver::restore))
         }
     }
 
     @Test
     fun saver_withUnknownPosition_restoresNothing() {
-        assertNull(TutorialProgressSaver.restore(FoldingStep.entries.size))
+        assertNull(GuideProgressSaver.restore(FoldingStep.entries.size))
     }
 }
