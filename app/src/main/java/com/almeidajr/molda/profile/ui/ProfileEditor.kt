@@ -1,6 +1,7 @@
 package com.almeidajr.molda.profile.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -148,7 +149,9 @@ private fun ProfileEditorHeading(isCreating: Boolean) {
             if (isCreating) R.string.profile_editor_new else R.string.profile_editor_edit,
         ),
         style = MaterialTheme.typography.headlineMedium,
-        modifier = Modifier.semantics { heading() },
+        // The first focusable: when the screen it replaced leaves with the focused button after
+        // the transition, Android refocuses here rather than raising the keyboard on a field.
+        modifier = Modifier.focusable().semantics { heading() },
     )
     if (isCreating) {
         Text(stringResource(R.string.profile_local_only))

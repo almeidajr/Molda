@@ -64,7 +64,9 @@ class AdaptiveResultsTest {
     fun forcedSizes_keepCuttingCardAndItsDiagramInReadableResultsPane_andTutorialBarWhole() {
         listOf(
             ResultsLayout(DpSize(1600.dp, 1000.dp), 1f, isTwoPane = true, isDiagramBeside = true),
-            ResultsLayout(DpSize(700.dp, 1000.dp), 1f, isTwoPane = false, isDiagramBeside = true),
+            // The 96dp navigation rail leaves the card too narrow for two 260dp columns.
+            ResultsLayout(DpSize(700.dp, 1000.dp), 1f, isTwoPane = false, isDiagramBeside = false),
+            ResultsLayout(DpSize(800.dp, 1000.dp), 1f, isTwoPane = false, isDiagramBeside = true),
             ResultsLayout(DpSize(1600.dp, 1000.dp), 2f, isTwoPane = true, isDiagramBeside = false),
             ResultsLayout(DpSize(1000.dp, 1000.dp), 2f, isTwoPane = false, isDiagramBeside = false),
             // A landscape phone: too short to pin the drawing above the instructions.
@@ -96,10 +98,9 @@ class AdaptiveResultsTest {
         showCalculator(size = null, fontScale = 2f)
         val title = composeRule.onNodeWithText("Saia godê inteira").assertTextFits("title")
             .fullyVisibleBounds("title")
-        val action = composeRule.onNodeWithText("Perfis de medidas")
-            .assertTextFits("action").fullyVisibleBounds("action")
+        val up = composeRule.onNodeWithContentDescription("Voltar").fullyVisibleBounds("up")
         // One pixel of slack for dp-to-pixel rounding.
-        assertTrue("app bar title $title overlaps action $action", title.right <= action.left + 1f)
+        assertTrue("app bar title $title overlaps up arrow $up", up.right <= title.left + 1f)
         calculateReferenceCase()
         REFERENCE_RADII.forEach { radius ->
             composeRule.onNodeWithContentDescription(radius).performScrollTo()
@@ -220,6 +221,7 @@ class AdaptiveResultsTest {
                 }
             }
         }
+        composeRule.showSkirtCalculator()
     }
 
     /** Publishes a fold across the content, half-opened by default, and returns its bounds. */

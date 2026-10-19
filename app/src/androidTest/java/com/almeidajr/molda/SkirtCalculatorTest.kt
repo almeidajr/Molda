@@ -48,6 +48,7 @@ import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -56,6 +57,9 @@ import org.junit.runner.RunWith
 class SkirtCalculatorTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
 
     @Test
     fun garmentChoicesAndAllowances_explainExplicitZeroBeforeCalculation() {
@@ -105,6 +109,7 @@ class SkirtCalculatorTest {
                     }
                 }
             }
+            composeRule.showSkirtCalculator()
             fillInputs(listOf("80", "2", "60", "1", "2"))
             composeRule.onNodeWithText("Calcular").performScrollTo()
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
@@ -459,6 +464,7 @@ class SkirtCalculatorTest {
                 }
             }
         }
+        composeRule.showSkirtCalculator()
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
         composeRule.onNodeWithContentDescription("Diagrama esquemático", substring = true)
@@ -500,6 +506,7 @@ class SkirtCalculatorTest {
                 }
             }
         }
+        composeRule.showSkirtCalculator()
         composeRule.onNodeWithText("Preencha as medidas e toque em Calcular.").assertIsDisplayed()
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
@@ -529,6 +536,7 @@ class SkirtCalculatorTest {
                 }
             }
         }
+        composeRule.showSkirtCalculator()
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
         composeRule.runOnUiThread { width.intValue = 400 }

@@ -29,6 +29,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,6 +38,9 @@ import org.junit.runner.RunWith
 class FabricFoldingLayoutTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
 
     @Test
     fun fullTutorial_keepsStepBarAndDrawingInView_onEveryStep() {
@@ -190,6 +194,7 @@ class FabricFoldingLayoutTest {
                 }
             }
         }
+        composeRule.showSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("80", "2", "60", "0", "0"))
             .forEach { (field, value) ->
                 composeRule.onNodeWithText(field.labelText).performScrollTo()

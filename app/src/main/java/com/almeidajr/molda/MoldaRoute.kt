@@ -1,5 +1,7 @@
 package com.almeidajr.molda
 
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -9,16 +11,19 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
+import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,19 +33,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.scene.Scene
-import androidx.navigation3.scene.SceneDecoratorStrategy
 import androidx.navigation3.ui.NavDisplay
+import com.almeidajr.molda.guide.ui.GuideLibrary
+import com.almeidajr.molda.pattern.ui.PatternCatalog
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
 import com.almeidajr.molda.profile.ui.ProfileEditor
@@ -50,24 +53,43 @@ import com.almeidajr.molda.profile.ui.ProfilesContent
 import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.profileWaistText
+import com.almeidajr.molda.project.ui.ProjectsScreen
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.adaptive.HingeSafeContent
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.adaptive.rememberReadableListDetailStrategy
+import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
+import com.almeidajr.molda.ui.navigation.NavigationLabel
+import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
+import com.almeidajr.molda.ui.navigation.materialTransition
+import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
 import kotlinx.serialization.Serializable
+
+/** The Moldes root: the catalog of pattern drafts. */
+@Serializable
+private data object PatternCatalogKey : NavKey
+
+/** The Projetos root. */
+@Serializable
+private data object ProjectsKey : NavKey
+
+/** The Guias root: the library of guides. */
+@Serializable
+private data object GuideLibraryKey : NavKey
+
+/** The Perfis root: profile management. */
+@Serializable
+private data object ProfileManagementKey : NavKey
 
 @Serializable
 private data object SkirtCalculatorKey : NavKey
 
 @Serializable
 private data object FabricFoldingTutorialKey : NavKey
-
-@Serializable
-private data object ProfileManagementKey : NavKey
 
 /** The profile an editor works on. */
 @Serializable
@@ -101,19 +123,47 @@ private sealed interface AfterDiscard {
 @Serializable
 private data class DiscardChangesKey(val afterDiscard: AfterDiscard) : NavKey
 
-/**
- * Shows every destination under one scene key, so a destination replaces the previous one within
- * a frame, without animation, as before the back stack. A scene change would keep the previous
- * destination for an extra frame, and removing its focused button then would move initial focus
- * into the new destination.
- */
-private data class SameFrameScene<T : Any>(val scene: Scene<T>) : Scene<T> by scene {
-    override val key: Any get() = SameFrameScene::class
+/** The top-level destinations, in navigation order; the first is the start destination. */
+private enum class Destination(
+    val root: NavKey,
+    @StringRes val label: Int,
+    @DrawableRes val icon: Int,
+    @DrawableRes val selectedIcon: Int,
+) {
+    Moldes(
+        PatternCatalogKey,
+        R.string.navigation_moldes,
+        R.drawable.ic_design_services,
+        R.drawable.ic_design_services_filled,
+    ),
+    Projetos(
+        ProjectsKey,
+        R.string.navigation_projetos,
+        R.drawable.ic_folder,
+        R.drawable.ic_folder_filled,
+    ),
+    Guias(
+        GuideLibraryKey,
+        R.string.navigation_guias,
+        R.drawable.ic_menu_book,
+        R.drawable.ic_menu_book_filled,
+    ),
+    Perfis(
+        ProfileManagementKey,
+        R.string.navigation_perfis,
+        R.drawable.ic_group,
+        R.drawable.ic_group_filled,
+    ),
 }
 
-// The back stack and every transition that edits it read together in one place.
+private val TopLevelRoots: List<NavKey> = Destination.entries.map { it.root }
+
+/** Windows narrower than this show a navigation bar; wider ones show a rail. */
+private val NavigationRailMinWidth = 600.dp
+
+// The back stacks and every transition that edits them read together in one place.
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun MoldaRoute(
     modifier: Modifier = Modifier,
@@ -122,25 +172,26 @@ fun MoldaRoute(
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
-    val backStack = rememberNavBackStack(SkirtCalculatorKey)
+    val navigation = rememberTopLevelBackStacks(TopLevelRoots)
+    val moldes = navigation.stackOf(PatternCatalogKey)
+    val perfis = navigation.stackOf(ProfileManagementKey)
     // ProfilesViewModel owns whether the editor is open (a save or delete also closes it).
-    LaunchedEffect(profileState.isEditorOpen, profileState.editingId, backStack.size) {
-        syncProfileEditor(backStack, profileState.form)
+    LaunchedEffect(profileState.isEditorOpen, profileState.editingId, perfis.size) {
+        syncProfileEditor(perfis, profileState.form)
     }
     val requestEditor: (EditedProfile) -> Unit = { profile ->
         requestProfileEditor(profileState, profiles, profile) {
-            backStack.add(DiscardChangesKey(AfterDiscard.OpenEditor(profile)))
+            perfis.add(DiscardChangesKey(AfterDiscard.OpenEditor(profile)))
         }
     }
-    val manageProfiles: () -> Unit = { backStack.add(ProfileManagementKey) }
     val snackbar = remember { SnackbarHostState() }
     var snackbarHeight by remember { mutableIntStateOf(0) }
     val snackbarInset = with(LocalDensity.current) { snackbarHeight.toDp() }
-    // An editor opened from the picker returns to it; any other editor stays in management.
+    // shortcut: the picker's "Criar perfil" opens the editor in Perfis, so closing that editor
+    // goes back to the picker, still open on the Moldes stack; #90 keeps the editor in Moldes.
     val returnToPickerIfOpen: () -> Unit = {
-        val picker = backStack.indexOf(ProfilePickerKey)
-        if (picker >= 0) {
-            while (backStack.lastIndex > picker) backStack.removeAt(backStack.lastIndex)
+        if (navigation.selected == ProfileManagementKey && moldes.last() == ProfilePickerKey) {
+            navigation.select(PatternCatalogKey)
         }
     }
     val finishEditor = {
@@ -149,125 +200,197 @@ fun MoldaRoute(
     }
     val cancelEditor: () -> Unit = {
         if (profileState.isDirty) {
-            backStack.add(DiscardChangesKey(AfterDiscard.CloseEditor))
+            perfis.add(DiscardChangesKey(AfterDiscard.CloseEditor))
         } else {
             finishEditor()
         }
     }
-    ProfileSaveFeedback(profiles, snackbar, onEditorClosed = returnToPickerIfOpen)
-    val isManaging = ProfileManagementKey in backStack
-    val isTutorialOpen = backStack.last() == FabricFoldingTutorialKey
-    // The player is one column even on a wide window: keep it off a book-posture fold only.
-    HingeSafeContent(modifier.fillMaxSize(), isSingleColumn = isTutorialOpen) {
-        BoxWithConstraints(Modifier.fillMaxSize()) {
-            val listDetail = rememberReadableListDetailStrategy<NavKey>(maxWidth)
-            val wide = listDetail != null
-            val overlayStrategy = remember { WindowOverlaySceneStrategy<NavKey>() }
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                snackbarHost = {
-                    SnackbarHost(snackbar, Modifier.onSizeChanged { snackbarHeight = it.height })
+    val select: (Destination) -> Unit = { destination ->
+        // Profiles own their open editor, so returning Perfis to its root closes it the usual way.
+        if (destination.root == navigation.selected && perfis.last() is ProfileEditorKey) {
+            if (!profileState.isSaving) cancelEditor()
+        } else {
+            navigation.select(destination.root)
+        }
+    }
+    val routes = entryProvider {
+        entry<PatternCatalogKey> {
+            PatternCatalog(onOpenSkirt = { moldes.add(SkirtCalculatorKey) })
+        }
+        entry<ProjectsKey> {
+            ProjectsScreen(onSeePatterns = {
+                navigation.select(PatternCatalogKey)
+            })
+        }
+        entry<GuideLibraryKey> { GuideLibrary() }
+        entry<SkirtCalculatorKey> {
+            CalculatorDestination(
+                calculator,
+                onUp = navigation::back,
+                onUseProfile = { moldes.add(ProfilePickerKey) },
+                onOpenTutorial = { moldes.add(FabricFoldingTutorialKey) },
+            )
+        }
+        entry<FabricFoldingTutorialKey> {
+            val close: () -> Unit = {
+                moldes.remove(FabricFoldingTutorialKey)
+            }
+            val radii = calculatorState.radii
+            if (radii != null) {
+                FabricFoldingPlayer(radii, close)
+            } else {
+                // Results do not survive process death; show the calculator.
+                LaunchedEffect(Unit) { close() }
+            }
+        }
+        entry<ProfileManagementKey>(
+            metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
+                ProfilePane {
+                    Text(
+                        stringResource(R.string.profile_select_or_create),
+                        Modifier.padding(16.dp),
+                    )
+                }
+            }),
+        ) {
+            Column(Modifier.fillMaxSize()) {
+                MoldaTopAppBar(stringResource(R.string.profile_manage))
+                ProfilePane { ProfileList(profiles, requestEditor) }
+            }
+        }
+        entry<ProfilePickerKey>(metadata = windowOverlay()) {
+            AppProfilePicker(
+                profiles,
+                calculator,
+                onDismiss = { moldes.remove(ProfilePickerKey) },
+                onCreate = {
+                    profiles.startCreating()
+                    navigation.select(ProfileManagementKey)
                 },
-                floatingActionButtonPosition = if (wide) FabPosition.Start else FabPosition.End,
-                floatingActionButton = {
-                    if (isManaging && (!profileState.isEditorOpen || wide)) {
-                        ProfileCreateAction(profileState, { requestEditor(EditedProfile.New) })
-                    }
-                },
-                contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            ) { padding ->
-                NavDisplay(
-                    backStack = backStack,
-                    // Keep bottom actions reachable while storage feedback is visible.
-                    modifier = Modifier.padding(padding).padding(bottom = snackbarInset),
-                    onBack = {
-                        if (backStack.last() !is ProfileEditorKey) {
-                            backStack.removeLastOrNull()
-                        } else if (!profileState.isSaving) {
-                            cancelEditor()
-                        }
-                    },
-                    // A narrow window shows one destination at a time, as a plain single pane.
-                    sceneStrategies = listOfNotNull(overlayStrategy, listDetail),
-                    sceneDecoratorStrategies = listOf(
-                        SceneDecoratorStrategy { scene -> SameFrameScene(scene) },
-                    ),
-                    entryProvider = entryProvider {
-                        entry<SkirtCalculatorKey> {
-                            CalculatorDestination(
-                                calculator,
-                                onManageProfiles = manageProfiles,
-                                onUseProfile = { backStack.add(ProfilePickerKey) },
-                                onOpenTutorial = { backStack.add(FabricFoldingTutorialKey) },
-                            )
-                        }
-                        entry<FabricFoldingTutorialKey> {
-                            val close: () -> Unit = { backStack.remove(FabricFoldingTutorialKey) }
-                            val radii = calculatorState.radii
-                            if (radii != null) {
-                                FabricFoldingPlayer(radii, close)
-                            } else {
-                                // Results do not survive process death; show the calculator.
-                                LaunchedEffect(Unit) { close() }
-                            }
-                        }
-                        entry<ProfileManagementKey>(
-                            metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
-                                ProfilePane {
-                                    Text(
-                                        stringResource(R.string.profile_select_or_create),
-                                        Modifier.padding(16.dp),
-                                    )
-                                }
-                            }),
-                        ) {
-                            ProfilePane {
-                                ProfileList(profiles, requestEditor) {
-                                    backStack.remove(ProfileManagementKey)
-                                }
-                            }
-                        }
-                        entry<ProfilePickerKey>(metadata = windowOverlay()) {
-                            AppProfilePicker(
-                                profiles,
-                                calculator,
-                                onDismiss = { backStack.remove(ProfilePickerKey) },
-                                onCreate = {
-                                    profiles.startCreating()
-                                    manageProfiles()
-                                },
-                            )
-                        }
-                        entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
-                            DiscardDialog(onDismiss = { backStack.remove(key) }, onDiscard = {
-                                backStack.remove(key)
-                                when (val afterDiscard = key.afterDiscard) {
-                                    AfterDiscard.CloseEditor -> finishEditor()
+            )
+        }
+        entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
+            DiscardDialog(onDismiss = { perfis.remove(key) }, onDiscard = {
+                perfis.remove(key)
+                when (val afterDiscard = key.afterDiscard) {
+                    AfterDiscard.CloseEditor -> finishEditor()
 
-                                    is AfterDiscard.OpenEditor -> {
-                                        profiles.cancel()
-                                        profiles.openEditor(afterDiscard.profile)
-                                    }
-                                }
-                            })
-                        }
-                        entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) {
-                            ProfilePane {
-                                ProfileEditor(
-                                    profileState,
-                                    profiles::edit,
-                                    profiles::save,
-                                    cancelEditor,
-                                    Modifier,
-                                    profiles.today,
-                                    onRetry = profiles::load,
-                                )
-                            }
-                        }
-                    },
+                    is AfterDiscard.OpenEditor -> {
+                        profiles.cancel()
+                        profiles.openEditor(afterDiscard.profile)
+                    }
+                }
+            })
+        }
+        entry<ProfileEditorKey>(
+            metadata = ListDetailSceneStrategy.detailPane(),
+        ) {
+            ProfilePane {
+                ProfileEditor(
+                    profileState,
+                    profiles::edit,
+                    profiles::save,
+                    cancelEditor,
+                    Modifier,
+                    profiles.today,
+                    onRetry = profiles::load,
                 )
             }
         }
+    }
+    ProfileSaveFeedback(profiles, snackbar, onEditorClosed = returnToPickerIfOpen)
+    val isManaging = navigation.selected == ProfileManagementKey
+    val isTutorialOpen = navigation.current.last() == FabricFoldingTutorialKey
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        val isCompact = maxWidth < NavigationRailMinWidth
+        val suiteState = rememberNavigationSuiteScaffoldState()
+        // The guide player's own step bar is the only bottom control on a compact window.
+        LaunchedEffect(isCompact && isTutorialOpen) {
+            if (isCompact && isTutorialOpen) suiteState.hide() else suiteState.show()
+        }
+        val suiteType = if (isCompact) {
+            NavigationSuiteType.ShortNavigationBarCompact
+        } else {
+            NavigationSuiteType.WideNavigationRailCollapsed
+        }
+        NavigationSuiteScaffold(
+            navigationItems = {
+                NavigationItems(navigation, suiteType, select)
+            },
+            navigationSuiteType = suiteType,
+            state = suiteState,
+        ) {
+            // The player is one column even on a wide window: keep it off a book-posture fold only.
+            HingeSafeContent(Modifier.fillMaxSize(), isSingleColumn = isTutorialOpen) {
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val listDetail = rememberReadableListDetailStrategy<NavKey>(maxWidth)
+                    val wide = listDetail != null
+                    val fabPosition = if (wide) FabPosition.Start else FabPosition.End
+                    val overlayStrategy = remember { WindowOverlaySceneStrategy<NavKey>() }
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        snackbarHost = {
+                            SnackbarHost(
+                                snackbar,
+                                Modifier.onSizeChanged { snackbarHeight = it.height },
+                            )
+                        },
+                        floatingActionButtonPosition = fabPosition,
+                        floatingActionButton = {
+                            if (isManaging && (!profileState.isEditorOpen || wide)) {
+                                ProfileCreateAction(
+                                    profileState,
+                                    { requestEditor(EditedProfile.New) },
+                                )
+                            }
+                        },
+                        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                    ) { padding ->
+                        NavDisplay(
+                            entries = navigation.entries(routes),
+                            // Keep bottom actions reachable while storage feedback is visible.
+                            modifier = Modifier.padding(padding).padding(bottom = snackbarInset),
+                            // A narrow window shows one destination at a time, in a single pane.
+                            sceneStrategies = listOfNotNull(overlayStrategy, listDetail),
+                            transitionSpec = { materialTransition(density, isForward = true) },
+                            popTransitionSpec = { materialTransition(density, isForward = false) },
+                            onBack = {
+                                if (navigation.current.last() !is ProfileEditorKey) {
+                                    navigation.back()
+                                } else if (!profileState.isSaving) {
+                                    cancelEditor()
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** One item per destination; a filled glyph, label colour and selected state mark the current. */
+@Composable
+private fun NavigationItems(
+    navigation: TopLevelBackStacks,
+    suiteType: NavigationSuiteType,
+    onSelect: (Destination) -> Unit,
+) {
+    Destination.entries.forEach { destination ->
+        val isSelected = navigation.selected == destination.root
+        NavigationSuiteItem(
+            selected = isSelected,
+            onClick = { onSelect(destination) },
+            icon = {
+                Icon(
+                    painterResource(if (isSelected) destination.selectedIcon else destination.icon),
+                    contentDescription = null,
+                )
+            },
+            label = { NavigationLabel(stringResource(destination.label)) },
+            navigationSuiteType = suiteType,
+        )
     }
 }
 
@@ -277,23 +400,23 @@ private fun ProfilesViewModel.openEditor(profile: EditedProfile) = when (profile
 }
 
 /** Shows the editor [form] has open above profile management, and drops any other editor. */
-private fun syncProfileEditor(backStack: NavBackStack<NavKey>, form: ProfileForm) {
+private fun syncProfileEditor(perfis: NavBackStack<NavKey>, form: ProfileForm) {
     val profile = form.editingId?.let(EditedProfile::Existing) ?: EditedProfile.New
     val editor = ProfileEditorKey(profile).takeIf { form.isEditorOpen }
-    backStack.removeAll { it is ProfileEditorKey && it != editor }
-    if (editor != null && backStack.lastOrNull() == ProfileManagementKey) backStack.add(editor)
+    perfis.removeAll { it is ProfileEditorKey && it != editor }
+    if (editor != null && perfis.last() == ProfileManagementKey) perfis.add(editor)
 }
 
 @Composable
 private fun CalculatorDestination(
     calculator: SkirtCalculatorViewModel,
-    onManageProfiles: () -> Unit,
+    onUp: () -> Unit,
     onUseProfile: () -> Unit,
     onOpenTutorial: () -> Unit,
 ) {
     val state by calculator.state.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize()) {
-        CalculatorTopBar(onManageProfiles)
+        MoldaTopAppBar(stringResource(R.string.skirt_title), onUp = onUp)
         SkirtCalculatorScreen(
             state,
             calculator::edit,
@@ -307,52 +430,20 @@ private fun CalculatorDestination(
 }
 
 @Composable
-private fun ProfileList(
-    profiles: ProfilesViewModel,
-    requestEditor: (EditedProfile) -> Unit,
-    onBackToCalculator: () -> Unit,
-) {
+private fun ProfileList(profiles: ProfilesViewModel, requestEditor: (EditedProfile) -> Unit) {
     val state by profiles.state.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        if (!state.isEditorOpen) {
-            TextButton(onClick = onBackToCalculator, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.profile_back_to_calculator))
-            }
-        }
-        ProfilesContent(
-            state,
-            profiles::load,
-            { requestEditor(EditedProfile.Existing(it)) },
-            profiles::delete,
-        )
-    }
+    ProfilesContent(
+        state,
+        profiles::load,
+        { requestEditor(EditedProfile.Existing(it)) },
+        profiles::delete,
+        Modifier.padding(16.dp),
+    )
 }
 
 @Composable
 private fun ProfilePane(content: @Composable () -> Unit) {
     Box(Modifier.imePadding()) { ReadablePane(content) }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CalculatorTopBar(onManageProfiles: () -> Unit) {
-    TopAppBar(
-        title = {
-            // TopAppBar measures the title as if its 16dp start inset were free, so a title that
-            // wraps at large text would run under the action without this end padding.
-            Text(
-                stringResource(R.string.skirt_title),
-                Modifier.padding(end = 16.dp).semantics {
-                    heading()
-                },
-            )
-        },
-        actions = {
-            TextButton(onClick = onManageProfiles, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.profile_manage))
-            }
-        },
-    )
 }
 
 @Composable

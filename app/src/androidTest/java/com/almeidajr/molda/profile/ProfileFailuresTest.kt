@@ -36,6 +36,8 @@ import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
+import com.almeidajr.molda.selectDestination
+import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
@@ -62,7 +64,7 @@ class ProfileFailuresTest {
     fun saving_pendingStorageKeepsEditorAndDisablesDuplicateMutation() {
         val gate = CompletableDeferred<Unit>()
         showProfiles(FailingProfiles(saveGate = gate))
-        click("Perfis de medidas")
+        composeRule.selectDestination("Perfis")
         click("Novo perfil")
         edit("Nome ou apelido", "Nova")
         edit("Cintura do perfil (cm)", "90")
@@ -90,7 +92,7 @@ class ProfileFailuresTest {
         val gate = CompletableDeferred<Unit>()
         val storage = FailingProfiles(deleteGate = gate)
         showProfiles(storage)
-        click("Perfis de medidas")
+        composeRule.selectDestination("Perfis")
         click("Ações: Existente")
         click("Excluir perfil")
         click("Confirmar exclusão")
@@ -115,7 +117,7 @@ class ProfileFailuresTest {
             "Usar perfil: Existente — 80 cm — 14/10/2026",
         ).assertIsDisplayed()
         click("Cancelar seleção")
-        click("Perfis de medidas")
+        composeRule.selectDestination("Perfis")
         click("Existente", useUnmergedTree = true)
         click("Salvar alterações")
         composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
@@ -133,7 +135,7 @@ class ProfileFailuresTest {
         showProfiles(storage)
         edit("Circunferência da cintura (cm)", "95")
         edit("Comprimento acabado (cm)", "60")
-        click("Perfis de medidas")
+        composeRule.selectDestination("Perfis")
         click("Existente", useUnmergedTree = true)
         edit("Nome ou apelido", "Alterado")
         edit("Cintura do perfil (cm)", "82")
@@ -155,7 +157,7 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
         composeRule.onNodeWithText("Existente")
             .performScrollTo().assertIsDisplayed()
-        click("Voltar ao cálculo")
+        composeRule.showSkirtCalculator()
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("95")
         composeRule.onNodeWithText("Comprimento acabado (cm)")
@@ -167,7 +169,7 @@ class ProfileFailuresTest {
     fun loadFailure_blocksSavingAndRetryShowsExistingRecords() {
         val storage = FailingProfiles(failLoad = true)
         showProfiles(storage)
-        click("Perfis de medidas")
+        composeRule.selectDestination("Perfis")
         composeRule.onNodeWithText("Não foi possível carregar os perfis.", substring = true)
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Nenhum perfil salvo.", substring = true).assertDoesNotExist()
@@ -208,7 +210,7 @@ class ProfileFailuresTest {
     @Test
     fun saveFailure_keepsFormAndExistingRecordsWithoutSuccess() {
         showProfiles(FailingProfiles(failSave = true))
-        click("Perfis de medidas")
+        composeRule.selectDestination("Perfis")
         click("Novo perfil")
         edit("Nome ou apelido", "Nova")
         edit("Cintura do perfil (cm)", "90")
@@ -228,7 +230,7 @@ class ProfileFailuresTest {
     @Test
     fun wideDeleteFailure_announcesOnce_andKeepsOtherEditorDraft() {
         showProfiles(FailingProfiles(), wide = true)
-        click("Perfis de medidas")
+        composeRule.selectDestination("Perfis")
         click("Existente", useUnmergedTree = true)
         edit("Nome ou apelido", "Rascunho")
         Espresso.closeSoftKeyboard()
@@ -274,6 +276,7 @@ class ProfileFailuresTest {
                 }
             }
         }
+        composeRule.showSkirtCalculator()
     }
 
     private fun edit(label: String, value: String) {

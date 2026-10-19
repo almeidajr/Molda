@@ -44,6 +44,7 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,6 +53,9 @@ import org.junit.runner.RunWith
 class FabricMarkingTutorialTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
 
     @Test
     fun enabledMotion_everyStepLoopsAfterPlay_withoutBlankFrames() {

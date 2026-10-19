@@ -1,5 +1,7 @@
 package com.almeidajr.molda.profile
 
+import android.view.KeyEvent
+import android.view.WindowInsets
 import androidx.activity.compose.setContent
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.SemanticsActions
@@ -11,6 +13,8 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasAnyAncestor
@@ -23,6 +27,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +38,8 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.test.espresso.Espresso
+import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
@@ -40,6 +47,8 @@ import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
+import com.almeidajr.molda.showProfiles
+import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
@@ -64,6 +73,7 @@ class ProfilePresentationTest {
         composeRule.activity.deleteDatabase(databaseName)
         storage = LocalProfileRepository(composeRule.activity, databaseName)
         showContent()
+        composeRule.showSkirtCalculator()
     }
 
     private fun showContent(
@@ -126,7 +136,7 @@ class ProfilePresentationTest {
         }
         composeRule.onNodeWithText("Medida com roupa leve").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Conferida antes do corte").performScrollTo().assertIsDisplayed()
-        click("Voltar ao cálculo")
+        composeRule.showSkirtCalculator()
         click("Usar perfil")
         composeRule.onNodeWithText("Conferida antes do corte").performScrollTo().performClick()
         composeRule.onNodeWithText("Cintura copiada do perfil: Ana").assertIsDisplayed()
@@ -166,7 +176,7 @@ class ProfilePresentationTest {
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
         saveProfile()
         assertTypography("Ana", 16, 24, FontWeight.Medium)
-        click("Voltar ao cálculo")
+        composeRule.showSkirtCalculator()
         click("Usar perfil")
         assertTypography("Usar perfil: Ana — 80 cm — 12/10/2026", 16, 24, FontWeight.Medium)
     }
@@ -181,7 +191,7 @@ class ProfilePresentationTest {
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
             saveProfile()
         }
-        click("Voltar ao cálculo")
+        composeRule.showSkirtCalculator()
         listOf(
             false to false,
             true to false,
@@ -205,7 +215,7 @@ class ProfilePresentationTest {
     @Test
     fun profileButtons_drawAtLeast48dpTall_atDefaultTextSize() {
         manage()
-        assertDrawnHeight("Voltar ao cálculo")
+        assertDrawnHeight("Perfis")
         click("Novo perfil")
         assertDrawnHeight("Salvar perfil", "Cancelar")
         edit("Nome ou apelido", "Ana")
@@ -217,9 +227,35 @@ class ProfilePresentationTest {
         click("Excluir perfil")
         assertDrawnHeight("Confirmar exclusão", "Cancelar")
         click("Cancelar")
-        click("Voltar ao cálculo")
+        composeRule.showSkirtCalculator()
         click("Usar perfil")
         assertDrawnHeight("Cancelar seleção", "Novo perfil")
+    }
+
+    @Test
+    fun keyboard_editFromProfileRow_doesNotFocusAField() {
+        manage()
+        click("Novo perfil")
+        edit("Nome ou apelido", "Ana")
+        edit("Cintura do perfil (cm)", "80")
+        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        saveProfile()
+        Espresso.closeSoftKeyboard()
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        // A real key event leaves touch mode, so the row joins keyboard focus traversal.
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
+        composeRule.onNodeWithText("Ana").requestFocus().assertIsFocused()
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
+        composeRule.onNodeWithText("Editar perfil de medidas").assertIsDisplayed()
+        // The list leaves after the editor arrives; losing its focused row must not refocus a field.
+        composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
+        composeRule.runOnUiThread {
+            assertEquals(
+                false,
+                composeRule.activity.window.decorView.rootWindowInsets
+                    .isVisible(WindowInsets.Type.ime()),
+            )
+        }
     }
 
     private fun assertDrawnHeight(vararg labels: String) = labels.forEach {
@@ -329,14 +365,7 @@ class ProfilePresentationTest {
         }
     }
 
-    private fun manage() {
-        if (composeRule.onAllNodes(
-                hasText("Perfis de medidas"),
-            ).fetchSemanticsNodes().isNotEmpty()
-        ) {
-            click("Perfis de medidas")
-        }
-    }
+    private fun manage() = composeRule.showProfiles()
 
     private fun saveProfile(label: String = "Salvar perfil") {
         click(label)

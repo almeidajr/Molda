@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="navigation_moldes">Moldes</string>
+    <string name="navigation_projetos">Projetos</string>
+    <string name="navigation_guias">Guias</string>
+    <string name="navigation_perfis">Perfis</string>
+    <string name="navigation_up">Voltar</string>
+
+    <string name="pattern_catalog_intro">Escolha a peça. Cada molde mostra as medidas, as escolhas e as fórmulas usadas no resultado.</string>
+    <string name="pattern_catalog_skirt">Tecido plano, com cós e fechamento. Quatro raios: costura e corte da cintura e da barra.</string>
+
+    <string name="guide_library_intro">Técnicas passo a passo. Abra um guia antes de calcular ou a partir de um resultado.</string>
+
+    <string name="project_empty_title">Nenhum projeto salvo</string>
+    <string name="project_empty_definition">Um projeto guarda, com um nome, as medidas, as escolhas e o resultado de um molde, mesmo que o perfil usado mude depois.</string>
+    <string name="project_see_patterns">Ver moldes</string>
+</resources>

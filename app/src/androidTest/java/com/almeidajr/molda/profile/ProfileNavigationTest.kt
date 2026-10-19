@@ -2,13 +2,15 @@ package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
 import android.view.WindowInsets
-import androidx.compose.ui.semantics.Role
+import android.view.WindowManager
+import android.view.inspector.WindowInspector
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasText
@@ -21,6 +23,12 @@ import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.SkirtTitle
+import com.almeidajr.molda.destination
+import com.almeidajr.molda.screenTitle
+import com.almeidajr.molda.selectDestination
+import com.almeidajr.molda.showSkirtCalculator
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -28,35 +36,37 @@ class ProfileNavigationTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
+    @Before
+    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
+
     @Test
     fun calculatorLaunch_doesNotInlineProfileManagement() {
         composeRule.onNodeWithText("Novo perfil").assertDoesNotExist()
     }
 
     @Test
-    fun calculatorAppBar_opensProfilesFromKeyboardAndReturnsToCalculator() {
-        val button = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)
-        composeRule.onNodeWithText("Perfis de medidas")
-            .assert(button).assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
-        // A real key event leaves touch mode, so buttons join keyboard focus traversal.
+    fun navigationSuite_opensProfilesFromKeyboardAndReturnsToCalculator() {
+        composeRule.destination("Perfis").assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
+        // A real key event leaves touch mode, so navigation items join keyboard focus traversal.
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
-        composeRule.onNodeWithText("Perfis de medidas").requestFocus().assertIsFocused()
+        composeRule.destination("Perfis").requestFocus().assertIsFocused()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
-        composeRule.onNodeWithText("Perfis de medidas (opcional)").assertIsDisplayed()
-        composeRule.onNodeWithText("Saia godê inteira").assertDoesNotExist()
-        composeRule.onNodeWithText("Voltar ao cálculo").performClick()
-        composeRule.onNodeWithText("Saia godê inteira").assertIsDisplayed()
-        composeRule.onNodeWithText("Perfis de medidas").assertIsDisplayed()
+        composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
+        composeRule.destination("Perfis").assertIsSelected()
+        composeRule.screenTitle(SkirtTitle).assertDoesNotExist()
+        composeRule.destination("Moldes").requestFocus().assertIsFocused()
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
+        composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
     }
 
     @Test
     fun calculatorProfilesAndPicker_exposeSectionHeadings() {
         val heading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
-        composeRule.onNodeWithText("Saia godê inteira").assert(heading)
-        composeRule.onNodeWithText("Perfis de medidas").performClick()
-        composeRule.onNodeWithText("Perfis de medidas (opcional)").assert(heading)
-        composeRule.onNodeWithText("Voltar ao cálculo").performClick()
+        composeRule.onNodeWithText(SkirtTitle).assert(heading)
+        composeRule.selectDestination("Perfis")
+        composeRule.onNodeWithText("Perfis de medidas").assert(heading)
+        composeRule.selectDestination("Moldes")
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
         composeRule.onNode(hasText("Usar perfil") and heading).assertIsDisplayed()
     }
@@ -64,16 +74,16 @@ class ProfileNavigationTest {
     @Test
     fun recreation_keepsDirtyProfileEditorAndItsWayBack() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
-        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.selectDestination("Perfis")
         composeRule.onNodeWithText("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         composeRule.activityRule.scenario.recreate()
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        composeRule.onNodeWithText("Descartar").performClick()
-        composeRule.onNodeWithText("Voltar ao cálculo").assertIsDisplayed()
+        clickInDialog("Descartar")
+        composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        composeRule.onNodeWithText("Saia godê inteira").assertIsDisplayed()
+        composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
     }
 
     @Test
@@ -86,24 +96,36 @@ class ProfileNavigationTest {
 
     @Test
     fun recreation_keepsDiscardConfirmation() {
-        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.selectDestination("Perfis")
         composeRule.onNodeWithText("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
         composeRule.activityRule.scenario.recreate()
-        composeRule.onNodeWithText("Continuar editando").performClick()
+        clickInDialog("Continuar editando")
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
     }
 
     @Test
     fun backWithKeyboardOpen_closesKeyboardAndKeepsProfileEditor() {
-        composeRule.onNodeWithText("Perfis de medidas").performClick()
+        composeRule.selectDestination("Perfis")
         composeRule.onNodeWithText("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performClick()
         composeRule.waitUntil(5_000) { isKeyboardVisible() }
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.waitUntil(5_000) { !isKeyboardVisible() }
         composeRule.onNodeWithText("Nome ou apelido").assertIsDisplayed()
+    }
+
+    private fun clickInDialog(label: String) {
+        // Touches reach a dialog only once its window has focus.
+        composeRule.waitUntil(5_000) {
+            WindowInspector.getGlobalWindowViews().any {
+                it.hasWindowFocus() &&
+                    (it.layoutParams as WindowManager.LayoutParams).type ==
+                    WindowManager.LayoutParams.TYPE_APPLICATION
+            }
+        }
+        composeRule.onNodeWithText(label).performClick()
     }
 
     private fun isKeyboardVisible(): Boolean {
