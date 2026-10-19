@@ -65,6 +65,7 @@ fun SkirtCalculatorScreen(
     onUseProfile: () -> Unit = {},
     onOpenGuide: () -> Unit = {},
     onSaveProject: () -> Unit = {},
+    onSaveAsNewProject: (() -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequesters = remember { SkirtDraftField.entries.associateWith { FocusRequester() } }
@@ -111,6 +112,7 @@ fun SkirtCalculatorScreen(
             state,
             onOpenGuide,
             onSaveProject,
+            onSaveAsNewProject,
             Modifier.bringIntoViewRequester(resultRequester),
         ) {
             focusRequesters.getValue(SkirtDraftField.Waist).requestFocus()
@@ -228,6 +230,7 @@ private fun CalculationOutcome(
     state: CalculatorState,
     onOpenGuide: () -> Unit,
     onSaveProject: () -> Unit,
+    onSaveAsNewProject: (() -> Unit)?,
     modifier: Modifier = Modifier,
     onEditMeasurements: () -> Unit,
 ) {
@@ -250,7 +253,7 @@ private fun CalculationOutcome(
             text,
         )
         CuttingCard(card, description, modifier)
-        SkirtResults(draft, onOpenGuide, onSaveProject, onEditMeasurements)
+        SkirtResults(draft, onOpenGuide, onSaveProject, onSaveAsNewProject, onEditMeasurements)
         DraftingExplanation(state.form.inputs, radii)
     }
 }
@@ -329,6 +332,7 @@ private fun SkirtResults(
     draft: SkirtDraft,
     onOpenGuide: () -> Unit,
     onSaveProject: () -> Unit,
+    onSaveAsNewProject: (() -> Unit)?,
     onEditMeasurements: () -> Unit,
 ) {
     // One action row under the card; at large text the buttons wrap onto further lines.
@@ -337,8 +341,22 @@ private fun SkirtResults(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         FabricFoldingGuideEntry(onOpenGuide)
+        // Editing a saved project offers updating it or keeping it and saving another.
         OutlinedButton(onClick = onSaveProject, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.project_save))
+            Text(
+                stringResource(
+                    if (onSaveAsNewProject == null) {
+                        R.string.project_save
+                    } else {
+                        R.string.project_save_confirm
+                    },
+                ),
+            )
+        }
+        onSaveAsNewProject?.let {
+            OutlinedButton(onClick = it, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.project_save_as_new))
+            }
         }
         TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.skirt_edit_measurements))

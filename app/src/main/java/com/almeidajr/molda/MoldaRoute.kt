@@ -56,6 +56,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.almeidajr.molda.about.ui.AboutScreen
 import com.almeidajr.molda.about.ui.LicencesScreen
 import com.almeidajr.molda.guide.ui.GuideLibrary
+import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.pattern.ui.PatternCatalog
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -66,10 +67,7 @@ import com.almeidajr.molda.profile.ui.ProfilePicker
 import com.almeidajr.molda.profile.ui.ProfilesContent
 import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
-import com.almeidajr.molda.profile.ui.profileWaistText
-import com.almeidajr.molda.project.domain.MeasurementSource
 import com.almeidajr.molda.project.domain.ProjectId
-import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.ui.DeleteProjectDialog
 import com.almeidajr.molda.project.ui.ProjectSaveFeedback
 import com.almeidajr.molda.project.ui.ProjectScreen
@@ -77,6 +75,7 @@ import com.almeidajr.molda.project.ui.ProjectsScreen
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.RenameProjectDialog
 import com.almeidajr.molda.project.ui.SaveProjectDialog
+import com.almeidajr.molda.skirt.ui.CalculatedFoldingGuide
 import com.almeidajr.molda.skirt.ui.ExampleSkirtRadii
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SavedSkirtResult
@@ -95,7 +94,6 @@ import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
 import com.almeidajr.molda.ui.navigation.materialTransition
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
-import java.time.LocalDate
 import kotlinx.serialization.Serializable
 
 /** The Moldes root: the catalog of pattern drafts. */
@@ -128,6 +126,14 @@ private data class ProjectKey(val id: ProjectId) : NavKey
 /** The fabric-folding guide on a saved project's radii, opened from that project. */
 @Serializable
 private data class ProjectGuideKey(val id: ProjectId) : NavKey
+
+/** A saved project loaded into the skirt calculator, on the Projetos stack. */
+@Serializable
+private data class ProjectEditorKey(val id: ProjectId) : NavKey
+
+/** The fabric-folding guide on the radii calculated while editing a project. */
+@Serializable
+private data object ProjectEditorGuideKey : NavKey
 
 /** The fabric-folding guide on example dimensions, opened from Guias. */
 @Serializable
@@ -177,6 +183,13 @@ private sealed interface AfterDiscard {
 
     @Serializable
     data object CalculateOwn : AfterDiscard
+
+    @Serializable
+    data object CloseProjectEditor : AfterDiscard
+
+    /** Re-selecting Projetos over a dirty project editor: back to its root. */
+    @Serializable
+    data object ShowProjects : AfterDiscard
 }
 
 /** Asks to discard the dirty editor, then does [afterDiscard]. */
@@ -234,10 +247,13 @@ fun MoldaRoute(
     calculator: SkirtCalculatorViewModel = hiltViewModel(),
     profiles: ProfilesViewModel = hiltViewModel(),
     projects: ProjectsViewModel = hiltViewModel(),
+    // Its own draft, so editing a project never touches the calculator in Moldes.
+    projectCalculator: SkirtCalculatorViewModel = hiltViewModel(key = "projectEditor"),
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
     val projectState by projects.state.collectAsStateWithLifecycle()
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
+    val projectCalculatorState by projectCalculator.state.collectAsStateWithLifecycle()
     val titleFocus = remember { TitleFocus() }
     val navigation = rememberTopLevelBackStacks(TopLevelRoots, onSwitch = titleFocus::request)
     val moldes = navigation.stackOf(PatternCatalogKey)
@@ -258,7 +274,8 @@ fun MoldaRoute(
         }
     }
     val openPickerEditor: () -> Unit = {
-        navigation.removeAll { it is ProfileEditorKey }
+        // Moldes and Projetos each have a picker; the one profile form backs only the latest.
+        navigation.removeAll { it is ProfileEditorKey || it == PickerProfileEditorKey }
         profiles.startCreating()
         navigation.push(PickerProfileEditorKey)
     }
@@ -288,6 +305,12 @@ fun MoldaRoute(
             // An open editor closes the usual way when its destination is re-selected.
             top.isProfileEditor -> if (!profileState.isSaving) cancelEditor()
 
+            // Returning to the root would drop the project editor's unsaved changes.
+            navigation.current.any { it is ProjectEditorKey } && projectCalculatorState.isDirty ->
+                if (!projectState.isUpdating) {
+                    navigation.push(DiscardChangesKey(AfterDiscard.ShowProjects))
+                }
+
             else -> navigation.select(destination.root)
         }
     }
@@ -307,6 +330,26 @@ fun MoldaRoute(
                 navigation.popTo(SkirtCalculatorKey)
             }
         }
+    }
+    val closeProjectEditor: () -> Unit = {
+        if (projectCalculatorState.isDirty) {
+            navigation.push(DiscardChangesKey(AfterDiscard.CloseProjectEditor))
+        } else {
+            navigation.removeAll { it is ProjectEditorKey }
+        }
+    }
+    // A save from the project editor shows the stored project in place of the editor, once the
+    // list holds it: a new project's insert returns before the list emits it.
+    LaunchedEffect(projectState.projectToShow, projectState.projects) {
+        projectState.projectToShow?.takeIf { id -> projectState.projects.any { it.id == id } }
+            ?.let { id ->
+                navigation.removeAll {
+                    it is ProjectEditorKey || it == ProjectEditorGuideKey || it is ProjectKey ||
+                        it is ProjectGuideKey
+                }
+                navigation.push(ProjectKey(id), root = ProjectsKey)
+                projects.onProjectShown()
+            }
     }
     val openAbout: () -> Unit = { navigation.push(AboutKey) }
     val routes = entryProvider {
@@ -351,6 +394,15 @@ fun MoldaRoute(
                     project,
                     // Beside the list the project is a pane, closed by choosing from the list or Back.
                     onUp = if (LocalIsTwoPane.current) null else navigation::back,
+                    onEdit = {
+                        val snapshot = project.snapshot
+                        projectCalculator.load(
+                            snapshot.draft,
+                            snapshot.source?.profileName,
+                            snapshot.source?.measurementDate,
+                        )
+                        navigation.push(ProjectEditorKey(key.id))
+                    },
                     // Deleting the open project closes it: OpenedProject no longer finds it.
                     onRename = { projects.startRenaming(project) },
                     onDelete = { projects.startDeleting(project) },
@@ -360,6 +412,30 @@ fun MoldaRoute(
                         navigation.push(ProjectGuideKey(key.id))
                     })
                 }
+            }
+        }
+        entry<ProjectEditorKey> { key ->
+            OpenedProject(key.id, projectState, onClose = { navigation.remove(key) }) { project ->
+                CalculatorDestination(
+                    projectCalculator,
+                    title = stringResource(R.string.project_edit_title, project.name.text),
+                    onUp = { if (!projectState.isUpdating) closeProjectEditor() },
+                    onUseProfile = { navigation.push(ProfilePickerKey) },
+                    onOpenGuide = { navigation.push(ProjectEditorGuideKey) },
+                    onSaveProject = { _ ->
+                        projectCalculatorState.snapshot()?.let { projects.update(key.id, it) }
+                    },
+                    onSaveAsNewProject = { patternName ->
+                        projectCalculatorState.snapshot()?.let {
+                            projects.startSaving(it, patternName, showsSaved = true)
+                        }
+                    },
+                )
+            }
+        }
+        entry<ProjectEditorGuideKey> {
+            CalculatedFoldingGuide(projectCalculatorState.radii) {
+                navigation.remove(ProjectEditorGuideKey)
             }
         }
         entry<ProjectGuideKey> { key ->
@@ -409,34 +485,18 @@ fun MoldaRoute(
         entry<SkirtCalculatorKey> {
             CalculatorDestination(
                 calculator,
+                title = stringResource(R.string.skirt_title),
                 onUp = navigation::back,
                 onUseProfile = { navigation.push(ProfilePickerKey) },
                 onOpenGuide = { navigation.push(FabricFoldingGuideKey) },
                 onSaveProject = { patternName ->
-                    val draft = calculatorState.draft
-                    val radii = calculatorState.radii
-                    if (draft != null && radii != null) {
-                        val form = calculatorState.form
-                        val source = form.sourceProfileName?.let { name ->
-                            form.sourceMeasurementDate?.let {
-                                MeasurementSource(name, LocalDate.parse(it))
-                            }
-                        }
-                        projects.startSaving(SkirtSnapshot(draft, radii, source), patternName)
-                    }
+                    calculatorState.snapshot()?.let { projects.startSaving(it, patternName) }
                 },
             )
         }
         entry<FabricFoldingGuideKey> {
-            val close: () -> Unit = {
+            CalculatedFoldingGuide(calculatorState.radii) {
                 navigation.remove(FabricFoldingGuideKey)
-            }
-            val radii = calculatorState.radii
-            if (radii != null) {
-                FabricFoldingPlayer(radii, close)
-            } else {
-                // Results do not survive process death; show the calculator.
-                LaunchedEffect(Unit) { close() }
             }
         }
         entry<ProfileManagementKey>(
@@ -457,7 +517,7 @@ fun MoldaRoute(
         entry<ProfilePickerKey>(metadata = windowOverlay()) {
             AppProfilePicker(
                 profiles,
-                calculator,
+                if (navigation.selected == ProjectsKey) projectCalculator else calculator,
                 onDismiss = { navigation.remove(ProfilePickerKey) },
                 onCreate = {
                     requestProfileEditor(profileState, onOpen = openPickerEditor) {
@@ -467,7 +527,13 @@ fun MoldaRoute(
             )
         }
         entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
-            DiscardDialog(onDismiss = { navigation.remove(key) }, onDiscard = {
+            val body = when (key.afterDiscard) {
+                AfterDiscard.CloseProjectEditor, AfterDiscard.ShowProjects ->
+                    R.string.project_discard_body
+
+                else -> R.string.profile_discard_body
+            }
+            DiscardDialog(body, onDismiss = { navigation.remove(key) }, onDiscard = {
                 navigation.remove(key)
                 when (val afterDiscard = key.afterDiscard) {
                     AfterDiscard.CloseEditor -> finishEditor()
@@ -486,6 +552,12 @@ fun MoldaRoute(
                         finishEditor()
                         navigation.popTo(SkirtCalculatorKey)
                     }
+
+                    AfterDiscard.CloseProjectEditor -> navigation.removeAll {
+                        it is ProjectEditorKey
+                    }
+
+                    AfterDiscard.ShowProjects -> navigation.select(ProjectsKey)
                 }
             })
         }
@@ -507,10 +579,15 @@ fun MoldaRoute(
     }
     ProfileSaveFeedback(profiles, snackbar, onCreated = { profile ->
         // A profile created from the picker is the one to use: back to the calculator with it.
-        if (PickerProfileEditorKey in moldes) {
+        val target = when (PickerProfileEditorKey) {
+            in moldes -> calculator
+            in projetos -> projectCalculator
+            else -> null
+        }
+        if (target != null) {
             val measurements = profile.measurements
-            calculator.selectProfile(
-                profileWaistText(measurements.waist),
+            target.selectProfile(
+                lengthText(measurements.waist),
                 measurements.name.text,
                 measurements.measurementDate,
             )
@@ -535,7 +612,7 @@ fun MoldaRoute(
     val isManaging = navigation.selected == ProfileManagementKey &&
         navigation.current.last() !in setOf(AboutKey, LicencesKey)
     val isGuideOpen = navigation.current.last().let {
-        it == FabricFoldingGuideKey || it is ProjectGuideKey
+        it == FabricFoldingGuideKey || it == ProjectEditorGuideKey || it is ProjectGuideKey
     }
     val isAnyGuideOpen = isGuideOpen || navigation.current.last() == ExampleFabricFoldingGuideKey
     val density = LocalDensity.current
@@ -606,10 +683,14 @@ fun MoldaRoute(
                                     materialTransition(density, isForward = false)
                                 },
                                 onBack = {
-                                    if (!navigation.current.last().isProfileEditor) {
-                                        navigation.back()
-                                    } else if (!profileState.isSaving) {
-                                        cancelEditor()
+                                    val top = navigation.current.last()
+                                    when {
+                                        top is ProjectEditorKey ->
+                                            if (!projectState.isUpdating) closeProjectEditor()
+
+                                        !top.isProfileEditor -> navigation.back()
+
+                                        !profileState.isSaving -> cancelEditor()
                                     }
                                 },
                             )
@@ -674,32 +755,36 @@ private val NavKey.isProfileEditor: Boolean
     get() = this is ProfileEditorKey || this == PickerProfileEditorKey
 
 /**
- * Shows the editor [form] has open above profile management, unless the picker's editor on the
- * Moldes stack holds it, and drops any other editor from profile management.
+ * Shows the editor [form] has open above profile management, unless the picker's editor holds
+ * it, and drops any other editor from profile management.
  */
 private fun syncProfileEditor(navigation: TopLevelBackStacks, form: ProfileForm) {
     val profile = form.editingId?.let(EditedProfile::Existing) ?: EditedProfile.New
     val editor = ProfileEditorKey(profile).takeIf { form.isEditorOpen }
     navigation.removeAll { it is ProfileEditorKey && it != editor }
     if (editor != null && navigation.stackOf(ProfileManagementKey).last() == ProfileManagementKey &&
-        PickerProfileEditorKey !in navigation.stackOf(PatternCatalogKey)
+        navigation.roots.none { PickerProfileEditorKey in navigation.stackOf(it) }
     ) {
         navigation.push(editor, root = ProfileManagementKey)
     }
 }
 
+/** The skirt calculator; with [onSaveAsNewProject] it edits a saved project. */
+@Suppress("LongParameterList") // The destination's own callbacks, wired by MoldaRoute.
 @Composable
 private fun CalculatorDestination(
     calculator: SkirtCalculatorViewModel,
+    title: String,
     onUp: () -> Unit,
     onUseProfile: () -> Unit,
     onOpenGuide: () -> Unit,
     onSaveProject: (patternName: String) -> Unit,
+    onSaveAsNewProject: ((patternName: String) -> Unit)? = null,
 ) {
     val state by calculator.state.collectAsStateWithLifecycle()
     val patternName = stringResource(R.string.project_pattern_skirt)
     Column(Modifier.fillMaxSize()) {
-        MoldaTopAppBar(stringResource(R.string.skirt_title), onUp = onUp)
+        MoldaTopAppBar(title, onUp = onUp)
         SkirtCalculatorScreen(
             state,
             calculator::edit,
@@ -709,6 +794,7 @@ private fun CalculatorDestination(
             onUseProfile = onUseProfile,
             onOpenGuide = onOpenGuide,
             onSaveProject = { onSaveProject(patternName) },
+            onSaveAsNewProject = onSaveAsNewProject?.let { { it(patternName) } },
         )
     }
 }
@@ -731,11 +817,11 @@ private fun ProfilePane(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun DiscardDialog(onDismiss: () -> Unit, onDiscard: () -> Unit) {
+private fun DiscardDialog(@StringRes body: Int, onDismiss: () -> Unit, onDiscard: () -> Unit) {
     AlertDialog(
         onDismissRequest = { onDismiss() },
         title = { Text(stringResource(R.string.profile_discard_title)) },
-        text = { Text(stringResource(R.string.profile_discard_body)) },
+        text = { Text(stringResource(body)) },
         confirmButton = {
             TextButton(onClick = {
                 onDiscard()
@@ -764,7 +850,7 @@ private fun AppProfilePicker(
     ProfilePicker(state, onDismiss, profiles::load, onSelect = {
         val measurements = it.measurements
         calculator.selectProfile(
-            profileWaistText(measurements.waist),
+            lengthText(measurements.waist),
             measurements.name.text,
             measurements.measurementDate,
         )

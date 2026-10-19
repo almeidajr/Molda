@@ -184,6 +184,9 @@ private object RefusingProjects : ProjectRepository {
     override suspend fun create(name: ProjectName, snapshot: SkirtSnapshot, savedAt: Instant) =
         Result.failure<Project>(IllegalStateException("Controlled storage failure"))
 
+    override suspend fun update(id: ProjectId, snapshot: SkirtSnapshot, updatedAt: Instant) =
+        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
+
     override suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant) =
         Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
 

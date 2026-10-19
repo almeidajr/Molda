@@ -24,4 +24,10 @@
     <string name="project_deleting">Excluindo…</string>
     <string name="project_deleted">Projeto excluído deste aparelho.</string>
     <string name="project_delete_failed">Não foi possível excluir o projeto. Ele continua salvo. Tente novamente.</string>
+    <string name="project_save_as_new">Salvar como novo</string>
+    <string name="project_edit">Editar</string>
+    <string name="project_edit_title">Editar %1$s</string>
+    <string name="project_discard_body">As alterações deste projeto ainda não foram salvas.</string>
+    <string name="project_updated">Projeto atualizado.</string>
+    <string name="project_update_failed">Não foi possível salvar as alterações. O projeto anterior foi mantido e as alterações continuam na tela. Tente novamente.</string>
 </resources>

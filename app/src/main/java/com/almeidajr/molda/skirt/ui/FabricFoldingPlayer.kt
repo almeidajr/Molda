@@ -275,3 +275,14 @@ private fun rememberSystemMotionEnabled(): Boolean {
     }
     return motionEnabled
 }
+
+/** The guide on calculated [radii], closed with [onClose] when there are none. */
+@Composable
+fun CalculatedFoldingGuide(radii: SkirtRadii?, onClose: () -> Unit) {
+    if (radii != null) {
+        FabricFoldingPlayer(radii, onClose)
+    } else {
+        // Results do not survive process death; show the calculator.
+        LaunchedEffect(Unit) { onClose() }
+    }
+}

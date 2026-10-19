@@ -149,6 +149,63 @@ class ProjectsViewModelTest {
     }
 
     @Test
+    fun update_replacesTheSnapshotInPlace_thenShowsTheProject() = runTest {
+        val projects = projectsViewModel()
+
+        projects.update(saved.id, fromProfile)
+
+        val state = projects.state.value
+        assertEquals(
+            listOf(saved.copy(snapshot = fromProfile, updatedAt = clock.instant())),
+            state.projects,
+        )
+        assertEquals(R.string.project_updated, state.savedMessage)
+        assertEquals(saved.id, state.projectToShow)
+        assertFalse(state.isUpdating)
+    }
+
+    @Test
+    fun update_whenStorageFails_keepsTheProjectAndSaysSo() = runTest {
+        storage.failsCommands = true
+        val projects = projectsViewModel()
+
+        projects.update(saved.id, fromProfile)
+
+        val state = projects.state.value
+        assertEquals(listOf(saved), state.projects)
+        assertEquals(R.string.project_update_failed, state.savedMessage)
+        assertNull(state.projectToShow)
+        assertFalse(state.isUpdating)
+    }
+
+    @Test
+    fun saveAsNew_keepsTheOriginal_thenShowsTheNewProject() = runTest {
+        val projects = projectsViewModel()
+
+        projects.startSaving(fromProfile, patternName = "Saia godê", showsSaved = true)
+        projects.save()
+
+        val state = projects.state.value
+        val created = state.projects.first()
+        assertEquals(listOf(created, saved), state.projects)
+        assertEquals(fromProfile, created.snapshot)
+        assertEquals(created.id, state.projectToShow)
+
+        projects.onProjectShown()
+        assertNull(projects.state.value.projectToShow)
+    }
+
+    @Test
+    fun save_freshCalculation_showsNoProject() = runTest {
+        val projects = projectsViewModel()
+
+        projects.startSaving(fromProfile, patternName = "Saia godê")
+        projects.save()
+
+        assertNull(projects.state.value.projectToShow)
+    }
+
+    @Test
     fun rename_trimmedName_updatesTheListImmediately() = runTest {
         val projects = projectsViewModel()
 
@@ -279,6 +336,13 @@ private class FakeProjects : ProjectRepository {
         stored.update { listOf(created) + it }
         Result.success(created)
     }
+
+    override suspend fun update(id: ProjectId, snapshot: SkirtSnapshot, updatedAt: Instant) =
+        command { projects ->
+            val updated = projects.single { it.id == id }
+                .copy(snapshot = snapshot, updatedAt = updatedAt)
+            listOf(updated) + projects.filter { it.id != id }
+        }
 
     override suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant) =
         command { projects ->

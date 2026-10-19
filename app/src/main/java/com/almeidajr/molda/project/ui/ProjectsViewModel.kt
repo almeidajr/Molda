@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.R
 import com.almeidajr.molda.project.domain.Project
+import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.domain.defaultProjectName
@@ -25,6 +26,8 @@ import kotlinx.coroutines.launch
 data class ProjectSaving(
     val snapshot: SkirtSnapshot,
     val name: String,
+    /** Whether the stored project opens once saved, as when saving an edit as a new one. */
+    val showsSaved: Boolean = false,
     val hasBlankName: Boolean = false,
     val isSaving: Boolean = false,
     @param:StringRes val saveError: Int? = null,
@@ -54,9 +57,15 @@ data class ProjectsState(
     val saving: ProjectSaving? = null,
     val renaming: ProjectRenaming? = null,
     val deleting: ProjectDeleting? = null,
+    /** Whether an edited project's snapshot is being stored. */
+    val isUpdating: Boolean = false,
     @param:StringRes val savedMessage: Int? = null,
+    /** A project just saved from an edit, to show until [ProjectsViewModel.onProjectShown]. */
+    val projectToShow: ProjectId? = null,
 )
 
+// One command per project action the UI offers.
+@Suppress("TooManyFunctions")
 @HiltViewModel
 class ProjectsViewModel @Inject constructor(
     private val repository: ProjectRepository,
@@ -97,11 +106,14 @@ class ProjectsViewModel @Inject constructor(
         }
     }
 
-    /** Opens the save dialog for [snapshot], named after [patternName], its profile and today. */
-    fun startSaving(snapshot: SkirtSnapshot, patternName: String) {
+    /**
+     * Opens the save dialog for [snapshot], named after [patternName], its profile and today;
+     * with [showsSaved], the new project is shown once saved.
+     */
+    fun startSaving(snapshot: SkirtSnapshot, patternName: String, showsSaved: Boolean = false) {
         val today = LocalDate.now(clock)
         val name = defaultProjectName(patternName, snapshot.source?.profileName, today)
-        transition { it.copy(saving = ProjectSaving(snapshot, name)) }
+        transition { it.copy(saving = ProjectSaving(snapshot, name, showsSaved)) }
     }
 
     /** Edits the name typed in the open save or rename dialog. */
@@ -124,8 +136,13 @@ class ProjectsViewModel @Inject constructor(
         viewModelScope.launch {
             val result = repository.create(name, saving.snapshot, clock.instant())
             transition { state ->
-                if (result.isSuccess) {
-                    state.copy(saving = null, savedMessage = R.string.project_saved)
+                val created = result.getOrNull()
+                if (created != null) {
+                    state.copy(
+                        saving = null,
+                        savedMessage = R.string.project_saved,
+                        projectToShow = created.id.takeIf { saving.showsSaved },
+                    )
                 } else {
                     state.copy(
                         saving = state.saving?.copy(
@@ -137,6 +154,28 @@ class ProjectsViewModel @Inject constructor(
             }
         }
     }
+
+    /** Stores [snapshot] as the project [id]'s, then shows that project. */
+    fun update(id: ProjectId, snapshot: SkirtSnapshot) {
+        if (mutableState.value.isUpdating) return
+        transition { it.copy(isUpdating = true) }
+        viewModelScope.launch {
+            val result = repository.update(id, snapshot, clock.instant())
+            transition { state ->
+                state.copy(
+                    isUpdating = false,
+                    savedMessage = if (result.isSuccess) {
+                        R.string.project_updated
+                    } else {
+                        R.string.project_update_failed
+                    },
+                    projectToShow = id.takeIf { result.isSuccess },
+                )
+            }
+        }
+    }
+
+    fun onProjectShown() = transition { it.copy(projectToShow = null) }
 
     fun startRenaming(project: Project) = transition {
         it.copy(renaming = ProjectRenaming(project, project.name.text))

@@ -39,11 +39,10 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
-import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileDateFormat
 import com.almeidajr.molda.profile.domain.ProfileId
-import java.math.BigDecimal
 import java.time.LocalDate
 
 @Composable
@@ -99,9 +98,6 @@ fun ProfileCreateAction(state: ProfilesState, onCreate: () -> Unit, modifier: Mo
     ) { Text(stringResource(R.string.profile_new)) }
 }
 
-internal fun profileWaistText(waist: Length): String =
-    BigDecimal.valueOf(waist.centimetres).stripTrailingZeros().toPlainString().replace('.', ',')
-
 internal fun profileDateText(date: LocalDate): String = date.format(ProfileDateFormat)
 
 @Composable
@@ -140,7 +136,7 @@ private fun ProfileManagementRow(
                         Text(
                             stringResource(
                                 R.string.profile_summary,
-                                profileWaistText(profile.measurements.waist),
+                                lengthText(profile.measurements.waist),
                                 profileDateText(profile.measurements.measurementDate),
                             ),
                         )
@@ -305,7 +301,7 @@ private fun PickerRow(
                     stringResource(
                         R.string.profile_use_label,
                         profile.measurements.name.text,
-                        profileWaistText(profile.measurements.waist),
+                        lengthText(profile.measurements.waist),
                         profileDateText(profile.measurements.measurementDate),
                     ),
                     style = MaterialTheme.typography.titleMedium,

@@ -89,6 +89,24 @@ class ProjectStorageTest {
     }
 
     @Test
+    fun update_replacesTheSnapshotInPlaceAsTheLatestChange() = runBlocking {
+        val (first, second) = withProjects(context, databaseName) { storage ->
+            storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
+                storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
+        }
+
+        withProjects(context, databaseName) { storage ->
+            assertTrue(storage.update(first.id, typedByHand, march).isSuccess)
+        }
+
+        val listed = withProjects(context, databaseName) { it.projects().first() }
+        assertEquals(
+            listOf(first.copy(snapshot = typedByHand, updatedAt = march), second),
+            listed,
+        )
+    }
+
+    @Test
     fun delete_removesOnlyThatProject() = runBlocking {
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
@@ -108,6 +126,7 @@ class ProjectStorageTest {
             storage.delete(gone.id).getOrThrow()
 
             assertTrue(storage.rename(gone.id, ProjectName("Outra"), march).isFailure)
+            assertTrue(storage.update(gone.id, fromProfile, march).isFailure)
             assertTrue(storage.delete(gone.id).isFailure)
         }
     }

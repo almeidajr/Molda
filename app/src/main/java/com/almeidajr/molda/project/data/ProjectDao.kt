@@ -39,6 +39,32 @@ interface ProjectDao {
     @Insert
     suspend fun insert(project: ProjectEntity): Long
 
+    @Query(
+        "UPDATE projects SET waist = :waist, ease = :ease, finished_length = :finishedLength, " +
+            "waist_seam_allowance = :waistSeamAllowance, hem_allowance = :hemAllowance, " +
+            "waist_stitching_radius = :waistStitchingRadius, " +
+            "finished_hem_radius = :finishedHemRadius, " +
+            "waist_cutting_radius = :waistCuttingRadius, hem_cutting_radius = :hemCuttingRadius, " +
+            "profile_name = :profileName, measurement_date = :measurementDate, " +
+            "updated_at = :updatedAt WHERE id = :id",
+    )
+    @Suppress("LongParameterList") // One parameter per snapshot column.
+    suspend fun update(
+        id: Long,
+        waist: Double,
+        ease: Double,
+        finishedLength: Double,
+        waistSeamAllowance: Double,
+        hemAllowance: Double,
+        waistStitchingRadius: Double,
+        finishedHemRadius: Double,
+        waistCuttingRadius: Double,
+        hemCuttingRadius: Double,
+        profileName: String?,
+        measurementDate: String?,
+        updatedAt: Long,
+    ): Int
+
     @Query("UPDATE projects SET name = :name, updated_at = :updatedAt WHERE id = :id")
     suspend fun rename(id: Long, name: String, updatedAt: Long): Int
 

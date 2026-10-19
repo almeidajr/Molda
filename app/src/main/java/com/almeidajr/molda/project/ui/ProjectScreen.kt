@@ -3,13 +3,16 @@ package com.almeidajr.molda.project.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,13 +26,14 @@ import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 
 /**
  * An opened project, read-only: its name as the title, where its measurements came from, then
- * its rename and delete actions and the saved result, drawn by [content]. The up arrow shows
- * only with [onUp].
+ * its edit, rename and delete actions and the saved result, drawn by [content]. The up arrow
+ * shows only with [onUp].
  */
 @Composable
 fun ProjectScreen(
     project: Project,
     onUp: (() -> Unit)?,
+    onEdit: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -57,7 +61,15 @@ fun ProjectScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                ProjectActions(project, onRename, onDelete)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedButton(onClick = onEdit, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(stringResource(R.string.project_edit))
+                    }
+                    ProjectActions(project, onRename, onDelete)
+                }
                 content()
             }
         }

@@ -29,6 +29,29 @@ class LocalProjectRepository(private val dao: ProjectDao) : ProjectRepository {
         entity.copy(id = dao.insert(entity)).toProject()
     }
 
+    override suspend fun update(
+        id: ProjectId,
+        snapshot: SkirtSnapshot,
+        updatedAt: Instant,
+    ): Result<Unit> = resultOf {
+        val updated = dao.update(
+            id = id.value,
+            waist = snapshot.draft.waist.centimetres,
+            ease = snapshot.draft.ease.centimetres,
+            finishedLength = snapshot.draft.finishedLength.centimetres,
+            waistSeamAllowance = snapshot.draft.waistSeamAllowance.centimetres,
+            hemAllowance = snapshot.draft.hemAllowance.centimetres,
+            waistStitchingRadius = snapshot.radii.waistStitching.centimetres,
+            finishedHemRadius = snapshot.radii.finishedHem.centimetres,
+            waistCuttingRadius = snapshot.radii.waistCutting.centimetres,
+            hemCuttingRadius = snapshot.radii.hemCutting.centimetres,
+            profileName = snapshot.source?.profileName,
+            measurementDate = snapshot.source?.measurementDate?.toString(),
+            updatedAt = updatedAt.toEpochMilli(),
+        )
+        check(updated == 1) { "Project no longer exists" }
+    }
+
     override suspend fun rename(
         id: ProjectId,
         name: ProjectName,
