@@ -15,6 +15,7 @@ import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -23,6 +24,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
+import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.SkirtTitle
@@ -120,6 +122,41 @@ class ProfileNavigationTest {
     }
 
     @Test
+    fun exampleGuideCalculateMySkirt_asksToDiscardDirtyPickerEditor_andLeavesNoDraftInPerfis() {
+        openPickerEditor()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
+        calculateMySkirtFromGuias()
+        clickInDialog("Descartar")
+        composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
+        composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
+        assertPerfisShowsNoEditor()
+    }
+
+    @Test
+    fun exampleGuideCalculateMySkirt_cancelsCleanPickerEditor_andLeavesNoDraftInPerfis() {
+        openPickerEditor()
+        calculateMySkirtFromGuias()
+        composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
+        assertPerfisShowsNoEditor()
+    }
+
+    @Test
+    fun reselectingMoldes_whileDiscardDialogIsOpen_keepsAsking_andLeavesNoDraftInPerfis() {
+        openPickerEditor()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onNodeWithText("Descartar alterações?").isDisplayed()
+        }
+        composeRule.selectDestination("Moldes")
+        clickInDialog("Descartar")
+        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
+        assertPerfisShowsNoEditor()
+    }
+
+    @Test
     fun recreation_keepsOpenPicker() {
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
         composeRule.activityRule.scenario.recreate()
@@ -147,6 +184,26 @@ class ProfileNavigationTest {
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.waitUntil(5_000) { !isKeyboardVisible() }
         composeRule.onNodeWithText("Nome ou apelido").assertIsDisplayed()
+    }
+
+    private fun openPickerEditor() {
+        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
+    }
+
+    private fun calculateMySkirtFromGuias() {
+        closeSoftKeyboard()
+        composeRule.selectDestination("Guias")
+        composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
+        composeRule.onNodeWithText("Calcular a minha saia").performClick()
+    }
+
+    private fun assertPerfisShowsNoEditor() {
+        composeRule.selectDestination("Perfis")
+        composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Rascunho").assertDoesNotExist()
     }
 
     private fun clickInDialog(label: String) {

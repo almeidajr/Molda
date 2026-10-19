@@ -143,6 +143,9 @@ private sealed interface AfterDiscard {
 
     @Serializable
     data object OpenPickerEditor : AfterDiscard
+
+    @Serializable
+    data object CalculateOwn : AfterDiscard
 }
 
 /** Asks to discard the dirty editor, then does [afterDiscard]. */
@@ -239,11 +242,34 @@ fun MoldaRoute(
         }
     }
     val select: (Destination) -> Unit = { destination ->
-        // An open editor closes the usual way when its destination is re-selected.
-        if (destination.root == navigation.selected && navigation.current.last().isProfileEditor) {
-            if (!profileState.isSaving) cancelEditor()
-        } else {
-            navigation.select(destination.root)
+        val top = navigation.current.last()
+        when {
+            destination.root != navigation.selected -> navigation.select(destination.root)
+
+            // An open discard dialog is already asking; popping it would orphan the draft.
+            top is DiscardChangesKey -> Unit
+
+            // An open editor closes the usual way when its destination is re-selected.
+            top.isProfileEditor -> if (!profileState.isSaving) cancelEditor()
+
+            else -> navigation.select(destination.root)
+        }
+    }
+    // Keeps the calculator and its draft, closing what is open above it; the picker's editor
+    // closes the usual way first.
+    val calculateOwn: () -> Unit = {
+        navigation.select(PatternCatalogKey)
+        val hasPickerEditor = PickerProfileEditorKey in navigation.current
+        when {
+            navigation.current.last() is DiscardChangesKey -> Unit
+
+            hasPickerEditor && profileState.isDirty ->
+                navigation.push(DiscardChangesKey(AfterDiscard.CalculateOwn))
+
+            else -> {
+                if (hasPickerEditor) finishEditor()
+                navigation.popTo(SkirtCalculatorKey)
+            }
         }
     }
     val openAbout: () -> Unit = { navigation.push(AboutKey) }
@@ -282,11 +308,7 @@ fun MoldaRoute(
                 onClose = { navigation.remove(ExampleFabricFoldingGuideKey) },
                 // Beside the list the guide is a pane, closed by choosing from the list or Back.
                 isCloseShown = !LocalIsTwoPane.current,
-                onCalculateOwn = {
-                    navigation.select(PatternCatalogKey)
-                    // Keeps the calculator and its draft, closing what is open above it.
-                    navigation.popTo(SkirtCalculatorKey)
-                },
+                onCalculateOwn = calculateOwn,
             )
         }
         entry<AboutKey> {
@@ -362,6 +384,11 @@ fun MoldaRoute(
                     AfterDiscard.OpenPickerEditor -> {
                         profiles.cancel()
                         openPickerEditor()
+                    }
+
+                    AfterDiscard.CalculateOwn -> {
+                        finishEditor()
+                        navigation.popTo(SkirtCalculatorKey)
                     }
                 }
             })
