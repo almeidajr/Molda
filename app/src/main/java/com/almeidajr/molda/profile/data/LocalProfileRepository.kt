@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /** Room-backed profiles, read and written through [dao]. */
-class LocalProfileRepository(private val dao: ProfileDao) : ProfileRepository {
+class LocalProfileRepository internal constructor(private val dao: ProfileDao) : ProfileRepository {
     override fun profiles(): Flow<List<MeasurementProfile>> =
         dao.profiles().map { rows -> rows.map { it.toProfile() } }
 

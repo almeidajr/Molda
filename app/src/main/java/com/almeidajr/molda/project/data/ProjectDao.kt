@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 /** A full-circle skirt project: its snapshot in typed columns, lengths in centimetres. */
 @Entity(tableName = "projects")
-data class ProjectEntity(
+internal data class ProjectEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     // The pattern draft kind's stored name, such as "full_circle_skirt".
@@ -24,7 +24,7 @@ data class ProjectEntity(
 )
 
 /** A skirt snapshot's columns: the draft, the radii and the profile it came from. */
-data class SkirtColumns(
+internal data class SkirtColumns(
     val waist: Double,
     val ease: Double,
     @ColumnInfo(name = "finished_length") val finishedLength: Double,
@@ -41,14 +41,14 @@ data class SkirtColumns(
 )
 
 /** A new snapshot for the project [id]; its name, kind and creation time are kept. */
-data class SkirtUpdate(
+internal data class SkirtUpdate(
     val id: Long,
     @Embedded val skirt: SkirtColumns,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
 )
 
 @Dao
-interface ProjectDao {
+internal interface ProjectDao {
     @Query("SELECT * FROM projects ORDER BY updated_at DESC, id DESC")
     fun projects(): Flow<List<ProjectEntity>>
 

@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /** Room-backed projects, read and written through [dao]. */
-class LocalProjectRepository(private val dao: ProjectDao) : ProjectRepository {
+class LocalProjectRepository internal constructor(private val dao: ProjectDao) : ProjectRepository {
     override fun projects(): Flow<List<Project>> =
         dao.projects().map { rows -> rows.map { it.toProject() } }
 

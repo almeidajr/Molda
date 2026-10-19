@@ -10,7 +10,7 @@ import androidx.room3.Update
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "profiles")
-data class ProfileEntity(
+internal data class ProfileEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val waist: Double,
@@ -20,7 +20,7 @@ data class ProfileEntity(
 )
 
 @Dao
-interface ProfileDao {
+internal interface ProfileDao {
     @Query("SELECT * FROM profiles ORDER BY id")
     fun profiles(): Flow<List<ProfileEntity>>
 

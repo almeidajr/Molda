@@ -16,8 +16,8 @@ import com.almeidajr.molda.project.data.ProjectEntity
 // Every schema change after version 1 ships a Migration (docs/adr/0002).
 @Database(entities = [ProfileEntity::class, ProjectEntity::class], version = 2)
 abstract class MoldaDatabase : RoomDatabase() {
-    abstract fun profiles(): ProfileDao
-    abstract fun projects(): ProjectDao
+    internal abstract fun profiles(): ProfileDao
+    internal abstract fun projects(): ProjectDao
 }
 
 /** Version 2 adds the projects table; profiles are untouched. */
