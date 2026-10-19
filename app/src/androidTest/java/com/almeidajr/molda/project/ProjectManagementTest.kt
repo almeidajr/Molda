@@ -2,10 +2,7 @@ package com.almeidajr.molda.project
 
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -17,11 +14,9 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
-import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
@@ -40,9 +35,7 @@ import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals

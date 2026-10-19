@@ -3,10 +3,7 @@ package com.almeidajr.molda.project
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isHeading
@@ -19,11 +16,9 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
-import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
@@ -32,11 +27,7 @@ import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.data.LocalProjectRepository
-import com.almeidajr.molda.project.domain.Project
-import com.almeidajr.molda.project.domain.ProjectId
-import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
-import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
@@ -47,9 +38,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
