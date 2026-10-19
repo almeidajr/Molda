@@ -71,8 +71,6 @@ android {
         checkDependencies = true
         checkAllWarnings = true
         checkTestSources = true
-        // Dependabot owns update notices; available releases must not change CI results.
-        disable += setOf("GradleDependency", "NewerVersionAvailable")
         // Opt-in library check: accessors for file-private Kotlin helpers are trivial and R8 inlines them.
         disable += "SyntheticAccessor"
     }
@@ -115,6 +113,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.adaptive.navigation3)
+    // Keeps the app on the same androidx.window as window-testing; adaptive pulls an older one.
+    implementation(libs.androidx.window)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.navigation.suite)
     implementation(libs.androidx.compose.ui)
