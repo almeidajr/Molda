@@ -4,8 +4,10 @@ import android.view.KeyEvent
 import android.view.WindowInsets
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -16,13 +18,18 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
+import androidx.compose.ui.test.then
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
@@ -180,6 +187,26 @@ class NavigationShellTest {
                 }
                 assertEquals(destinations.size, items.distinct().size)
             }
+    }
+
+    @Test
+    fun doubleTextOnPhoneBar_labelsFitTheirItems() {
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent {
+                DeviceConfigurationOverride(
+                    DeviceConfigurationOverride.ForcedSize(DpSize(360.dp, 640.dp)) then
+                        DeviceConfigurationOverride.FontScale(2f),
+                ) { MoldaTheme { MoldaRoute() } }
+            }
+        }
+        destinations.forEach { label ->
+            val layouts = mutableListOf<TextLayoutResult>()
+            composeRule.onNode(hasText(label) and hasAnyAncestor(isSelectable()), true)
+                .performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
+                    assertTrue(it(layouts))
+                }
+            assertTrue("$label overflows its item", !layouts.single().hasVisualOverflow)
+        }
     }
 
     private fun waistField() = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
