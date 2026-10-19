@@ -481,7 +481,7 @@ class SkirtCalculatorTest {
     fun results_actionsAndDisclosuresAreTallEnough_andDisclosuresExposeState() {
         fillInputs(listOf("80", "2", "60", "1", "2"))
         calculate()
-        listOf("Editar medidas", "Tutorial de dobra do tecido").forEach {
+        listOf("Editar medidas", "Guia de dobra do tecido").forEach {
             composeRule.onNodeWithText(it).performScrollTo().assertHeightIsAtLeast(48.dp)
         }
         listOf("Como levar os raios ao papel", "Fórmulas").forEach { label ->
@@ -603,17 +603,17 @@ class SkirtCalculatorTest {
             "diagram outside the card",
             diagram.top >= card.top && diagram.bottom <= card.bottom,
         )
-        val tutorial = composeRule.onNodeWithText("Tutorial de dobra do tecido")
+        val guide = composeRule.onNodeWithText("Guia de dobra do tecido")
             .getUnclippedBoundsInRoot()
         val edit = composeRule.onNodeWithText("Editar medidas").getUnclippedBoundsInRoot()
-        assertTrue("actions above the card", tutorial.top >= card.bottom && edit.top >= card.bottom)
+        assertTrue("actions above the card", guide.top >= card.bottom && edit.top >= card.bottom)
         val below = listOf(
             "Medidas utilizadas (cm)",
             "Limites do cálculo",
             "Como levar os raios ao papel",
             "Fórmulas",
         ).map { composeRule.onNodeWithText(it).getUnclippedBoundsInRoot() }
-        (listOf(maxOf(tutorial.bottom, edit.bottom)) + below.map { it.top })
+        (listOf(maxOf(guide.bottom, edit.bottom)) + below.map { it.top })
             .zipWithNext().forEach { (upper, lower) ->
                 assertTrue("results out of order: $upper > $lower", upper <= lower)
             }
@@ -626,7 +626,7 @@ class SkirtCalculatorTest {
             "Linhas de referência",
             "Linhas de corte",
             "Diagrama das linhas",
-            "Tutorial de dobra do tecido",
+            "Guia de dobra do tecido",
             "Editar medidas",
             "Medidas utilizadas (cm)",
             "Folga de cintura:",

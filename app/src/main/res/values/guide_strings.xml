@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="guide_fabric_folding_description">Dobre o tecido em quatro, marque os raios a partir das dobras e corte o círculo da saia.</string>
+    <string name="guide_choose">Escolha um guia na lista.</string>
+
+    <string name="guide_example_label">Exemplo — não são as suas medidas</string>
+    <string name="guide_example_inputs">Cintura 80, folga 2, comprimento 60, margens 1 e 2 (cm)</string>
+    <string name="guide_calculate_own">Calcular a minha saia</string>
+</resources>
