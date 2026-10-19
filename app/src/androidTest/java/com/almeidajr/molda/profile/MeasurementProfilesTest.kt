@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.destination
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.data.LocalProfileRepository
@@ -67,7 +68,8 @@ class MeasurementProfilesTest {
     @Before
     fun showIsolatedProfiles() {
         composeRule.activity.deleteDatabase(databaseName)
-        storage = LocalProfileRepository(composeRule.activity, databaseName)
+        storage =
+            LocalProfileRepository(openMoldaDatabase(composeRule.activity, databaseName).profiles())
         showContent()
         composeRule.showSkirtCalculator()
     }

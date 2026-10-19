@@ -67,7 +67,12 @@ import com.almeidajr.molda.profile.ui.ProfilesContent
 import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.profileWaistText
+import com.almeidajr.molda.project.domain.MeasurementSource
+import com.almeidajr.molda.project.domain.SkirtSnapshot
+import com.almeidajr.molda.project.ui.ProjectSaveFeedback
 import com.almeidajr.molda.project.ui.ProjectsScreen
+import com.almeidajr.molda.project.ui.ProjectsViewModel
+import com.almeidajr.molda.project.ui.SaveProjectDialog
 import com.almeidajr.molda.skirt.ui.ExampleSkirtRadii
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
@@ -85,6 +90,7 @@ import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
 import com.almeidajr.molda.ui.navigation.materialTransition
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
+import java.time.LocalDate
 import kotlinx.serialization.Serializable
 
 /** The Moldes root: the catalog of pattern drafts. */
@@ -214,8 +220,10 @@ fun MoldaRoute(
     versionName: String = "",
     calculator: SkirtCalculatorViewModel = hiltViewModel(),
     profiles: ProfilesViewModel = hiltViewModel(),
+    projects: ProjectsViewModel = hiltViewModel(),
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
+    val projectState by projects.state.collectAsStateWithLifecycle()
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
     val titleFocus = remember { TitleFocus() }
     val navigation = rememberTopLevelBackStacks(TopLevelRoots, onSwitch = titleFocus::request)
@@ -294,7 +302,7 @@ fun MoldaRoute(
             }, onAbout = openAbout)
         }
         entry<ProjectsKey> {
-            ProjectsScreen(onSeePatterns = {
+            ProjectsScreen(projectState, projects::load, onSeePatterns = {
                 navigation.select(PatternCatalogKey)
             }, onAbout = openAbout)
         }
@@ -342,6 +350,19 @@ fun MoldaRoute(
                 onUp = navigation::back,
                 onUseProfile = { navigation.push(ProfilePickerKey) },
                 onOpenGuide = { navigation.push(FabricFoldingGuideKey) },
+                onSaveProject = { patternName ->
+                    val draft = calculatorState.draft
+                    val radii = calculatorState.radii
+                    if (draft != null && radii != null) {
+                        val form = calculatorState.form
+                        val source = form.sourceProfileName?.let { name ->
+                            form.sourceMeasurementDate?.let {
+                                MeasurementSource(name, LocalDate.parse(it))
+                            }
+                        }
+                        projects.startSaving(SkirtSnapshot(draft, radii, source), patternName)
+                    }
+                },
             )
         }
         entry<FabricFoldingGuideKey> {
@@ -426,10 +447,18 @@ fun MoldaRoute(
         // A profile created from the picker is the one to use: back to the calculator with it.
         if (PickerProfileEditorKey in moldes) {
             val measurements = profile.measurements
-            calculator.selectProfile(profileWaistText(measurements.waist), measurements.name.text)
+            calculator.selectProfile(
+                profileWaistText(measurements.waist),
+                measurements.name.text,
+                measurements.measurementDate,
+            )
             navigation.removeAll { it == PickerProfileEditorKey || it == ProfilePickerKey }
         }
     })
+    projectState.saving?.let { saving ->
+        SaveProjectDialog(saving, projects::editName, projects::save, projects::cancelSaving)
+    }
+    ProjectSaveFeedback(projectState, snackbar, projects::dismissMessage)
     val isManaging = navigation.selected == ProfileManagementKey &&
         navigation.current.last() !in setOf(AboutKey, LicencesKey)
     val isGuideOpen = navigation.current.last() == FabricFoldingGuideKey
@@ -590,8 +619,10 @@ private fun CalculatorDestination(
     onUp: () -> Unit,
     onUseProfile: () -> Unit,
     onOpenGuide: () -> Unit,
+    onSaveProject: (patternName: String) -> Unit,
 ) {
     val state by calculator.state.collectAsStateWithLifecycle()
+    val patternName = stringResource(R.string.project_pattern_skirt)
     Column(Modifier.fillMaxSize()) {
         MoldaTopAppBar(stringResource(R.string.skirt_title), onUp = onUp)
         SkirtCalculatorScreen(
@@ -602,6 +633,7 @@ private fun CalculatorDestination(
             onBlur = calculator::blur,
             onUseProfile = onUseProfile,
             onOpenGuide = onOpenGuide,
+            onSaveProject = { onSaveProject(patternName) },
         )
     }
 }
@@ -656,7 +688,11 @@ private fun AppProfilePicker(
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilePicker(state, onDismiss, profiles::load, onSelect = {
         val measurements = it.measurements
-        calculator.selectProfile(profileWaistText(measurements.waist), measurements.name.text)
+        calculator.selectProfile(
+            profileWaistText(measurements.waist),
+            measurements.name.text,
+            measurements.measurementDate,
+        )
         onDismiss()
     }, onCreate = onCreate)
 }

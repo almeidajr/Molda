@@ -71,7 +71,7 @@ fun ProfilesContent(
                 enabled = !state.isLoading,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                Text(stringResource(R.string.profile_retry_load))
+                Text(stringResource(R.string.action_retry_load))
             }
         }
         if (!state.isLoading && state.loadError == null && state.profiles.isEmpty()) {
@@ -223,7 +223,7 @@ private fun ConfirmProfileDeletion(
         },
         dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.profile_cancel))
+                Text(stringResource(R.string.action_cancel))
             }
         },
     )
@@ -261,7 +261,7 @@ fun ProfilePicker(
                 state.loadError != null -> {
                     Text(stringResource(state.loadError), color = MaterialTheme.colorScheme.error)
                     TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.profile_retry_load))
+                        Text(stringResource(R.string.action_retry_load))
                     }
                 }
 

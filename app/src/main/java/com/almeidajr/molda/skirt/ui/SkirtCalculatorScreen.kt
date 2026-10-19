@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -64,6 +65,7 @@ fun SkirtCalculatorScreen(
     onBlur: (SkirtDraftField) -> Unit = {},
     onUseProfile: () -> Unit = {},
     onOpenGuide: () -> Unit = {},
+    onSaveProject: () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequesters = remember { SkirtDraftField.entries.associateWith { FocusRequester() } }
@@ -109,6 +111,7 @@ fun SkirtCalculatorScreen(
         CalculationOutcome(
             state,
             onOpenGuide,
+            onSaveProject,
             Modifier.bringIntoViewRequester(resultRequester),
         ) {
             focusRequesters.getValue(SkirtDraftField.Waist).requestFocus()
@@ -225,6 +228,7 @@ private fun CalculatorIntro() {
 private fun CalculationOutcome(
     state: CalculatorState,
     onOpenGuide: () -> Unit,
+    onSaveProject: () -> Unit,
     modifier: Modifier = Modifier,
     onEditMeasurements: () -> Unit,
 ) {
@@ -247,7 +251,7 @@ private fun CalculationOutcome(
             text,
         )
         CuttingCard(card, description, modifier)
-        SkirtResults(draft, onOpenGuide, onEditMeasurements)
+        SkirtResults(draft, onOpenGuide, onSaveProject, onEditMeasurements)
         DraftingExplanation(state.form.inputs, radii)
     }
 }
@@ -325,14 +329,18 @@ private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
 private fun SkirtResults(
     draft: SkirtDraft,
     onOpenGuide: () -> Unit,
+    onSaveProject: () -> Unit,
     onEditMeasurements: () -> Unit,
 ) {
-    // One action row under the card; at large text the second button wraps below the first.
+    // One action row under the card; at large text the buttons wrap onto further lines.
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         FabricFoldingGuideEntry(onOpenGuide)
+        OutlinedButton(onClick = onSaveProject, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.project_save))
+        }
         TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.skirt_edit_measurements))
         }

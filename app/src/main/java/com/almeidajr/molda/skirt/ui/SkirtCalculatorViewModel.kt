@@ -13,6 +13,7 @@ import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.skirt.domain.readSkirtDraft
 import com.almeidajr.molda.skirt.domain.skirtFieldError
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,8 @@ import kotlinx.serialization.Serializable
 data class CalculatorForm(
     val inputs: Map<SkirtDraftField, String> = SkirtDraftField.entries.associateWith { "" },
     val sourceProfileName: String? = null,
+    /** The source profile's measurement date as ISO-8601 text, set with [sourceProfileName]. */
+    val sourceMeasurementDate: String? = null,
     val hasAttemptedCalculation: Boolean = false,
 )
 
@@ -43,7 +46,8 @@ class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle)
     private val mutableState = MutableStateFlow(CalculatorState(form = savedForm))
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
 
-    fun selectProfile(waist: String, name: String) = transition { it.withProfileWaist(waist, name) }
+    fun selectProfile(waist: String, name: String, measurementDate: LocalDate) =
+        transition { it.withProfileWaist(waist, name, measurementDate) }
 
     fun edit(field: SkirtDraftField, text: String) = transition { it.edited(field, text) }
 
@@ -58,15 +62,29 @@ class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle)
     }
 }
 
-private fun CalculatorState.withProfileWaist(waist: String, name: String): CalculatorState {
+private fun CalculatorState.withProfileWaist(
+    waist: String,
+    name: String,
+    measurementDate: LocalDate,
+): CalculatorState {
     val edited = edited(SkirtDraftField.Waist, waist)
-    return edited.copy(form = edited.form.copy(sourceProfileName = name))
+    return edited.copy(
+        form = edited.form.copy(
+            sourceProfileName = name,
+            sourceMeasurementDate = measurementDate.toString(),
+        ),
+    )
 }
 
 private fun CalculatorState.edited(field: SkirtDraftField, text: String): CalculatorState = copy(
     form = form.copy(
         inputs = form.inputs + (field to text),
         sourceProfileName = if (field == SkirtDraftField.Waist) null else form.sourceProfileName,
+        sourceMeasurementDate = if (field == SkirtDraftField.Waist) {
+            null
+        } else {
+            form.sourceMeasurementDate
+        },
     ),
     hasNonfiniteResult = false,
     draft = null,

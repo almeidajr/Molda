@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="project_pattern_skirt">Saia godê</string>
+    <string name="project_save">Salvar projeto</string>
+    <string name="project_field_name">Nome do projeto</string>
+    <string name="project_hint_name">Use um nome que ajude a encontrar o projeto depois.</string>
+    <string name="project_error_blank_name">Informe um nome para o projeto.</string>
+    <string name="project_save_confirm">Salvar</string>
+    <string name="project_saved">Projeto salvo em Projetos.</string>
+    <string name="project_save_failed">Não foi possível salvar o projeto. O resultado continua na tela. Tente novamente.</string>
+    <string name="project_load_failed">Não foi possível carregar os projetos. Os dados não foram apagados. Tente novamente.</string>
+    <string name="project_loading">Carregando projetos…</string>
+    <string name="project_summary">%1$s · %2$s</string>
+</resources>

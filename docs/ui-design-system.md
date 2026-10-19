@@ -178,7 +178,7 @@ and wide, light and dark, with annotations) were reviewed on #87.
 | Order | Label | Material Symbol (unselected / selected) | Root screen | Back at root |
 | --- | --- | --- | --- | --- |
 | 1 | Moldes | `design_services` / filled | Catalog of pattern drafts; start destination | Exits the app |
-| 2 | Projetos | `folder` / filled | Empty state until projects ship | Switches to Moldes |
+| 2 | Projetos | `folder` / filled | Saved projects, most recently changed first; the empty state when there are none | Switches to Moldes |
 | 3 | Guias | `menu_book` / filled | Library of guides | Switches to Moldes |
 | 4 | Perfis | `group` / filled | Measurement profiles (existing list-detail) | Switches to Moldes |
 

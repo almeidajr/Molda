@@ -1,8 +1,6 @@
 package com.almeidajr.molda.profile.data
 
-import android.content.Context
-import androidx.room3.Room
-import androidx.sqlite.driver.AndroidSQLiteDriver
+import com.almeidajr.molda.data.resultOf
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -13,16 +11,8 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** Room-backed profiles in [databaseName]; the old `profiles.db` is deliberately not read (docs/adr/0002). */
-class LocalProfileRepository(context: Context, databaseName: String = "molda.db") :
-    ProfileRepository,
-    AutoCloseable {
-    private val database = Room
-        .databaseBuilder<ProfileDatabase>(context.applicationContext, databaseName)
-        .setDriver(AndroidSQLiteDriver())
-        .build()
-    private val dao = database.profiles()
-
+/** Room-backed profiles, read and written through [dao]. */
+class LocalProfileRepository(private val dao: ProfileDao) : ProfileRepository {
     override fun profiles(): Flow<List<MeasurementProfile>> =
         dao.profiles().map { rows -> rows.map { it.toProfile() } }
 
@@ -40,8 +30,6 @@ class LocalProfileRepository(context: Context, databaseName: String = "molda.db"
     override suspend fun delete(id: ProfileId): Result<Unit> = resultOf {
         check(dao.delete(id.value) == 1) { "Profile no longer exists" }
     }
-
-    override fun close() = database.close()
 }
 
 // Domain constructors validate every loaded row, so a malformed row fails the load.

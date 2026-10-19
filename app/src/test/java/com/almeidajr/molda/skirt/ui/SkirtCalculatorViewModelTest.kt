@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.testing.viewModelScenario
 import app.cash.turbine.test
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtFieldError
+import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -76,7 +77,11 @@ class SkirtCalculatorViewModelTest {
     fun selectProfile_usesTheProfileWaistUntilTheWaistIsEdited() = runTest {
         val calculator = SkirtCalculatorViewModel(SavedStateHandle())
 
-        calculator.selectProfile(waist = "68,5", name = "Ana")
+        calculator.selectProfile(
+            waist = "68,5",
+            name = "Ana",
+            measurementDate = LocalDate.of(2026, 10, 12),
+        )
 
         calculator.state.test {
             val selected = awaitItem().form
@@ -84,14 +89,16 @@ class SkirtCalculatorViewModelTest {
             assertEquals("Ana", selected.sourceProfileName)
 
             calculator.edit(SkirtDraftField.Waist, "70")
-            assertNull(awaitItem().form.sourceProfileName)
+            val edited = awaitItem().form
+            assertNull(edited.sourceProfileName)
+            assertNull(edited.sourceMeasurementDate)
         }
     }
 
     @Test
     fun recreate_afterProcessDeath_restoresTheForm() = runTest {
         viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
-            scenario.viewModel.selectProfile(waist = "70", name = "Ana")
+            scenario.viewModel.selectProfile(waist = "70", name = "Ana", LocalDate.of(2026, 10, 12))
             scenario.viewModel.edit(SkirtDraftField.Ease, "2")
             scenario.viewModel.calculate()
 
@@ -103,6 +110,7 @@ class SkirtCalculatorViewModelTest {
                         inputs = SkirtDraftField.entries.associateWith { "" } +
                             mapOf(SkirtDraftField.Waist to "70", SkirtDraftField.Ease to "2"),
                         sourceProfileName = "Ana",
+                        sourceMeasurementDate = "2026-10-12",
                         hasAttemptedCalculation = true,
                     ),
                     awaitItem().form,
