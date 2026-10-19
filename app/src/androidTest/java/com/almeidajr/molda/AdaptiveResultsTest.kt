@@ -19,6 +19,7 @@ import androidx.compose.ui.test.hasAnyChild
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -172,13 +173,7 @@ class AdaptiveResultsTest {
         assertTrue("inputs cross the fold", waist.right <= hinge.left)
         assertTrue("card crosses the fold", card.left >= hinge.right)
         openGuide()
-        val player = listOf("Anterior", "Etapa 1 de 6", "Próximo", "Preparar o tecido")
-            .map { composeRule.onNodeWithText(it).fullyVisibleBounds(it) } +
-            composeRule.onNodeWithContentDescription("Fechar guia").fullyVisibleBounds("close")
-        assertTrue(
-            "guide player crosses the fold: $player",
-            player.all { it.right <= hinge.left } || player.all { it.left >= hinge.right },
-        )
+        assertPlayerOnOneSide(hinge)
     }
 
     @Test
@@ -196,6 +191,43 @@ class AdaptiveResultsTest {
         assertTrue(
             "guide player does not span the flat fold: $back $forward",
             back.right <= hinge.left && forward.left >= hinge.right,
+        )
+    }
+
+    @Test
+    fun halfOpenedVerticalHinge_keepsSinglePaneExampleGuideOnOneSide() {
+        // Too narrow for the library beside the guide, so the example guide is a single pane.
+        showCalculator(DpSize(700.dp, 800.dp), fontScale = 1f)
+        val hinge = publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
+        composeRule.selectDestination("Guias")
+        composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
+        assertPlayerOnOneSide(hinge)
+    }
+
+    @Test
+    fun flatVerticalHinge_singlePaneExampleGuideSpansFullWidth() {
+        showCalculator(DpSize(700.dp, 800.dp), fontScale = 1f)
+        composeRule.selectDestination("Guias")
+        composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
+        val hinge = publishHinge(
+            FoldingFeature.Orientation.VERTICAL,
+            state = FoldingFeature.State.FLAT,
+        )
+        val back = composeRule.onNodeWithText("Anterior").fullyVisibleBounds("Anterior")
+        val forward = composeRule.onNodeWithText("Próximo").fullyVisibleBounds("Próximo")
+        assertTrue(
+            "guide player does not span the flat fold: $back $forward",
+            back.right <= hinge.left && forward.left >= hinge.right,
+        )
+    }
+
+    private fun assertPlayerOnOneSide(hinge: Rect) {
+        val player = listOf("Anterior", "Etapa 1 de 6", "Próximo", "Preparar o tecido")
+            .map { composeRule.onNodeWithText(it).fullyVisibleBounds(it) } +
+            composeRule.onNodeWithContentDescription("Fechar guia").fullyVisibleBounds("close")
+        assertTrue(
+            "guide player crosses the fold: $player",
+            player.all { it.right <= hinge.left } || player.all { it.left >= hinge.right },
         )
     }
 
