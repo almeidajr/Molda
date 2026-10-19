@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.testing.viewModelScenario
 import com.almeidajr.molda.R
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
+import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
@@ -372,6 +373,7 @@ private val fromProfile = SkirtSnapshot(
 private val saved = Project(
     ProjectId(1),
     ProjectName("Saia antiga"),
+    PatternDraftKind.FullCircleSkirt,
     fromProfile.copy(source = null),
     createdAt = Instant.parse("2026-09-01T10:00:00Z"),
     updatedAt = Instant.parse("2026-09-01T10:00:00Z"),
@@ -398,7 +400,14 @@ private class FakeProjects : ProjectRepository {
     ): Result<Project> = if (failsCommands) {
         Result.failure(IllegalStateException("Controlled storage failure"))
     } else {
-        val created = Project(ProjectId(stored.value.size + 1L), name, snapshot, savedAt, savedAt)
+        val created = Project(
+            ProjectId(stored.value.size + 1L),
+            name,
+            snapshot.kind,
+            snapshot,
+            savedAt,
+            savedAt,
+        )
         stored.update { listOf(created) + it }
         Result.success(created)
     }

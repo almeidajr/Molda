@@ -1,5 +1,6 @@
 package com.almeidajr.molda.project.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
+import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectDateFormat
 import com.almeidajr.molda.project.domain.ProjectId
@@ -146,7 +148,7 @@ private fun ProjectRow(
             Text(
                 stringResource(
                     R.string.project_summary,
-                    stringResource(R.string.project_pattern_skirt),
+                    stringResource(project.kind.label),
                     project.updatedAt.atZone(ZoneId.systemDefault()).format(ProjectDateFormat),
                 ),
                 style = MaterialTheme.typography.bodyMedium,
@@ -156,6 +158,12 @@ private fun ProjectRow(
         }
     }
 }
+
+/** The name of the pattern draft (molde) a project was saved from. */
+internal val PatternDraftKind.label: Int
+    @StringRes get() = when (this) {
+        PatternDraftKind.FullCircleSkirt -> R.string.project_pattern_skirt
+    }
 
 /** The "Ações: <nome>" menu: rename, or delete after a confirmation. */
 @Composable

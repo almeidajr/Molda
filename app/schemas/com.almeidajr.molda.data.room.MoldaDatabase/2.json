@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "7a3f3dd58c27a448bf2d29c7af4831fb",
+    "identityHash": "f201128df330aa0765e53e1878072dd7",
     "entities": [
       {
         "tableName": "profiles",
@@ -48,7 +48,7 @@
       },
       {
         "tableName": "projects",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `waist` REAL NOT NULL, `ease` REAL NOT NULL, `finished_length` REAL NOT NULL, `waist_seam_allowance` REAL NOT NULL, `hem_allowance` REAL NOT NULL, `waist_stitching_radius` REAL NOT NULL, `finished_hem_radius` REAL NOT NULL, `waist_cutting_radius` REAL NOT NULL, `hem_cutting_radius` REAL NOT NULL, `profile_name` TEXT, `measurement_date` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `pattern_kind` TEXT NOT NULL, `waist` REAL NOT NULL, `ease` REAL NOT NULL, `finished_length` REAL NOT NULL, `waist_seam_allowance` REAL NOT NULL, `hem_allowance` REAL NOT NULL, `waist_stitching_radius` REAL NOT NULL, `finished_hem_radius` REAL NOT NULL, `waist_cutting_radius` REAL NOT NULL, `hem_cutting_radius` REAL NOT NULL, `profile_name` TEXT, `measurement_date` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -59,6 +59,12 @@
           {
             "fieldPath": "name",
             "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patternKind",
+            "columnName": "pattern_kind",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -149,7 +155,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7a3f3dd58c27a448bf2d29c7af4831fb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f201128df330aa0765e53e1878072dd7')"
     ]
   }
 }

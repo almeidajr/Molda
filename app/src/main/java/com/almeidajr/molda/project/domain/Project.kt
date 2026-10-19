@@ -28,6 +28,9 @@ value class ProjectName(val text: String) {
     }
 }
 
+/** The pattern draft (molde) a project was saved from. */
+enum class PatternDraftKind { FullCircleSkirt, }
+
 /**
  * A full-circle skirt as it was saved: the draft (waist and drafting assumptions), the calculated
  * radii, and the profile the waist came from, or null when it was typed by hand.
@@ -37,12 +40,15 @@ data class SkirtSnapshot(
     val draft: SkirtDraft,
     val radii: SkirtRadii,
     val source: MeasurementSource?,
-)
+) {
+    val kind: PatternDraftKind get() = PatternDraftKind.FullCircleSkirt
+}
 
-/** A named, saved pattern draft; [updatedAt] is its last change. */
+/** A named, saved pattern draft of the stored [kind]; [updatedAt] is its last change. */
 data class Project(
     val id: ProjectId,
     val name: ProjectName,
+    val kind: PatternDraftKind,
     val snapshot: SkirtSnapshot,
     val createdAt: Instant,
     val updatedAt: Instant,

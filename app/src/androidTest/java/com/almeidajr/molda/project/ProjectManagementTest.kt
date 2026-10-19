@@ -176,6 +176,7 @@ private object RefusingProjects : ProjectRepository {
     private val stored = Project(
         ProjectId(1),
         ProjectName("Saia antiga"),
+        snapshot.kind,
         snapshot,
         Instant.parse("2026-10-01T12:00:00Z"),
         Instant.parse("2026-10-01T12:00:00Z"),

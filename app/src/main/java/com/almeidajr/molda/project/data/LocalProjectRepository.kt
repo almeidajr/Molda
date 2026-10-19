@@ -3,6 +3,7 @@ package com.almeidajr.molda.project.data
 import com.almeidajr.molda.data.resultOf
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
+import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
@@ -71,6 +72,7 @@ class LocalProjectRepository(private val dao: ProjectDao) : ProjectRepository {
 private fun ProjectEntity.toProject() = Project(
     id = ProjectId(id),
     name = ProjectName(name),
+    kind = PatternDraftKind.entries.single { it.storedName == patternKind },
     snapshot = SkirtSnapshot(
         SkirtDraft(
             waist = Length(waist),
@@ -91,8 +93,15 @@ private fun ProjectEntity.toProject() = Project(
     updatedAt = Instant.ofEpochMilli(updatedAt),
 )
 
+// A stable stored name, independent of the enum constant's.
+private val PatternDraftKind.storedName: String
+    get() = when (this) {
+        PatternDraftKind.FullCircleSkirt -> "full_circle_skirt"
+    }
+
 private fun SkirtSnapshot.toEntity(name: ProjectName, savedAt: Instant) = ProjectEntity(
     name = name.text,
+    patternKind = kind.storedName,
     waist = draft.waist.centimetres,
     ease = draft.ease.centimetres,
     finishedLength = draft.finishedLength.centimetres,

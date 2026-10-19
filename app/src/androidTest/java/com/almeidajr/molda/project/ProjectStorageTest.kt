@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
+import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtDraft
@@ -45,6 +46,17 @@ class ProjectStorageTest {
         assertEquals(typedByHand, listed.first().snapshot)
         assertEquals(january, listed.last().createdAt)
         assertEquals(january, listed.last().updatedAt)
+    }
+
+    @Test
+    fun create_reopenKeepsThePatternDraftKind() = runBlocking {
+        withProjects(context, databaseName) { storage ->
+            storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow()
+        }
+
+        val listed = withProjects(context, databaseName) { it.projects().first() }
+
+        assertEquals(PatternDraftKind.FullCircleSkirt, listed.single().kind)
     }
 
     @Test

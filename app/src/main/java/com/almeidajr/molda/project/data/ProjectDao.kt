@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.Flow
 data class ProjectEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
+    // The pattern draft kind's stored name, such as "full_circle_skirt".
+    @ColumnInfo(name = "pattern_kind") val patternKind: String,
     val waist: Double,
     val ease: Double,
     @ColumnInfo(name = "finished_length") val finishedLength: Double,
