@@ -33,9 +33,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -512,11 +522,31 @@ private fun NavigationItems(
     suiteType: NavigationSuiteType,
     onSelect: (Destination) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+    val first = remember { FocusRequester() }
+    val last = remember { FocusRequester() }
     Destination.entries.forEach { destination ->
         val isSelected = navigation.selected == destination.root
+        val edge = when (destination) {
+            Destination.entries.first() -> Modifier.focusRequester(first)
+            Destination.entries.last() -> Modifier.focusRequester(last)
+            else -> Modifier
+        }
         NavigationSuiteItem(
             selected = isSelected,
             onClick = { onSelect(destination) },
+            // One focus group: arrow keys move between items, Tab and Shift+Tab leave them.
+            modifier = edge.onPreviewKeyEvent { event ->
+                val isTab = event.key == Key.Tab && event.type == KeyEventType.KeyDown
+                if (isTab) {
+                    val isBackward = event.isShiftPressed
+                    (if (isBackward) first else last).requestFocus()
+                    focusManager.moveFocus(
+                        if (isBackward) FocusDirection.Previous else FocusDirection.Next,
+                    )
+                }
+                isTab
+            },
             icon = {
                 Icon(
                     painterResource(if (isSelected) destination.selectedIcon else destination.icon),

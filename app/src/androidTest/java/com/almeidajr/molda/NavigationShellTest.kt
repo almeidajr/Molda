@@ -239,6 +239,28 @@ class NavigationShellTest {
         assertTrue("keyboard opened by itself", !isKeyboardVisible())
     }
 
+    @Test
+    fun keyboard_navigationItemsAreOneFocusGroup_arrowsMove_enterAndSpaceSelect() {
+        // A real key event leaves touch mode, so navigation items join keyboard focus traversal.
+        pressKey(KeyEvent.KEYCODE_TAB)
+        composeRule.destination("Moldes").requestFocus().assertIsFocused()
+        pressKey(KeyEvent.KEYCODE_DPAD_RIGHT)
+        composeRule.destination("Projetos").assertIsFocused()
+        pressKey(KeyEvent.KEYCODE_SPACE)
+        composeRule.destination("Projetos").assertIsSelected()
+        composeRule.destination("Projetos").requestFocus()
+        pressKey(KeyEvent.KEYCODE_DPAD_RIGHT)
+        composeRule.destination("Guias").assertIsFocused()
+        pressKey(KeyEvent.KEYCODE_ENTER)
+        composeRule.destination("Guias").assertIsSelected()
+        // Tab and Shift+Tab leave the items in one step, wherever focus sits among them.
+        listOf(false, true).forEach { isShifted ->
+            composeRule.destination("Projetos").requestFocus()
+            pressKey(KeyEvent.KEYCODE_TAB, isShifted)
+            destinations.forEach { composeRule.destination(it).assertIsNotFocused() }
+        }
+    }
+
     private fun waistField() = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
 
     private fun pressBack() = pressKey(KeyEvent.KEYCODE_BACK)
