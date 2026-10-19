@@ -8,7 +8,7 @@ remain in force.
 Implementation is specified in [GitHub issue #35](https://github.com/almeidajr/Molda/issues/35).
 The results redesign in [issue #51](https://github.com/almeidajr/Molda/issues/51)
 supersedes the result groups, inline explanation and dialog tutorial with the
-cutting card, disclosures, a full-screen tutorial player and a calculator top app
+cutting card, disclosures, a full-screen guide player and a calculator top app
 bar; this document describes what shipped.
 
 ## Accepted direction
@@ -42,11 +42,11 @@ line heights are in sp and scale with system preferences.
 | Use | Material role | Size / line height | Weight |
 | --- | --- | --- | --- |
 | Profile screen heading | headlineMedium | 28 / 36 | Regular |
-| App bar title, section heading, cutting-card heading, tutorial step title | titleLarge | 22 / 28 | Regular |
+| App bar title, section heading, cutting-card heading, guide step title | titleLarge | 22 / 28 | Regular |
 | Profile name / component title / cutting-card group | titleMedium | 16 / 24 | Medium |
 | Field text / explanatory body | bodyLarge | 16 / 24 | Regular |
 | Supporting text / field errors | bodyMedium | 14 / 20 | Regular |
-| Action label, line number, tutorial step position | labelLarge | 14 / 20 | Medium |
+| Action label, line number, guide step position | labelLarge | 14 / 20 | Medium |
 | Each calculated radius value | headlineSmall | 24 / 32 | Medium emphasis |
 
 Display all four radii with equal size and weight; labels identify their meaning.
@@ -73,11 +73,11 @@ hex values and contrast measurements belong in this document before implementati
 | --- | --- |
 | primary / onPrimary | Calculate and Save fills/labels |
 | primaryContainer / onPrimaryContainer | Profile-creation FAB |
-| secondaryContainer / onSecondaryContainer | Cutting card; tonal tutorial action |
+| secondaryContainer / onSecondaryContainer | Cutting card; tonal guide action |
 | surface / onSurface | Screen background, top app bar and essential text |
 | surfaceContainerLow | Grouped input surfaces |
-| surfaceContainer | Tutorial step bar |
-| surfaceContainerHigh | Calculation-limits callout; tutorial drawing frame, which shows through the transparent Rive artboards; overlays where Material defaults select it |
+| surfaceContainer | Guide step bar |
+| surfaceContainerHigh | Calculation-limits callout; guide drawing frame, which shows through the transparent Rive artboards; overlays where Material defaults select it |
 | onSurfaceVariant | Supporting text and secondary labels |
 | outline | Essential field boundaries |
 | outlineVariant | Decorative separators |
@@ -122,7 +122,7 @@ Keep the calculator as the launch destination. Its top app bar shows the screen
 title and the labelled "Perfis de medidas" action; the bar is not a navigation
 destination. "Usar perfil" and the waist's source sit just above the waist
 field. Selection uses a modal bottom sheet; editing and creation use a dedicated
-profile form. The fabric-folding tutorial opens as a full-screen player owned by
+profile form. The fabric-folding guide opens as a full-screen player owned by
 the same hierarchical route; its close action, "Concluir", system Back and
 predictive Back return to the results.
 Retain the existing hierarchical Back, unsaved-discard and picker-return rules
@@ -136,7 +136,7 @@ list may sit beside its active editor. Avoid hinges and preserve drafts when
 window size or orientation changes. Large text can return the layout to one pane.
 One column spans a flat fold and keeps to one side of a half-open or separating
 one; two panes split at the fold, or share one side when they cannot fit beside it.
-The cutting card follows the results pane. The tutorial player is one column of
+The cutting card follows the results pane. The guide player is one column of
 at most 640dp that keeps to one side of a half-open or separating vertical
 fold, spans a flat one, and keeps above or below a horizontal one. When its window is under 560dp tall, the drawing scrolls with the
 instructions instead of staying pinned, so the fixed step bar and the text both
@@ -145,7 +145,7 @@ keep room.
 Apply system-bar and keyboard insets. Scroll focused fields and their errors
 into view. Primary actions stay in the form flow so they cannot cover fields or
 results. No new home screen, bottom navigation, drawer or navigation rail is
-needed for the accepted destination hierarchy; the top app bar and the tutorial
+needed for the accepted destination hierarchy; the top app bar and the guide
 player do not change that.
 
 ## Navigation shell
@@ -244,10 +244,10 @@ Material component. Reuse the current Compose components and state ownership.
 | Profile row | Name, waist, measurement date; notes when needed to distinguish identical rows | Picker tap selects; management tap edits with separately labelled overflow; loading, empty, failure/Retry and ready list |
 | Profile picker | Material modal sheet, profile rows and creation action | Dismissal changes nothing; creation opens the editor on the Moldes stack, saving selects the new profile and cancelling returns to the picker; manual calculation remains available |
 | Cutting card | secondaryContainer, 28dp corners; "Raios para o molde" heading, reference and cutting groups, each radius with diagram number, line-style sample, label and value; then the drafting diagram under "Diagrama das linhas", directly after the radii or beside them when two 260dp × max(fontScale, 1) columns fit | Each value shown and announced once, outside the expanded formulas; heading announces a successful calculation once; Calculate hides the keyboard and brings the whole card into view; hidden after any input change; wide empty pane explains how to calculate |
-| Results follow-up | One wrapping action row (tonal tutorial action, "Editar medidas"), then the "Medidas utilizadas (cm)" summary as one wrapping line with the unit stated once, then the "Limites do cálculo" callout | "Editar medidas" focuses waist; the callout keeps every honest limit |
+| Results follow-up | One wrapping action row (tonal guide action, "Editar medidas"), then the "Medidas utilizadas (cm)" summary as one wrapping line with the unit stated once, then the "Limites do cálculo" callout | "Editar medidas" focuses waist; the callout keeps every honest limit |
 | Drafting diagram | Square sketch up to 400dp on the cutting card's own surface, with numbered reference/cutting lines in distinct styles; the card's radius rows are its key | Text equivalent gives each line's number, style and meaning, the drawing order, coincident lines and allowance direction, but not the radius values, which the cutting card states once (a departure from the earlier "lists all dimensions" contract, confirmed by the owner); no color-only information or gesture-only controls |
 | Disclosures | "Como levar os raios ao papel" and "Fórmulas" text buttons with a chevron; both start collapsed | Expose "Recolhido"/"Expandido"; 48dp target; content wraps and stays readable with scaled text; label wraps before the chevron shrinks |
-| Tutorial player | Full screen: close action and step title, pinned Rive drawing with play/replay/pause, scrolling instructions, fixed bar with "Anterior", "Etapa n de 6", "Próximo"/"Concluir" | "Anterior" disabled on step 1; "Concluir" closes; Back closes; focus returns to the entry; step survives recreation; reduced motion shows each step's final drawing; bar fully visible on every step at 200% text |
+| Guide player | Full screen: close action and step title, pinned Rive drawing with play/replay/pause, scrolling instructions, fixed bar with "Anterior", "Etapa n de 6", "Próximo"/"Concluir" | "Anterior" disabled on step 1; "Concluir" closes; Back closes; focus returns to the entry; step survives recreation; reduced motion shows each step's final drawing; bar fully visible on every step at 200% text |
 | Feedback | Inline field/action errors, loading indicators and brief success snackbar | Announce results/errors without duplicate speech; success only after storage succeeds; errors persist until resolved |
 | Date entry | Editable dd/mm/aaaa field with Material date picker | Initially blank; syntax and future-date errors; explicit actual measurement date |
 | Confirmation dialog | Named deletion confirmation; unsaved-discard confirmation | Clear cancel and destructive actions; retain draft after cancel or failed save/delete |
@@ -304,7 +304,7 @@ meet the ADR threshold.
 
 ## Known gaps
 
-- The tutorial drawing's line numbers are stroked vector numerals, not text, so
+- The guide drawing's line numbers are stroked vector numerals, not text, so
   they do not follow the system font size; the written instructions carry every
   number and value as scalable text.
 

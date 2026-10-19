@@ -10,7 +10,7 @@ implementation remains outside that design-system phase.
 The results redesign in [issue #51](https://github.com/almeidajr/Molda/issues/51)
 updates the screen structure and result details below: the calculator gains a
 top app bar, results become a cutting card, the explanation and formulas sit
-behind disclosures, and the fabric-folding tutorial opens in a full-screen
+behind disclosures, and the fabric-folding guide opens in a full-screen
 player instead of a dialog.
 
 Status: confirmed design, implemented in
@@ -55,7 +55,7 @@ accessibility and human-feedback verification.
   screen. The card presents all four labelled radii once, distinguishes
   stitching/reference dimensions from cutting dimensions, and pairs each value
   with its diagram number and line style. The drafting diagram sits on the
-  same card, after the radii or beside them when both fit. "Tutorial de dobra
+  same card, after the radii or beside them when both fit. "Guide de dobra
   do tecido" and "Editar medidas" follow it in one action row.
 - Keep construction boundaries beside results in one callout. Put the drafting
   explanation ("Como levar os raios ao papel") and the formulas behind
@@ -126,7 +126,7 @@ accessibility and human-feedback verification.
   spans a flat fold and keeps to one side of a half-open or separating one; two
   panes split at the fold, or share one side when they cannot fit beside it.
 - The navigation suite keeps to the start edge as a rail and never straddles a
-  fold. The full-screen tutorial player hides the compact navigation bar, keeps
+  fold. The full-screen guide player hides the compact navigation bar, keeps
   to one side of a half-open or separating fold but spans a flat one, and the
   cutting card stays in the results pane.
 
@@ -163,14 +163,14 @@ accessibility and human-feedback verification.
   and hem cutting radii). Keep all four values equally readable, in centimetres
   with two decimal places, each shown and announced once. The diagram follows
   on the card under "Diagrama das linhas"; the radius rows serve as its key.
-  Then include one action row with the tutorial entry and "Editar medidas", a
+  Then include one action row with the guide entry and "Editar medidas", a
   one-line summary of all five calculation inputs under "Medidas utilizadas
   (cm)", the construction-limits callout, and the collapsed drafting
   explanation and formulas.
 - The diagram's text equivalent describes every line but no longer repeats the
   radius values, which the card states once. The product owner confirmed this
   departure from the earlier "lists all dimensions" contract.
-- The tutorial player keeps the drawing pinned while the step's instructions
+- The guide player keeps the drawing pinned while the step's instructions
   scroll (in short windows the drawing scrolls with them) and has a fixed bar:
   "Anterior", "Etapa n de 6", and "Próximo", which becomes "Concluir" on the last
   step. Close, "Concluir" and Back return to the results. Its still frame stays
