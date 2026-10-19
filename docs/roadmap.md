@@ -20,6 +20,10 @@ The repeatable practical-trial protocol for [#45](https://github.com/almeidajr/M
 - Measurement-driven geometry has passed technical checks; those checks do not replace practical sewing validation.
 - This extends the original MVP's paper-drafting guidance; it does not change the historical scope recorded in `product-discovery.md`.
 
+## Navigation shell
+
+Status: in progress under [#83](https://github.com/almeidajr/Molda/issues/83), following [ADR 0003](adr/0003-top-level-navigation-shell.md). The app opens on the Moldes catalog inside a navigation suite (a bar on compact windows, a rail from 600dp) with four destinations, Moldes · Projetos · Guias · Perfis, each keeping its own back stack ([#88](https://github.com/almeidajr/Molda/issues/88)). The full-circle skirt calculator opens from the catalog, Perfis holds profile management, and Projetos shows an empty state until projects can be saved. Still to come: guides in the Guias library ([#89](https://github.com/almeidajr/Molda/issues/89)), creating a profile from the picker without leaving Moldes ([#90](https://github.com/almeidajr/Molda/issues/90)) and the About screen ([#91](https://github.com/almeidajr/Molda/issues/91)).
+
 ## Follow-up features
 
 - Check actual fabric dimensions and choose alternative layouts when the pattern does not fit. This is separate from the first folding tutorial.

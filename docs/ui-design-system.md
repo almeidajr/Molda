@@ -152,7 +152,7 @@ player do not change that.
 
 Status: **approved by the product owner on
 [#87](https://github.com/almeidajr/Molda/issues/87)**; implementation follows in
-[#83](https://github.com/almeidajr/Molda/issues/83)'s later sub-issues. It
+[#83](https://github.com/almeidajr/Molda/issues/83)'s later sub-issues; [#88](https://github.com/almeidajr/Molda/issues/88) ships the suite, Moldes, Projetos and Perfis. It
 supersedes the "calculator on launch", "no home screen, bottom navigation,
 drawer or navigation rail" and "Perfis de medidas app-bar action" lines above,
 following [ADR 0003](adr/0003-top-level-navigation-shell.md). The comps (compact
