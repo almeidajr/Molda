@@ -68,13 +68,16 @@ import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.profileWaistText
 import com.almeidajr.molda.project.domain.MeasurementSource
+import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.ui.ProjectSaveFeedback
+import com.almeidajr.molda.project.ui.ProjectScreen
 import com.almeidajr.molda.project.ui.ProjectsScreen
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.SaveProjectDialog
 import com.almeidajr.molda.skirt.ui.ExampleSkirtRadii
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
+import com.almeidajr.molda.skirt.ui.SavedSkirtResult
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorScreen
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.adaptive.HingeSafeContent
@@ -115,6 +118,14 @@ private data object SkirtCalculatorKey : NavKey
 /** The fabric-folding guide on the calculated radii, opened from a result. */
 @Serializable
 private data object FabricFoldingGuideKey : NavKey
+
+/** A saved project, opened read-only from Projetos. */
+@Serializable
+private data class ProjectKey(val id: ProjectId) : NavKey
+
+/** The fabric-folding guide on a saved project's radii, opened from that project. */
+@Serializable
+private data class ProjectGuideKey(val id: ProjectId) : NavKey
 
 /** The fabric-folding guide on example dimensions, opened from Guias. */
 @Serializable
@@ -230,6 +241,7 @@ fun MoldaRoute(
     val moldes = navigation.stackOf(PatternCatalogKey)
     val guias = navigation.stackOf(GuideLibraryKey)
     val perfis = navigation.stackOf(ProfileManagementKey)
+    val projetos = navigation.stackOf(ProjectsKey)
     // ProfilesViewModel owns whether the editor is open (a save or delete also closes it).
     LaunchedEffect(profileState.isEditorOpen, profileState.editingId, perfis.size, moldes.size) {
         syncProfileEditor(navigation, profileState.form)
@@ -301,10 +313,53 @@ fun MoldaRoute(
                 navigation.push(SkirtCalculatorKey)
             }, onAbout = openAbout)
         }
-        entry<ProjectsKey> {
-            ProjectsScreen(projectState, projects::load, onSeePatterns = {
-                navigation.select(PatternCatalogKey)
-            }, onAbout = openAbout)
+        entry<ProjectsKey>(
+            metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
+                ReadablePane {
+                    Text(stringResource(R.string.project_choose), Modifier.padding(16.dp))
+                }
+            }),
+        ) {
+            val isTwoPane = LocalIsTwoPane.current
+            ProjectsScreen(
+                projectState,
+                projects::load,
+                onSeePatterns = { navigation.select(PatternCatalogKey) },
+                onAbout = openAbout,
+                onOpen = { id ->
+                    if (projetos.last() != ProjectKey(id)) {
+                        navigation.removeAll { it is ProjectKey || it is ProjectGuideKey }
+                        navigation.push(ProjectKey(id))
+                    }
+                },
+                selection = { id ->
+                    when {
+                        !isTwoPane -> CatalogSelection.None
+                        projetos.last() == ProjectKey(id) -> CatalogSelection.Selected
+                        else -> CatalogSelection.Unselected
+                    }
+                },
+            )
+        }
+        entry<ProjectKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
+            OpenedProject(key.id, projectState, onClose = { navigation.remove(key) }) { project ->
+                ProjectScreen(
+                    project,
+                    // Beside the list the project is a pane, closed by choosing from the list or Back.
+                    onUp = if (LocalIsTwoPane.current) null else navigation::back,
+                ) {
+                    val snapshot = project.snapshot
+                    SavedSkirtResult(snapshot.draft, snapshot.radii, onOpenGuide = {
+                        navigation.push(ProjectGuideKey(key.id))
+                    })
+                }
+            }
+        }
+        entry<ProjectGuideKey> { key ->
+            val close: () -> Unit = { navigation.remove(key) }
+            OpenedProject(key.id, projectState, onClose = close) { project ->
+                FabricFoldingPlayer(project.snapshot.radii, close)
+            }
         }
         entry<GuideLibraryKey>(
             metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
@@ -461,7 +516,9 @@ fun MoldaRoute(
     ProjectSaveFeedback(projectState, snackbar, projects::dismissMessage)
     val isManaging = navigation.selected == ProfileManagementKey &&
         navigation.current.last() !in setOf(AboutKey, LicencesKey)
-    val isGuideOpen = navigation.current.last() == FabricFoldingGuideKey
+    val isGuideOpen = navigation.current.last().let {
+        it == FabricFoldingGuideKey || it is ProjectGuideKey
+    }
     val isAnyGuideOpen = isGuideOpen || navigation.current.last() == ExampleFabricFoldingGuideKey
     val density = LocalDensity.current
     BoxWithConstraints(modifier.fillMaxSize()) {

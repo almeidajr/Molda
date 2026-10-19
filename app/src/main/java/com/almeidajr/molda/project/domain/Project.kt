@@ -6,8 +6,10 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 
 /** The positive identity of a stored [Project]. */
+@Serializable
 @JvmInline
 value class ProjectId(val value: Long) {
     init {

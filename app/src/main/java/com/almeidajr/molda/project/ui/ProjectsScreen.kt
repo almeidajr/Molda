@@ -23,21 +23,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectDateFormat
+import com.almeidajr.molda.project.domain.ProjectId
+import com.almeidajr.molda.ui.navigation.CatalogSelection
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import java.time.ZoneId
 
-/** The Projetos root: saved projects, most recently changed first, or an empty state. */
+/**
+ * The Projetos root: saved projects, most recently changed first, or an empty state. A row opens
+ * its project with [onOpen]; [selection] marks the one shown beside the list.
+ */
 @Composable
 fun ProjectsScreen(
     state: ProjectsState,
     onRetry: () -> Unit,
     onSeePatterns: () -> Unit,
     onAbout: () -> Unit,
+    onOpen: (ProjectId) -> Unit,
+    selection: (ProjectId) -> CatalogSelection,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
@@ -61,7 +69,9 @@ fun ProjectsScreen(
 
                     state.projects.isEmpty() -> EmptyProjects(onSeePatterns)
 
-                    else -> state.projects.forEach { ProjectRow(it) }
+                    else -> state.projects.forEach { project ->
+                        ProjectRow(project, selection(project.id)) { onOpen(project.id) }
+                    }
                 }
             }
         }
@@ -91,13 +101,25 @@ private fun EmptyProjects(onSeePatterns: () -> Unit) {
     }
 }
 
-/** One saved project: its name, then its molde and the date it last changed. */
+/**
+ * One saved project, opened by a click: its name, then its molde and the date it last changed.
+ * Beside the opened project ([selection] other than [CatalogSelection.None]) the selected row
+ * fills with the secondary container and is exposed as selected.
+ */
 @Composable
-private fun ProjectRow(project: Project) {
+private fun ProjectRow(project: Project, selection: CatalogSelection, onOpen: () -> Unit) {
+    val isSelected = selection == CatalogSelection.Selected
     Surface(
+        onClick = onOpen,
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.fillMaxWidth(),
+        color = if (isSelected) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics {
+            if (selection != CatalogSelection.None) selected = isSelected
+        },
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(project.name.text, style = MaterialTheme.typography.titleMedium)
