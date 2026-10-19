@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.data.room.openMoldaDatabase
@@ -53,18 +54,12 @@ class ProjectManagementTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val databaseName = "project-management-test.db"
-    private val database =
-        openMoldaDatabase(context.also { it.deleteDatabase(databaseName) }, databaseName)
+    private val storage = IsolatedStorage("project-management-test.db")
+    private val database = storage.database
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
 
     @After
-    fun removeIsolatedStorage() {
-        composeRule.activityRule.scenario.close()
-        database.close()
-        context.deleteDatabase(databaseName)
-    }
+    fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
 
     @Test
     fun rename_refusesBlankName_thenUpdatesTheList() {
@@ -74,10 +69,10 @@ class ProjectManagementTest {
 
         click("Ações: Saia antiga")
         click("Renomear projeto")
-        nameField().performTextReplacement("   ")
+        composeRule.nameField().performTextReplacement("   ")
         click("Renomear")
         composeRule.onNodeWithText("Informe um nome para o projeto.").assertIsDisplayed()
-        nameField().performTextReplacement("Saia da formatura")
+        composeRule.nameField().performTextReplacement("Saia da formatura")
         click("Renomear")
 
         composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
@@ -108,7 +103,20 @@ class ProjectManagementTest {
 
     @Test
     fun delete_whenStorageFails_showsFailureAndKeepsTheProject() {
-        showProjetos(RefusingProjects)
+        showProjetos(
+            RefusingProjects(
+                listOf(
+                    Project(
+                        ProjectId(1),
+                        ProjectName("Saia antiga"),
+                        snapshot.kind,
+                        snapshot,
+                        Instant.parse("2026-10-01T12:00:00Z"),
+                        Instant.parse("2026-10-01T12:00:00Z"),
+                    ),
+                ),
+            ),
+        )
 
         click("Ações: Saia antiga")
         click("Excluir projeto")
@@ -152,8 +160,6 @@ class ProjectManagementTest {
         composeRule.selectDestination("Projetos")
     }
 
-    private fun nameField() = composeRule.onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
-
     private fun click(label: String) {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(hasText(label) and isEnabled()).fetchSemanticsNodes()
@@ -170,29 +176,3 @@ private val snapshot = SkirtSnapshot(
     SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
     source = null,
 )
-
-/** Storage that lists one project and refuses every change to it. */
-private object RefusingProjects : ProjectRepository {
-    private val stored = Project(
-        ProjectId(1),
-        ProjectName("Saia antiga"),
-        snapshot.kind,
-        snapshot,
-        Instant.parse("2026-10-01T12:00:00Z"),
-        Instant.parse("2026-10-01T12:00:00Z"),
-    )
-
-    override fun projects(): Flow<List<Project>> = flowOf(listOf(stored))
-
-    override suspend fun create(name: ProjectName, snapshot: SkirtSnapshot, savedAt: Instant) =
-        Result.failure<Project>(IllegalStateException("Controlled storage failure"))
-
-    override suspend fun update(id: ProjectId, snapshot: SkirtSnapshot, updatedAt: Instant) =
-        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
-
-    override suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant) =
-        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
-
-    override suspend fun delete(id: ProjectId) =
-        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
-}

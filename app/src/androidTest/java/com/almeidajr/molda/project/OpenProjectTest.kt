@@ -31,6 +31,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.data.room.openMoldaDatabase
@@ -68,23 +69,17 @@ class OpenProjectTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val databaseName = "open-project-test.db"
-    private val database =
-        openMoldaDatabase(context.also { it.deleteDatabase(databaseName) }, databaseName)
+    private val storage = IsolatedStorage("open-project-test.db")
+    private val database = storage.database
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
     private val projects = LocalProjectRepository(database.projects())
 
     @After
-    fun removeIsolatedStorage() {
-        composeRule.activityRule.scenario.close()
-        database.close()
-        context.deleteDatabase(databaseName)
-    }
+    fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
 
     @Test
     fun openProject_showsTheStoredResultAndItsSource_withoutRecalculating() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
 
@@ -102,7 +97,7 @@ class OpenProjectTest {
 
     @Test
     fun guideFromProject_usesItsRadii_andBackReturnsToTheProject() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -155,7 +150,7 @@ class OpenProjectTest {
 
     @Test
     fun wideWindow_showsListBesideThePlaceholderThenBesideTheOpenedProject() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute(DpSize(1600.dp, 1000.dp))
         composeRule.selectDestination("Projetos")
         composeRule.onNodeWithText("Escolha um projeto na lista.").assertIsDisplayed()
@@ -176,7 +171,7 @@ class OpenProjectTest {
 
     @Test
     fun recreation_keepsTheOpenedProject() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -190,14 +185,14 @@ class OpenProjectTest {
 
     @Test
     fun openedProject_rename_updatesItsTitleAndTheList() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
 
         click("Ações: Saia da formatura")
         click("Renomear projeto")
-        composeRule.onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
+        composeRule.nameField()
             .performTextReplacement("Saia de verão")
         click("Renomear")
 
@@ -209,7 +204,7 @@ class OpenProjectTest {
 
     @Test
     fun openedProject_delete_returnsToTheList() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -224,7 +219,7 @@ class OpenProjectTest {
 
     @Test
     fun wideWindow_deletingTheOpenedProject_returnsToThePlaceholder() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute(DpSize(1600.dp, 1000.dp))
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -244,18 +239,6 @@ class OpenProjectTest {
     }
 
     private fun isAt(id: Int) = SemanticsMatcher("node $id") { it.id == id }
-
-    private fun storeProject() = runBlocking {
-        projects.create(
-            ProjectName("Saia da formatura"),
-            SkirtSnapshot(
-                SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
-                SkirtRadii(Length(11.11), Length(71.11), Length(10.11), Length(73.11)),
-                MeasurementSource("Ana", LocalDate.of(2026, 10, 12)),
-            ),
-            clock.instant(),
-        ).getOrThrow()
-    }
 
     private fun showRoute(size: DpSize? = null) {
         composeRule.runOnUiThread {

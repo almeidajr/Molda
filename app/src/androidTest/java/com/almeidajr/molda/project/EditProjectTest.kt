@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.data.room.openMoldaDatabase
@@ -62,23 +63,17 @@ class EditProjectTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val databaseName = "edit-project-test.db"
-    private val database =
-        openMoldaDatabase(context.also { it.deleteDatabase(databaseName) }, databaseName)
+    private val storage = IsolatedStorage("edit-project-test.db")
+    private val database = storage.database
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
     private val projects = LocalProjectRepository(database.projects())
 
     @After
-    fun removeIsolatedStorage() {
-        composeRule.activityRule.scenario.close()
-        database.close()
-        context.deleteDatabase(databaseName)
-    }
+    fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
 
     @Test
     fun edit_loadsEveryInput_thenSalvarUpdatesTheProjectInPlace() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         openEditor()
 
@@ -103,14 +98,14 @@ class EditProjectTest {
 
     @Test
     fun saveAsNew_keepsTheOriginal_andShowsTheNewProject() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         openEditor()
 
         editEase("4")
         click("Calcular")
         click("Salvar como novo")
-        composeRule.onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
+        composeRule.nameField()
             .performTextReplacement("Saia de verão")
         composeRule.onNode(hasText("Salvar") and hasAnyAncestor(isDialog())).performClick()
 
@@ -126,7 +121,7 @@ class EditProjectTest {
 
     @Test
     fun back_withUnsavedChanges_asksBeforeDiscarding() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         openEditor()
 
@@ -146,7 +141,7 @@ class EditProjectTest {
 
     @Test
     fun back_withoutChanges_returnsToTheProject() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         openEditor()
 
@@ -158,7 +153,7 @@ class EditProjectTest {
 
     @Test
     fun editing_leavesTheMoldesCalculatorDraftUntouched() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performTextReplacement("70")
@@ -178,7 +173,7 @@ class EditProjectTest {
                 ProfileMeasurements(ProfileName("Bia"), Length(95.0), LocalDate.of(2026, 10, 17)),
             ).getOrThrow()
         }
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         openEditor()
 
@@ -192,7 +187,7 @@ class EditProjectTest {
 
     @Test
     fun recreation_keepsTheEditedValues() {
-        storeProject()
+        projects.storeProject(clock.instant())
         showRoute()
         openEditor()
         editEase("4")
@@ -227,18 +222,6 @@ class EditProjectTest {
     }
 
     private fun storedProjects(): List<Project> = runBlocking { projects.projects().first() }
-
-    private fun storeProject() = runBlocking {
-        projects.create(
-            ProjectName("Saia da formatura"),
-            SkirtSnapshot(
-                SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
-                SkirtRadii(Length(11.11), Length(71.11), Length(10.11), Length(73.11)),
-                MeasurementSource("Ana", LocalDate.of(2026, 10, 12)),
-            ),
-            clock.instant(),
-        ).getOrThrow()
-    }
 
     private fun showRoute() {
         composeRule.runOnUiThread {

@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.data.room.openMoldaDatabase
@@ -60,18 +61,12 @@ class ProjectSavingTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val databaseName = "project-ui-test.db"
-    private val database =
-        openMoldaDatabase(context.also { it.deleteDatabase(databaseName) }, databaseName)
+    private val storage = IsolatedStorage("project-ui-test.db")
+    private val database = storage.database
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
 
     @After
-    fun removeIsolatedStorage() {
-        composeRule.activityRule.scenario.close()
-        database.close()
-        context.deleteDatabase(databaseName)
-    }
+    fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
 
     @Test
     fun calculateFromProfile_saveWithEditedName_listsItInProjetosWithItsSource() {
@@ -89,11 +84,11 @@ class ProjectSavingTest {
         calculate(listOf("2", "60", "1", "2"))
 
         click("Salvar projeto")
-        nameField().assertTextContains("Saia godê · Ana · 18/10/2026")
-        nameField().performTextReplacement("   ")
+        composeRule.nameField().assertTextContains("Saia godê · Ana · 18/10/2026")
+        composeRule.nameField().performTextReplacement("   ")
         click("Salvar")
         composeRule.onNodeWithText("Informe um nome para o projeto.").assertIsDisplayed()
-        nameField().performTextReplacement("Saia da formatura")
+        composeRule.nameField().performTextReplacement("Saia da formatura")
         click("Salvar")
 
         composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
@@ -109,19 +104,19 @@ class ProjectSavingTest {
 
     @Test
     fun save_whenStorageFails_showsFailureAndKeepsTheResult() {
-        showRoute(FailingProjects)
+        showRoute(RefusingProjects())
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
             .performTextReplacement("70")
         calculate(listOf("0", "45", "0", "0"))
 
         click("Salvar projeto")
-        nameField().assertTextContains("Saia godê · 18/10/2026")
+        composeRule.nameField().assertTextContains("Saia godê · 18/10/2026")
         click("Salvar")
 
         composeRule.onNodeWithText("Não foi possível salvar o projeto", substring = true)
             .assertIsDisplayed()
-        nameField().assertTextContains("Saia godê · 18/10/2026")
+        composeRule.nameField().assertTextContains("Saia godê · 18/10/2026")
         click("Cancelar")
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
     }
@@ -168,8 +163,6 @@ class ProjectSavingTest {
         composeRule.onNodeWithText("Raios para o molde").assertIsDisplayed()
     }
 
-    private fun nameField() = composeRule.onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
-
     private fun click(label: String) {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
@@ -180,21 +173,4 @@ class ProjectSavingTest {
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()
     }
-}
-
-/** Storage that loads no projects and refuses every save. */
-private object FailingProjects : ProjectRepository {
-    override fun projects(): Flow<List<Project>> = flowOf(emptyList())
-
-    override suspend fun create(name: ProjectName, snapshot: SkirtSnapshot, savedAt: Instant) =
-        Result.failure<Project>(IllegalStateException("Controlled storage failure"))
-
-    override suspend fun update(id: ProjectId, snapshot: SkirtSnapshot, updatedAt: Instant) =
-        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
-
-    override suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant) =
-        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
-
-    override suspend fun delete(id: ProjectId) =
-        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
 }
