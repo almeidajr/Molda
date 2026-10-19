@@ -32,6 +32,7 @@ import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.data.LocalProjectRepository
 import com.almeidajr.molda.project.domain.MeasurementSource
 import com.almeidajr.molda.project.domain.Project
+import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
@@ -185,4 +186,10 @@ private object FailingProjects : ProjectRepository {
 
     override suspend fun create(name: ProjectName, snapshot: SkirtSnapshot, savedAt: Instant) =
         Result.failure<Project>(IllegalStateException("Controlled storage failure"))
+
+    override suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant) =
+        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
+
+    override suspend fun delete(id: ProjectId) =
+        Result.failure<Unit>(IllegalStateException("Controlled storage failure"))
 }

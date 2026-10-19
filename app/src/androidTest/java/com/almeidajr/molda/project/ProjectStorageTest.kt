@@ -70,7 +70,51 @@ class ProjectStorageTest {
         }
     }
 
+    @Test
+    fun rename_storesTheNameAndListsItAsTheLatestChange() = runBlocking {
+        val (first, second) = withProjects(context, databaseName) { storage ->
+            storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
+                storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
+        }
+
+        withProjects(context, databaseName) { storage ->
+            assertTrue(storage.rename(first.id, ProjectName("Saia da formatura"), march).isSuccess)
+        }
+
+        val listed = withProjects(context, databaseName) { it.projects().first() }
+        assertEquals(
+            listOf(first.copy(name = ProjectName("Saia da formatura"), updatedAt = march), second),
+            listed,
+        )
+    }
+
+    @Test
+    fun delete_removesOnlyThatProject() = runBlocking {
+        val (first, second) = withProjects(context, databaseName) { storage ->
+            storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
+                storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
+        }
+
+        withProjects(context, databaseName) { storage ->
+            assertTrue(storage.delete(second.id).isSuccess)
+            assertEquals(listOf(first), storage.projects().first())
+        }
+    }
+
+    @Test
+    fun renameAndDelete_ofAMissingProject_reportFailure() = runBlocking {
+        withProjects(context, databaseName) { storage ->
+            val gone = storage.create(ProjectName("Saia"), typedByHand, january).getOrThrow()
+            storage.delete(gone.id).getOrThrow()
+
+            assertTrue(storage.rename(gone.id, ProjectName("Outra"), march).isFailure)
+            assertTrue(storage.delete(gone.id).isFailure)
+        }
+    }
+
     private companion object {
+        val march: Instant = Instant.parse("2026-03-10T09:00:00Z")
+
         val january: Instant = Instant.parse("2026-01-10T09:00:00Z")
         val february: Instant = Instant.parse("2026-02-10T09:00:00Z")
 

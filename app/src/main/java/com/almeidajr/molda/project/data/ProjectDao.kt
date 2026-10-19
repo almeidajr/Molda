@@ -38,4 +38,10 @@ interface ProjectDao {
 
     @Insert
     suspend fun insert(project: ProjectEntity): Long
+
+    @Query("UPDATE projects SET name = :name, updated_at = :updatedAt WHERE id = :id")
+    suspend fun rename(id: Long, name: String, updatedAt: Long): Int
+
+    @Query("DELETE FROM projects WHERE id = :id")
+    suspend fun delete(id: Long): Int
 }

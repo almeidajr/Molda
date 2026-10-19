@@ -1,5 +1,6 @@
 package com.almeidajr.molda.project.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,32 +34,73 @@ fun SaveProjectDialog(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    ProjectNameDialog(
+        title = stringResource(R.string.project_save),
+        confirmLabel = stringResource(R.string.project_save_confirm),
+        name = saving.name,
+        hasBlankName = saving.hasBlankName,
+        isBusy = saving.isSaving,
+        error = saving.saveError,
+        onEditName = onEditName,
+        onConfirm = onSave,
+        onCancel = onCancel,
+        modifier = modifier,
+    )
+}
+
+/** Renames a stored project; a storage failure keeps the dialog and the typed name. */
+@Composable
+fun RenameProjectDialog(
+    renaming: ProjectRenaming,
+    onEditName: (String) -> Unit,
+    onRename: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ProjectNameDialog(
+        title = stringResource(R.string.project_rename),
+        confirmLabel = stringResource(R.string.project_rename_confirm),
+        name = renaming.name,
+        hasBlankName = renaming.hasBlankName,
+        isBusy = renaming.isBusy,
+        error = renaming.error,
+        onEditName = onEditName,
+        onConfirm = onRename,
+        onCancel = onCancel,
+        modifier = modifier,
+    )
+}
+
+/** Asks before deleting a stored project; a storage failure keeps it and says so. */
+@Composable
+fun DeleteProjectDialog(
+    deleting: ProjectDeleting,
+    onDelete: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     AlertDialog(
         onDismissRequest = onCancel,
         modifier = modifier,
-        title = { Text(stringResource(R.string.project_save)) },
+        title = {
+            Text(stringResource(R.string.project_delete_title, deleting.project.name.text))
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProjectNameField(saving, onEditName, onSave)
-                saving.saveError?.let { error ->
-                    Text(
-                        stringResource(error),
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
-                    )
-                }
+                Text(stringResource(R.string.project_delete_body))
+                deleting.error?.let { ErrorText(it) }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = onSave,
-                enabled = !saving.isSaving,
+                onClick = onDelete,
+                enabled = !deleting.isBusy,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                val label = if (saving.isSaving) {
-                    R.string.status_saving
+                val label = if (deleting.isBusy) {
+                    R.string.project_deleting
                 } else {
-                    R.string.project_save_confirm
+                    R.string.action_confirm_delete
                 }
                 Text(stringResource(label))
             }
@@ -66,7 +108,50 @@ fun SaveProjectDialog(
         dismissButton = {
             TextButton(
                 onClick = onCancel,
-                enabled = !saving.isSaving,
+                enabled = !deleting.isBusy,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+@Suppress("LongParameterList") // The dialog's whole state, shared by saving and renaming.
+@Composable
+private fun ProjectNameDialog(
+    title: String,
+    confirmLabel: String,
+    name: String,
+    hasBlankName: Boolean,
+    isBusy: Boolean,
+    @StringRes error: Int?,
+    onEditName: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        modifier = modifier,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProjectNameField(name, hasBlankName, isBusy, onEditName, onConfirm)
+                error?.let { ErrorText(it) }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !isBusy,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Text(if (isBusy) stringResource(R.string.status_saving) else confirmLabel)
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onCancel,
+                enabled = !isBusy,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) { Text(stringResource(R.string.action_cancel)) }
         },
@@ -74,28 +159,39 @@ fun SaveProjectDialog(
 }
 
 @Composable
+private fun ErrorText(@StringRes error: Int) {
+    Text(
+        stringResource(error),
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
+    )
+}
+
+@Composable
 private fun ProjectNameField(
-    saving: ProjectSaving,
+    name: String,
+    hasBlankName: Boolean,
+    isBusy: Boolean,
     onEditName: (String) -> Unit,
-    onSave: () -> Unit,
+    onConfirm: () -> Unit,
 ) {
     OutlinedTextField(
-        value = saving.name,
+        value = name,
         onValueChange = onEditName,
         label = { Text(stringResource(R.string.project_field_name)) },
-        isError = saving.hasBlankName,
-        enabled = !saving.isSaving,
+        isError = hasBlankName,
+        enabled = !isBusy,
         supportingText = {
             Text(
                 stringResource(
-                    if (saving.hasBlankName) {
+                    if (hasBlankName) {
                         R.string.project_error_blank_name
                     } else {
                         R.string.project_hint_name
                     },
                 ),
                 modifier = Modifier.semantics {
-                    if (saving.hasBlankName) liveRegion = LiveRegionMode.Polite
+                    if (hasBlankName) liveRegion = LiveRegionMode.Polite
                 },
             )
         },
@@ -104,12 +200,12 @@ private fun ProjectNameField(
             capitalization = KeyboardCapitalization.Sentences,
             imeAction = ImeAction.Done,
         ),
-        keyboardActions = KeyboardActions(onDone = { onSave() }),
+        keyboardActions = KeyboardActions(onDone = { onConfirm() }),
         modifier = Modifier.fillMaxWidth(),
     )
 }
 
-/** Shows the saved confirmation once in [snackbar], then calls [onDismiss]. */
+/** Shows a saved, renamed or deleted confirmation once in [snackbar], then calls [onDismiss]. */
 @Composable
 fun ProjectSaveFeedback(state: ProjectsState, snackbar: SnackbarHostState, onDismiss: () -> Unit) {
     val message = state.savedMessage?.let { stringResource(it) }

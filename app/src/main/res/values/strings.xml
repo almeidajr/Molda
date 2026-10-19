@@ -9,5 +9,7 @@
 
     <string name="action_cancel">Cancelar</string>
     <string name="action_retry_load">Tentar carregar novamente</string>
+    <string name="action_menu_for">Ações: %1$s</string>
+    <string name="action_confirm_delete">Confirmar exclusão</string>
     <string name="status_saving">Salvando…</string>
 </resources>

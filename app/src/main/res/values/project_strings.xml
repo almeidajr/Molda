@@ -11,4 +11,14 @@
     <string name="project_load_failed">Não foi possível carregar os projetos. Os dados não foram apagados. Tente novamente.</string>
     <string name="project_loading">Carregando projetos…</string>
     <string name="project_summary">%1$s · %2$s</string>
+    <string name="project_rename">Renomear projeto</string>
+    <string name="project_rename_confirm">Renomear</string>
+    <string name="project_renamed">Projeto renomeado.</string>
+    <string name="project_rename_failed">Não foi possível renomear o projeto. O nome anterior foi mantido. Tente novamente.</string>
+    <string name="project_delete">Excluir projeto</string>
+    <string name="project_delete_title">Excluir projeto %1$s?</string>
+    <string name="project_delete_body">O projeto será excluído deste aparelho. Os perfis de medidas não mudam.</string>
+    <string name="project_deleting">Excluindo…</string>
+    <string name="project_deleted">Projeto excluído deste aparelho.</string>
+    <string name="project_delete_failed">Não foi possível excluir o projeto. Ele continua salvo. Tente novamente.</string>
 </resources>

@@ -36,12 +36,10 @@
     <string name="profile_summary">%1$s cm — %2$s</string>
     <string name="profile_use_label">Usar perfil: %1$s — %2$s cm — %3$s</string>
     <string name="profile_deleting">Excluindo %1$s…</string>
-    <string name="profile_actions">Ações: %1$s</string>
     <string name="profile_edit">Editar perfil</string>
     <string name="profile_delete">Excluir perfil</string>
     <string name="profile_delete_title">Excluir perfil %1$s?</string>
     <string name="profile_delete_body">A medida salva será excluída deste aparelho. O cálculo atual será mantido.</string>
-    <string name="profile_delete_confirm">Confirmar exclusão</string>
     <string name="profile_picker_title">Usar perfil</string>
     <string name="profile_picker_cancel">Cancelar seleção</string>
     <string name="profile_empty_picker">Nenhum perfil salvo. Você pode calcular com uma medida manual.</string>

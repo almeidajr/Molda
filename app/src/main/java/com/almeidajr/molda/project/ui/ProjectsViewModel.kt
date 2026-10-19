@@ -30,12 +30,30 @@ data class ProjectSaving(
     @param:StringRes val saveError: Int? = null,
 )
 
+/** A stored [project] being renamed to the [name] typed so far. */
+data class ProjectRenaming(
+    val project: Project,
+    val name: String,
+    val hasBlankName: Boolean = false,
+    val isBusy: Boolean = false,
+    @param:StringRes val error: Int? = null,
+)
+
+/** A stored [project] whose deletion is being confirmed; a failure keeps it with [error]. */
+data class ProjectDeleting(
+    val project: Project,
+    val isBusy: Boolean = false,
+    @param:StringRes val error: Int? = null,
+)
+
 data class ProjectsState(
     val projects: List<Project> = emptyList(),
     val isLoading: Boolean = true,
     @param:StringRes val loadError: Int? = null,
     /** The open save dialog; it lives with the result, so it does not survive process death. */
     val saving: ProjectSaving? = null,
+    val renaming: ProjectRenaming? = null,
+    val deleting: ProjectDeleting? = null,
     @param:StringRes val savedMessage: Int? = null,
 )
 
@@ -86,8 +104,12 @@ class ProjectsViewModel @Inject constructor(
         transition { it.copy(saving = ProjectSaving(snapshot, name)) }
     }
 
+    /** Edits the name typed in the open save or rename dialog. */
     fun editName(text: String) = transition { state ->
-        state.copy(saving = state.saving?.copy(name = text, hasBlankName = false))
+        state.copy(
+            saving = state.saving?.copy(name = text, hasBlankName = false),
+            renaming = state.renaming?.copy(name = text, hasBlankName = false),
+        )
     }
 
     fun save() {
@@ -116,8 +138,67 @@ class ProjectsViewModel @Inject constructor(
         }
     }
 
-    fun cancelSaving() = transition { state ->
-        if (state.saving?.isSaving == true) state else state.copy(saving = null)
+    fun startRenaming(project: Project) = transition {
+        it.copy(renaming = ProjectRenaming(project, project.name.text))
+    }
+
+    fun rename() {
+        val renaming = mutableState.value.renaming
+        if (renaming == null || renaming.isBusy) return
+        val name = readProjectName(renaming.name)
+        if (name == null) {
+            transition { it.copy(renaming = renaming.copy(hasBlankName = true)) }
+            return
+        }
+        transition { it.copy(renaming = renaming.copy(isBusy = true, error = null)) }
+        viewModelScope.launch {
+            val result = repository.rename(renaming.project.id, name, clock.instant())
+            transition { state ->
+                if (result.isSuccess) {
+                    state.copy(renaming = null, savedMessage = R.string.project_renamed)
+                } else {
+                    state.copy(
+                        renaming = state.renaming?.copy(
+                            isBusy = false,
+                            error = R.string.project_rename_failed,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    /** Asks to confirm deleting [project]; nothing is deleted until [delete]. */
+    fun startDeleting(project: Project) = transition {
+        it.copy(deleting = ProjectDeleting(project))
+    }
+
+    fun delete() {
+        val deleting = mutableState.value.deleting
+        if (deleting == null || deleting.isBusy) return
+        transition { it.copy(deleting = deleting.copy(isBusy = true, error = null)) }
+        viewModelScope.launch {
+            val result = repository.delete(deleting.project.id)
+            transition { state ->
+                if (result.isSuccess) {
+                    state.copy(deleting = null, savedMessage = R.string.project_deleted)
+                } else {
+                    state.copy(
+                        deleting = state.deleting?.copy(
+                            isBusy = false,
+                            error = R.string.project_delete_failed,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    /** Closes the open save, rename or delete dialog, unless its storage call is running. */
+    fun cancel() = transition { state ->
+        val isBusy = state.saving?.isSaving == true || state.renaming?.isBusy == true ||
+            state.deleting?.isBusy == true
+        if (isBusy) state else state.copy(saving = null, renaming = null, deleting = null)
     }
 
     fun dismissMessage() = transition { it.copy(savedMessage = null) }

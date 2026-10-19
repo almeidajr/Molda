@@ -56,6 +56,11 @@ interface ProjectRepository {
         snapshot: SkirtSnapshot,
         savedAt: Instant,
     ): Result<Project>
+
+    /** Renames the project [id], which becomes the latest change at [renamedAt]. */
+    suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant): Result<Unit>
+
+    suspend fun delete(id: ProjectId): Result<Unit>
 }
 
 /** How a project's dates are shown. */

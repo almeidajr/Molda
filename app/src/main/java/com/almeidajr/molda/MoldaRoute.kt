@@ -69,9 +69,11 @@ import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.profileWaistText
 import com.almeidajr.molda.project.domain.MeasurementSource
 import com.almeidajr.molda.project.domain.SkirtSnapshot
+import com.almeidajr.molda.project.ui.DeleteProjectDialog
 import com.almeidajr.molda.project.ui.ProjectSaveFeedback
 import com.almeidajr.molda.project.ui.ProjectsScreen
 import com.almeidajr.molda.project.ui.ProjectsViewModel
+import com.almeidajr.molda.project.ui.RenameProjectDialog
 import com.almeidajr.molda.project.ui.SaveProjectDialog
 import com.almeidajr.molda.skirt.ui.ExampleSkirtRadii
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
@@ -302,9 +304,14 @@ fun MoldaRoute(
             }, onAbout = openAbout)
         }
         entry<ProjectsKey> {
-            ProjectsScreen(projectState, projects::load, onSeePatterns = {
-                navigation.select(PatternCatalogKey)
-            }, onAbout = openAbout)
+            ProjectsScreen(
+                projectState,
+                projects::load,
+                onSeePatterns = { navigation.select(PatternCatalogKey) },
+                onAbout = openAbout,
+                onRename = projects::startRenaming,
+                onDelete = projects::startDeleting,
+            )
         }
         entry<GuideLibraryKey>(
             metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
@@ -456,7 +463,18 @@ fun MoldaRoute(
         }
     })
     projectState.saving?.let { saving ->
-        SaveProjectDialog(saving, projects::editName, projects::save, projects::cancelSaving)
+        SaveProjectDialog(saving, projects::editName, projects::save, projects::cancel)
+    }
+    projectState.renaming?.let { renaming ->
+        RenameProjectDialog(
+            renaming,
+            projects::editName,
+            projects::rename,
+            projects::cancel,
+        )
+    }
+    projectState.deleting?.let { deleting ->
+        DeleteProjectDialog(deleting, projects::delete, projects::cancel)
     }
     ProjectSaveFeedback(projectState, snackbar, projects::dismissMessage)
     val isManaging = navigation.selected == ProfileManagementKey &&

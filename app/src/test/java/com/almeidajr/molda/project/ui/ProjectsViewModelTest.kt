@@ -142,9 +142,99 @@ class ProjectsViewModelTest {
         val projects = projectsViewModel()
 
         projects.startSaving(fromProfile, patternName = "Saia godê")
-        projects.cancelSaving()
+        projects.cancel()
 
         assertNull(projects.state.value.saving)
+        assertEquals(listOf(saved), projects.state.value.projects)
+    }
+
+    @Test
+    fun rename_trimmedName_updatesTheListImmediately() = runTest {
+        val projects = projectsViewModel()
+
+        projects.startRenaming(saved)
+        assertEquals("Saia antiga", projects.state.value.renaming?.name)
+        projects.editName("  Saia da formatura ")
+        projects.rename()
+
+        val state = projects.state.value
+        assertEquals(
+            listOf(
+                saved.copy(name = ProjectName("Saia da formatura"), updatedAt = clock.instant()),
+            ),
+            state.projects,
+        )
+        assertNull(state.renaming)
+        assertEquals(R.string.project_renamed, state.savedMessage)
+    }
+
+    @Test
+    fun rename_blankName_isRefusedWithoutStoring() = runTest {
+        val projects = projectsViewModel()
+
+        projects.startRenaming(saved)
+        projects.editName("   ")
+        projects.rename()
+
+        assertTrue(projects.state.value.renaming?.hasBlankName == true)
+        assertEquals(listOf(saved), projects.state.value.projects)
+        projects.editName("Saia")
+        assertFalse(projects.state.value.renaming?.hasBlankName == true)
+    }
+
+    @Test
+    fun rename_whenStorageFails_keepsTheDialogAndShowsTheFailure() = runTest {
+        storage.failsCommands = true
+        val projects = projectsViewModel()
+
+        projects.startRenaming(saved)
+        projects.editName("Saia da formatura")
+        projects.rename()
+
+        val renaming = projects.state.value.renaming
+        assertEquals("Saia da formatura", renaming?.name)
+        assertEquals(R.string.project_rename_failed, renaming?.error)
+        assertFalse(renaming?.isBusy == true)
+        assertEquals(listOf(saved), projects.state.value.projects)
+    }
+
+    @Test
+    fun delete_afterConfirmation_removesTheProject() = runTest {
+        val projects = projectsViewModel()
+
+        projects.startDeleting(saved)
+        assertEquals(listOf(saved), projects.state.value.projects)
+        projects.delete()
+
+        val state = projects.state.value
+        assertEquals(emptyList<Project>(), state.projects)
+        assertNull(state.deleting)
+        assertEquals(R.string.project_deleted, state.savedMessage)
+    }
+
+    @Test
+    fun delete_whenStorageFails_keepsTheProjectAndShowsTheFailure() = runTest {
+        storage.failsCommands = true
+        val projects = projectsViewModel()
+
+        projects.startDeleting(saved)
+        projects.delete()
+
+        val deleting = projects.state.value.deleting
+        assertEquals(saved, deleting?.project)
+        assertEquals(R.string.project_delete_failed, deleting?.error)
+        assertFalse(deleting?.isBusy == true)
+        assertEquals(listOf(saved), projects.state.value.projects)
+    }
+
+    @Test
+    fun cancelDeleting_keepsTheProject() = runTest {
+        val projects = projectsViewModel()
+
+        projects.startDeleting(saved)
+        projects.cancel()
+
+        assertNull(projects.state.value.deleting)
         assertEquals(listOf(saved), projects.state.value.projects)
     }
 
@@ -189,4 +279,21 @@ private class FakeProjects : ProjectRepository {
         stored.update { listOf(created) + it }
         Result.success(created)
     }
+
+    override suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant) =
+        command { projects ->
+            val renamed = projects.single { it.id == id }.copy(name = name, updatedAt = renamedAt)
+            listOf(renamed) + projects.filter { it.id != id }
+        }
+
+    override suspend fun delete(id: ProjectId) = command { projects ->
+        projects.filter { it.id != id }
+    }
+
+    private fun command(change: (List<Project>) -> List<Project>): Result<Unit> =
+        if (failsCommands) {
+            Result.failure(IllegalStateException("Controlled storage failure"))
+        } else {
+            Result.success(stored.update(change))
+        }
 }

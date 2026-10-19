@@ -178,7 +178,7 @@ private fun ProfileRowActions(
         TextButton(onClick = {
             expanded = true
         }, enabled = enabled, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.profile_actions, profile.measurements.name.text))
+            Text(stringResource(R.string.action_menu_for, profile.measurements.name.text))
         }
         DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
@@ -218,7 +218,7 @@ private fun ConfirmProfileDeletion(
                 enabled = enabled,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                Text(stringResource(R.string.profile_delete_confirm))
+                Text(stringResource(R.string.action_confirm_delete))
             }
         },
         dismissButton = {

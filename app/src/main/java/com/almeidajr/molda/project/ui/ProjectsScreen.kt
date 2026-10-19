@@ -12,12 +12,18 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -38,6 +44,8 @@ fun ProjectsScreen(
     onRetry: () -> Unit,
     onSeePatterns: () -> Unit,
     onAbout: () -> Unit,
+    onRename: (Project) -> Unit,
+    onDelete: (Project) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
@@ -61,7 +69,9 @@ fun ProjectsScreen(
 
                     state.projects.isEmpty() -> EmptyProjects(onSeePatterns)
 
-                    else -> state.projects.forEach { ProjectRow(it) }
+                    else -> state.projects.forEach { project ->
+                        ProjectRow(project, { onRename(project) }, { onDelete(project) })
+                    }
                 }
             }
         }
@@ -91,9 +101,9 @@ private fun EmptyProjects(onSeePatterns: () -> Unit) {
     }
 }
 
-/** One saved project: its name, then its molde and the date it last changed. */
+/** One saved project: its name, its molde and the date it last changed, then its actions. */
 @Composable
-private fun ProjectRow(project: Project) {
+private fun ProjectRow(project: Project, onRename: () -> Unit, onDelete: () -> Unit) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -109,6 +119,39 @@ private fun ProjectRow(project: Project) {
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ProjectActions(project, onRename, onDelete)
+        }
+    }
+}
+
+/** The "Ações: <nome>" menu: rename, or delete after a confirmation. */
+@Composable
+fun ProjectActions(
+    project: Project,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier) {
+        TextButton(onClick = { expanded = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.action_menu_for, project.name.text))
+        }
+        DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.project_rename)) },
+                onClick = {
+                    expanded = false
+                    onRename()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.project_delete)) },
+                onClick = {
+                    expanded = false
+                    onDelete()
+                },
             )
         }
     }

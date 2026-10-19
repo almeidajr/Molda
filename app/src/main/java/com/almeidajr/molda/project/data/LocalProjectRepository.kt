@@ -28,6 +28,20 @@ class LocalProjectRepository(private val dao: ProjectDao) : ProjectRepository {
         val entity = snapshot.toEntity(name, savedAt)
         entity.copy(id = dao.insert(entity)).toProject()
     }
+
+    override suspend fun rename(
+        id: ProjectId,
+        name: ProjectName,
+        renamedAt: Instant,
+    ): Result<Unit> = resultOf {
+        check(dao.rename(id.value, name.text, renamedAt.toEpochMilli()) == 1) {
+            "Project no longer exists"
+        }
+    }
+
+    override suspend fun delete(id: ProjectId): Result<Unit> = resultOf {
+        check(dao.delete(id.value) == 1) { "Project no longer exists" }
+    }
 }
 
 // Domain constructors validate every loaded row, so a malformed row fails the load.
