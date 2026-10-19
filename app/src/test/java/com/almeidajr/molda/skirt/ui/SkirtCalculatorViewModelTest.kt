@@ -199,6 +199,36 @@ class SkirtCalculatorViewModelTest {
         }
     }
 
+    @Test
+    fun recreate_afterProcessDeath_recalculatesTheShownResult() = runTest {
+        viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
+            scenario.viewModel.load(savedDraft, ana)
+            scenario.viewModel.edit(SkirtDraftField.Ease, "3")
+            scenario.viewModel.calculate()
+
+            scenario.recreate()
+
+            scenario.viewModel.state.test {
+                val snapshot = awaitItem().snapshot()
+                assertEquals(savedDraft.copy(ease = Length(3.0)), snapshot?.draft)
+                assertEquals(11.6382052, snapshot?.radii?.waistStitching?.centimetres ?: 0.0, 1e-6)
+                assertEquals(ana, snapshot?.source)
+            }
+        }
+    }
+
+    @Test
+    fun recreate_afterProcessDeath_showsNoResultForUncalculatedChanges() = runTest {
+        viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
+            scenario.viewModel.load(savedDraft, ana)
+            scenario.viewModel.edit(SkirtDraftField.Ease, "3")
+
+            scenario.recreate()
+
+            scenario.viewModel.state.test { assertNull(awaitItem().radii) }
+        }
+    }
+
     private val ana = MeasurementSource("Ana", LocalDate.of(2026, 10, 12))
 
     private val savedDraft = SkirtDraft(

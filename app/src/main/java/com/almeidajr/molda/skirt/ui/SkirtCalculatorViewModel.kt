@@ -31,6 +31,8 @@ data class CalculatorForm(
     /** The profile the waist came from, or null when it was typed by hand. */
     val source: MeasurementSource? = null,
     val hasAttemptedCalculation: Boolean = false,
+    /** Whether a result for these inputs is shown, so a restored form recalculates it. */
+    val isCalculated: Boolean = false,
     /** The values a saved draft was loaded with, or null when none was loaded. */
     val loaded: DraftValues? = null,
 )
@@ -77,7 +79,7 @@ fun CalculatorState.snapshot(): SkirtSnapshot? {
 @HiltViewModel
 class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle) : ViewModel() {
     private var savedForm by savedState.saved { CalculatorForm() }
-    private val mutableState = MutableStateFlow(CalculatorState(form = savedForm))
+    private val mutableState = MutableStateFlow(CalculatorState(form = savedForm).restored())
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
 
     /** Uses the [waist] taken from the profile [source]. */
@@ -119,12 +121,17 @@ private fun CalculatorState.withProfileWaist(
 private fun CalculatorState.edited(field: SkirtDraftField, text: String): CalculatorState = copy(
     form = form.copy(
         inputs = form.inputs + (field to text),
+        isCalculated = false,
         source = form.source.takeIf { field != SkirtDraftField.Waist },
     ),
     hasNonfiniteResult = false,
     draft = null,
     radii = null,
 )
+
+/** The state restored from a saved [CalculatorState.form], with its result recalculated. */
+private fun CalculatorState.restored(): CalculatorState =
+    if (form.isCalculated) calculated().copy(calculationAttempt = calculationAttempt) else this
 
 /** After the first calculation attempt, revalidates [field] as the user leaves it. */
 private fun CalculatorState.blurred(field: SkirtDraftField): CalculatorState {
@@ -136,7 +143,7 @@ private fun CalculatorState.blurred(field: SkirtDraftField): CalculatorState {
 
 private fun CalculatorState.calculated(): CalculatorState {
     val attempt = copy(
-        form = form.copy(hasAttemptedCalculation = true),
+        form = form.copy(hasAttemptedCalculation = true, isCalculated = false),
         calculationAttempt = calculationAttempt + 1,
         errors = emptyMap(),
         hasNonfiniteResult = false,
@@ -147,7 +154,11 @@ private fun CalculatorState.calculated(): CalculatorState {
         is SkirtDraftReading.Invalid -> attempt.copy(errors = reading.errors)
 
         is SkirtDraftReading.Valid -> when (val result = calculateSkirtRadii(reading.draft)) {
-            is SkirtCalculation.Success -> attempt.copy(draft = reading.draft, radii = result.radii)
+            is SkirtCalculation.Success -> attempt.copy(
+                form = attempt.form.copy(isCalculated = true),
+                draft = reading.draft,
+                radii = result.radii,
+            )
 
             SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching -> attempt.copy(
                 errors = mapOf(
