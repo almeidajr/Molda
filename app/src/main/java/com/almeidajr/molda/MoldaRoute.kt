@@ -49,6 +49,7 @@ import com.almeidajr.molda.about.ui.AboutScreen
 import com.almeidajr.molda.about.ui.LicencesScreen
 import com.almeidajr.molda.guide.ui.GuideLibrary
 import com.almeidajr.molda.pattern.ui.PatternCatalog
+import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
 import com.almeidajr.molda.profile.ui.ProfileEditor
@@ -124,6 +125,10 @@ private sealed interface EditedProfile {
 @Serializable
 private data class ProfileEditorKey(val profile: EditedProfile) : NavKey
 
+/** A new profile's editor, opened from the picker on the Moldes stack. */
+@Serializable
+private data object PickerProfileEditorKey : NavKey
+
 /** The profile picker sheet over the calculator. */
 @Serializable
 private data object ProfilePickerKey : NavKey
@@ -136,6 +141,9 @@ private sealed interface AfterDiscard {
 
     @Serializable
     data class OpenEditor(val profile: EditedProfile) : AfterDiscard
+
+    @Serializable
+    data object OpenPickerEditor : AfterDiscard
 }
 
 /** Asks to discard the dirty editor, then does [afterDiscard]. */
@@ -199,38 +207,41 @@ fun MoldaRoute(
     val guias = navigation.stackOf(GuideLibraryKey)
     val perfis = navigation.stackOf(ProfileManagementKey)
     // ProfilesViewModel owns whether the editor is open (a save or delete also closes it).
-    LaunchedEffect(profileState.isEditorOpen, profileState.editingId, perfis.size) {
-        syncProfileEditor(perfis, profileState.form)
+    LaunchedEffect(profileState.isEditorOpen, profileState.editingId, perfis.size, moldes.size) {
+        syncProfileEditor(perfis, moldes, profileState.form)
+    }
+    val openEditor: (EditedProfile) -> Unit = { profile ->
+        moldes.remove(PickerProfileEditorKey)
+        profiles.openEditor(profile)
     }
     val requestEditor: (EditedProfile) -> Unit = { profile ->
-        requestProfileEditor(profileState, profiles, profile) {
+        requestProfileEditor(profileState, onOpen = { openEditor(profile) }) {
             perfis.add(DiscardChangesKey(AfterDiscard.OpenEditor(profile)))
         }
+    }
+    val openPickerEditor: () -> Unit = {
+        perfis.removeAll { it is ProfileEditorKey }
+        profiles.startCreating()
+        moldes.add(PickerProfileEditorKey)
     }
     val snackbar = remember { SnackbarHostState() }
     var snackbarHeight by remember { mutableIntStateOf(0) }
     val snackbarInset = with(LocalDensity.current) { snackbarHeight.toDp() }
-    // shortcut: the picker's "Criar perfil" opens the editor in Perfis, so closing that editor
-    // goes back to the picker, still open on the Moldes stack; #90 keeps the editor in Moldes.
-    val returnToPickerIfOpen: () -> Unit = {
-        if (navigation.selected == ProfileManagementKey && moldes.last() == ProfilePickerKey) {
-            navigation.select(PatternCatalogKey)
-        }
-    }
-    val finishEditor = {
+    // Closing the picker's editor without saving returns to the picker below it.
+    val finishEditor: () -> Unit = {
         profiles.cancel()
-        returnToPickerIfOpen()
+        moldes.remove(PickerProfileEditorKey)
     }
     val cancelEditor: () -> Unit = {
         if (profileState.isDirty) {
-            perfis.add(DiscardChangesKey(AfterDiscard.CloseEditor))
+            navigation.current.add(DiscardChangesKey(AfterDiscard.CloseEditor))
         } else {
             finishEditor()
         }
     }
     val select: (Destination) -> Unit = { destination ->
-        // Profiles own their open editor, so returning Perfis to its root closes it the usual way.
-        if (destination.root == navigation.selected && perfis.last() is ProfileEditorKey) {
+        // An open editor closes the usual way when its destination is re-selected.
+        if (destination.root == navigation.selected && navigation.current.last().isProfileEditor) {
             if (!profileState.isSaving) cancelEditor()
         } else {
             navigation.select(destination.root)
@@ -335,27 +346,31 @@ fun MoldaRoute(
                 calculator,
                 onDismiss = { moldes.remove(ProfilePickerKey) },
                 onCreate = {
-                    profiles.startCreating()
-                    navigation.select(ProfileManagementKey)
+                    requestProfileEditor(profileState, onOpen = openPickerEditor) {
+                        moldes.add(DiscardChangesKey(AfterDiscard.OpenPickerEditor))
+                    }
                 },
             )
         }
         entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
-            DiscardDialog(onDismiss = { perfis.remove(key) }, onDiscard = {
-                perfis.remove(key)
+            DiscardDialog(onDismiss = { navigation.current.remove(key) }, onDiscard = {
+                navigation.current.remove(key)
                 when (val afterDiscard = key.afterDiscard) {
                     AfterDiscard.CloseEditor -> finishEditor()
 
                     is AfterDiscard.OpenEditor -> {
                         profiles.cancel()
-                        profiles.openEditor(afterDiscard.profile)
+                        openEditor(afterDiscard.profile)
+                    }
+
+                    AfterDiscard.OpenPickerEditor -> {
+                        profiles.cancel()
+                        openPickerEditor()
                     }
                 }
             })
         }
-        entry<ProfileEditorKey>(
-            metadata = ListDetailSceneStrategy.detailPane(),
-        ) {
+        val editor = @Composable {
             ProfilePane {
                 ProfileEditor(
                     profileState,
@@ -368,8 +383,17 @@ fun MoldaRoute(
                 )
             }
         }
+        entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { editor() }
+        entry<PickerProfileEditorKey> { editor() }
     }
-    ProfileSaveFeedback(profiles, snackbar, onEditorClosed = returnToPickerIfOpen)
+    ProfileSaveFeedback(profiles, snackbar, onCreated = { profile ->
+        // A profile created from the picker is the one to use: back to the calculator with it.
+        if (PickerProfileEditorKey in moldes) {
+            val measurements = profile.measurements
+            calculator.selectProfile(profileWaistText(measurements.waist), measurements.name.text)
+            moldes.removeAll { it == PickerProfileEditorKey || it == ProfilePickerKey }
+        }
+    })
     val isManaging = navigation.selected == ProfileManagementKey &&
         navigation.current.last() !in setOf(AboutKey, LicencesKey)
     val isGuideOpen = navigation.current.last() == FabricFoldingGuideKey
@@ -411,7 +435,7 @@ fun MoldaRoute(
                         },
                         floatingActionButtonPosition = fabPosition,
                         floatingActionButton = {
-                            if (isManaging && (!profileState.isEditorOpen || wide)) {
+                            if (isManaging && (perfis.none { it is ProfileEditorKey } || wide)) {
                                 ProfileCreateAction(
                                     profileState,
                                     { requestEditor(EditedProfile.New) },
@@ -434,7 +458,7 @@ fun MoldaRoute(
                                     materialTransition(density, isForward = false)
                                 },
                                 onBack = {
-                                    if (navigation.current.last() !is ProfileEditorKey) {
+                                    if (!navigation.current.last().isProfileEditor) {
                                         navigation.back()
                                     } else if (!profileState.isSaving) {
                                         cancelEditor()
@@ -478,12 +502,26 @@ private fun ProfilesViewModel.openEditor(profile: EditedProfile) = when (profile
     is EditedProfile.Existing -> startEditing(profile.id)
 }
 
-/** Shows the editor [form] has open above profile management, and drops any other editor. */
-private fun syncProfileEditor(perfis: NavBackStack<NavKey>, form: ProfileForm) {
+private val NavKey.isProfileEditor: Boolean
+    get() = this is ProfileEditorKey || this == PickerProfileEditorKey
+
+/**
+ * Shows the editor [form] has open above profile management, unless the picker's editor in
+ * [moldes] holds it, and drops any other editor from profile management.
+ */
+private fun syncProfileEditor(
+    perfis: NavBackStack<NavKey>,
+    moldes: NavBackStack<NavKey>,
+    form: ProfileForm,
+) {
     val profile = form.editingId?.let(EditedProfile::Existing) ?: EditedProfile.New
     val editor = ProfileEditorKey(profile).takeIf { form.isEditorOpen }
     perfis.removeAll { it is ProfileEditorKey && it != editor }
-    if (editor != null && perfis.last() == ProfileManagementKey) perfis.add(editor)
+    if (editor != null && perfis.last() == ProfileManagementKey &&
+        PickerProfileEditorKey !in moldes
+    ) {
+        perfis.add(editor)
+    }
 }
 
 @Composable
@@ -567,25 +605,21 @@ private fun AppProfilePicker(
 private fun ProfileSaveFeedback(
     profiles: ProfilesViewModel,
     snackbar: SnackbarHostState,
-    onEditorClosed: () -> Unit,
+    onCreated: (MeasurementProfile) -> Unit,
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
     val message = state.savedMessage?.let { stringResource(it) }
     LaunchedEffect(message) {
         message?.let {
-            if (!state.isEditorOpen) onEditorClosed()
+            state.createdProfile?.let(onCreated)
             snackbar.showSnackbar(it)
             profiles.dismissMessage()
         }
     }
 }
 
-private fun requestProfileEditor(
-    state: ProfilesState,
-    profiles: ProfilesViewModel,
-    profile: EditedProfile,
-    onDiscard: () -> Unit,
-) {
+/** Opens an editor with [onOpen], first asking with [onDiscard] when the open one is dirty. */
+private fun requestProfileEditor(state: ProfilesState, onOpen: () -> Unit, onDiscard: () -> Unit) {
     if (state.isSaving || state.isLoading || state.loadError != null) return
-    if (state.isEditorOpen && state.isDirty) onDiscard() else profiles.openEditor(profile)
+    if (state.isEditorOpen && state.isDirty) onDiscard() else onOpen()
 }

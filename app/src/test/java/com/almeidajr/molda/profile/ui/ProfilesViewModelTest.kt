@@ -106,6 +106,7 @@ class ProfilesViewModelTest {
         assertEquals(listOf("Ana", "Bia"), saved.profiles.map { it.measurements.name.text })
         assertFalse(saved.isEditorOpen)
         assertEquals(R.string.profile_saved, saved.savedMessage)
+        assertEquals(saved.profiles.last(), saved.createdProfile)
     }
 
     @Test

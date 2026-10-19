@@ -14,6 +14,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -84,6 +85,37 @@ class ProfileNavigationTest {
         composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
+    }
+
+    @Test
+    fun pickerCreation_cancelReturnsToPickerWithoutSelecting() {
+        val waist = composeRule.onNodeWithText("Circunferência da cintura (cm)")
+        waist.performScrollTo().performTextReplacement("95")
+        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
+        composeRule.destination("Moldes").assertIsSelected()
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed().performClick()
+        waist.assertTextContains("95")
+        composeRule.onNodeWithText("Medida manual").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun pickerCreation_dirtyCancelAsksToDiscard_thenReturnsToPicker() {
+        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        val confirmation = composeRule.onNodeWithText("Descartar alterações?")
+        composeRule.waitUntil(5_000) { confirmation.isDisplayed() }
+        clickInDialog("Descartar")
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
+        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
+        composeRule.onNodeWithText("Rascunho").assertDoesNotExist()
     }
 
     @Test
