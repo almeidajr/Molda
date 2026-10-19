@@ -41,7 +41,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
@@ -208,21 +207,21 @@ fun MoldaRoute(
     val perfis = navigation.stackOf(ProfileManagementKey)
     // ProfilesViewModel owns whether the editor is open (a save or delete also closes it).
     LaunchedEffect(profileState.isEditorOpen, profileState.editingId, perfis.size, moldes.size) {
-        syncProfileEditor(perfis, moldes, profileState.form)
+        syncProfileEditor(navigation, profileState.form)
     }
     val openEditor: (EditedProfile) -> Unit = { profile ->
-        moldes.remove(PickerProfileEditorKey)
+        navigation.remove(PickerProfileEditorKey)
         profiles.openEditor(profile)
     }
     val requestEditor: (EditedProfile) -> Unit = { profile ->
         requestProfileEditor(profileState, onOpen = { openEditor(profile) }) {
-            perfis.add(DiscardChangesKey(AfterDiscard.OpenEditor(profile)))
+            navigation.push(DiscardChangesKey(AfterDiscard.OpenEditor(profile)))
         }
     }
     val openPickerEditor: () -> Unit = {
-        perfis.removeAll { it is ProfileEditorKey }
+        navigation.removeAll { it is ProfileEditorKey }
         profiles.startCreating()
-        moldes.add(PickerProfileEditorKey)
+        navigation.push(PickerProfileEditorKey)
     }
     val snackbar = remember { SnackbarHostState() }
     var snackbarHeight by remember { mutableIntStateOf(0) }
@@ -230,11 +229,11 @@ fun MoldaRoute(
     // Closing the picker's editor without saving returns to the picker below it.
     val finishEditor: () -> Unit = {
         profiles.cancel()
-        moldes.remove(PickerProfileEditorKey)
+        navigation.remove(PickerProfileEditorKey)
     }
     val cancelEditor: () -> Unit = {
         if (profileState.isDirty) {
-            navigation.current.add(DiscardChangesKey(AfterDiscard.CloseEditor))
+            navigation.push(DiscardChangesKey(AfterDiscard.CloseEditor))
         } else {
             finishEditor()
         }
@@ -247,10 +246,12 @@ fun MoldaRoute(
             navigation.select(destination.root)
         }
     }
-    val openAbout: () -> Unit = { navigation.current.add(AboutKey) }
+    val openAbout: () -> Unit = { navigation.push(AboutKey) }
     val routes = entryProvider {
         entry<PatternCatalogKey> {
-            PatternCatalog(onOpenSkirt = { moldes.add(SkirtCalculatorKey) }, onAbout = openAbout)
+            PatternCatalog(onOpenSkirt = {
+                navigation.push(SkirtCalculatorKey)
+            }, onAbout = openAbout)
         }
         entry<ProjectsKey> {
             ProjectsScreen(onSeePatterns = {
@@ -269,7 +270,7 @@ fun MoldaRoute(
                     .takeIf { LocalIsTwoPane.current },
                 onOpenFabricFolding = {
                     if (guias.last() != ExampleFabricFoldingGuideKey) {
-                        guias.add(ExampleFabricFoldingGuideKey)
+                        navigation.push(ExampleFabricFoldingGuideKey)
                     }
                 },
                 onAbout = openAbout,
@@ -278,18 +279,13 @@ fun MoldaRoute(
         entry<ExampleFabricFoldingGuideKey>(metadata = ListDetailSceneStrategy.detailPane()) {
             FabricFoldingPlayer(
                 ExampleSkirtRadii,
-                onClose = { guias.remove(ExampleFabricFoldingGuideKey) },
+                onClose = { navigation.remove(ExampleFabricFoldingGuideKey) },
                 // Beside the list the guide is a pane, closed by choosing from the list or Back.
                 isCloseShown = !LocalIsTwoPane.current,
                 onCalculateOwn = {
                     navigation.select(PatternCatalogKey)
                     // Keeps the calculator and its draft, closing what is open above it.
-                    val calculatorIndex = moldes.indexOf(SkirtCalculatorKey)
-                    if (calculatorIndex < 0) {
-                        moldes.add(SkirtCalculatorKey)
-                    } else {
-                        moldes.subList(calculatorIndex + 1, moldes.size).clear()
-                    }
+                    navigation.popTo(SkirtCalculatorKey)
                 },
             )
         }
@@ -301,7 +297,7 @@ fun MoldaRoute(
             AboutScreen(
                 versionName = versionName,
                 onUp = navigation::back,
-                onOpenLicences = { navigation.current.add(LicencesKey) },
+                onOpenLicences = { navigation.push(LicencesKey) },
             )
         }
         entry<LicencesKey> { LicencesScreen(onUp = navigation::back) }
@@ -309,13 +305,13 @@ fun MoldaRoute(
             CalculatorDestination(
                 calculator,
                 onUp = navigation::back,
-                onUseProfile = { moldes.add(ProfilePickerKey) },
-                onOpenGuide = { moldes.add(FabricFoldingGuideKey) },
+                onUseProfile = { navigation.push(ProfilePickerKey) },
+                onOpenGuide = { navigation.push(FabricFoldingGuideKey) },
             )
         }
         entry<FabricFoldingGuideKey> {
             val close: () -> Unit = {
-                moldes.remove(FabricFoldingGuideKey)
+                navigation.remove(FabricFoldingGuideKey)
             }
             val radii = calculatorState.radii
             if (radii != null) {
@@ -344,17 +340,17 @@ fun MoldaRoute(
             AppProfilePicker(
                 profiles,
                 calculator,
-                onDismiss = { moldes.remove(ProfilePickerKey) },
+                onDismiss = { navigation.remove(ProfilePickerKey) },
                 onCreate = {
                     requestProfileEditor(profileState, onOpen = openPickerEditor) {
-                        moldes.add(DiscardChangesKey(AfterDiscard.OpenPickerEditor))
+                        navigation.push(DiscardChangesKey(AfterDiscard.OpenPickerEditor))
                     }
                 },
             )
         }
         entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
-            DiscardDialog(onDismiss = { navigation.current.remove(key) }, onDiscard = {
-                navigation.current.remove(key)
+            DiscardDialog(onDismiss = { navigation.remove(key) }, onDiscard = {
+                navigation.remove(key)
                 when (val afterDiscard = key.afterDiscard) {
                     AfterDiscard.CloseEditor -> finishEditor()
 
@@ -391,7 +387,7 @@ fun MoldaRoute(
         if (PickerProfileEditorKey in moldes) {
             val measurements = profile.measurements
             calculator.selectProfile(profileWaistText(measurements.waist), measurements.name.text)
-            moldes.removeAll { it == PickerProfileEditorKey || it == ProfilePickerKey }
+            navigation.removeAll { it == PickerProfileEditorKey || it == ProfilePickerKey }
         }
     })
     val isManaging = navigation.selected == ProfileManagementKey &&
@@ -506,21 +502,17 @@ private val NavKey.isProfileEditor: Boolean
     get() = this is ProfileEditorKey || this == PickerProfileEditorKey
 
 /**
- * Shows the editor [form] has open above profile management, unless the picker's editor in
- * [moldes] holds it, and drops any other editor from profile management.
+ * Shows the editor [form] has open above profile management, unless the picker's editor on the
+ * Moldes stack holds it, and drops any other editor from profile management.
  */
-private fun syncProfileEditor(
-    perfis: NavBackStack<NavKey>,
-    moldes: NavBackStack<NavKey>,
-    form: ProfileForm,
-) {
+private fun syncProfileEditor(navigation: TopLevelBackStacks, form: ProfileForm) {
     val profile = form.editingId?.let(EditedProfile::Existing) ?: EditedProfile.New
     val editor = ProfileEditorKey(profile).takeIf { form.isEditorOpen }
-    perfis.removeAll { it is ProfileEditorKey && it != editor }
-    if (editor != null && perfis.last() == ProfileManagementKey &&
-        PickerProfileEditorKey !in moldes
+    navigation.removeAll { it is ProfileEditorKey && it != editor }
+    if (editor != null && navigation.stackOf(ProfileManagementKey).last() == ProfileManagementKey &&
+        PickerProfileEditorKey !in navigation.stackOf(PatternCatalogKey)
     ) {
-        perfis.add(editor)
+        navigation.push(editor, root = ProfileManagementKey)
     }
 }
 

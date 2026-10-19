@@ -46,16 +46,16 @@ class TopLevelBackStacks internal constructor(
 
     val selected: NavKey get() = roots[selectedIndex]
 
-    /** The selected destination's back stack. */
-    val current: NavBackStack<NavKey> get() = stacks[selectedIndex]
+    /** The selected destination's back stack, read-only. */
+    val current: List<NavKey> get() = stacks[selectedIndex]
 
-    /** The back stack of the destination whose root is [root]. */
-    fun stackOf(root: NavKey): NavBackStack<NavKey> = stacks[roots.indexOf(root)]
+    /** The back stack of the destination whose root is [root], read-only. */
+    fun stackOf(root: NavKey): List<NavKey> = stacks[roots.indexOf(root)]
 
     /** Switches to [root]'s destination, or returns it to its root when already selected. */
     fun select(root: NavKey) {
         if (root == selected) {
-            current.subList(1, current.size).clear()
+            popAbove(0)
         } else {
             selectedIndex = roots.indexOf(root)
         }
@@ -63,7 +63,37 @@ class TopLevelBackStacks internal constructor(
 
     /** Pops the selected stack; at another destination's root, returns to the start one. */
     fun back() {
-        if (current.size > 1) current.removeAt(current.lastIndex) else selectedIndex = 0
+        if (current.size >
+            1
+        ) {
+            stacks[selectedIndex].removeAt(current.lastIndex)
+        } else {
+            selectedIndex = 0
+        }
+    }
+
+    /** Pushes [key] onto the stack of the destination whose root is [root]. */
+    fun push(key: NavKey, root: NavKey = selected) {
+        stacks[roots.indexOf(root)].add(key)
+    }
+
+    /** Removes every key matching [predicate] from every stack; roots always stay. */
+    fun removeAll(predicate: (NavKey) -> Boolean) {
+        stacks.forEach { stack -> stack.removeAll { it !in roots && predicate(it) } }
+    }
+
+    /** Removes [key] from every stack. */
+    fun remove(key: NavKey) = removeAll { it == key }
+
+    /** Pops the selected stack down to [key], pushing it when the stack does not hold it. */
+    fun popTo(key: NavKey) {
+        val index = current.indexOf(key)
+        if (index < 0) push(key) else popAbove(index)
+    }
+
+    private fun popAbove(index: Int) {
+        val stack = stacks[selectedIndex]
+        stack.subList(index + 1, stack.size).clear()
     }
 
     /** The entries to show: the start stack, then the selected stack when it is another one. */
