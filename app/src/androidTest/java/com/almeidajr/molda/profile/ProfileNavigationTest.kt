@@ -87,6 +87,36 @@ class ProfileNavigationTest {
     }
 
     @Test
+    fun pickerCreation_cancelReturnsToPickerWithoutSelecting() {
+        val waist = composeRule.onNodeWithText("Circunferência da cintura (cm)")
+        waist.performScrollTo().performTextReplacement("95")
+        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
+        composeRule.destination("Moldes").assertIsSelected()
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed().performClick()
+        waist.assertTextContains("95")
+        composeRule.onNodeWithText("Medida manual").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun pickerCreation_dirtyCancelAsksToDiscard_thenReturnsToPicker() {
+        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+        clickInDialog("Descartar")
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
+        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
+        composeRule.onNodeWithText("Rascunho").assertDoesNotExist()
+    }
+
+    @Test
     fun recreation_keepsOpenPicker() {
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
         composeRule.activityRule.scenario.recreate()

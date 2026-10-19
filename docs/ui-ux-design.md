@@ -151,9 +151,10 @@ accessibility and human-feedback verification.
   editor to profiles, then to Moldes. Cancel and Back share the unsaved-change
   confirmation. Resizing into a multi-pane layout must not discard the draft;
   Back applies to the active editor rather than removing a visible list pane.
-- Dismissing the profile picker leaves the calculation untouched. Creating a
-  profile from the picker returns to the picker after a successful save without
-  automatically selecting the newly created profile.
+- Dismissing the profile picker leaves the calculation untouched. "Novo perfil"
+  in the picker opens the editor on the Moldes stack; saving returns to the
+  calculator with the new profile selected, and cancelling (after the
+  unsaved-change confirmation when needed) returns to the picker.
 
 ## Confirmed result details and edge cases
 

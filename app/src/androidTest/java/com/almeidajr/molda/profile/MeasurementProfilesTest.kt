@@ -280,10 +280,13 @@ class MeasurementProfilesTest {
     }
 
     @Test
-    fun pickerCreation_returnsWithoutSelectingAndRestoresDirtyEditor() {
+    fun pickerCreation_savesInMoldesAndSelectsTheNewProfile() {
         edit("Circunferência da cintura (cm)", "95")
         click("Usar perfil")
         click("Novo perfil")
+        // The editor opens on the Moldes stack, without switching destination.
+        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
+        composeRule.destination("Moldes").assertIsSelected()
         edit("Nome ou apelido", "Nova no seletor")
         edit("Cintura do perfil (cm)", "80")
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
@@ -293,13 +296,15 @@ class MeasurementProfilesTest {
         click("Cancelar")
         click("Continuar editando")
         saveProfile()
-        val profile = composeRule.onNodeWithText(
-            "Usar perfil: Nova no seletor — 80 cm — 12/10/2026",
-        )
-        composeRule.waitUntil(5_000) { profile.isDisplayed() }
-        profile.assertIsDisplayed()
-        click("Cancelar seleção")
-        composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("95")
+        val source = composeRule.onNodeWithText("Cintura copiada do perfil: Nova no seletor")
+        composeRule.waitUntil(5_000) { source.isDisplayed() }
+        composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("80")
+        composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
+        composeRule.destination("Moldes").assertIsSelected()
+        // Perfis lists the new profile and holds no editor.
+        manage()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.onAllNodes(hasText("Ações: Nova no seletor"))[0].assertExists()
     }
 
     @Test
