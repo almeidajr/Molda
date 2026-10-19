@@ -26,9 +26,12 @@ Lint treats warnings as errors and there are no Detekt/Lint baselines: fix findi
 Single-activity Compose app organized by feature, each split into `domain` / `data` / `ui`:
 
 - `skirt/` — full-circle skirt calculator. `domain/CalculateSkirtRadii.kt` holds the pure math; `ui/` has the screen, `SkirtCalculatorViewModel`, and the Rive-driven `FabricFoldingGuide`.
-- `profile/` — measurement profiles. `domain/ProfileRepository` is the boundary; `data/LocalProfileRepository` implements it with Room 3 in `molda.db` (a `Flow` query plus commands returning `Result`). The schema is exported to `app/schemas/`; every schema change needs a real `Migration`, never destructive fallback (`docs/adr/0002`).
+- `profile/` — measurement profiles. `domain/ProfileRepository` is the boundary; `data/LocalProfileRepository` implements it (a `Flow` query plus commands returning `Result`).
+- `project/` — saved projetos: a named snapshot of a pattern draft's measurements, assumptions and stored radii, never recalculated on open. `domain/ProjectRepository` is the boundary, `data/LocalProjectRepository` implements it, and `ui/ProjectsViewModel` owns the list and the save, rename and delete dialogs.
 
-Entry flow: `MainActivity` (calls `Rive.init`) → `MoldaRoute.kt`, which hosts the navigation suite (Moldes, Projetos, Guias, Perfis) and one Navigation 3 back stack per destination through `ui/navigation/TopLevelBackStacks.kt`. Its `NavKey`s cover every screen and overlay (calculator, guides, About, profile editor, picker, discard dialog); `MoldaRoute` wires both ViewModels into one `NavDisplay`, which shows list-detail panes on wide windows and avoids hinges (`ui/adaptive/AdaptiveContent.kt`).
+Both repositories share one Room 3 database, `data/room/MoldaDatabase.kt` (`molda.db`), opened in `di/AppModule`. The schema is exported to `app/schemas/`; every schema change needs a real `Migration`, never destructive fallback (`docs/adr/0002`).
+
+Entry flow: `MainActivity` (calls `Rive.init`) → `MoldaRoute.kt`, which hosts the navigation suite (Moldes, Projetos, Guias, Perfis) and one Navigation 3 back stack per destination through `ui/navigation/TopLevelBackStacks.kt`. Its `NavKey`s cover every screen and overlay (calculator, guides, About, profile editor, picker, discard dialog); `MoldaRoute` wires the feature ViewModels (a second calculator for the project editor) and all cross-feature flows into one `NavDisplay`, which shows list-detail panes on wide windows and avoids hinges (`ui/adaptive/AdaptiveContent.kt`).
 
 ## Rive animation
 
