@@ -110,6 +110,8 @@ class ProfileNavigationTest {
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
         composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
+        // The keyboard resizing the editor mid-scroll would move Cancelar from under the touch.
+        closeSoftKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
         val confirmation = composeRule.onNodeWithText("Descartar alterações?")
         composeRule.waitUntil(5_000) { confirmation.isDisplayed() }
@@ -146,6 +148,8 @@ class ProfileNavigationTest {
     fun reselectingMoldes_whileDiscardDialogIsOpen_keepsAsking_andLeavesNoDraftInPerfis() {
         openPickerEditor()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
+        // The keyboard resizing the editor mid-scroll would move Cancelar from under the touch.
+        closeSoftKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
         composeRule.waitUntil(5_000) {
             composeRule.onNodeWithText("Descartar alterações?").isDisplayed()
