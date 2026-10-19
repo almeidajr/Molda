@@ -4,7 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.serialization.saved
 import com.almeidajr.molda.measurement.MeasurementSource
+import com.almeidajr.molda.measurement.ParsedLength
 import com.almeidajr.molda.measurement.lengthText
+import com.almeidajr.molda.measurement.parseLength
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
@@ -49,9 +51,20 @@ data class CalculatorState(
     val radii: SkirtRadii? = null,
     val calculationAttempt: Int = 0,
 ) {
-    /** Whether the inputs or their source differ from the loaded saved draft. */
-    val isDirty: Boolean get() = form.loaded?.let { it != form.values } == true
+    /** Whether the inputs' values or their source differ from the loaded saved draft. */
+    val isDirty: Boolean get() = form.loaded?.let { !it.hasSameValues(form.values) } == true
 }
+
+// "80" and "80,0" are the same length; text that is not a length compares as typed.
+private fun DraftValues.hasSameValues(other: DraftValues): Boolean = source == other.source &&
+    SkirtDraftField.entries.all { field ->
+        val text = inputs[field].orEmpty()
+        val otherText = other.inputs[field].orEmpty()
+        when (val length = parseLength(text)) {
+            is ParsedLength.Valid -> length == parseLength(otherText)
+            else -> text == otherText
+        }
+    }
 
 /** The calculated result as a project snapshot, or null before a successful calculation. */
 fun CalculatorState.snapshot(): SkirtSnapshot? {

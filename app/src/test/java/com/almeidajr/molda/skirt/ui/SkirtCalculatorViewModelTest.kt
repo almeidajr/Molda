@@ -170,6 +170,17 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
+    fun isDirty_sameValueWrittenDifferently_isFalse() = runTest {
+        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
+        calculator.load(savedDraft, source = null)
+
+        calculator.edit(SkirtDraftField.FinishedLength, "50,0")
+        calculator.edit(SkirtDraftField.WaistSeamAllowance, "1.50")
+
+        calculator.state.test { assertFalse(awaitItem().isDirty) }
+    }
+
+    @Test
     fun isDirty_withoutALoadedDraft_isFalse() = runTest {
         val calculator = calculatorWith(validDraft)
 
