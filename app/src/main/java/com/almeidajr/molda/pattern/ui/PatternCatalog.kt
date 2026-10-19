@@ -19,7 +19,7 @@ import com.almeidajr.molda.ui.navigation.motifDashEffect
 @Composable
 fun PatternCatalog(onOpenSkirt: () -> Unit, onAbout: () -> Unit, modifier: Modifier = Modifier) {
     CatalogScreen(
-        stringResource(R.string.navigation_moldes),
+        stringResource(R.string.navigation_patterns),
         stringResource(R.string.pattern_catalog_intro),
         onAbout,
         modifier,
