@@ -6,7 +6,7 @@
     <string name="navigation_perfis">Perfis</string>
     <string name="navigation_up">Voltar</string>
 
-    <string name="pattern_catalog_intro">Escolha a peça. Cada molde mostra as medidas, as escolhas e as fórmulas usadas no resultado.</string>
+    <string name="pattern_catalog_intro">Escolha o molde. Cada um mostra as medidas, as escolhas e as fórmulas usadas no resultado.</string>
     <string name="pattern_catalog_skirt">Tecido plano, com cós e fechamento. Quatro raios: costura e corte da cintura e da barra.</string>
 
     <string name="guide_library_intro">Técnicas passo a passo. Abra um guia antes de calcular ou a partir de um resultado.</string>
