@@ -204,27 +204,27 @@ private enum class Destination(
     @DrawableRes val icon: Int,
     @DrawableRes val selectedIcon: Int,
 ) {
-    Moldes(
+    Patterns(
         PatternCatalogKey,
-        R.string.navigation_moldes,
+        R.string.navigation_patterns,
         R.drawable.ic_design_services,
         R.drawable.ic_design_services_filled,
     ),
-    Projetos(
+    Projects(
         ProjectsKey,
-        R.string.navigation_projetos,
+        R.string.navigation_projects,
         R.drawable.ic_folder,
         R.drawable.ic_folder_filled,
     ),
-    Guias(
+    Guides(
         GuideLibraryKey,
-        R.string.navigation_guias,
+        R.string.navigation_guides,
         R.drawable.ic_menu_book,
         R.drawable.ic_menu_book_filled,
     ),
-    Perfis(
+    Profiles(
         ProfileManagementKey,
-        R.string.navigation_perfis,
+        R.string.navigation_profiles,
         R.drawable.ic_group,
         R.drawable.ic_group_filled,
     ),

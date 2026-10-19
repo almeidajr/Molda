@@ -59,7 +59,7 @@ fun ProjectsScreen(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
-        MoldaTopAppBar(stringResource(R.string.navigation_projetos), onAbout = onAbout)
+        MoldaTopAppBar(stringResource(R.string.navigation_projects), onAbout = onAbout)
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             Column(
                 Modifier.widthIn(max = 640.dp).fillMaxWidth().verticalScroll(rememberScrollState())

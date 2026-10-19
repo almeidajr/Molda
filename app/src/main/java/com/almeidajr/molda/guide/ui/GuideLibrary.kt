@@ -28,7 +28,7 @@ fun GuideLibrary(
     modifier: Modifier = Modifier,
 ) {
     CatalogScreen(
-        stringResource(R.string.navigation_guias),
+        stringResource(R.string.navigation_guides),
         stringResource(R.string.guide_library_intro),
         onAbout,
         modifier,

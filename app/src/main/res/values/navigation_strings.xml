@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="navigation_moldes">Moldes</string>
-    <string name="navigation_projetos">Projetos</string>
-    <string name="navigation_guias">Guias</string>
-    <string name="navigation_perfis">Perfis</string>
+    <string name="navigation_patterns">Moldes</string>
+    <string name="navigation_projects">Projetos</string>
+    <string name="navigation_guides">Guias</string>
+    <string name="navigation_profiles">Perfis</string>
     <string name="navigation_up">Voltar</string>
 
     <string name="pattern_catalog_intro">Escolha o molde. Cada um mostra as medidas, as escolhas e as fórmulas usadas no resultado.</string>
