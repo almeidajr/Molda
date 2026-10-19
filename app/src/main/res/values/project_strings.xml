@@ -12,6 +12,7 @@
     <string name="project_loading">Carregando projetos…</string>
     <string name="project_summary">%1$s · %2$s</string>
     <string name="project_source_profile">Medidas de %1$s, tiradas em %2$s.</string>
+    <string name="project_source_profile_undated">Medidas de %1$s.</string>
     <string name="project_source_manual">Cintura digitada, sem perfil de medidas.</string>
     <string name="project_choose">Escolha um projeto na lista.</string>
     <string name="project_rename">Renomear projeto</string>

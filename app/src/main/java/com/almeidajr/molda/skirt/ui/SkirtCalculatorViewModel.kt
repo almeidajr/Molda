@@ -65,7 +65,7 @@ fun CalculatorState.snapshot(): SkirtSnapshot? {
     val radii = radii
     if (draft == null || radii == null) return null
     val source = form.sourceProfileName?.let { name ->
-        form.sourceMeasurementDate?.let { MeasurementSource(name, LocalDate.parse(it)) }
+        MeasurementSource(name, form.sourceMeasurementDate?.let(LocalDate::parse))
     }
     return SkirtSnapshot(draft, radii, source)
 }

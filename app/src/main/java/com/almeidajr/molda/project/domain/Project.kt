@@ -27,8 +27,11 @@ value class ProjectName(val text: String) {
     }
 }
 
-/** The measurement profile a snapshot's waist came from, copied as plain values. */
-data class MeasurementSource(val profileName: String, val measurementDate: LocalDate)
+/**
+ * The measurement profile a snapshot's waist came from, copied as plain values; the date is null
+ * when it was not known.
+ */
+data class MeasurementSource(val profileName: String, val measurementDate: LocalDate?)
 
 /**
  * A full-circle skirt as it was saved: the draft (waist and drafting assumptions), the calculated

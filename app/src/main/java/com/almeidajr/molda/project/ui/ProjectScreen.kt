@@ -48,14 +48,20 @@ fun ProjectScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 val source = project.snapshot.source
+                val measurementDate = source?.measurementDate
                 Text(
-                    if (source == null) {
-                        stringResource(R.string.project_source_manual)
-                    } else {
-                        stringResource(
+                    when {
+                        source == null -> stringResource(R.string.project_source_manual)
+
+                        measurementDate == null -> stringResource(
+                            R.string.project_source_profile_undated,
+                            source.profileName,
+                        )
+
+                        else -> stringResource(
                             R.string.project_source_profile,
                             source.profileName,
-                            source.measurementDate.format(ProjectDateFormat),
+                            measurementDate.format(ProjectDateFormat),
                         )
                     },
                     style = MaterialTheme.typography.bodyMedium,

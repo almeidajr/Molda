@@ -22,7 +22,7 @@ data class ProjectEntity(
     @ColumnInfo(name = "finished_hem_radius") val finishedHemRadius: Double,
     @ColumnInfo(name = "waist_cutting_radius") val waistCuttingRadius: Double,
     @ColumnInfo(name = "hem_cutting_radius") val hemCuttingRadius: Double,
-    // Both null when the waist was typed by hand; copied values, never a profile reference.
+    // Null when the waist was typed by hand; copied values, never a profile reference.
     @ColumnInfo(name = "profile_name") val profileName: String?,
     // ISO-8601 text, like profiles.measurement_date.
     @ColumnInfo(name = "measurement_date") val measurementDate: String?,

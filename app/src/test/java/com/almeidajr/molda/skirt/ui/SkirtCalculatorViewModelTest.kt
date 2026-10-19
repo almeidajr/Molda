@@ -5,6 +5,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
 import app.cash.turbine.test
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.project.domain.MeasurementSource
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtFieldError
@@ -145,6 +146,17 @@ class SkirtCalculatorViewModelTest {
             assertEquals("2026-10-12", loaded.form.sourceMeasurementDate)
             assertEquals(savedDraft, loaded.draft)
             assertFalse(loaded.isDirty)
+        }
+    }
+
+    @Test
+    fun snapshot_ofSourceWithoutMeasurementDate_keepsTheProfileName() = runTest {
+        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
+
+        calculator.load(savedDraft, sourceProfileName = "Ana", sourceMeasurementDate = null)
+
+        calculator.state.test {
+            assertEquals(MeasurementSource("Ana", null), awaitItem().snapshot()?.source)
         }
     }
 

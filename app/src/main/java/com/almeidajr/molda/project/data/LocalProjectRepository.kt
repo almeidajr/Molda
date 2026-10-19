@@ -85,7 +85,7 @@ private fun ProjectEntity.toProject() = Project(
             waistCutting = Length(waistCuttingRadius),
             hemCutting = Length(hemCuttingRadius),
         ),
-        profileName?.let { MeasurementSource(it, LocalDate.parse(checkNotNull(measurementDate))) },
+        profileName?.let { MeasurementSource(it, measurementDate?.let(LocalDate::parse)) },
     ),
     createdAt = Instant.ofEpochMilli(createdAt),
     updatedAt = Instant.ofEpochMilli(updatedAt),
