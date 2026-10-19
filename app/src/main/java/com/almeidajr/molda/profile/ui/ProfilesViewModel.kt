@@ -68,6 +68,8 @@ data class ProfilesState(
     @param:StringRes val loadError: Int? = null,
     @param:StringRes val saveError: Int? = null,
     @param:StringRes val savedMessage: Int? = null,
+    /** The profile the last save created, until its message is dismissed. */
+    val createdProfile: MeasurementProfile? = null,
     val deleteId: ProfileId? = null,
 ) {
     val inputs: Map<ProfileField, String> get() = form.inputs
@@ -131,8 +133,12 @@ class ProfilesViewModel @Inject constructor(
         viewModelScope.launch {
             val measurements = validation.measurements
             val result = current.editingId
-                ?.let { id -> repository.update(MeasurementProfile(id, measurements)) }
-                ?: repository.create(measurements).map {}
+                ?.let { id ->
+                    repository.update(MeasurementProfile(id, measurements)).map {
+                        ProfileSave.Updated
+                    }
+                }
+                ?: repository.create(measurements).map(ProfileSave::Created)
             transition { it.savedWith(result) }
         }
     }
@@ -149,7 +155,7 @@ class ProfilesViewModel @Inject constructor(
 
     fun cancel() = transition { it.cancelled() }
 
-    fun dismissMessage() = transition { it.copy(savedMessage = null) }
+    fun dismissMessage() = transition { it.copy(savedMessage = null, createdProfile = null) }
 
     // Main-thread only, so reading back the new value cannot race another transition.
     private fun transition(next: (ProfilesState) -> ProfilesState) {

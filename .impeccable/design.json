@@ -286,11 +286,11 @@
       },
       "title-large": {
         "displayName": "Title Large",
-        "purpose": "App bar and tutorial step titles, group headings, the cutting card's heading."
+        "purpose": "App bar and guide step titles, group headings, the cutting card's heading."
       },
       "title-medium": {
         "displayName": "Title Medium",
-        "purpose": "Sub-headings, profile names and picker rows, each tutorial step's lead sentence."
+        "purpose": "Sub-headings, profile names and picker rows, each guide step's lead sentence."
       },
       "body-large": {
         "displayName": "Body Large",
@@ -298,7 +298,7 @@
       },
       "body-medium": {
         "displayName": "Body Medium",
-        "purpose": "Field guidance and errors, the measurement summary, the diagram note, tutorial Detalhes."
+        "purpose": "Field guidance and errors, the measurement summary, the diagram note, guide Detalhes."
       },
       "label-large": {
         "displayName": "Label Large",
@@ -319,22 +319,22 @@
         "purpose": "Ripple, pressed states and the disclosure chevron flip; follows the system animator scale."
       },
       {
-        "name": "tutorial-ease-in-out",
+        "name": "guide-ease-in-out",
         "value": "cubic-bezier(0.45, 0, 0.55, 1)",
-        "purpose": "Rive tutorial: folds, sweeps and the unfolding, no bounce."
+        "purpose": "Rive guide: folds, sweeps and the unfolding, no bounce."
       },
       {
-        "name": "tutorial-decelerate",
+        "name": "guide-decelerate",
         "value": "cubic-bezier(0, 0, 0.3, 1)",
-        "purpose": "Rive tutorial: arcs and traces settling into place."
+        "purpose": "Rive guide: arcs and traces settling into place."
       },
       {
-        "name": "tutorial-accelerate",
+        "name": "guide-accelerate",
         "value": "cubic-bezier(0.4, 0, 1, 1)",
-        "purpose": "Rive tutorial: cut scraps lifting away."
+        "purpose": "Rive guide: cut scraps lifting away."
       },
       {
-        "name": "tutorial-step-duration",
+        "name": "guide-step-duration",
         "value": "180–240 frames (3–4 s at 60 fps), ping-pong",
         "purpose": "One step plays on request, holds its completed pose, then reverses; never plays with system animations off."
       }
@@ -348,7 +348,7 @@
       {
         "name": "pane-max",
         "value": "640dp",
-        "purpose": "Maximum readable width of a pane and of the tutorial player, centred."
+        "purpose": "Maximum readable width of a pane and of the guide player, centred."
       },
       {
         "name": "card-two-column",
@@ -356,12 +356,12 @@
         "purpose": "Cutting-card content width at which the diagram moves beside the radii."
       },
       {
-        "name": "tutorial-pinned-drawing",
+        "name": "guide-pinned-drawing",
         "value": "560dp window height",
-        "purpose": "At or above, the tutorial drawing stays pinned while the text scrolls; below, it scrolls with the text."
+        "purpose": "At or above, the guide drawing stays pinned while the text scrolls; below, it scrolls with the text."
       },
       {
-        "name": "tutorial-stacked-step-bar",
+        "name": "guide-stacked-step-bar",
         "value": "fontScale > 1.3",
         "purpose": "The step position moves above the step-bar buttons."
       }
@@ -388,8 +388,8 @@
       "name": "Tonal Button",
       "kind": "button",
       "refersTo": "button-tonal",
-      "description": "Used once: Tutorial de dobra do tecido, on the cutting card's own Heather Wash pair.",
-      "html": "<button class=\"ds-btn-tonal\">Tutorial de dobra do tecido</button>",
+      "description": "Used once: Guia de dobra do tecido, on the cutting card's own Heather Wash pair.",
+      "html": "<button class=\"ds-btn-tonal\">Guia de dobra do tecido</button>",
       "css": ".ds-btn-tonal { background: #F2DBF3; color: #514154; padding: 10px 24px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-btn-tonal:hover { background: #E7D1E8; } .ds-btn-tonal:active { background: #E2CCE3; } .ds-btn-tonal:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
     },
     {
@@ -428,16 +428,16 @@
       "name": "Results Sequence",
       "kind": "custom",
       "refersTo": "boundary-callout",
-      "description": "Under the card, 16dp apart: the wrapping action row (tonal tutorial button, Editar medidas), the Medidas utilizadas (cm) summary as one Body Medium line, and the Limites do cálculo callout on Calico High.",
-      "html": "<div class=\"ds-results\"><div class=\"ds-actions\"><button class=\"ds-tonal\">Tutorial de dobra do tecido</button><button class=\"ds-text\">Editar medidas</button></div><section class=\"ds-summary\"><h3>Medidas utilizadas (cm)</h3><p>Circunferência da cintura:&nbsp;80,00 · Folga de cintura:&nbsp;2,00 · Comprimento acabado:&nbsp;60,00 · Margem de costura da cintura:&nbsp;1,00 · Margem de barra:&nbsp;2,00</p></section><aside class=\"ds-callout\"><h3>Limites do cálculo</h3><p>Para saia godê inteira em tecido plano, com cós e fechamento. Não inclui divisão em painéis, margens do fechamento, molde do cós ou metragem de tecido.</p></aside></div>",
+      "description": "Under the card, 16dp apart: the wrapping action row (tonal guide button, Editar medidas), the Medidas utilizadas (cm) summary as one Body Medium line, and the Limites do cálculo callout on Calico High.",
+      "html": "<div class=\"ds-results\"><div class=\"ds-actions\"><button class=\"ds-tonal\">Guia de dobra do tecido</button><button class=\"ds-text\">Editar medidas</button></div><section class=\"ds-summary\"><h3>Medidas utilizadas (cm)</h3><p>Circunferência da cintura:&nbsp;80,00 · Folga de cintura:&nbsp;2,00 · Comprimento acabado:&nbsp;60,00 · Margem de costura da cintura:&nbsp;1,00 · Margem de barra:&nbsp;2,00</p></section><aside class=\"ds-callout\"><h3>Limites do cálculo</h3><p>Para saia godê inteira em tecido plano, com cós e fechamento. Não inclui divisão em painéis, margens do fechamento, molde do cós ou metragem de tecido.</p></aside></div>",
       "css": ".ds-results { display: flex; flex-direction: column; gap: 16px; color: #201B13; font-family: Roboto, system-ui, sans-serif; } .ds-actions { display: flex; flex-wrap: wrap; gap: 8px; } .ds-tonal { background: #F2DBF3; color: #514154; padding: 10px 24px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-tonal:hover { background: #E7D1E8; } .ds-text { background: transparent; color: #784F82; padding: 10px 12px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-text:hover { background: rgba(120,79,130,0.08); } .ds-tonal:focus-visible, .ds-text:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; } .ds-summary { display: flex; flex-direction: column; gap: 4px; } .ds-results h3 { margin: 0; font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-summary p { margin: 0; font: 400 14px/20px Roboto, system-ui, sans-serif; } .ds-callout { background: #F2E6D9; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; } .ds-callout p { margin: 0; font: 400 16px/24px Roboto, system-ui, sans-serif; }"
     },
     {
-      "name": "Fabric Folding Tutorial",
+      "name": "Fabric Folding Guide",
       "kind": "custom",
-      "refersTo": "tutorial-step-bar",
+      "refersTo": "guide-step-bar",
       "description": "Full-screen player, one column at most 640dp: close button and step title, the theme-bound Rive drawing in a Calico High frame, a Title Medium lead, brief context, a collapsed Detalhes in Body Medium and Faded Walnut, and the fixed Calico Mid step bar.",
-      "html": "<div class=\"ds-player\"><header class=\"ds-player-top\"><button class=\"ds-icon\" aria-label=\"Fechar tutorial\"><svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z\"/></svg></button><h1>Marcar os raios</h1></header><div class=\"ds-frame\"><svg viewBox=\"0 0 448 448\" role=\"img\" aria-label=\"Marcação proporcional em Rive\"><rect x=\"24\" y=\"24\" width=\"400\" height=\"400\" fill=\"#F2DBF3\"/><g fill=\"none\" stroke=\"#514154\" stroke-width=\"3\"><path d=\"M24 24H424M24 24V424\"/><path d=\"M424 24V424\" stroke-dasharray=\"3 7\"/><path d=\"M24 424H424\" stroke-dasharray=\"18 9\"/><path d=\"M94 24A70 70 0 0 1 24 94\"/><path d=\"M88 24A64 64 0 0 1 24 88\" stroke-dasharray=\"18 9\"/><path d=\"M413 24A389 389 0 0 1 24 413\" stroke-dasharray=\"3 7\"/><path d=\"M424 24A400 400 0 0 1 24 424\" stroke=\"#4F644A\" stroke-dasharray=\"18 7 3 7\"/></g><circle cx=\"24\" cy=\"24\" r=\"5\" fill=\"#514154\"/></svg></div><div class=\"ds-controls\"><button class=\"ds-text\">Reproduzir marcação</button></div><div class=\"ds-steps\"><p class=\"ds-lead\">Prenda fita ou régua no encontro das duas dobras fechadas e marque cada arco com raio constante.</p><ol class=\"ds-key\"><li>1. Costura da cintura: 13,05&nbsp;cm</li><li>2. Corte da cintura: 12,05&nbsp;cm</li><li>3. Barra acabada: 73,05&nbsp;cm</li><li>4. Corte da barra: 75,05&nbsp;cm</li></ol><p>As linhas 1 (contínua) e 3 (pontilhada) são referências de costura e do comprimento acabado, não de corte.</p><button class=\"ds-text ds-more\" aria-expanded=\"false\">Detalhes<svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z\"/></svg></button></div><nav class=\"ds-stepbar\"><button class=\"ds-text\">Anterior</button><span>Etapa 4 de 6</span><button class=\"ds-next\">Próximo</button></nav></div>",
+      "html": "<div class=\"ds-player\"><header class=\"ds-player-top\"><button class=\"ds-icon\" aria-label=\"Fechar guia\"><svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z\"/></svg></button><h1>Marcar os raios</h1></header><div class=\"ds-frame\"><svg viewBox=\"0 0 448 448\" role=\"img\" aria-label=\"Marcação proporcional em Rive\"><rect x=\"24\" y=\"24\" width=\"400\" height=\"400\" fill=\"#F2DBF3\"/><g fill=\"none\" stroke=\"#514154\" stroke-width=\"3\"><path d=\"M24 24H424M24 24V424\"/><path d=\"M424 24V424\" stroke-dasharray=\"3 7\"/><path d=\"M24 424H424\" stroke-dasharray=\"18 9\"/><path d=\"M94 24A70 70 0 0 1 24 94\"/><path d=\"M88 24A64 64 0 0 1 24 88\" stroke-dasharray=\"18 9\"/><path d=\"M413 24A389 389 0 0 1 24 413\" stroke-dasharray=\"3 7\"/><path d=\"M424 24A400 400 0 0 1 24 424\" stroke=\"#4F644A\" stroke-dasharray=\"18 7 3 7\"/></g><circle cx=\"24\" cy=\"24\" r=\"5\" fill=\"#514154\"/></svg></div><div class=\"ds-controls\"><button class=\"ds-text\">Reproduzir marcação</button></div><div class=\"ds-steps\"><p class=\"ds-lead\">Prenda fita ou régua no encontro das duas dobras fechadas e marque cada arco com raio constante.</p><ol class=\"ds-key\"><li>1. Costura da cintura: 13,05&nbsp;cm</li><li>2. Corte da cintura: 12,05&nbsp;cm</li><li>3. Barra acabada: 73,05&nbsp;cm</li><li>4. Corte da barra: 75,05&nbsp;cm</li></ol><p>As linhas 1 (contínua) e 3 (pontilhada) são referências de costura e do comprimento acabado, não de corte.</p><button class=\"ds-text ds-more\" aria-expanded=\"false\">Detalhes<svg width=\"24\" height=\"24\" viewBox=\"0 -960 960 960\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z\"/></svg></button></div><nav class=\"ds-stepbar\"><button class=\"ds-text\">Anterior</button><span>Etapa 4 de 6</span><button class=\"ds-next\">Próximo</button></nav></div>",
       "css": ".ds-player { max-width: 640px; background: #FFF8F3; color: #201B13; font-family: Roboto, system-ui, sans-serif; display: flex; flex-direction: column; } .ds-player-top { display: flex; align-items: center; gap: 4px; min-height: 64px; padding: 0 4px; } .ds-player-top h1 { flex: 1; margin: 0 12px 0 0; font: 400 22px/28px Roboto, system-ui, sans-serif; } .ds-icon { width: 48px; height: 48px; display: grid; place-items: center; background: transparent; color: #4E4539; border: none; border-radius: 9999px; cursor: pointer; } .ds-icon:hover { background: rgba(78,69,57,0.08); } .ds-frame { margin: 0 16px; align-self: center; width: min(100% - 32px, 320px); padding: 8px; background: #F2E6D9; border-radius: 16px; } .ds-frame svg { display: block; width: 100%; } .ds-controls { display: flex; justify-content: center; } .ds-steps { display: flex; flex-direction: column; gap: 16px; padding: 16px; } .ds-steps p { margin: 0; font: 400 16px/24px Roboto, system-ui, sans-serif; } .ds-steps .ds-lead { font: 500 16px/24px Roboto, system-ui, sans-serif; } .ds-key { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font: 400 16px/24px Roboto, system-ui, sans-serif; } .ds-text { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; background: transparent; color: #784F82; padding: 10px 12px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-text:hover { background: rgba(120,79,130,0.08); } .ds-stepbar { display: flex; align-items: center; padding: 8px 16px; background: #F8ECDF; } .ds-stepbar span { flex: 1; text-align: center; font: 500 14px/20px Roboto, system-ui, sans-serif; color: #4E4539; } .ds-next { background: #784F82; color: #FFFFFF; padding: 10px 24px; font: 500 14px/20px Roboto, system-ui, sans-serif; min-height: 48px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s; } .ds-next:hover { background: #6E4878; } .ds-icon:focus-visible, .ds-text:focus-visible, .ds-next:focus-visible { outline: 3px solid #5F3869; outline-offset: 2px; }"
     },
     {
@@ -451,7 +451,7 @@
   ],
   "narrative": {
     "northStar": "The Tailor's Notebook",
-    "overview": "Molda should feel like the drafting notebook a skilled tailor keeps next to the cutting table. The pages are warm, the figures are exact, and a worked explanation always sits in the margin. Every screen is a page you can check: the inputs at the top, the assumptions stated, the results set apart on a cutting card, and the formulas available on request. The character is tactile and confident. Primary actions are firm pill shapes you can rely on, and grouped content reads like swatches laid on raw calico, stacked by tone rather than lifted with shadows.\n\nThe system is native Material 3, themed rather than reinvented. Dynamic color is the runtime default, so the dyed-fabric palette is the fallback identity. The notebook character must also survive in shape, spacing and hierarchy when the wallpaper replaces the plum. Density is calm: one readable column on compact windows, generous 16dp rhythm, and two panes only when the content truly fits. Interface motion is Material's own and never moves a dimension while someone is reading it; the one choreographed motion is the tutorial drawing, which plays only when asked.",
+    "overview": "Molda should feel like the drafting notebook a skilled tailor keeps next to the cutting table. The pages are warm, the figures are exact, and a worked explanation always sits in the margin. Every screen is a page you can check: the inputs at the top, the assumptions stated, the results set apart on a cutting card, and the formulas available on request. The character is tactile and confident. Primary actions are firm pill shapes you can rely on, and grouped content reads like swatches laid on raw calico, stacked by tone rather than lifted with shadows.\n\nThe system is native Material 3, themed rather than reinvented. Dynamic color is the runtime default, so the dyed-fabric palette is the fallback identity. The notebook character must also survive in shape, spacing and hierarchy when the wallpaper replaces the plum. Density is calm: one readable column on compact windows, generous 16dp rhythm, and two panes only when the content truly fits. Interface motion is Material's own and never moves a dimension while someone is reading it; the one choreographed motion is the guide drawing, which plays only when asked.",
     "keyCharacteristics": [
       "Dynamic color first; the warm Mulberry/Lichen/Calico palette is the fallback.",
       "Flat tonal layering; no decorative shadows, no nested cards.",
@@ -499,10 +499,10 @@
     "dos": [
       "Do take every color from `MaterialTheme.colorScheme` roles so dynamic color, dark theme and the fallback palette all hold.",
       "Do group inputs on Calico Low with 16dp corners and 16dp padding, and put the four radii on the Heather Wash cutting card with 28dp corners.",
-      "Do give each page one filled Mulberry Dye primary action and make the other actions text buttons; the tutorial entry is the one tonal button.",
+      "Do give each page one filled Mulberry Dye primary action and make the other actions text buttons; the guide entry is the one tonal button.",
       "Do set every radius in Headline Small with two pt-BR decimals and a non-breaking space before \"cm\", and show each value once.",
-      "Do put formulas, drafting steps and tutorial details behind disclosures that start collapsed and announce their state.",
-      "Do keep the tutorial's step bar fixed and fully visible on every step, at every text size.",
+      "Do put formulas, drafting steps and guide details behind disclosures that start collapsed and announce their state.",
+      "Do keep the guide's step bar fixed and fully visible on every step, at every text size.",
       "Do distinguish diagram and drawing lines by stroke pattern and number labels, and provide the text equivalent.",
       "Do keep the diagram on the cutting card's own surface, under \"Diagrama das linhas\", directly after or beside the radii.",
       "Do follow the card with the action row, the summary, the limits callout and the disclosures, in that order.",
@@ -516,7 +516,7 @@
       "Don't make one radius more prominent than the others.",
       "Don't signal reference versus cutting, or error versus valid, by color alone.",
       "Don't use the legacy Compose Material Icons library. Use Material Symbols XML vectors tinted by the theme.",
-      "Don't animate a dimension while it is being read, or add choreography outside the tutorial drawing; interface motion stays Material's own."
+      "Don't animate a dimension while it is being read, or add choreography outside the guide drawing; interface motion stays Material's own."
     ]
   }
 }

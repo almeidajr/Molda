@@ -10,7 +10,7 @@ implementation remains outside that design-system phase.
 The results redesign in [issue #51](https://github.com/almeidajr/Molda/issues/51)
 updates the screen structure and result details below: the calculator gains a
 top app bar, results become a cutting card, the explanation and formulas sit
-behind disclosures, and the fabric-folding tutorial opens in a full-screen
+behind disclosures, and the fabric-folding guide opens in a full-screen
 player instead of a dialog.
 
 Status: confirmed design, implemented in
@@ -36,11 +36,17 @@ accessibility and human-feedback verification.
 
 ## Confirmed screen structure and calculation flow
 
-- Launch into the calculator under a top app bar titled "Saia godê inteira",
-  whose labelled "Perfis de medidas" action opens the separate management
-  screen. Place "Usar perfil" and the waist's source just above the waist input.
-  Superseded by [ADR 0003](adr/0003-top-level-navigation-shell.md): ~~Do not introduce an additional home screen; the app bar is not a navigation
-  destination.~~
+- Following [ADR 0003](adr/0003-top-level-navigation-shell.md), the app opens
+  on the Moldes catalog inside a navigation suite with four destinations,
+  Moldes · Projetos · Guias · Perfis: a navigation bar under 600dp, a rail from
+  600dp. "Saia godê inteira" in the catalog opens the calculator under a top app
+  bar with that title and an up arrow back to the catalog. Perfis is profile
+  management as its own destination; Projetos shows an empty state that defines
+  a project; Guias lists guides. Each destination keeps its own back stack:
+  switching keeps a typed draft, re-selecting the current destination returns
+  to its root, Back at another destination's root goes to Moldes, and Back at
+  the Moldes root leaves the app. Place "Usar perfil" and the waist's source
+  just above the waist input.
 - Keep the five inputs in one form, grouped into body measurement, garment
   choices, and cutting allowances. Place brief guidance by the relevant fields;
   ease and allowances still require explicit values, including zero.
@@ -49,7 +55,7 @@ accessibility and human-feedback verification.
   screen. The card presents all four labelled radii once, distinguishes
   stitching/reference dimensions from cutting dimensions, and pairs each value
   with its diagram number and line style. The drafting diagram sits on the
-  same card, after the radii or beside them when both fit. "Tutorial de dobra
+  same card, after the radii or beside them when both fit. "Guide de dobra
   do tecido" and "Editar medidas" follow it in one action row.
 - Keep construction boundaries beside results in one callout. Put the drafting
   explanation ("Como levar os raios ao papel") and the formulas behind
@@ -58,7 +64,7 @@ accessibility and human-feedback verification.
 ## Design tree
 
 - Confirmed product journey and scope
-  - Confirmed: calculator launch and separate profile management
+  - Confirmed: Moldes catalog launch and a Perfis destination (ADR 0003)
     - Confirmed: profile selection, creation, editing, and deletion safety
     - Confirmed: bottom-sheet picker, management list actions, explicit date entry
   - Confirmed: single grouped form with contextual guidance
@@ -119,10 +125,10 @@ accessibility and human-feedback verification.
   avoid fold hinges, and preserve the current draft when resizing. One column
   spans a flat fold and keeps to one side of a half-open or separating one; two
   panes split at the fold, or share one side when they cannot fit beside it.
-- Superseded by [ADR 0003](adr/0003-top-level-navigation-shell.md): ~~Keep the agreed hierarchical navigation; no home screen, bottom navigation
-  bar, rail or drawer is needed.~~ The full-screen tutorial player keeps to one
-  side of a half-open or separating fold but spans a flat one, and the cutting
-  card stays in the results pane.
+- The navigation suite keeps to the start edge as a rail and never straddles a
+  fold. The full-screen guide player hides the compact navigation bar, keeps
+  to one side of a half-open or separating fold but spans a flat one, and the
+  cutting card stays in the results pane.
 
 ## Confirmed accessibility acceptance criteria
 
@@ -142,12 +148,13 @@ accessibility and human-feedback verification.
   operations in a brief snackbar after storage succeeds. Explain device-only
   storage and potential loss on the management screen and creation form.
 - Back first closes the keyboard or active overlay, then returns through
-  editor to profiles to calculator. Cancel and Back share the unsaved-change
+  editor to profiles, then to Moldes. Cancel and Back share the unsaved-change
   confirmation. Resizing into a multi-pane layout must not discard the draft;
   Back applies to the active editor rather than removing a visible list pane.
-- Dismissing the profile picker leaves the calculation untouched. Creating a
-  profile from the picker returns to the picker after a successful save without
-  automatically selecting the newly created profile.
+- Dismissing the profile picker leaves the calculation untouched. "Novo perfil"
+  in the picker opens the editor on the Moldes stack; saving returns to the
+  calculator with the new profile selected, and cancelling (after the
+  unsaved-change confirmation when needed) returns to the picker.
 
 ## Confirmed result details and edge cases
 
@@ -156,14 +163,14 @@ accessibility and human-feedback verification.
   and hem cutting radii). Keep all four values equally readable, in centimetres
   with two decimal places, each shown and announced once. The diagram follows
   on the card under "Diagrama das linhas"; the radius rows serve as its key.
-  Then include one action row with the tutorial entry and "Editar medidas", a
+  Then include one action row with the guide entry and "Editar medidas", a
   one-line summary of all five calculation inputs under "Medidas utilizadas
   (cm)", the construction-limits callout, and the collapsed drafting
   explanation and formulas.
 - The diagram's text equivalent describes every line but no longer repeats the
   radius values, which the card states once. The product owner confirmed this
   departure from the earlier "lists all dimensions" contract.
-- The tutorial player keeps the drawing pinned while the step's instructions
+- The guide player keeps the drawing pinned while the step's instructions
   scroll (in short windows the drawing scrolls with them) and has a fixed bar:
   "Anterior", "Etapa n de 6", and "Próximo", which becomes "Concluir" on the last
   step. Close, "Concluir" and Back return to the results. Its still frame stays

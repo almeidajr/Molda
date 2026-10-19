@@ -19,11 +19,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Rive.init(this)
         enableEdgeToEdge()
+        // Read once here: the package manager is I/O and stays out of composition.
+        val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
         setContent {
             MoldaTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MoldaRoute(
                         modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
+                        versionName = versionName,
                     )
                 }
             }

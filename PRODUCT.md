@@ -24,7 +24,7 @@ Molda is a pattern calculation assistant, not an automatic pattern generator. It
 Three things together, which a generic circle-skirt calculator does not combine:
 
 1. **Explained, checkable math.** Every result shows its inputs, assumptions and formulas. Reference (stitching) dimensions are kept apart from cutting dimensions. Construction boundaries sit next to the results.
-2. **Visual teaching built on the user's own numbers.** The Rive fabric-folding tutorial keeps the proportions of the current calculation's radii.
+2. **Visual teaching built on the user's own numbers.** The Rive fabric-folding guide keeps the proportions of the current calculation's radii.
 3. **Reusable measurement profiles.** Saved body measurements for each person someone sews for are stored only on the device.
 
 It is a native, offline, private app written in Brazilian Portuguese.
@@ -32,14 +32,14 @@ It is a native, offline, private app written in Brazilian Portuguese.
 ## Operating Context
 
 - Paper drafting and fabric cutting, often at a cutting table, with values transferred by hand.
-- Fabric is folded in layers before marking and cutting. The tutorial assumes fabric large enough for the pattern and says so.
+- Fabric is folded in layers before marking and cutting. The guide assumes fabric large enough for the pattern and says so.
 - Works offline, with no account. Profiles live only on the device, so clearing app data or replacing the device loses them. The UI must say this.
 
 ## Capabilities and Constraints
 
 - Full-circle skirt (saia godê inteira) calculator in woven fabric with waistband and closure. Inputs: waist, explicit waist ease, finished skirt length, waist seam allowance, hem allowance. Outputs: four radii, shown to two decimals in cm. The math stays unrounded until display.
 - Measurement profiles hold a name or nickname, waist, measurement date and optional notes. Profiles are optional. A profile fills only the waist field and is never changed silently by a calculation.
-- Fabric-folding tutorial (Rive) opens from the results. It plays step by step with replay, previous and next controls. The drawing is proportional, labelled, and marked as not actual size.
+- Fabric-folding guide (Rive) opens from the results. It plays step by step with replay, previous and next controls. The drawing is proportional, labelled, and marked as not actual size.
 - pt-BR only, centimetres only, decimal commas accepted. Ease and allowances need explicit values, which may be zero. There are no hidden assumptions.
 - Android API 36+, Jetpack Compose and Material 3, and adaptive layouts for wide windows and foldables.
 - Excluded for now: other circle fractions or garments, printable or 1:1 templates, fit diagnosis, panel layout, closure allowances, waistband drafting, yardage, accounts, sync, backup and calculation history. The roadmap lists follow-ups whose priority is undecided.

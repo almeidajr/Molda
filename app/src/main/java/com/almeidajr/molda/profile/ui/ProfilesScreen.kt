@@ -59,12 +59,7 @@ fun ProfilesContent(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(
-            stringResource(R.string.profile_management_title),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        Text(stringResource(R.string.profile_local_only))
+        Text(stringResource(R.string.profile_management_local_only))
         if (state.isLoading) {
             CircularProgressIndicator()
             Text(stringResource(R.string.profile_loading))

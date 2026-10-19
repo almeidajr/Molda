@@ -8,7 +8,7 @@ remain in force.
 Implementation is specified in [GitHub issue #35](https://github.com/almeidajr/Molda/issues/35).
 The results redesign in [issue #51](https://github.com/almeidajr/Molda/issues/51)
 supersedes the result groups, inline explanation and dialog tutorial with the
-cutting card, disclosures, a full-screen tutorial player and a calculator top app
+cutting card, disclosures, a full-screen guide player and a calculator top app
 bar; this document describes what shipped.
 
 ## Accepted direction
@@ -42,11 +42,11 @@ line heights are in sp and scale with system preferences.
 | Use | Material role | Size / line height | Weight |
 | --- | --- | --- | --- |
 | Profile screen heading | headlineMedium | 28 / 36 | Regular |
-| App bar title, section heading, cutting-card heading, tutorial step title | titleLarge | 22 / 28 | Regular |
+| App bar title, section heading, cutting-card heading, guide step title | titleLarge | 22 / 28 | Regular |
 | Profile name / component title / cutting-card group | titleMedium | 16 / 24 | Medium |
 | Field text / explanatory body | bodyLarge | 16 / 24 | Regular |
 | Supporting text / field errors | bodyMedium | 14 / 20 | Regular |
-| Action label, line number, tutorial step position | labelLarge | 14 / 20 | Medium |
+| Action label, line number, guide step position | labelLarge | 14 / 20 | Medium |
 | Each calculated radius value | headlineSmall | 24 / 32 | Medium emphasis |
 
 Display all four radii with equal size and weight; labels identify their meaning.
@@ -73,11 +73,11 @@ hex values and contrast measurements belong in this document before implementati
 | --- | --- |
 | primary / onPrimary | Calculate and Save fills/labels |
 | primaryContainer / onPrimaryContainer | Profile-creation FAB |
-| secondaryContainer / onSecondaryContainer | Cutting card; tonal tutorial action |
+| secondaryContainer / onSecondaryContainer | Cutting card; tonal guide action |
 | surface / onSurface | Screen background, top app bar and essential text |
 | surfaceContainerLow | Grouped input surfaces |
-| surfaceContainer | Tutorial step bar |
-| surfaceContainerHigh | Calculation-limits callout; tutorial drawing frame, which shows through the transparent Rive artboards; overlays where Material defaults select it |
+| surfaceContainer | Guide step bar |
+| surfaceContainerHigh | Calculation-limits callout; guide drawing frame, which shows through the transparent Rive artboards; overlays where Material defaults select it |
 | onSurfaceVariant | Supporting text and secondary labels |
 | outline | Essential field boundaries |
 | outlineVariant | Decorative separators |
@@ -122,7 +122,7 @@ Keep the calculator as the launch destination. Its top app bar shows the screen
 title and the labelled "Perfis de medidas" action; the bar is not a navigation
 destination. "Usar perfil" and the waist's source sit just above the waist
 field. Selection uses a modal bottom sheet; editing and creation use a dedicated
-profile form. The fabric-folding tutorial opens as a full-screen player owned by
+profile form. The fabric-folding guide opens as a full-screen player owned by
 the same hierarchical route; its close action, "Concluir", system Back and
 predictive Back return to the results.
 Retain the existing hierarchical Back, unsaved-discard and picker-return rules
@@ -136,7 +136,7 @@ list may sit beside its active editor. Avoid hinges and preserve drafts when
 window size or orientation changes. Large text can return the layout to one pane.
 One column spans a flat fold and keeps to one side of a half-open or separating
 one; two panes split at the fold, or share one side when they cannot fit beside it.
-The cutting card follows the results pane. The tutorial player is one column of
+The cutting card follows the results pane. The guide player is one column of
 at most 640dp that keeps to one side of a half-open or separating vertical
 fold, spans a flat one, and keeps above or below a horizontal one. When its window is under 560dp tall, the drawing scrolls with the
 instructions instead of staying pinned, so the fixed step bar and the text both
@@ -145,8 +145,89 @@ keep room.
 Apply system-bar and keyboard insets. Scroll focused fields and their errors
 into view. Primary actions stay in the form flow so they cannot cover fields or
 results. No new home screen, bottom navigation, drawer or navigation rail is
-needed for the accepted destination hierarchy; the top app bar and the tutorial
+needed for the accepted destination hierarchy; the top app bar and the guide
 player do not change that.
+
+## Navigation shell
+
+Status: **approved by the product owner on
+[#87](https://github.com/almeidajr/Molda/issues/87)**; implementation follows in
+[#83](https://github.com/almeidajr/Molda/issues/83)'s later sub-issues; [#88](https://github.com/almeidajr/Molda/issues/88) ships the suite, Moldes, Projetos and Perfis. It
+supersedes the "calculator on launch", "no home screen, bottom navigation,
+drawer or navigation rail" and "Perfis de medidas app-bar action" lines above,
+following [ADR 0003](adr/0003-top-level-navigation-shell.md). The comps (compact
+and wide, light and dark, with annotations) were reviewed on #87.
+
+### Decisions recorded on #87
+
+- Perfis uses the `group` glyph.
+- The Projetos empty state only defines a project and offers "Ver moldes"; it
+  says nothing about when saving arrives.
+- On compact windows the navigation bar is hidden while the guide player is open.
+- Navigation labels are always shown and auto-size down to a 14sp floor to fit
+  the item width at large text.
+- On wide windows Guias shows the "Escolha um guia na lista." placeholder until
+  a guide is chosen, even with a single guide.
+- About adds a "Licenças de código aberto" row that opens the licences screen;
+  no GitHub repository link yet.
+- Perfis is titled "Perfis de medidas" in the top app bar; "(opcional)" moves into
+  the storage warning.
+
+### Destinations
+
+| Order | Label | Material Symbol (unselected / selected) | Root screen | Back at root |
+| --- | --- | --- | --- | --- |
+| 1 | Moldes | `design_services` / filled | Catalog of pattern drafts; start destination | Exits the app |
+| 2 | Projetos | `folder` / filled | Empty state until projects ship | Switches to Moldes |
+| 3 | Guias | `menu_book` / filled | Library of guides | Switches to Moldes |
+| 4 | Perfis | `group` / filled | Measurement profiles (existing list-detail) | Switches to Moldes |
+
+Glyphs are Material Symbols Outlined, weight 400, 24dp, stored as XML vectors
+(`ic_<name>` and `ic_<name>_filled`) with no theme tint. The filled glyph marks
+the selected destination. `group` was chosen over a single avatar because
+profiles belong to the people someone sews for, not to an account.
+
+### Component contracts
+
+| Component | Content and interaction | States, accessibility and recovery |
+| --- | --- | --- |
+| Navigation suite | `NavigationSuiteScaffold` around the Navigation 3 `NavDisplay`. Compact (<600dp): short navigation bar, 64dp, `surfaceContainer`. Medium and expanded: collapsed wide navigation rail, 96dp, `surface`, items top-aligned, no FAB or menu in the rail. Labels always shown, auto-sizing down to 14sp to fit the item width. | Selected item: `secondaryContainer` pill with the filled glyph in `onSecondaryContainer`, label in `secondary`; unselected in `onSurfaceVariant`. Selection is never colour alone (the pill measures 1.11–1.97:1 against its container): filled glyph, label colour and selected semantics carry it. Icons are decorative; the label is the accessible name. Keyboard: one focus group, arrow keys move, Enter or Space selects. Re-selecting pops to the root. Items ≥90 × 64dp. |
+| Top app bar (root screens) | 64dp, Title Large heading with the destination's name ("Moldes", "Projetos", "Guias", "Perfis de medidas"), then the About action: `info` icon button, 48dp, "Sobre o Molda". | Title wraps at large text and keeps 16dp from the action. After switching destination, focus lands on the title. |
+| Top app bar (pushed screens) | Up arrow (`arrow_back`, "Voltar") and the screen title; no About action. The skirt calculator no longer carries "Perfis de medidas". | Up and system Back pop the current destination's stack. |
+| Catalog / library entry | Whole-row target on `surfaceContainerLow`, 16dp corners, 16dp padding, ≥88dp tall: a 56dp `secondaryContainer` thumbnail (quarter-arc motif for the skirt, folded square for fabric folding, decorative), the name in Title Medium, one Body Medium sentence in `onSurfaceVariant`, and a decorative `chevron_right`. A one-sentence Body Medium intro sits above the entries. | One merged TalkBack node announced as a button. Only existing moldes and guides are listed; no "em breve" entries. Wide windows: an adaptive grid with a 320dp minimum column, at most 1040dp wide. In a list-detail pane, the selected entry fills with `secondaryContainer`, drops the chevron and is exposed as selected. |
+| Example label (guide) | Pinned with the drawing at the top of a guide opened from Guias: `surfaceContainerHighest`, 16dp corners, decorative `info` glyph, "Exemplo — não são as suas medidas" in Label Large, the example inputs ("Cintura 80, folga 2, comprimento 60, margens 1 e 2 (cm)") in Body Small, and the "Calcular a minha saia" text button. | Never scrolls away and never appears when the guide carries a calculation's radii. A neutral surface on purpose: `secondaryContainer` means "your result" and the tertiary roles belong to the drawing. "Calcular a minha saia" switches to Moldes and opens the calculator, keeping any draft. The guide keeps one filled action ("Próximo"). |
+| Guide player in the shell | The existing full-screen player, renamed "Guia de dobra do tecido" (entry button) and "Fechar guia" (close). From a result it opens on the Moldes stack with the calculated radii; from Guias it opens on the Guias stack with the example radii. | Compact: the navigation bar is hidden while the player is open (`NavigationSuiteScaffoldState.hide()`); the fixed step bar stays the only bottom control. Wide: the rail stays; from Guias the guide is the list-detail detail pane with no close button, and the placeholder reads "Escolha um guia na lista.". |
+| Projetos empty state | Start-aligned in the content column: 48dp `folder` glyph (decorative, `onSurfaceVariant`), Title Large "Nenhum projeto salvo", Body Large definition "Um projeto guarda, com um nome, as medidas, as escolhas e o resultado de um molde, mesmo que o perfil usado mude depois.", and the filled "Ver moldes". | No dates, promises or statement about when saving arrives. "Ver moldes" switches to Moldes. Wide: one pane, at most 640dp, centred. |
+| Perfis root | The existing list, editor, picker and deletion flow. The title moves to the top app bar ("Perfis de medidas"); the in-content "Perfis de medidas (opcional)" heading and the "Voltar ao cálculo" button go; the storage warning starts with "Opcionais." | The "Novo perfil" FAB sits 16dp above the navigation bar on compact and at the start edge of the list pane in two panes. "Criar perfil" from the picker opens the editor on the Moldes stack, as #83 specifies. |
+| About screen | Pushed on the current destination's stack: up arrow, title "Sobre o Molda", "Molda" in Headline Medium, a Body Large description of the product and its limits, an offline/on-device line, a divider, a "Versão" list row with `versionName`, and a "Licenças de código aberto" row (decorative `license` glyph and `chevron_right`, whole-row 56dp target) that opens the licences screen. No GitHub repository link yet. | The space below these rows is reserved for the GitHub Releases update check; nothing is drawn there until it ships. |
+
+### Layout per window size
+
+- **Compact (<600dp):** navigation bar; one column; 16dp margins.
+- **Medium (600–839dp):** rail; panes follow the existing content-fit rule
+  measured beside the rail (`360dp × max(fontScale, 1) × 2 + 24dp`), so a
+  medium window shows one pane.
+- **Expanded (≥840dp):** rail; two panes where the rule fits: Guias list beside
+  the guide, Perfis list beside the editor, calculator inputs beside the cutting
+  card.
+- **Foldables:** the rail stays at the start edge of the left half; two panes
+  split at a vertical fold, or share the larger side or stack when the left half
+  beside the rail cannot hold a pane. In tabletop posture content moves to the
+  larger half and no navigation item straddles the fold. A flat fold is no fold.
+
+### Accessibility checks for the shell
+
+Measured contrast in the fallback scheme (light / dark): bar labels
+`onSurfaceVariant` on `surfaceContainer` 8.08 / 9.65:1; selected label
+`secondary` on `surfaceContainer` 5.54 / 9.64:1; rail labels on `surface`
+8.94 / 10.92:1 and 6.13 / 10.90:1; selected glyph `onSecondaryContainer` on
+`secondaryContainer` 7.25:1; example label text on `surfaceContainerHighest`
+13.27 / 9.55:1 and supporting text 7.29 / 7.26:1; its `primary` action 5.03 /
+7.24:1. At 200% text the 12sp label becomes about 24sp, and "Projetos" is about
+90dp, the width of one bar item on a 360dp phone: labels never ellipsize or
+wrap and auto-size down to a 14sp floor when the scaled size would overflow the
+item width; the bar grows in height with the text. Verify on a device at 200%
+and 360dp.
 
 ## Reusable component contracts
 
@@ -161,12 +242,12 @@ Material component. Reuse the current Compose components and state ownership.
 | Primary action | Filled "Calcular" (full width at the end of the form) or "Salvar" with visible label | Calculate remains enabled for incomplete input; show save progress and prevent duplicate writes; retain values on failure |
 | Secondary action | Tonal or text button for reuse/edit/cancel | Visible pressed/focus feedback; accessible name; destructive actions use explicit wording |
 | Profile row | Name, waist, measurement date; notes when needed to distinguish identical rows | Picker tap selects; management tap edits with separately labelled overflow; loading, empty, failure/Retry and ready list |
-| Profile picker | Material modal sheet, profile rows and creation action | Dismissal changes nothing; creation returns to picker without auto-selection; manual calculation remains available |
+| Profile picker | Material modal sheet, profile rows and creation action | Dismissal changes nothing; creation opens the editor on the Moldes stack, saving selects the new profile and cancelling returns to the picker; manual calculation remains available |
 | Cutting card | secondaryContainer, 28dp corners; "Raios para o molde" heading, reference and cutting groups, each radius with diagram number, line-style sample, label and value; then the drafting diagram under "Diagrama das linhas", directly after the radii or beside them when two 260dp × max(fontScale, 1) columns fit | Each value shown and announced once, outside the expanded formulas; heading announces a successful calculation once; Calculate hides the keyboard and brings the whole card into view; hidden after any input change; wide empty pane explains how to calculate |
-| Results follow-up | One wrapping action row (tonal tutorial action, "Editar medidas"), then the "Medidas utilizadas (cm)" summary as one wrapping line with the unit stated once, then the "Limites do cálculo" callout | "Editar medidas" focuses waist; the callout keeps every honest limit |
+| Results follow-up | One wrapping action row (tonal guide action, "Editar medidas"), then the "Medidas utilizadas (cm)" summary as one wrapping line with the unit stated once, then the "Limites do cálculo" callout | "Editar medidas" focuses waist; the callout keeps every honest limit |
 | Drafting diagram | Square sketch up to 400dp on the cutting card's own surface, with numbered reference/cutting lines in distinct styles; the card's radius rows are its key | Text equivalent gives each line's number, style and meaning, the drawing order, coincident lines and allowance direction, but not the radius values, which the cutting card states once (a departure from the earlier "lists all dimensions" contract, confirmed by the owner); no color-only information or gesture-only controls |
 | Disclosures | "Como levar os raios ao papel" and "Fórmulas" text buttons with a chevron; both start collapsed | Expose "Recolhido"/"Expandido"; 48dp target; content wraps and stays readable with scaled text; label wraps before the chevron shrinks |
-| Tutorial player | Full screen: close action and step title, pinned Rive drawing with play/replay/pause, scrolling instructions, fixed bar with "Anterior", "Etapa n de 6", "Próximo"/"Concluir" | "Anterior" disabled on step 1; "Concluir" closes; Back closes; focus returns to the entry; step survives recreation; reduced motion shows each step's final drawing; bar fully visible on every step at 200% text |
+| Guide player | Full screen: close action and step title, pinned Rive drawing with play/replay/pause, scrolling instructions, fixed bar with "Anterior", "Etapa n de 6", "Próximo"/"Concluir" | "Anterior" disabled on step 1; "Concluir" closes; Back closes; focus returns to the entry; step survives recreation; reduced motion shows each step's final drawing; bar fully visible on every step at 200% text |
 | Feedback | Inline field/action errors, loading indicators and brief success snackbar | Announce results/errors without duplicate speech; success only after storage succeeds; errors persist until resolved |
 | Date entry | Editable dd/mm/aaaa field with Material date picker | Initially blank; syntax and future-date errors; explicit actual measurement date |
 | Confirmation dialog | Named deletion confirmation; unsaved-discard confirmation | Clear cancel and destructive actions; retain draft after cancel or failed save/delete |
@@ -223,7 +304,7 @@ meet the ADR threshold.
 
 ## Known gaps
 
-- The tutorial drawing's line numbers are stroked vector numerals, not text, so
+- The guide drawing's line numbers are stroked vector numerals, not text, so
   they do not follow the system font size; the written instructions carry every
   number and value as scalable text.
 

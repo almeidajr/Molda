@@ -19,6 +19,7 @@ import androidx.compose.ui.test.hasAnyChild
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -44,7 +45,7 @@ import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 
-/** Large windows, large text and hinges keep the cutting card and tutorial bar whole. */
+/** Large windows, large text and hinges keep the cutting card and guide bar whole. */
 @RunWith(AndroidJUnit4::class)
 class AdaptiveResultsTest {
     private val publisher = WindowLayoutInfoPublisherRule()
@@ -61,10 +62,12 @@ class AdaptiveResultsTest {
     private var contentBounds = Rect.Zero
 
     @Test
-    fun forcedSizes_keepCuttingCardAndItsDiagramInReadableResultsPane_andTutorialBarWhole() {
+    fun forcedSizes_keepCuttingCardAndItsDiagramInReadableResultsPane_andGuideBarWhole() {
         listOf(
             ResultsLayout(DpSize(1600.dp, 1000.dp), 1f, isTwoPane = true, isDiagramBeside = true),
-            ResultsLayout(DpSize(700.dp, 1000.dp), 1f, isTwoPane = false, isDiagramBeside = true),
+            // The 96dp navigation rail leaves the card too narrow for two 260dp columns.
+            ResultsLayout(DpSize(700.dp, 1000.dp), 1f, isTwoPane = false, isDiagramBeside = false),
+            ResultsLayout(DpSize(800.dp, 1000.dp), 1f, isTwoPane = false, isDiagramBeside = true),
             ResultsLayout(DpSize(1600.dp, 1000.dp), 2f, isTwoPane = true, isDiagramBeside = false),
             ResultsLayout(DpSize(1000.dp, 1000.dp), 2f, isTwoPane = false, isDiagramBeside = false),
             // A landscape phone: too short to pin the drawing above the instructions.
@@ -82,24 +85,23 @@ class AdaptiveResultsTest {
                 assertTrue("$context card below inputs", card.left < waist.right)
             }
             assertDiagramInCard(card, layout.isDiagramBeside, context)
-            openTutorial()
-            assertTutorialBarWhole(context)
+            openGuide()
+            assertGuideBarWhole(context)
             // The instructions still have room to scroll to their end, the details disclosure.
             composeRule.onNodeWithText("Detalhes").performScrollTo().fullyVisibleBounds(context)
             // Saved state would otherwise reopen the player under the next size.
-            composeRule.onNodeWithContentDescription("Fechar tutorial").performClick()
+            composeRule.onNodeWithContentDescription("Fechar guia").performClick()
         }
     }
 
     @Test
-    fun doubleText_appBarCardDisclosuresAndTutorialBar_neitherClipNorOverlap() {
+    fun doubleText_appBarCardDisclosuresAndGuideBar_neitherClipNorOverlap() {
         showCalculator(size = null, fontScale = 2f)
         val title = composeRule.onNodeWithText("Saia godê inteira").assertTextFits("title")
             .fullyVisibleBounds("title")
-        val action = composeRule.onNodeWithText("Perfis de medidas")
-            .assertTextFits("action").fullyVisibleBounds("action")
+        val up = composeRule.onNodeWithContentDescription("Voltar").fullyVisibleBounds("up")
         // One pixel of slack for dp-to-pixel rounding.
-        assertTrue("app bar title $title overlaps action $action", title.right <= action.left + 1f)
+        assertTrue("app bar title $title overlaps up arrow $up", up.right <= title.left + 1f)
         calculateReferenceCase()
         REFERENCE_RADII.forEach { radius ->
             composeRule.onNodeWithContentDescription(radius).performScrollTo()
@@ -115,14 +117,14 @@ class AdaptiveResultsTest {
             assertTrue("radii overlap: $upper $lower", upper.bottom <= lower.top)
         }
         // The action row wraps rather than squeezing either label.
-        val actionLabels = listOf("Tutorial de dobra do tecido", "Editar medidas")
+        val actionLabels = listOf("Guia de dobra do tecido", "Editar medidas")
         actionLabels.forEach {
             composeRule.onNodeWithText(it).performScrollTo().assertTextFits(it)
                 .fullyVisibleBounds(it)
         }
         // Both read at one scroll position.
-        val (tutorial, edit) = actionLabels.map { composeRule.onNodeWithText(it).layoutBounds() }
-        assertTrue("actions overlap: $tutorial $edit", !tutorial.overlaps(edit))
+        val (guide, edit) = actionLabels.map { composeRule.onNodeWithText(it).layoutBounds() }
+        assertTrue("actions overlap: $guide $edit", !guide.overlaps(edit))
         listOf("Como levar os raios ao papel", "Fórmulas").forEach { label ->
             val disclosure = composeRule.onNode(hasText(label) and hasClickAction())
             disclosure.performScrollTo().performClick()
@@ -135,12 +137,12 @@ class AdaptiveResultsTest {
                 bounds.right - text.right >= 36.dp.value * pixelsPerDp - 1f,
             )
         }
-        openTutorial()
-        assertTutorialBarWhole("double text")
+        openGuide()
+        assertGuideBarWhole("double text")
     }
 
     @Test
-    fun tabletopHinge_keepsCuttingCardAndTutorialBarAboveFold() {
+    fun tabletopHinge_keepsCuttingCardAndGuideBarAboveFold() {
         showCalculator(size = null, fontScale = 1f)
         val hinge = publishHinge(FoldingFeature.Orientation.HORIZONTAL)
         calculateReferenceCase()
@@ -151,7 +153,7 @@ class AdaptiveResultsTest {
             val bounds = it.performScrollTo().fullyVisibleBounds("result")
             assertTrue("result crosses the fold: $bounds", bounds.bottom <= hinge.top)
         }
-        openTutorial()
+        openGuide()
         listOf("Anterior", "Etapa 1 de 6", "Próximo").forEach {
             val bounds = composeRule.onNodeWithText(it).fullyVisibleBounds(it)
             assertTrue("$it crosses the fold", bounds.bottom <= hinge.top)
@@ -159,7 +161,7 @@ class AdaptiveResultsTest {
     }
 
     @Test
-    fun halfOpenedVerticalHinge_splitsPanesAtFold_andKeepsTutorialPlayerOnOneSide() {
+    fun halfOpenedVerticalHinge_splitsPanesAtFold_andKeepsGuidePlayerOnOneSide() {
         // Wide enough on any device for both sides of an off-centre fold to hold a pane.
         showCalculator(DpSize(1000.dp, 800.dp), fontScale = 1f)
         // Off centre, so panes that ignored the fold would put the card across it.
@@ -170,22 +172,16 @@ class AdaptiveResultsTest {
         val card = cuttingCard().layoutBounds()
         assertTrue("inputs cross the fold", waist.right <= hinge.left)
         assertTrue("card crosses the fold", card.left >= hinge.right)
-        openTutorial()
-        val player = listOf("Anterior", "Etapa 1 de 6", "Próximo", "Preparar o tecido")
-            .map { composeRule.onNodeWithText(it).fullyVisibleBounds(it) } +
-            composeRule.onNodeWithContentDescription("Fechar tutorial").fullyVisibleBounds("close")
-        assertTrue(
-            "tutorial player crosses the fold: $player",
-            player.all { it.right <= hinge.left } || player.all { it.left >= hinge.right },
-        )
+        openGuide()
+        assertPlayerOnOneSide(hinge)
     }
 
     @Test
-    fun flatVerticalHinge_tutorialPlayerSpansFullWidth() {
+    fun flatVerticalHinge_guidePlayerSpansFullWidth() {
         // Whether the calculator behind it has one column or two, a flat fold splits neither.
         showCalculator(size = null, fontScale = 1f)
         calculateReferenceCase()
-        openTutorial()
+        openGuide()
         val hinge = publishHinge(
             FoldingFeature.Orientation.VERTICAL,
             state = FoldingFeature.State.FLAT,
@@ -193,8 +189,45 @@ class AdaptiveResultsTest {
         val back = composeRule.onNodeWithText("Anterior").fullyVisibleBounds("Anterior")
         val forward = composeRule.onNodeWithText("Próximo").fullyVisibleBounds("Próximo")
         assertTrue(
-            "tutorial player does not span the flat fold: $back $forward",
+            "guide player does not span the flat fold: $back $forward",
             back.right <= hinge.left && forward.left >= hinge.right,
+        )
+    }
+
+    @Test
+    fun halfOpenedVerticalHinge_keepsSinglePaneExampleGuideOnOneSide() {
+        // Too narrow for the library beside the guide, so the example guide is a single pane.
+        showCalculator(DpSize(700.dp, 800.dp), fontScale = 1f)
+        val hinge = publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
+        composeRule.selectDestination("Guias")
+        composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
+        assertPlayerOnOneSide(hinge)
+    }
+
+    @Test
+    fun flatVerticalHinge_singlePaneExampleGuideSpansFullWidth() {
+        showCalculator(DpSize(700.dp, 800.dp), fontScale = 1f)
+        composeRule.selectDestination("Guias")
+        composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
+        val hinge = publishHinge(
+            FoldingFeature.Orientation.VERTICAL,
+            state = FoldingFeature.State.FLAT,
+        )
+        val back = composeRule.onNodeWithText("Anterior").fullyVisibleBounds("Anterior")
+        val forward = composeRule.onNodeWithText("Próximo").fullyVisibleBounds("Próximo")
+        assertTrue(
+            "guide player does not span the flat fold: $back $forward",
+            back.right <= hinge.left && forward.left >= hinge.right,
+        )
+    }
+
+    private fun assertPlayerOnOneSide(hinge: Rect) {
+        val player = listOf("Anterior", "Etapa 1 de 6", "Próximo", "Preparar o tecido")
+            .map { composeRule.onNodeWithText(it).fullyVisibleBounds(it) } +
+            composeRule.onNodeWithContentDescription("Fechar guia").fullyVisibleBounds("close")
+        assertTrue(
+            "guide player crosses the fold: $player",
+            player.all { it.right <= hinge.left } || player.all { it.left >= hinge.right },
         )
     }
 
@@ -220,6 +253,7 @@ class AdaptiveResultsTest {
                 }
             }
         }
+        composeRule.showSkirtCalculator()
     }
 
     /** Publishes a fold across the content, half-opened by default, and returns its bounds. */
@@ -291,12 +325,12 @@ class AdaptiveResultsTest {
         }
     }
 
-    private fun openTutorial() {
-        composeRule.onNodeWithText("Tutorial de dobra do tecido").performScrollTo().performClick()
+    private fun openGuide() {
+        composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo().performClick()
         composeRule.onNodeWithText("Preparar o tecido").fullyVisibleBounds("step title")
     }
 
-    private fun assertTutorialBarWhole(context: String) {
+    private fun assertGuideBarWhole(context: String) {
         listOf("Anterior", "Etapa 1 de 6", "Próximo").forEach {
             composeRule.onNodeWithText(it).assertTextFits("$context $it")
                 .fullyVisibleBounds("$context $it")
@@ -307,7 +341,7 @@ class AdaptiveResultsTest {
             "$context Próximo is shorter than 48dp",
             forward.height >= 48.dp.value * pixelsPerDp - 1f,
         )
-        composeRule.onNode(hasContentDescription("Fechar tutorial"))
+        composeRule.onNode(hasContentDescription("Fechar guia"))
             .fullyVisibleBounds("$context close")
     }
 

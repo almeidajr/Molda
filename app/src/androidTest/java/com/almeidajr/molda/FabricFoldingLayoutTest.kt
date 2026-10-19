@@ -1,6 +1,7 @@
 package com.almeidajr.molda
 
 import android.animation.ValueAnimator
+import androidx.activity.BackEventCompat
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -29,6 +30,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,10 +40,13 @@ class FabricFoldingLayoutTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
+    @Before
+    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
+
     @Test
-    fun fullTutorial_keepsStepBarAndDrawingInView_onEveryStep() {
+    fun fullGuide_keepsStepBarAndDrawingInView_onEveryStep() {
         listOf(false to 1f, true to 2f).forEach { (dark, fontScale) ->
-            openTutorial(dark, fontScale)
+            openGuide(dark, fontScale)
             listOf(
                 "Preparar o tecido",
                 "Primeira dobra",
@@ -91,20 +96,40 @@ class FabricFoldingLayoutTest {
                     .performClick()
             }
             composeRule.onNodeWithText("Etapa 6 de 6").assertDoesNotExist()
-            composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
+            composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
             composeRule.onNodeWithText(SkirtDraftField.FinishedLength.labelText).performScrollTo()
                 .performTextReplacement("70")
-            composeRule.onNodeWithText("Tutorial de dobra do tecido").assertDoesNotExist()
+            composeRule.onNodeWithText("Guia de dobra do tecido").assertDoesNotExist()
         }
     }
 
     @Test
     fun closeAction_isTallEnough_andReturnsToResults() {
-        openTutorial(dark = false, fontScale = 2f)
-        composeRule.onNodeWithContentDescription("Fechar tutorial")
+        openGuide(dark = false, fontScale = 2f)
+        composeRule.onNodeWithContentDescription("Fechar guia")
             .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
         composeRule.onNodeWithText("Preparar o tecido").assertDoesNotExist()
-        composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
+        composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
+    }
+
+    @Test
+    fun predictiveBack_onGuide_previewsResultsBeneath_andCancelKeepsGuide() {
+        openGuide(dark = false, fontScale = 1f)
+        composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
+        val dispatcher = composeRule.activity.onBackPressedDispatcher
+        composeRule.runOnUiThread {
+            dispatcher.dispatchOnBackStarted(
+                BackEventCompat(0f, 400f, 0f, BackEventCompat.EDGE_LEFT),
+            )
+            dispatcher.dispatchOnBackProgressed(
+                BackEventCompat(200f, 400f, 0.5f, BackEventCompat.EDGE_LEFT),
+            )
+        }
+        composeRule.onNodeWithText("Preparar o tecido").assertExists()
+        composeRule.onNodeWithText("Guia de dobra do tecido").assertExists()
+        composeRule.runOnUiThread { dispatcher.dispatchOnBackCancelled() }
+        composeRule.onNodeWithText("Guia de dobra do tecido").assertDoesNotExist()
+        composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
     }
 
     private companion object {
@@ -180,7 +205,7 @@ class FabricFoldingLayoutTest {
             .performScrollTo().assertIsDisplayed()
     }
 
-    private fun openTutorial(dark: Boolean, fontScale: Float) {
+    private fun openGuide(dark: Boolean, fontScale: Float) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
@@ -190,6 +215,7 @@ class FabricFoldingLayoutTest {
                 }
             }
         }
+        composeRule.showSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("80", "2", "60", "0", "0"))
             .forEach { (field, value) ->
                 composeRule.onNodeWithText(field.labelText).performScrollTo()
@@ -197,7 +223,7 @@ class FabricFoldingLayoutTest {
             }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
-        composeRule.onNodeWithText("Tutorial de dobra do tecido")
+        composeRule.onNodeWithText("Guia de dobra do tecido")
             .performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
     }
 }

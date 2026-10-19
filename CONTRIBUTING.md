@@ -175,7 +175,7 @@ The `Release` workflow uses the tag without its `v` as `versionName`, and the
 workflow run number as `versionCode`. It signs the APK with the
 `RELEASE_KEYSTORE_BASE64`, `RELEASE_KEYSTORE_PASSWORD`, and `RELEASE_KEY_ALIAS`
 secrets and attaches `molda-<tag>.apk`. Install the APK and smoke-test the
-calculator, profiles, and folding tutorial before sending testers the link.
+calculator, profiles, and folding guide before sending testers the link.
 Record which beta build each practical trial used in its issue.
 Never replace the signing key: testers could only install a build signed with a
 new key after uninstalling, which deletes their profiles. Keep a backup of the

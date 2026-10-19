@@ -35,8 +35,8 @@ import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.skirt.ui.FoldingStep
-import com.almeidajr.molda.skirt.ui.TutorialAnimation
-import com.almeidajr.molda.skirt.ui.tutorialPalette
+import com.almeidajr.molda.skirt.ui.GuideAnimation
+import com.almeidajr.molda.skirt.ui.guidePalette
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import com.almeidajr.molda.ui.theme.moldaColorScheme
 import java.io.FileInputStream
@@ -44,14 +44,18 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class FabricMarkingTutorialTest {
+class FabricMarkingGuideTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
 
     @Test
     fun enabledMotion_everyStepLoopsAfterPlay_withoutBlankFrames() {
@@ -59,7 +63,7 @@ class FabricMarkingTutorialTest {
         try {
             shell("settings put global animator_duration_scale 1")
             composeRule.waitUntil(5_000) { ValueAnimator.areAnimatorsEnabled() }
-            openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+            openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
             val colors = drawingColors()
             listOf(
                 "Dobra do tecido em Rive: etapa 1",
@@ -119,9 +123,9 @@ class FabricMarkingTutorialTest {
         val originalScale = shell("settings get global animator_duration_scale")
         try {
             shell("settings put global animator_duration_scale 1")
-            openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+            openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
             val colors = drawingColors()
-            // Change the actual system preference while the tutorial is already open.
+            // Change the actual system preference while the guide is already open.
             shell("settings put global animator_duration_scale 0")
             composeRule.waitUntil(5_000) { !ValueAnimator.areAnimatorsEnabled() }
             listOf(
@@ -183,7 +187,7 @@ class FabricMarkingTutorialTest {
             listOf("80", "2", "120", "1", "2") to listOf(0.096635, 0.089230, 0.985191, 1.0),
             listOf("80", "2", "60", "0", "0") to listOf(0.178653, 1.0),
         ).forEach { (inputs, expectedRatios) ->
-            openTutorial(inputs)
+            openGuide(inputs)
             val colors = drawingColors()
             composeRule.waitUntil(15_000) {
                 composeRule.onAllNodes(
@@ -221,13 +225,13 @@ class FabricMarkingTutorialTest {
                     "Margem de barra zero: as linhas 3 e 4 coincidem.",
                 ).performScrollTo().assertIsDisplayed()
             }
-            closeTutorial()
+            closeGuide()
         }
     }
 
     @Test
     fun validCalculation_opensOfflineMarkingWithCurrentDimensions() {
-        openTutorial(listOf("80", "2", "60", "1", "2"))
+        openGuide(listOf("80", "2", "60", "1", "2"))
         composeRule.onNodeWithText("Marcar os raios").assertIsDisplayed()
         composeRule.waitUntil(15_000) {
             composeRule.onAllNodes(
@@ -242,19 +246,19 @@ class FabricMarkingTutorialTest {
             "1. Costura da cintura: 13,05\u00A0cm",
         ).performScrollTo().assertIsDisplayed()
         playThenPause("Reproduzir marcação")
-        closeTutorial()
+        closeGuide()
         composeRule.onNodeWithText(
             "Como levar os raios ao papel",
         ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(
             SkirtDraftField.FinishedLength.labelText,
         ).performScrollTo().performTextReplacement("70")
-        composeRule.onNodeWithText("Tutorial de dobra do tecido").assertDoesNotExist()
+        composeRule.onNodeWithText("Guia de dobra do tecido").assertDoesNotExist()
     }
 
     @Test
     fun foldingSteps_canBeReadReplayedAndRevisited_beforeMarkingCurrentRadii() {
-        openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+        openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
         composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
         composeRule.onNodeWithText("Anterior").assertIsNotEnabled()
         composeRule.onNodeWithText("Alise o tecido sem esticar e respeite o fio.")
@@ -286,7 +290,7 @@ class FabricMarkingTutorialTest {
 
     @Test
     fun cuttingAndUnfolding_completeSequence_withConstructionBoundariesAndReplay() {
-        openTutorial(listOf("80", "2", "60", "1", "2"))
+        openGuide(listOf("80", "2", "60", "1", "2"))
         composeRule.onNodeWithText("Próximo").performClick()
         composeRule.onNodeWithText("Cortar os arcos").assertIsDisplayed()
         composeRule.onNodeWithText(
@@ -325,7 +329,7 @@ class FabricMarkingTutorialTest {
 
     @Test
     fun back_closesPlayer_returningKeyboardFocusToEntry_withResultsUnchanged() {
-        openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+        openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
         composeRule.onNodeWithText("Próximo").performClick()
         composeRule.onNodeWithText("Etapa 2 de 6").assertIsDisplayed()
         // Touch mode leaves buttons unfocusable; keyboard users are the ones who need focus back.
@@ -334,7 +338,7 @@ class FabricMarkingTutorialTest {
             instrumentation.setInTouchMode(false)
             pressBack()
             composeRule.onNodeWithText("Etapa 2 de 6").assertDoesNotExist()
-            composeRule.onNodeWithText("Tutorial de dobra do tecido").assertIsDisplayed()
+            composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
                 .assertIsFocused()
         } finally {
             instrumentation.setInTouchMode(true)
@@ -347,7 +351,7 @@ class FabricMarkingTutorialTest {
 
     @Test
     fun recreation_keepsCurrentStep() {
-        openTutorial(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+        openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
         repeat(2) { composeRule.onNodeWithText("Próximo").performClick() }
         composeRule.activityRule.scenario.recreate()
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
@@ -390,7 +394,7 @@ class FabricMarkingTutorialTest {
             composeRule.activity.setContent {
                 // The full width of the narrowest phone; the still frame ignores motion.
                 MoldaTheme(darkTheme = darkTheme) {
-                    TutorialAnimation(radii, step, motionEnabled = false, drawingSize = 288.dp)
+                    GuideAnimation(radii, step, motionEnabled = false, drawingSize = 288.dp)
                 }
             }
         }
@@ -527,7 +531,7 @@ class FabricMarkingTutorialTest {
 
     /** Classifies captured pixels as the drawing's ink, fabric or the frame behind it. */
     private class DrawingColors(scheme: ColorScheme) {
-        private val palette = tutorialPalette(scheme).mapValues { it.value.toArgb() }
+        private val palette = guidePalette(scheme).mapValues { it.value.toArgb() }
         private val ink = palette.getValue("ink")
         private val fabric = palette.getValue("fabric")
         private val frame = scheme.surfaceContainerHigh.toArgb()
@@ -549,7 +553,7 @@ class FabricMarkingTutorialTest {
                 abs(Color.blue(first) - Color.blue(second))
     }
 
-    private fun openTutorial(inputs: List<String>, advanceToMarking: Boolean = true) {
+    private fun openGuide(inputs: List<String>, advanceToMarking: Boolean = true) {
         SkirtDraftField.entries.zip(inputs).forEach { (field, value) ->
             composeRule.onNodeWithText(
                 field.labelText,
@@ -557,7 +561,7 @@ class FabricMarkingTutorialTest {
         }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
-        composeRule.onNodeWithText("Tutorial de dobra do tecido").performScrollTo().performClick()
+        composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo().performClick()
         if (advanceToMarking) {
             repeat(3) { composeRule.onNodeWithText("Próximo").performClick() }
         }
@@ -574,8 +578,8 @@ class FabricMarkingTutorialTest {
         composeRule.onNodeWithText("Detalhes").performScrollTo().performClick()
     }
 
-    private fun closeTutorial() {
-        composeRule.onNodeWithContentDescription("Fechar tutorial").performClick()
+    private fun closeGuide() {
+        composeRule.onNodeWithContentDescription("Fechar guia").performClick()
     }
 
     private fun advanceOrAssertConcluir(index: Int) {

@@ -50,8 +50,22 @@ internal fun ProfilesState.submitted(validation: ProfileValidation) = when (vali
 internal fun ProfilesState.mutating(deleteId: ProfileId? = null) =
     copy(isSaving = true, saveError = null, savedMessage = null, deleteId = deleteId)
 
-internal fun ProfilesState.savedWith(result: Result<Unit>) = result.fold(
-    onSuccess = { closed().copy(isSaving = false, savedMessage = R.string.profile_saved) },
+/** What a successful save did to the stored profiles. */
+internal sealed interface ProfileSave {
+    data class Created(val profile: MeasurementProfile) : ProfileSave
+
+    data object Updated : ProfileSave
+}
+
+/** Closes the editor after a save, keeping the profile the save created. */
+internal fun ProfilesState.savedWith(result: Result<ProfileSave>) = result.fold(
+    onSuccess = { save ->
+        closed().copy(
+            isSaving = false,
+            savedMessage = R.string.profile_saved,
+            createdProfile = (save as? ProfileSave.Created)?.profile,
+        )
+    },
     onFailure = { copy(isSaving = false, saveError = R.string.profile_save_failed) },
 )
 

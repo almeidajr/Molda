@@ -1,6 +1,6 @@
 # Practical fabric-folding trial
 
-Use this repeatable protocol with a sewist before releasing the tutorial.
+Use this repeatable protocol with a sewist before releasing the guide.
 It is a plan, not evidence that a participant has completed the trial. Record
 actual observations, screenshots, build identifiers and results in
 [issue #45](https://github.com/almeidajr/Molda/issues/45), not in this document.
@@ -8,7 +8,7 @@ Automated UI checks and rendered geometry do not replace this physical trial.
 
 ## Preparation
 
-- Recruit a sewist who can read the tutorial's Brazilian Portuguese instructions.
+- Recruit a sewist who can read the guide's Brazilian Portuguese instructions.
   Record their relevant experience without unnecessary personal information.
 - Identify the installed build: integration commit SHA, APK SHA-256, version,
   device/Android version, language, font scale and date. Use an APK built from
@@ -17,7 +17,7 @@ Automated UI checks and rendered geometry do not replace this physical trial.
   squares (50, 70 and 45 cm sides). Scrap fabric is an alternative, but record
   material, measured size and any slipping or stretching. Label opposite sides
   as simulated selvages and the remaining sides as raw ends on paper.
-- Use paper or scrap only. The tutorial does not teach the opening, closure
+- Use paper or scrap only. The guide does not teach the opening, closure
   allowances or waistband. Agree those separate instructions before cutting
   garment fabric. A completed ring is not a complete garment pattern or fit test.
 - Keep the observer's expected outcomes below separate from the participant's
@@ -27,7 +27,7 @@ Automated UI checks and rendered geometry do not replace this physical trial.
 
 All inputs and radii are centimetres. These deliberately short practice pieces
 are not wearable skirt recommendations. Enter each case in the working
-calculator and open **Tutorial de dobra do tecido** beside the results. Use the
+calculator and open **Guia de dobra do tecido** beside the results. Use the
 displayed dimensions for marking; never trace or measure the screen drawing.
 
 | Case | Waist | Ease | Finished length | Waist seam allowance | Hem allowance | Paper square |
@@ -90,14 +90,14 @@ written instructions without playback as well as a pass using animation.
 8. **Compare:** moving A to B must keep waist dimensions and allowances while
    increasing the outer radii and changing the displayed proportions. In C,
    verify coincident lines and the retained annulus physically. Ensure the
-   tutorial uses each current calculation rather than the preceding case.
+   guide uses each current calculation rather than the preceding case.
 
 ## Corrections and release decision
 
 Stop if instructions cause confusion about the origin, layers, cutting lines,
 safe material or construction boundary. Record the problem and exact assistance;
 do not count the assisted result as an unassisted success. Correct confirmed
-tutorial defects, rerun affected UI/Rive checks, and repeat the physical sequence
+guide defects, rerun affected UI/Rive checks, and repeat the physical sequence
 on fresh material with the corrected build whenever it changes. Record both
 builds, the correction and the actual retrial outcome. Preserve failed evidence.
 

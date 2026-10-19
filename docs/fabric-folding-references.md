@@ -6,7 +6,7 @@ trial or confirmation of garment fit.
 - [Seamwork: Cutting and marking fabric](https://www.seamwork.com/sewing-tutorials/cutting-and-marking-fabric)
   supports preparing and pressing fabric, identifying grain and selvages, and
   avoiding distorted alignment. Directional prints and nap require layout care;
-  this tutorial does not choose an actual layout for those fabrics.
+  this guide does not choose an actual layout for those fabrics.
 - [Heather Handmade: Easy Circle Skirt, page 4](https://www.heatherhandmade.com/wp-content/uploads/2018/03/Easy-Circle-Skirt-Tutorial-Free-PatternC-1.pdf)
   describes a one-piece layout folded lengthwise then crosswise, marking from
   the corner with two folds, conditional on fabric being wide enough. Only this
@@ -31,7 +31,7 @@ check fit, account for directional layouts, or provide a complete garment
 pattern. Start with paper or scrap; instructions for the opening, closure
 allowances and waistband are required before cutting garment fabric.
 
-A participant has not followed the finished tutorial on paper or scrap.
+A participant has not followed the finished guide on paper or scrap.
 The practical validation required by #45 remains a release gate.
 
 ## Circular cutting and unfolding (#44)
@@ -52,7 +52,7 @@ Unfolding reverses our established folds: open the upper pair upward around the
 horizontal fold to form a right semicircle, then open the upper layer left around
 the vertical fold. The four quarter-annuli make a complete annulus with a central
 waist cutout. This reversal is the geometric consequence of the referenced folds,
-not a claim that a participant has tested this tutorial. The opening animation
+not a claim that a participant has tested this guide. The opening animation
 uniformly reduces the quarter to half its marking-screen size to fit the full
 circle, retaining the same origin and all radius ratios.
 
