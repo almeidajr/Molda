@@ -66,8 +66,10 @@ import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.ui.adaptive.HingeSafeContent
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.adaptive.rememberReadableListDetailStrategy
+import com.almeidajr.molda.ui.navigation.LocalTitleFocus
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.NavigationLabel
+import com.almeidajr.molda.ui.navigation.TitleFocus
 import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
@@ -204,7 +206,8 @@ fun MoldaRoute(
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
     val calculatorState by calculator.state.collectAsStateWithLifecycle()
-    val navigation = rememberTopLevelBackStacks(TopLevelRoots)
+    val titleFocus = remember { TitleFocus() }
+    val navigation = rememberTopLevelBackStacks(TopLevelRoots, onSwitch = titleFocus::request)
     val moldes = navigation.stackOf(PatternCatalogKey)
     val guias = navigation.stackOf(GuideLibraryKey)
     val perfis = navigation.stackOf(ProfileManagementKey)
@@ -467,7 +470,10 @@ fun MoldaRoute(
                         },
                         contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     ) { padding ->
-                        CompositionLocalProvider(LocalIsTwoPane provides wide) {
+                        CompositionLocalProvider(
+                            LocalIsTwoPane provides wide,
+                            LocalTitleFocus provides titleFocus,
+                        ) {
                             NavDisplay(
                                 entries = navigation.entries(routes),
                                 // Keep bottom actions reachable while storage feedback is visible.

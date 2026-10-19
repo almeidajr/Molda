@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
 import com.almeidajr.molda.profile.domain.parseProfileDate
+import com.almeidajr.molda.ui.navigation.rememberTitleFocusRequester
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -151,7 +153,8 @@ private fun ProfileEditorHeading(isCreating: Boolean) {
         style = MaterialTheme.typography.headlineMedium,
         // The first focusable: when the screen it replaced leaves with the focused button after
         // the transition, Android refocuses here rather than raising the keyboard on a field.
-        modifier = Modifier.focusable().semantics { heading() },
+        modifier = Modifier.focusRequester(rememberTitleFocusRequester()).focusable()
+            .semantics { heading() },
     )
     if (isCreating) {
         Text(stringResource(R.string.profile_local_only))

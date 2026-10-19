@@ -15,6 +15,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Density
@@ -41,6 +42,7 @@ class TopLevelBackStacks internal constructor(
     val roots: List<NavKey>,
     selectedIndex: MutableIntState,
     private val stacks: List<NavBackStack<NavKey>>,
+    private val onSwitch: () -> Unit,
 ) {
     private var selectedIndex by selectedIndex
 
@@ -57,19 +59,14 @@ class TopLevelBackStacks internal constructor(
         if (root == selected) {
             popAbove(0)
         } else {
-            selectedIndex = roots.indexOf(root)
+            switchTo(roots.indexOf(root))
         }
     }
 
     /** Pops the selected stack; at another destination's root, returns to the start one. */
     fun back() {
-        if (current.size >
-            1
-        ) {
-            stacks[selectedIndex].removeAt(current.lastIndex)
-        } else {
-            selectedIndex = 0
-        }
+        val stack = stacks[selectedIndex]
+        if (stack.size > 1) stack.removeAt(stack.lastIndex) else switchTo(0)
     }
 
     /** Pushes [key] onto the stack of the destination whose root is [root]. */
@@ -89,6 +86,11 @@ class TopLevelBackStacks internal constructor(
     fun popTo(key: NavKey) {
         val index = current.indexOf(key)
         if (index < 0) push(key) else popAbove(index)
+    }
+
+    private fun switchTo(index: Int) {
+        if (index != selectedIndex) onSwitch()
+        selectedIndex = index
     }
 
     private fun popAbove(index: Int) {
@@ -116,12 +118,18 @@ class TopLevelBackStacks internal constructor(
     }
 }
 
-/** Remembers one back stack per root in [roots], the first being the start destination. */
+/**
+ * Remembers one back stack per root in [roots], the first being the start destination; [onSwitch]
+ * runs whenever another destination is about to be selected.
+ */
 @Composable
-fun rememberTopLevelBackStacks(roots: List<NavKey>): TopLevelBackStacks {
+fun rememberTopLevelBackStacks(roots: List<NavKey>, onSwitch: () -> Unit): TopLevelBackStacks {
     val selectedIndex = rememberSaveable { mutableIntStateOf(0) }
     val stacks = roots.map { rememberNavBackStack(it) }
-    return remember(roots) { TopLevelBackStacks(roots, selectedIndex, stacks) }
+    val currentOnSwitch by rememberUpdatedState(onSwitch)
+    return remember(roots) {
+        TopLevelBackStacks(roots, selectedIndex, stacks, onSwitch = { currentOnSwitch() })
+    }
 }
 
 /** Marks each entry with the root of the destination whose stack holds it. */

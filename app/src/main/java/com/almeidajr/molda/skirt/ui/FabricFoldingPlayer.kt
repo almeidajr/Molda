@@ -1,6 +1,7 @@
 package com.almeidajr.molda.skirt.ui
 
 import android.animation.ValueAnimator
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -51,6 +52,7 @@ import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
+import com.almeidajr.molda.ui.navigation.rememberTitleFocusRequester
 
 // Not `const`: ktlint then demands SCREAMING_SNAKE names, which Detekt's naming rule rejects.
 // Leaves most of a short window to the instructions while the drawing stays pinned.
@@ -173,7 +175,8 @@ private fun PlayerTopBar(title: String, onClose: (() -> Unit)?) {
         Text(
             title,
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.weight(1f).padding(end = 12.dp).semantics { heading() },
+            modifier = Modifier.weight(1f).padding(end = 12.dp)
+                .focusRequester(rememberTitleFocusRequester()).focusable().semantics { heading() },
         )
     }
 }

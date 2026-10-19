@@ -1,5 +1,6 @@
 package com.almeidajr.molda.ui.navigation
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -9,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -34,7 +36,8 @@ fun MoldaTopAppBar(
             // wraps at large text would run under an action without this end padding.
             Text(
                 title,
-                Modifier.padding(end = 16.dp).semantics { heading() },
+                Modifier.padding(end = 16.dp).focusRequester(rememberTitleFocusRequester())
+                    .focusable().semantics { heading() },
             )
         },
         modifier = modifier,

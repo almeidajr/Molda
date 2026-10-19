@@ -209,10 +209,46 @@ class NavigationShellTest {
         }
     }
 
+    @Test
+    fun switchingDestination_movesFocusToTheTitle() {
+        listOf(
+            "Projetos" to "Projetos",
+            "Guias" to "Guias",
+            "Perfis" to "Perfis de medidas",
+            "Moldes" to "Moldes",
+        ).forEach { (destination, title) ->
+            composeRule.selectDestination(destination)
+            composeRule.screenTitle(title).assertIsFocused()
+        }
+        pressKey(KeyEvent.KEYCODE_TAB)
+        composeRule.destination("Perfis").requestFocus()
+        pressKey(KeyEvent.KEYCODE_ENTER)
+        composeRule.screenTitle("Perfis de medidas").assertIsFocused()
+        pressBack()
+        composeRule.screenTitle("Moldes").assertIsFocused()
+    }
+
+    @Test
+    fun switchingToAnOpenEditor_focusesItsHeadingNotAField() {
+        composeRule.selectDestination("Perfis")
+        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.selectDestination("Moldes")
+        composeRule.selectDestination("Perfis")
+        composeRule.onNode(hasText("Novo perfil de medidas") and isHeading()).assertIsFocused()
+        composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
+        assertTrue("keyboard opened by itself", !isKeyboardVisible())
+    }
+
     private fun waistField() = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
 
-    private fun pressBack() {
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+    private fun pressBack() = pressKey(KeyEvent.KEYCODE_BACK)
+
+    private fun pressKey(keyCode: Int, isShifted: Boolean = false) {
+        val metaState = if (isShifted) KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON else 0
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).forEach { action ->
+            instrumentation.sendKeySync(KeyEvent(0, 0, action, keyCode, 0, metaState))
+        }
     }
 
     private fun isKeyboardVisible(): Boolean {
