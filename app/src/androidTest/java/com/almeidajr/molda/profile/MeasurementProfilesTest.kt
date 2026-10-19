@@ -316,6 +316,9 @@ class MeasurementProfilesTest {
         click("Novo perfil")
         composeRule.onNodeWithText("Nenhum perfil salvo.", substring = true).assertDoesNotExist()
         edit("Nome ou apelido", "Rascunho")
+        // A keyboard open under the dialog reopens once it closes, resizing the editor under the
+        // next tap; closed first, it stays closed.
+        Espresso.closeSoftKeyboard()
         click("Cancelar")
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
         click("Continuar editando")
