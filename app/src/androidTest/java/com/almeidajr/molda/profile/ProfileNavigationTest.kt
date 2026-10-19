@@ -2,8 +2,7 @@ package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
 import android.view.WindowInsets
-import android.view.WindowManager
-import android.view.inspector.WindowInspector
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -13,12 +12,14 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
@@ -149,15 +150,12 @@ class ProfileNavigationTest {
     }
 
     private fun clickInDialog(label: String) {
-        // Touches reach a dialog only once its window has focus.
+        // A semantics click needs no window focus, unlike a touch on a dialog still attaching.
+        val button = hasText(label) and hasClickAction()
         composeRule.waitUntil(5_000) {
-            WindowInspector.getGlobalWindowViews().any {
-                it.hasWindowFocus() &&
-                    (it.layoutParams as WindowManager.LayoutParams).type ==
-                    WindowManager.LayoutParams.TYPE_APPLICATION
-            }
+            composeRule.onAllNodes(button).fetchSemanticsNodes().size == 1
         }
-        composeRule.onNodeWithText(label).performClick()
+        composeRule.onNode(button).performSemanticsAction(SemanticsActions.OnClick)
     }
 
     private fun isKeyboardVisible(): Boolean {
