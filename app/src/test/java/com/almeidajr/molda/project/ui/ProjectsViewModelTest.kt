@@ -101,7 +101,7 @@ class ProjectsViewModelTest {
         assertEquals(clock.instant(), created.updatedAt)
         assertEquals(listOf(created, saved), state.projects)
         assertNull(state.saving)
-        assertEquals(R.string.project_saved, state.savedMessage)
+        assertEquals(R.string.project_saved, state.message)
     }
 
     @Test
@@ -132,8 +132,8 @@ class ProjectsViewModelTest {
         val saving = projects.state.value.saving
         assertEquals("Saia da formatura", saving?.name)
         assertEquals(fromProfile, saving?.snapshot)
-        assertEquals(R.string.project_save_failed, saving?.saveError)
-        assertFalse(saving?.isSaving == true)
+        assertEquals(R.string.project_save_failed, saving?.error)
+        assertFalse(saving?.isBusy == true)
         assertEquals(listOf(saved), projects.state.value.projects)
     }
 
@@ -159,7 +159,7 @@ class ProjectsViewModelTest {
             listOf(saved.copy(snapshot = fromProfile, updatedAt = clock.instant())),
             state.projects,
         )
-        assertEquals(R.string.project_updated, state.savedMessage)
+        assertEquals(R.string.project_updated, state.message)
         assertEquals(saved.id, state.projectToShow)
         assertFalse(state.isUpdating)
     }
@@ -173,7 +173,7 @@ class ProjectsViewModelTest {
 
         val state = projects.state.value
         assertEquals(listOf(saved), state.projects)
-        assertEquals(R.string.project_update_failed, state.savedMessage)
+        assertEquals(R.string.project_update_failed, state.message)
         assertNull(state.projectToShow)
         assertFalse(state.isUpdating)
     }
@@ -222,7 +222,7 @@ class ProjectsViewModelTest {
             state.projects,
         )
         assertNull(state.renaming)
-        assertEquals(R.string.project_renamed, state.savedMessage)
+        assertEquals(R.string.project_renamed, state.message)
     }
 
     @Test
@@ -266,7 +266,7 @@ class ProjectsViewModelTest {
         val state = projects.state.value
         assertEquals(emptyList<Project>(), state.projects)
         assertNull(state.deleting)
-        assertEquals(R.string.project_deleted, state.savedMessage)
+        assertEquals(R.string.project_deleted, state.message)
     }
 
     @Test

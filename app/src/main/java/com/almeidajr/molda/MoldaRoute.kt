@@ -69,7 +69,7 @@ import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.ui.DeleteProjectDialog
-import com.almeidajr.molda.project.ui.ProjectSaveFeedback
+import com.almeidajr.molda.project.ui.ProjectFeedback
 import com.almeidajr.molda.project.ui.ProjectScreen
 import com.almeidajr.molda.project.ui.ProjectsScreen
 import com.almeidajr.molda.project.ui.ProjectsViewModel
@@ -601,7 +601,7 @@ fun MoldaRoute(
     projectState.deleting?.let { deleting ->
         DeleteProjectDialog(deleting, projects::delete, projects::cancel)
     }
-    ProjectSaveFeedback(projectState, snackbar, projects::dismissMessage)
+    ProjectFeedback(projectState, snackbar, projects::dismissMessage)
     val isManaging = navigation.selected == ProfileManagementKey &&
         navigation.current.last() !in setOf(AboutKey, LicencesKey)
     val isGuideOpen = navigation.current.last().let {

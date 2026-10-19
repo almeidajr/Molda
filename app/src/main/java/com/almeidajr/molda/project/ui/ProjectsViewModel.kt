@@ -29,8 +29,8 @@ data class ProjectSaving(
     /** Whether the stored project opens once saved, as when saving an edit as a new one. */
     val showsSaved: Boolean = false,
     val hasBlankName: Boolean = false,
-    val isSaving: Boolean = false,
-    @param:StringRes val saveError: Int? = null,
+    val isBusy: Boolean = false,
+    @param:StringRes val error: Int? = null,
 )
 
 /** A stored [project] being renamed to the [name] typed so far. */
@@ -53,13 +53,13 @@ data class ProjectsState(
     val projects: List<Project> = emptyList(),
     val isLoading: Boolean = true,
     @param:StringRes val loadError: Int? = null,
-    /** The open save dialog; it lives with the result, so it does not survive process death. */
     val saving: ProjectSaving? = null,
     val renaming: ProjectRenaming? = null,
     val deleting: ProjectDeleting? = null,
     /** Whether an edited project's snapshot is being stored. */
     val isUpdating: Boolean = false,
-    @param:StringRes val savedMessage: Int? = null,
+    /** The outcome of the latest command, to show until [ProjectsViewModel.dismissMessage]. */
+    @param:StringRes val message: Int? = null,
     /** A project just saved from an edit, to show until [ProjectsViewModel.onProjectShown]. */
     val projectToShow: ProjectId? = null,
 )
@@ -125,53 +125,35 @@ class ProjectsViewModel @Inject constructor(
     }
 
     fun save() {
-        val saving = mutableState.value.saving
-        if (saving == null || saving.isSaving) return
+        val saving = mutableState.value.saving?.takeUnless { it.isBusy } ?: return
         val name = readProjectName(saving.name)
-        if (name == null) {
-            transition { it.copy(saving = saving.copy(hasBlankName = true)) }
-            return
-        }
-        transition { it.copy(saving = saving.copy(isSaving = true, saveError = null)) }
-        viewModelScope.launch {
-            val result = repository.create(name, saving.snapshot, clock.instant())
-            transition { state ->
-                val created = result.getOrNull()
-                if (created != null) {
-                    state.copy(
-                        saving = null,
-                        savedMessage = R.string.project_saved,
-                        projectToShow = created.id.takeIf { saving.showsSaved },
-                    )
-                } else {
-                    state.copy(
-                        saving = state.saving?.copy(
-                            isSaving = false,
-                            saveError = R.string.project_save_failed,
-                        ),
-                    )
-                }
-            }
+            ?: return transition { it.copy(saving = saving.copy(hasBlankName = true)) }
+        submit(
+            command = { repository.create(name, saving.snapshot, clock.instant()) },
+            progress = { state, isBusy, error ->
+                state.copy(saving = state.saving?.copy(isBusy = isBusy, error = error))
+            },
+            failure = R.string.project_save_failed,
+        ) { state, created ->
+            state.copy(
+                saving = null,
+                message = R.string.project_saved,
+                projectToShow = created.id.takeIf { saving.showsSaved },
+            )
         }
     }
 
     /** Stores [snapshot] as the project [id]'s, then shows that project. */
     fun update(id: ProjectId, snapshot: SkirtSnapshot) {
         if (mutableState.value.isUpdating) return
-        transition { it.copy(isUpdating = true) }
-        viewModelScope.launch {
-            val result = repository.update(id, snapshot, clock.instant())
-            transition { state ->
-                state.copy(
-                    isUpdating = false,
-                    savedMessage = if (result.isSuccess) {
-                        R.string.project_updated
-                    } else {
-                        R.string.project_update_failed
-                    },
-                    projectToShow = id.takeIf { result.isSuccess },
-                )
-            }
+        submit(
+            command = { repository.update(id, snapshot, clock.instant()) },
+            progress = { state, isBusy, error ->
+                state.copy(isUpdating = isBusy, message = error ?: state.message)
+            },
+            failure = R.string.project_update_failed,
+        ) { state, _ ->
+            state.copy(isUpdating = false, message = R.string.project_updated, projectToShow = id)
         }
     }
 
@@ -182,29 +164,16 @@ class ProjectsViewModel @Inject constructor(
     }
 
     fun rename() {
-        val renaming = mutableState.value.renaming
-        if (renaming == null || renaming.isBusy) return
+        val renaming = mutableState.value.renaming?.takeUnless { it.isBusy } ?: return
         val name = readProjectName(renaming.name)
-        if (name == null) {
-            transition { it.copy(renaming = renaming.copy(hasBlankName = true)) }
-            return
-        }
-        transition { it.copy(renaming = renaming.copy(isBusy = true, error = null)) }
-        viewModelScope.launch {
-            val result = repository.rename(renaming.project.id, name, clock.instant())
-            transition { state ->
-                if (result.isSuccess) {
-                    state.copy(renaming = null, savedMessage = R.string.project_renamed)
-                } else {
-                    state.copy(
-                        renaming = state.renaming?.copy(
-                            isBusy = false,
-                            error = R.string.project_rename_failed,
-                        ),
-                    )
-                }
-            }
-        }
+            ?: return transition { it.copy(renaming = renaming.copy(hasBlankName = true)) }
+        submit(
+            command = { repository.rename(renaming.project.id, name, clock.instant()) },
+            progress = { state, isBusy, error ->
+                state.copy(renaming = state.renaming?.copy(isBusy = isBusy, error = error))
+            },
+            failure = R.string.project_rename_failed,
+        ) { state, _ -> state.copy(renaming = null, message = R.string.project_renamed) }
     }
 
     /** Asks to confirm deleting [project]; nothing is deleted until [delete]. */
@@ -213,34 +182,46 @@ class ProjectsViewModel @Inject constructor(
     }
 
     fun delete() {
-        val deleting = mutableState.value.deleting
-        if (deleting == null || deleting.isBusy) return
-        transition { it.copy(deleting = deleting.copy(isBusy = true, error = null)) }
-        viewModelScope.launch {
-            val result = repository.delete(deleting.project.id)
-            transition { state ->
-                if (result.isSuccess) {
-                    state.copy(deleting = null, savedMessage = R.string.project_deleted)
-                } else {
-                    state.copy(
-                        deleting = state.deleting?.copy(
-                            isBusy = false,
-                            error = R.string.project_delete_failed,
-                        ),
-                    )
-                }
-            }
-        }
+        val deleting = mutableState.value.deleting?.takeUnless { it.isBusy } ?: return
+        submit(
+            command = { repository.delete(deleting.project.id) },
+            progress = { state, isBusy, error ->
+                state.copy(deleting = state.deleting?.copy(isBusy = isBusy, error = error))
+            },
+            failure = R.string.project_delete_failed,
+        ) { state, _ -> state.copy(deleting = null, message = R.string.project_deleted) }
     }
 
     /** Closes the open save, rename or delete dialog, unless its storage call is running. */
     fun cancel() = transition { state ->
-        val isBusy = state.saving?.isSaving == true || state.renaming?.isBusy == true ||
+        val isBusy = state.saving?.isBusy == true || state.renaming?.isBusy == true ||
             state.deleting?.isBusy == true
         if (isBusy) state else state.copy(saving = null, renaming = null, deleting = null)
     }
 
-    fun dismissMessage() = transition { it.copy(savedMessage = null) }
+    fun dismissMessage() = transition { it.copy(message = null) }
+
+    /**
+     * Runs a storage [command], marking its dialog busy through [progress] meanwhile; a success
+     * moves on with [succeeded], a failure shows [failure] through [progress].
+     */
+    private fun <T> submit(
+        command: suspend () -> Result<T>,
+        progress: (ProjectsState, isBusy: Boolean, error: Int?) -> ProjectsState,
+        @StringRes failure: Int,
+        succeeded: (ProjectsState, T) -> ProjectsState,
+    ) {
+        transition { progress(it, true, null) }
+        viewModelScope.launch {
+            val result = command()
+            transition { state ->
+                result.fold(
+                    onSuccess = { succeeded(state, it) },
+                    onFailure = { progress(state, false, failure) },
+                )
+            }
+        }
+    }
 
     // Main-thread only, so reading back the new value cannot race another transition.
     private fun transition(next: (ProjectsState) -> ProjectsState) {

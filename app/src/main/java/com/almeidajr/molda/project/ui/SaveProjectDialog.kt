@@ -39,8 +39,8 @@ fun SaveProjectDialog(
         confirmLabel = stringResource(R.string.project_save_confirm),
         name = saving.name,
         hasBlankName = saving.hasBlankName,
-        isBusy = saving.isSaving,
-        error = saving.saveError,
+        isBusy = saving.isBusy,
+        error = saving.error,
         onEditName = onEditName,
         onConfirm = onSave,
         onCancel = onCancel,
@@ -205,10 +205,10 @@ private fun ProjectNameField(
     )
 }
 
-/** Shows a saved, renamed or deleted confirmation once in [snackbar], then calls [onDismiss]. */
+/** Shows the latest command's outcome once in [snackbar], then calls [onDismiss]. */
 @Composable
-fun ProjectSaveFeedback(state: ProjectsState, snackbar: SnackbarHostState, onDismiss: () -> Unit) {
-    val message = state.savedMessage?.let { stringResource(it) }
+fun ProjectFeedback(state: ProjectsState, snackbar: SnackbarHostState, onDismiss: () -> Unit) {
+    val message = state.message?.let { stringResource(it) }
     LaunchedEffect(message) {
         message?.let {
             snackbar.showSnackbar(it)
