@@ -140,13 +140,15 @@ on them. Never sleep: Detekt rejects `Thread.sleep`, `SystemClock.sleep` and
    one timeout constant, and use the built-in variants: `waitUntil` with a
    condition description for window state, `waitUntilAtLeastOneExists`,
    `waitUntilExactlyOneExists` and `waitUntilDoesNotExist` for nodes, never
-   hand-rolled `fetchSemanticsNodes()` checks. Do not call `waitUntil*` directly
-   from a test.
+   hand-rolled `fetchSemanticsNodes()` checks. Detekt rejects `waitUntil*`
+   calls in every other test file. Keep native waits out of logic tests: test
+   UI that sits behind a native load through a seam that takes the loaded
+   state, as `GuideFrame` does for the guide's playback controls.
 
 Never follow a wait with an assertion of the same condition; the wait already
 states it. A test that changes a global device setting, such as the animator
 duration scale, does it through a JUnit rule that restores the original value
-even when the test fails.
+even when the test fails (`AnimatorDurationScaleRule` in the support file).
 
 ## UI behavior
 

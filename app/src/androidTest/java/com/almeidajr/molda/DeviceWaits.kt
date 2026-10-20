@@ -1,11 +1,23 @@
+// The one home of wall-clock waits: Detekt bans waitUntil* in every other test file.
+@file:Suppress("ForbiddenMethodCall")
+
 package com.almeidajr.molda
 
+import android.animation.ValueAnimator
 import android.view.WindowManager
 import android.view.inspector.WindowInspector
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.test.platform.app.InstrumentationRegistry
+import java.io.FileInputStream
 import kotlin.time.Duration.Companion.seconds
+import org.junit.rules.ExternalResource
 
 /**
  * Wall-clock budget for state Compose cannot see. Compose-driven state needs no wait:
@@ -53,3 +65,67 @@ internal fun AndroidComposeTestRule<*, *>.awaitActivityFocus() =
 /** Waits for the activity to start finishing, for example after Back leaves the app. */
 internal fun AndroidComposeTestRule<*, *>.awaitActivityFinishing() =
     waitUntil("activity finishing", DeviceWaitTimeout.inWholeMilliseconds) { activity.isFinishing }
+
+/**
+ * Waits until the Rive drawing labelled [description] shows a frame that [isExpected] accepts,
+ * and returns that frame. Rive loads and draws on its own threads, which Compose cannot see.
+ */
+@OptIn(ExperimentalTestApi::class)
+internal fun AndroidComposeTestRule<*, *>.awaitRiveFrame(
+    description: String,
+    isExpected: (ImageBitmap) -> Boolean = { true },
+): ImageBitmap {
+    val timeout = DeviceWaitTimeout.inWholeMilliseconds
+    waitUntilAtLeastOneExists(hasContentDescription(description), timeout)
+    var frame: ImageBitmap? = null
+    waitUntil("$description rendered as expected", timeout) {
+        frame = onNodeWithContentDescription(description).captureToImage().takeIf(isExpected)
+        frame != null
+    }
+    return checkNotNull(frame)
+}
+
+/**
+ * Owns the system animator duration scale for one test: [set] changes it and waits until the app
+ * sees the change, and the original value comes back after the test, even when it fails. Order it
+ * inside [composeRule] (a higher `order`), whose waits it uses on both ends.
+ */
+class AnimatorDurationScaleRule internal constructor(
+    private val composeRule: AndroidComposeTestRule<*, *>,
+) : ExternalResource() {
+    private var original = "null"
+
+    override fun before() {
+        original = shell("settings get global animator_duration_scale")
+    }
+
+    override fun after() {
+        if (original == "null") {
+            shell("settings delete global animator_duration_scale")
+            awaitScale(1f)
+        } else {
+            set(original.toFloat())
+        }
+    }
+
+    fun set(scale: Float) {
+        shell("settings put global animator_duration_scale $scale")
+        awaitScale(scale)
+    }
+
+    // The app process learns of a settings change asynchronously.
+    private fun awaitScale(scale: Float) = composeRule.waitUntil(
+        "animator duration scale $scale",
+        DeviceWaitTimeout.inWholeMilliseconds,
+    ) {
+        ValueAnimator.getDurationScale() == scale
+    }
+
+    private fun shell(command: String): String =
+        InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+            .use { descriptor ->
+                FileInputStream(descriptor.fileDescriptor).bufferedReader().use {
+                    it.readText().trim()
+                }
+            }
+}

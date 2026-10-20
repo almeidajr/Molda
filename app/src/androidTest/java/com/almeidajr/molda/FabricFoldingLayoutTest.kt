@@ -15,7 +15,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertWidthIsAtLeast
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -74,9 +73,8 @@ class FabricFoldingLayoutTest {
                     "$context must wrap within the available width",
                 )
                 val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
-                composeRule.waitUntil(15_000) {
-                    composeRule.onAllNodes(hasText(playLabel)).fetchSemanticsNodes().isNotEmpty()
-                }
+                // The drawing and its controls change the pinned area's height once Rive loads.
+                composeRule.awaitRiveFrame(STEP_DRAWINGS[index])
                 assertLeadAndStepBarInView(STEP_LEADS[index], index, context, fontScale)
                 readDetails(isMarkingOrLater = index >= 3)
                 // Reading to the end of the details leaves the drawing's controls in view.
@@ -133,6 +131,15 @@ class FabricFoldingLayoutTest {
     }
 
     private companion object {
+        val STEP_DRAWINGS = listOf(
+            "Dobra do tecido em Rive: etapa 1",
+            "Dobra do tecido em Rive: etapa 2",
+            "Dobra do tecido em Rive: etapa 3",
+            "Marcação proporcional em Rive",
+            "Corte proporcional em Rive",
+            "Círculo desdobrado proporcional em Rive",
+        )
+
         val STEP_LEADS = listOf(
             "Alise o tecido sem esticar e respeite o fio.",
             "Dobre no sentido do comprimento, levando a ourela esquerda até a direita.",

@@ -53,6 +53,16 @@ style:
         value: 'java.util.concurrent.CountDownLatch.await'
       - reason: 'runBlocking ignores virtual time. Use runTest; see .agents/rules/kotlin-tests.md.'
         value: 'kotlinx.coroutines.runBlocking'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntil'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntilAtLeastOneExists'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntilExactlyOneExists'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntilDoesNotExist'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntilNodeCount'
   # One assertion library; see .agents/rules/kotlin-tests.md.
   ForbiddenImport:
     active: true
