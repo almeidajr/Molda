@@ -1,0 +1,24 @@
+package com.almeidajr.molda.testing
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
+
+/**
+ * Replaces [Dispatchers.Main] with [testDispatcher] for each test and always resets it afterwards.
+ *
+ * The default [UnconfinedTestDispatcher] runs `viewModelScope` work eagerly, so state has settled
+ * before the assertions; pass a `StandardTestDispatcher` to check ordering or intermediate state.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class MainDispatcherRule(private val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()) :
+    TestWatcher() {
+    override fun starting(description: Description) = Dispatchers.setMain(testDispatcher)
+
+    override fun finished(description: Description) = Dispatchers.resetMain()
+}

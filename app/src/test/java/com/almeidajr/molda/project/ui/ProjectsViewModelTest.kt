@@ -14,6 +14,7 @@ import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
+import com.almeidajr.molda.testing.MainDispatcherRule
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -22,20 +23,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -45,14 +40,8 @@ import org.robolectric.RobolectricTestRunner
 class ProjectsViewModelTest {
     private val storage = FakeProjects()
 
-    // Runs viewModelScope work eagerly, so each call has settled before the assertions.
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Before
-    fun useTestMainDispatcher() = Dispatchers.setMain(UnconfinedTestDispatcher())
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @After
-    fun resetMainDispatcher() = Dispatchers.resetMain()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun projects_followTheRepository() = runTest {
