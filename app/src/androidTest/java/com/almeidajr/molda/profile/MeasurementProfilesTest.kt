@@ -1,8 +1,6 @@
 package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
-import android.view.WindowInsets
-import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.test.DeviceConfigurationOverride
@@ -31,6 +29,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.awaitActivityFocus
+import com.almeidajr.molda.awaitDialogFocus
+import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.destination
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -116,12 +117,9 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
         click("Ações: Ana")
         click("Excluir perfil")
-        waitForDialogFocus()
+        composeRule.awaitDialogFocus()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
             .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(hasText("Excluir perfil Ana?")).fetchSemanticsNodes().isEmpty()
-        }
         composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
         composeRule.onNodeWithText("Ana").assertIsDisplayed()
         assertEquals(1, storage.current.size)
@@ -186,12 +184,12 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
         composeRule.onNodeWithContentDescription("Escolher data no calendário").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
-        waitForDialogFocus()
+        composeRule.awaitDialogFocus()
         composeRule.onNodeWithText("Confirmar data").assertIsDisplayed().assertIsNotEnabled()
         click("Cancelar calendário")
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
         composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
-        waitForDialogFocus()
+        composeRule.awaitDialogFocus()
         composeRule.onNodeWithText("Confirmar data").assertIsDisplayed().assertIsEnabled()
         click("Cancelar calendário")
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("12/10/2026")
@@ -206,15 +204,13 @@ class MeasurementProfilesTest {
         Espresso.closeSoftKeyboard()
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
         composeRule.onNodeWithContentDescription("Escolher data no calendário").performClick()
-        waitForDialogFocus()
+        composeRule.awaitDialogFocus()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
             .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(hasText("Cancelar calendário")).fetchSemanticsNodes().isEmpty()
-        }
+        composeRule.onNodeWithText("Cancelar calendário").assertDoesNotExist()
         composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
-        composeRule.waitUntil(5_000) { composeRule.activity.hasWindowFocus() }
+        composeRule.awaitActivityFocus()
         androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
             .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
@@ -230,10 +226,7 @@ class MeasurementProfilesTest {
         edit("Cintura do perfil (cm)", "80")
         Espresso.closeSoftKeyboard()
         // Native IME dismissal can move the button after Compose has become idle.
-        composeRule.waitUntil(5_000) {
-            !composeRule.activity.window.decorView.rootWindowInsets
-                .isVisible(WindowInsets.Type.ime())
-        }
+        composeRule.awaitKeyboardHidden()
         click("Salvar perfil")
         composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
             .performScrollTo().assertIsDisplayed()
@@ -604,17 +597,6 @@ class MeasurementProfilesTest {
         showContent(width = 1200)
         composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("80")
         composeRule.onNodeWithText("Cintura copiada do perfil: Ana").assertIsDisplayed()
-    }
-    private fun waitForDialogFocus() {
-        // Wait for native dialog focus and keyboard dismissal before delivering Back.
-        composeRule.waitUntil(5_000) {
-            android.view.inspector.WindowInspector.getGlobalWindowViews().any {
-                it.hasWindowFocus() &&
-                    !it.rootWindowInsets.isVisible(WindowInsets.Type.ime()) &&
-                    (it.layoutParams as WindowManager.LayoutParams).type ==
-                    WindowManager.LayoutParams.TYPE_APPLICATION
-            }
-        }
     }
     private fun edit(label: String, value: String) {
         if (label == "Data da medida (dd/mm/aaaa)") {

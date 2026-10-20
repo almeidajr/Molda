@@ -134,10 +134,12 @@ on them. Never sleep: Detekt rejects `Thread.sleep`, `SystemClock.sleep` and
    Journey tests open Room with a query dispatcher on an Espresso-tracked
    executor, so Compose waits for database work by itself.
 4. **Named `waitUntil*` helpers**, only for state outside Compose: keyboard
-   visibility, dialog window focus, an activity finishing, a native Rive frame.
-   They live in the shared device-test support file, use one shared timeout
-   constant, and are built on `waitUntilAtLeastOneExists`,
-   `waitUntilExactlyOneExists` and `waitUntilDoesNotExist` rather than
+   visibility, window focus, an activity finishing, a native Rive frame.
+   They live in the shared device-test support file
+   (`app/src/androidTest/java/com/almeidajr/molda/DeviceWaits.kt`), share its
+   one timeout constant, and use the built-in variants: `waitUntil` with a
+   condition description for window state, `waitUntilAtLeastOneExists`,
+   `waitUntilExactlyOneExists` and `waitUntilDoesNotExist` for nodes, never
    hand-rolled `fetchSemanticsNodes()` checks. Do not call `waitUntil*` directly
    from a test.
 

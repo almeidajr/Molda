@@ -40,8 +40,6 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
@@ -549,8 +547,7 @@ class SkirtCalculatorTest {
         composeRule.onNodeWithText("Editar medidas").performScrollTo().performClick()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
             .assertIsFocused().assertTextContains("80")
-        // Android's keyboard can resize the viewport after Compose has become idle.
-        composeRule.waitUntil(10_000) { isKeyboardVisible() }
+        composeRule.awaitKeyboardVisible()
         composeRule.onNodeWithText("Calcular").performScrollTo().assertIsDisplayed()
         composeRule.runOnUiThread {
             width.intValue = 1200
@@ -579,13 +576,11 @@ class SkirtCalculatorTest {
         fillInputs(values)
         composeRule.onNodeWithText(SkirtDraftField.HemAllowance.labelText)
             .performScrollTo().performClick()
-        composeRule.waitUntil(10_000) { isKeyboardVisible() }
+        composeRule.awaitKeyboardVisible()
     }
 
     private fun assertCuttingCardOnScreenWithoutKeyboard() {
-        // Android's keyboard can resize the viewport after Compose has become idle.
-        composeRule.waitUntil(10_000) { !isKeyboardVisible() }
-        composeRule.waitForIdle()
+        composeRule.awaitKeyboardHidden()
         // No performScrollTo: the radii must already be on screen.
         REFERENCE_RADII.forEach { composeRule.onNodeWithContentDescription(it).assertIsDisplayed() }
     }
@@ -644,10 +639,6 @@ class SkirtCalculatorTest {
         composeRule.onNode(hasText("Fórmulas") and hasClickAction())
             .performScrollTo().assertGraphicContrast("disclosure chevron $scheme")
     }
-
-    private fun isKeyboardVisible(): Boolean =
-        ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
-            ?.isVisible(WindowInsetsCompat.Type.ime()) == true
 
     private fun edit(field: SkirtDraftField, value: String) {
         composeRule.onNodeWithText(field.labelText).performScrollTo().performTextReplacement(value)

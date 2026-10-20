@@ -1,7 +1,6 @@
 package com.almeidajr.molda
 
 import android.view.KeyEvent
-import android.view.WindowInsets
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
@@ -71,7 +70,7 @@ class NavigationShellTest {
         pressBack()
         composeRule.screenTitle("Moldes").assertIsDisplayed()
         pressBack()
-        composeRule.waitUntil(5_000) { composeRule.activity.isFinishing }
+        composeRule.awaitActivityFinishing()
     }
 
     @Test
@@ -156,7 +155,7 @@ class NavigationShellTest {
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
         composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
         composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
-        assertTrue(!isKeyboardVisible(), "keyboard opened by itself")
+        assertTrue(!composeRule.isKeyboardVisible(), "keyboard opened by itself")
     }
 
     @Test
@@ -237,7 +236,7 @@ class NavigationShellTest {
         composeRule.selectDestination("Perfis")
         composeRule.onNode(hasText("Novo perfil de medidas") and isHeading()).assertIsFocused()
         composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
-        assertTrue(!isKeyboardVisible(), "keyboard opened by itself")
+        assertTrue(!composeRule.isKeyboardVisible(), "keyboard opened by itself")
     }
 
     @Test
@@ -272,14 +271,5 @@ class NavigationShellTest {
         listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).forEach { action ->
             instrumentation.sendKeySync(KeyEvent(0, 0, action, keyCode, 0, metaState))
         }
-    }
-
-    private fun isKeyboardVisible(): Boolean {
-        var isVisible = false
-        composeRule.runOnUiThread {
-            isVisible = composeRule.activity.window.decorView.rootWindowInsets
-                .isVisible(WindowInsets.Type.ime())
-        }
-        return isVisible
     }
 }

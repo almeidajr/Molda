@@ -1,7 +1,6 @@
 package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
-import android.view.WindowInsets
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -15,7 +14,6 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -35,6 +33,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.SkirtTitle
+import com.almeidajr.molda.awaitKeyboardHidden
+import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.destination
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.screenTitle
@@ -151,8 +151,6 @@ class ProfileNavigationTest {
         // The keyboard resizing the editor mid-scroll would move Cancelar from under the touch.
         closeSoftKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
-        val confirmation = composeRule.onNodeWithText("Descartar alterações?")
-        composeRule.waitUntil(5_000) { confirmation.isDisplayed() }
         clickInDialog("Descartar")
         composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
         composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
@@ -189,9 +187,7 @@ class ProfileNavigationTest {
         // The keyboard resizing the editor mid-scroll would move Cancelar from under the touch.
         closeSoftKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
-        composeRule.waitUntil(5_000) {
-            composeRule.onNodeWithText("Descartar alterações?").isDisplayed()
-        }
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
         composeRule.selectDestination("Moldes")
         clickInDialog("Descartar")
         composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
@@ -226,9 +222,9 @@ class ProfileNavigationTest {
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performClick()
-        composeRule.waitUntil(5_000) { isKeyboardVisible() }
+        composeRule.awaitKeyboardVisible()
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        composeRule.waitUntil(5_000) { !isKeyboardVisible() }
+        composeRule.awaitKeyboardHidden()
         composeRule.onNodeWithText("Nome ou apelido").assertIsDisplayed()
     }
 
@@ -254,19 +250,7 @@ class ProfileNavigationTest {
 
     private fun clickInDialog(label: String) {
         // A semantics click needs no window focus, unlike a touch on a dialog still attaching.
-        val button = hasText(label) and hasClickAction()
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(button).fetchSemanticsNodes().size == 1
-        }
-        composeRule.onNode(button).performSemanticsAction(SemanticsActions.OnClick)
-    }
-
-    private fun isKeyboardVisible(): Boolean {
-        var isVisible = false
-        composeRule.runOnUiThread {
-            isVisible = composeRule.activity.window.decorView.rootWindowInsets
-                .isVisible(WindowInsets.Type.ime())
-        }
-        return isVisible
+        composeRule.onNode(hasText(label) and hasClickAction())
+            .performSemanticsAction(SemanticsActions.OnClick)
     }
 }
