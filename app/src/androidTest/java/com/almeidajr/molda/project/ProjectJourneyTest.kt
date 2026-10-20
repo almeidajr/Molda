@@ -1,14 +1,11 @@
 package com.almeidajr.molda.project
 
 import androidx.activity.compose.setContent
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
-import androidx.compose.ui.test.isEnabled
-import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -39,12 +36,15 @@ import java.time.Instant
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 
-/** A project's whole life in the app: saved from a result, edited, copied and deleted. */
+/**
+ * A project's whole life in the app: saved from a result, edited, copied and deleted. It runs on
+ * real Room through [IsolatedStorage], so Compose waits for every query without polling.
+ */
 class ProjectJourneyTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
@@ -58,7 +58,7 @@ class ProjectJourneyTest {
     fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
 
     @Test
-    fun calculateSaveEditCopyAndDelete_keepsProjetosInStep() {
+    fun calculateSaveEditCopyAndDelete_keepsProjetosInStep() = runTest {
         showRoute()
         composeRule.showSkirtCalculator()
         listOf("80", "2", "60", "1", "2").zip(SkirtDraftField.entries).forEach { (text, field) ->
@@ -68,18 +68,18 @@ class ProjectJourneyTest {
         click("Salvar projeto")
         composeRule.nameField().performTextReplacement("Saia da formatura")
         confirmDialog("Salvar")
-        await(hasText("Projeto salvo em Projetos."))
+        composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
 
         composeRule.selectDestination("Projetos")
         composeRule.onNodeWithText("Saia godê · 18/10/2026").assertIsDisplayed()
         click("Saia da formatura")
-        awaitTitle("Saia da formatura")
+        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
 
         click("Editar")
         editField(SkirtDraftField.Ease, "4")
         click("Calcular")
         click("Salvar")
-        awaitTitle("Saia da formatura")
+        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Projeto atualizado.").assertIsDisplayed()
         assertEquals(listOf("Saia da formatura" to 4.0), storedNamesAndEase())
 
@@ -89,7 +89,7 @@ class ProjectJourneyTest {
         click("Salvar como novo")
         composeRule.nameField().performTextReplacement("Saia de verão")
         confirmDialog("Salvar")
-        awaitTitle("Saia de verão")
+        composeRule.screenTitle("Saia de verão").assertIsDisplayed()
         assertEquals(
             listOf("Saia de verão" to 5.0, "Saia da formatura" to 4.0),
             storedNamesAndEase(),
@@ -99,15 +99,14 @@ class ProjectJourneyTest {
         click("Excluir projeto")
         composeRule.onNodeWithText("Excluir projeto Saia de verão?").assertIsDisplayed()
         confirmDialog("Confirmar exclusão")
-        await(hasText("Projeto excluído deste aparelho."))
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Saia de verão").assertDoesNotExist()
         composeRule.onNodeWithText("Saia da formatura").assertIsDisplayed()
         assertEquals(listOf("Saia da formatura" to 4.0), storedNamesAndEase())
     }
 
-    private fun storedNamesAndEase(): List<Pair<String, Double>> = runBlocking {
+    private suspend fun storedNamesAndEase(): List<Pair<String, Double>> =
         projects.projects().first().map(Project::namesAndEase)
-    }
 
     private fun editField(field: SkirtDraftField, text: String) {
         composeRule.onNodeWithText(field.labelText).performScrollTo().performTextReplacement(text)
@@ -121,21 +120,7 @@ class ProjectJourneyTest {
         closeSoftKeyboard()
     }
 
-    private fun awaitTitle(title: String) {
-        await(hasText(title) and isHeading())
-        composeRule.screenTitle(title).assertIsDisplayed()
-    }
-
-    // Storage runs off the main thread, outside Compose's idling.
-    private fun await(matcher: SemanticsMatcher) = composeRule.waitUntil(5_000) {
-        composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
-    }
-
     private fun click(label: String) {
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(hasText(label) and isEnabled()).fetchSemanticsNodes()
-                .isNotEmpty()
-        }
         // Tap the label as a reader does: a small row's centre falls on its Ações button.
         val text = composeRule.onAllNodes(hasText(label), useUnmergedTree = true)[0]
         if (!text.isDisplayed()) text.performScrollTo()

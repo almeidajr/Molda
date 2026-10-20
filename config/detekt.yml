@@ -51,6 +51,8 @@ style:
         value: 'android.os.SystemClock.sleep'
       - reason: 'Blocking on a latch waits on wall-clock time. Synchronize instead; see .agents/rules/kotlin-tests.md.'
         value: 'java.util.concurrent.CountDownLatch.await'
+      - reason: 'runBlocking ignores virtual time. Use runTest; see .agents/rules/kotlin-tests.md.'
+        value: 'kotlinx.coroutines.runBlocking'
   # One assertion library; see .agents/rules/kotlin-tests.md.
   ForbiddenImport:
     active: true

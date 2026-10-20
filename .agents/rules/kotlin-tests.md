@@ -101,8 +101,8 @@ real Room.
 Follow [Testing Kotlin coroutines](https://developer.android.com/kotlin/coroutines/test)
 and [Testing flows](https://developer.android.com/kotlin/flow/test).
 
-- Run coroutine tests with `runTest`, which skips delays on virtual time. Do not
-  use `runBlocking`.
+- Run coroutine tests with `runTest`, which skips delays on virtual time. Detekt
+  rejects `runBlocking` in test sources.
 - ViewModel tests replace the main dispatcher with the shared `MainDispatcherRule`
   (after Now in Android), never with hand-written `setMain`/`resetMain`. It takes
   a `TestDispatcher` and defaults to `UnconfinedTestDispatcher`, so simple state
