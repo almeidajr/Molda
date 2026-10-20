@@ -33,6 +33,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.SkirtTitle
+import com.almeidajr.molda.awaitActivityFocus
 import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.destination
@@ -121,9 +122,12 @@ class ProfileNavigationTest {
         composeRule.activityRule.scenario.recreate()
         showContent()
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+        // A key reaches only the focused window: the recreated activity, then again after the dialog.
+        composeRule.awaitActivityFocus()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         clickInDialog("Descartar")
         composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
+        composeRule.awaitActivityFocus()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
     }
