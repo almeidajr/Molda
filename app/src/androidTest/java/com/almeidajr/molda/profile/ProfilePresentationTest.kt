@@ -18,10 +18,12 @@ import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -310,7 +312,7 @@ class ProfilePresentationTest {
             }
             composeRule.onNodeWithText("Ações: $name").performScrollTo().assertIsDisplayed()
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
-            composeRule.onNodeWithText("Novo perfil").assertIsDisplayed()
+            composeRule.onNodeWithContentDescription("Novo perfil").assertIsDisplayed()
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
             click("Ações: $name")
             click("Editar perfil")
@@ -380,10 +382,11 @@ class ProfilePresentationTest {
     private fun click(label: String) {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
-                hasText(label) and isEnabled() and !hasAnyAncestor(!isEnabled()),
+                hasText(label) or hasContentDescription(label) and isEnabled() and
+                    !hasAnyAncestor(!isEnabled()),
             ).fetchSemanticsNodes().isNotEmpty()
         }
-        val node = composeRule.onNodeWithText(label)
+        val node = composeRule.onNode(hasText(label) or hasContentDescription(label))
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()
     }

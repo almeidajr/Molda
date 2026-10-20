@@ -14,6 +14,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
@@ -678,10 +679,11 @@ class MeasurementProfilesTest {
     private fun click(label: String) {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodes(
-                hasText(label) and isEnabled() and !hasAnyAncestor(!isEnabled()),
+                hasText(label) or hasContentDescription(label) and isEnabled() and
+                    !hasAnyAncestor(!isEnabled()),
             ).fetchSemanticsNodes().isNotEmpty()
         }
-        val node = composeRule.onNodeWithText(label)
+        val node = composeRule.onNode(hasText(label) or hasContentDescription(label))
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()
     }

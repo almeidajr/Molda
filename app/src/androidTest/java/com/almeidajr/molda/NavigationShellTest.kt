@@ -23,6 +23,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
@@ -99,7 +100,7 @@ class NavigationShellTest {
         composeRule.selectDestination("Moldes")
         composeRule.screenTitle("Moldes").assertIsDisplayed()
         composeRule.selectDestination("Perfis")
-        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
@@ -136,7 +137,7 @@ class NavigationShellTest {
         waistField().performTextReplacement("80")
         closeSoftKeyboard()
         composeRule.selectDestination("Perfis")
-        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.activityRule.scenario.recreate()
         composeRule.destination("Perfis").assertIsSelected()
         composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
@@ -151,7 +152,7 @@ class NavigationShellTest {
         composeRule.selectDestination("Perfis")
         // A real key event leaves touch mode, so buttons join keyboard focus traversal.
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
-        composeRule.onNodeWithText("Novo perfil").requestFocus().assertIsFocused()
+        composeRule.onNodeWithContentDescription("Novo perfil").requestFocus().assertIsFocused()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
         composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
         composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
@@ -231,7 +232,7 @@ class NavigationShellTest {
     @Test
     fun switchingToAnOpenEditor_focusesItsHeadingNotAField() {
         composeRule.selectDestination("Perfis")
-        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.selectDestination("Moldes")
         composeRule.selectDestination("Perfis")
         composeRule.onNode(hasText("Novo perfil de medidas") and isHeading()).assertIsFocused()

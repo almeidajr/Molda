@@ -5,12 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -96,15 +94,14 @@ fun ProfilesContent(
 @Composable
 fun ProfileCreateAction(state: ProfilesState, onCreate: () -> Unit, modifier: Modifier = Modifier) {
     val canMutate = !state.isLoading && state.loadError == null && !state.isSaving
+    val label = stringResource(R.string.profile_new)
     ExtendedFloatingActionButton(
+        text = { Text(label) },
+        // This overload hides the text from accessibility and names the FAB by its icon.
+        icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = label) },
         onClick = { if (canMutate) onCreate() },
         modifier = modifier.semantics { if (!canMutate) disabled() },
-    ) {
-        // The icon/text overload clears the label's semantics; this slot keeps it as the button's text.
-        Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-        Spacer(Modifier.width(12.dp))
-        Text(stringResource(R.string.profile_new))
-    }
+    )
 }
 
 internal fun profileDateText(date: LocalDate): String = date.format(ProfileDateFormat)

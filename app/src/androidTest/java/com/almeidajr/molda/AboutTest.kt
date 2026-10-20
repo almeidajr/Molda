@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -53,7 +54,7 @@ class AboutTest {
             // Pushed screens carry an up arrow, not the About action.
             aboutAction().assertDoesNotExist()
             // Profile management's FAB belongs to its own screens.
-            composeRule.onNodeWithText("Novo perfil").assertDoesNotExist()
+            composeRule.onNodeWithContentDescription("Novo perfil").assertDoesNotExist()
             pressBack()
             composeRule.screenTitle(title).assertIsDisplayed()
             composeRule.destination(destination).assertIsSelected()

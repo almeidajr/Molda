@@ -17,6 +17,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -45,7 +46,7 @@ class ProfileNavigationTest {
 
     @Test
     fun calculatorLaunch_doesNotInlineProfileManagement() {
-        composeRule.onNodeWithText("Novo perfil").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Novo perfil").assertDoesNotExist()
     }
 
     @Test
@@ -79,7 +80,7 @@ class ProfileNavigationTest {
     fun recreation_keepsDirtyProfileEditorAndItsWayBack() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         composeRule.selectDestination("Perfis")
-        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         composeRule.activityRule.scenario.recreate()
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
@@ -171,7 +172,7 @@ class ProfileNavigationTest {
     @Test
     fun recreation_keepsDiscardConfirmation() {
         composeRule.selectDestination("Perfis")
-        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         // The opening keyboard resizes the editor, so a tap racing it can miss Cancelar.
         closeSoftKeyboard()
@@ -184,7 +185,7 @@ class ProfileNavigationTest {
     @Test
     fun backWithKeyboardOpen_closesKeyboardAndKeepsProfileEditor() {
         composeRule.selectDestination("Perfis")
-        composeRule.onNodeWithText("Novo perfil").performClick()
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performClick()
         composeRule.waitUntil(5_000) { isKeyboardVisible() }
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
