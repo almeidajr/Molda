@@ -18,6 +18,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.disabled
@@ -95,7 +97,9 @@ fun ProfileCreateAction(state: ProfilesState, onCreate: () -> Unit, modifier: Mo
     ExtendedFloatingActionButton(
         onClick = { if (canMutate) onCreate() },
         modifier = modifier.semantics { if (!canMutate) disabled() },
-    ) { Text(stringResource(R.string.profile_new)) }
+        icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
+        text = { Text(stringResource(R.string.profile_new)) },
+    )
 }
 
 internal fun profileDateText(date: LocalDate): String = date.format(ProfileDateFormat)
