@@ -110,7 +110,7 @@ when a concrete requirement needs it, rather than building a speculative toolkit
 or importing a library for a trivial helper. Fetch current API documentation
 through Context7 before selecting or using a library.
 
-See [Kotlin tests](kotlin-unit-tests.md) when changing tests.
+See [Kotlin tests](kotlin-tests.md) when changing tests.
 
 References: [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html),
 [collection types](https://kotlinlang.org/docs/collections-overview.html),

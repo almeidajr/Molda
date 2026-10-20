@@ -40,3 +40,14 @@ style:
     active: true
   VarCouldBeVal:
     active: true
+  # Tests synchronize instead of sleeping; see .agents/rules/kotlin-tests.md.
+  ForbiddenMethodCall:
+    active: true
+    includes: ['**/test/**', '**/androidTest/**']
+    methods:
+      - reason: 'Fixed sleeps make tests slow and flaky. Synchronize instead; see .agents/rules/kotlin-tests.md.'
+        value: 'java.lang.Thread.sleep'
+      - reason: 'Fixed sleeps make tests slow and flaky. Synchronize instead; see .agents/rules/kotlin-tests.md.'
+        value: 'android.os.SystemClock.sleep'
+      - reason: 'Blocking on a latch waits on wall-clock time. Synchronize instead; see .agents/rules/kotlin-tests.md.'
+        value: 'java.util.concurrent.CountDownLatch.await'

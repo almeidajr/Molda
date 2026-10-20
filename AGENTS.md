@@ -34,7 +34,7 @@ When writing or changing Kotlin code, read and follow [Kotlin style](.agents/rul
 
 Use JUnit 4 for local tests and AndroidJUnit4 for instrumented tests. Espresso and Compose UI testing dependencies are available. Name test classes with a `Test` suffix and methods descriptively, following examples such as `addition_isCorrect`. Add behavior-focused tests for changed logic and UI interactions. No coverage threshold is configured.
 
-When adding or changing tests, read and follow [Kotlin tests](.agents/rules/kotlin-unit-tests.md) for test selection, behavior assertions, and deterministic execution.
+When adding or changing tests, read and follow [Kotlin tests](.agents/rules/kotlin-tests.md) for local and device tests: test selection, assertions, coroutines, fakes, and synchronization.
 
 ## Commit & Pull Request Guidelines
 
