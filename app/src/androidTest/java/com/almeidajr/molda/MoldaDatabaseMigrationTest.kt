@@ -13,7 +13,7 @@ import com.almeidajr.molda.profile.domain.ProfileName
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -30,7 +30,7 @@ class MoldaDatabaseMigrationTest {
     )
 
     @Test
-    fun version1WithProfiles_opensKeepingProfilesAndNoProjects() = runBlocking {
+    fun version1WithProfiles_opensKeepingProfilesAndNoProjects() = runTest {
         helper.createDatabase(1).apply {
             execSQL(
                 "INSERT INTO profiles (id, name, waist, measurement_date, notes) " +

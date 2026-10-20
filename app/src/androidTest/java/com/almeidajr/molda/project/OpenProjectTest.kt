@@ -1,9 +1,5 @@
 package com.almeidajr.molda.project
 
-import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.DeviceConfigurationOverride
-import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -13,7 +9,6 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
-import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -22,35 +17,26 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso.pressBack
-import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
-import com.almeidajr.molda.profile.data.LocalProfileRepository
+import com.almeidajr.molda.profile.domain.MeasurementProfile
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
-import com.almeidajr.molda.project.data.LocalProjectRepository
-import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
-import com.almeidajr.molda.ui.theme.MoldaTheme
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.test.assertTrue
-import kotlinx.coroutines.runBlocking
-import org.junit.After
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -59,17 +45,11 @@ class OpenProjectTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val storage = IsolatedStorage("open-project-test.db")
-    private val database = storage.database
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
-    private val projects = LocalProjectRepository(database.projects())
-
-    @After
-    fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
+    private val projects = FakeProjectRepository(listOf(formaturaProject(clock.instant())))
 
     @Test
     fun openProject_showsTheStoredResultAndItsSource_withoutRecalculating() {
-        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
 
@@ -87,7 +67,6 @@ class OpenProjectTest {
 
     @Test
     fun guideFromProject_usesItsRadii_andBackReturnsToTheProject() {
-        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -103,13 +82,12 @@ class OpenProjectTest {
 
     @Test
     fun savedFromProfile_profileEditedThenDeleted_projectKeepsOriginalMeasurementsAndName() {
-        val profiles = LocalProfileRepository(database.profiles())
-        val ana = runBlocking {
-            profiles.create(
-                ProfileMeasurements(ProfileName("Ana"), Length(80.0), LocalDate.of(2026, 10, 12)),
-            ).getOrThrow()
-        }
-        showRoute()
+        val ana = MeasurementProfile(
+            ProfileId(1),
+            ProfileMeasurements(ProfileName("Ana"), Length(80.0), LocalDate.of(2026, 10, 12)),
+        )
+        val profiles = FakeProfileRepository(listOf(ana))
+        showRoute(profiles = profiles)
         composeRule.showSkirtCalculator()
         click("Usar perfil")
         composeRule.onAllNodes(hasText("Usar perfil: Ana", substring = true))[0].performClick()
@@ -122,7 +100,8 @@ class OpenProjectTest {
         click("Salvar")
         composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
 
-        runBlocking {
+        // A change made elsewhere in the app while the project stays saved.
+        runTest {
             val edited =
                 ProfileMeasurements(ProfileName("Bia"), Length(95.0), LocalDate.of(2026, 10, 17))
             profiles.update(ana.copy(measurements = edited)).getOrThrow()
@@ -140,7 +119,6 @@ class OpenProjectTest {
 
     @Test
     fun wideWindow_showsListBesideThePlaceholderThenBesideTheOpenedProject() {
-        projects.storeProject(clock.instant())
         showRoute(DpSize(1600.dp, 1000.dp))
         composeRule.selectDestination("Projetos")
         composeRule.onNodeWithText("Escolha um projeto na lista.").assertIsDisplayed()
@@ -161,7 +139,6 @@ class OpenProjectTest {
 
     @Test
     fun recreation_keepsTheOpenedProject() {
-        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -175,7 +152,6 @@ class OpenProjectTest {
 
     @Test
     fun openedProject_rename_updatesItsTitleAndTheList() {
-        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -194,7 +170,6 @@ class OpenProjectTest {
 
     @Test
     fun openedProject_delete_returnsToTheList() {
-        projects.storeProject(clock.instant())
         showRoute()
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -209,7 +184,6 @@ class OpenProjectTest {
 
     @Test
     fun wideWindow_deletingTheOpenedProject_returnsToThePlaceholder() {
-        projects.storeProject(clock.instant())
         showRoute(DpSize(1600.dp, 1000.dp))
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
@@ -230,51 +204,12 @@ class OpenProjectTest {
 
     private fun isAt(id: Int) = SemanticsMatcher("node $id") { it.id == id }
 
-    private fun showRoute(size: DpSize? = null) {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                val profiles: ProfilesViewModel = viewModel(
-                    key = "isolatedProfiles",
-                    factory = viewModelFactory {
-                        initializer {
-                            ProfilesViewModel(
-                                LocalProfileRepository(database.profiles()),
-                                createSavedStateHandle(),
-                                clock,
-                            )
-                        }
-                    },
-                )
-                val projectsViewModel: ProjectsViewModel = viewModel(
-                    key = "isolatedProjects",
-                    factory = viewModelFactory {
-                        initializer { ProjectsViewModel(projects, clock, createSavedStateHandle()) }
-                    },
-                )
-                val calculator: SkirtCalculatorViewModel = viewModel()
-                val route = @Composable {
-                    MoldaTheme {
-                        MoldaRoute(
-                            calculator = calculator,
-                            profiles = profiles,
-                            projects = projectsViewModel,
-                        )
-                    }
-                }
-                if (size == null) {
-                    route()
-                } else {
-                    DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(size), route)
-                }
-            }
-        }
-    }
+    private fun showRoute(
+        size: DpSize? = null,
+        profiles: FakeProfileRepository = FakeProfileRepository(),
+    ) = composeRule.showRoute(profiles, projects, clock, size)
 
     private fun click(label: String) {
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(hasText(label) and isEnabled()).fetchSemanticsNodes()
-                .isNotEmpty()
-        }
         // Tap the label as a reader does: a small row's centre falls on its Ações button.
         val text = composeRule.onAllNodes(hasText(label), useUnmergedTree = true)[0]
         if (!text.isDisplayed()) text.performScrollTo()

@@ -1,6 +1,5 @@
 package com.almeidajr.molda.project
 
-import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
@@ -12,36 +11,24 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
-import com.almeidajr.molda.profile.data.LocalProfileRepository
+import com.almeidajr.molda.profile.domain.MeasurementProfile
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
-import com.almeidajr.molda.project.data.LocalProjectRepository
-import com.almeidajr.molda.project.domain.ProjectRepository
-import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
-import com.almeidajr.molda.ui.theme.MoldaTheme
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 
@@ -50,23 +37,16 @@ class ProjectSavingTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val storage = IsolatedStorage("project-ui-test.db")
-    private val database = storage.database
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
-
-    @After
-    fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
 
     @Test
     fun calculateFromProfile_saveWithEditedName_listsItInProjetosWithItsSource() {
-        val profiles = LocalProfileRepository(database.profiles())
-        runBlocking {
-            profiles.create(
-                ProfileMeasurements(ProfileName("Ana"), Length(80.0), LocalDate.of(2026, 10, 12)),
-            ).getOrThrow()
-        }
-        val projects = LocalProjectRepository(database.projects())
-        showRoute(projects)
+        val ana = MeasurementProfile(
+            ProfileId(1),
+            ProfileMeasurements(ProfileName("Ana"), Length(80.0), LocalDate.of(2026, 10, 12)),
+        )
+        val projects = FakeProjectRepository()
+        composeRule.showRoute(FakeProfileRepository(listOf(ana)), projects, clock)
         composeRule.showSkirtCalculator()
         click("Usar perfil")
         composeRule.onAllNodes(hasText("Usar perfil: Ana", substring = true))[0].performClick()
@@ -82,7 +62,7 @@ class ProjectSavingTest {
 
         composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
-        val stored = runBlocking { projects.projects().first() }.single()
+        val stored = projects.current.single()
         assertEquals(MeasurementSource("Ana", LocalDate.of(2026, 10, 12)), stored.snapshot.source)
         assertEquals(Length(80.0), stored.snapshot.draft.waist)
         composeRule.selectDestination("Projetos")
@@ -93,7 +73,11 @@ class ProjectSavingTest {
 
     @Test
     fun save_whenStorageFails_showsFailureAndKeepsTheResult() {
-        showRoute(RefusingProjects())
+        composeRule.showRoute(
+            FakeProfileRepository(),
+            FakeProjectRepository().apply { failsCommands = true },
+            clock,
+        )
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
             .performTextReplacement("70")
@@ -110,37 +94,6 @@ class ProjectSavingTest {
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
     }
 
-    private fun showRoute(projectStorage: ProjectRepository) {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                val profiles: ProfilesViewModel = viewModel(
-                    key = "isolatedProfiles",
-                    factory = viewModelFactory {
-                        initializer {
-                            ProfilesViewModel(
-                                LocalProfileRepository(database.profiles()),
-                                createSavedStateHandle(),
-                                clock,
-                            )
-                        }
-                    },
-                )
-                val projects: ProjectsViewModel = viewModel(
-                    key = "isolatedProjects",
-                    factory = viewModelFactory {
-                        initializer {
-                            ProjectsViewModel(projectStorage, clock, createSavedStateHandle())
-                        }
-                    },
-                )
-                val calculator: SkirtCalculatorViewModel = viewModel()
-                MoldaTheme {
-                    MoldaRoute(calculator = calculator, profiles = profiles, projects = projects)
-                }
-            }
-        }
-    }
-
     /** Fills every field after the waist and calculates. */
     private fun calculate(values: List<String>) {
         SkirtDraftField.entries.drop(1).zip(values).forEach { (field, value) ->
@@ -153,11 +106,6 @@ class ProjectSavingTest {
     }
 
     private fun click(label: String) {
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(
-                hasText(label) and isEnabled(),
-            ).fetchSemanticsNodes().isNotEmpty()
-        }
         val node = composeRule.onNode(hasText(label) and isEnabled())
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()

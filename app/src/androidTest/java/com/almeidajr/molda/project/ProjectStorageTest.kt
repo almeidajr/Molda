@@ -15,7 +15,7 @@ import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -31,7 +31,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun create_reopenListsEveryFieldMostRecentFirst() = runBlocking {
+    fun create_reopenListsEveryFieldMostRecentFirst() = runTest {
         val saved = withProjects(context, databaseName) { storage ->
             listOf(
                 storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow(),
@@ -49,7 +49,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun create_reopenKeepsThePatternDraftKind() = runBlocking {
+    fun create_reopenKeepsThePatternDraftKind() = runTest {
         withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow()
         }
@@ -60,7 +60,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun create_whenStorageFails_reportsFailureAndKeepsOtherProjects() = runBlocking {
+    fun create_whenStorageFails_reportsFailureAndKeepsOtherProjects() = runTest {
         val kept = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow()
         }
@@ -83,7 +83,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun rename_storesTheNameAndListsItAsTheLatestChange() = runBlocking {
+    fun rename_storesTheNameAndListsItAsTheLatestChange() = runTest {
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
                 storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
@@ -101,7 +101,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun update_replacesTheSnapshotInPlaceAsTheLatestChange() = runBlocking {
+    fun update_replacesTheSnapshotInPlaceAsTheLatestChange() = runTest {
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
                 storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
@@ -119,7 +119,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun delete_removesOnlyThatProject() = runBlocking {
+    fun delete_removesOnlyThatProject() = runTest {
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
                 storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
@@ -132,7 +132,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun renameAndDelete_ofAMissingProject_reportFailure() = runBlocking {
+    fun renameAndDelete_ofAMissingProject_reportFailure() = runTest {
         withProjects(context, databaseName) { storage ->
             val gone = storage.create(ProjectName("Saia"), typedByHand, january).getOrThrow()
             storage.delete(gone.id).getOrThrow()

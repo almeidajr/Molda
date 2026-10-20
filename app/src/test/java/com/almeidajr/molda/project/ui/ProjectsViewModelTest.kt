@@ -10,10 +10,10 @@ import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
-import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
+import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import java.time.Clock
 import java.time.Instant
@@ -23,12 +23,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -38,7 +33,7 @@ import org.robolectric.RobolectricTestRunner
 // Robolectric supplies the real Bundle that saved state is parcelled through.
 @RunWith(RobolectricTestRunner::class)
 class ProjectsViewModelTest {
-    private val storage = FakeProjects()
+    private val storage = FakeProjectRepository(listOf(saved))
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -48,7 +43,7 @@ class ProjectsViewModelTest {
         val projects = projectsViewModel()
         assertEquals(listOf(saved), projects.state.value.projects)
 
-        storage.stored.update { emptyList() }
+        storage.delete(saved.id).getOrThrow()
 
         assertEquals(emptyList<Project>(), projects.state.value.projects)
     }
@@ -334,7 +329,8 @@ class ProjectsViewModelTest {
 
     @Test
     fun recreate_afterProcessDeath_duringAStorageCall_offersTheDialogAgain() = runTest {
-        storage.isCommandPending = true
+        // A command that never finishes, as when the process dies during one.
+        storage.commandGate = CompletableDeferred()
         recreatedAfter { projects -> projects.startDeleting(saved).also { projects.delete() } }
             .use { scenario ->
                 assertFalse(scenario.viewModel.state.value.deleting?.isBusy ?: true)
@@ -367,63 +363,3 @@ private val saved = Project(
     createdAt = Instant.parse("2026-09-01T10:00:00Z"),
     updatedAt = Instant.parse("2026-09-01T10:00:00Z"),
 )
-
-/** In-memory projects that emit again after each change, most recent first like Room. */
-private class FakeProjects : ProjectRepository {
-    val stored = MutableStateFlow(listOf(saved))
-    var failsLoad = false
-    var failsCommands = false
-
-    /** Whether commands never finish, as when the process dies during one. */
-    var isCommandPending = false
-
-    override fun projects(): Flow<List<Project>> = flow {
-        check(!failsLoad) { "Controlled load failure" }
-        emitAll(stored)
-    }
-
-    override suspend fun create(
-        name: ProjectName,
-        snapshot: SkirtSnapshot,
-        savedAt: Instant,
-    ): Result<Project> = if (failsCommands) {
-        Result.failure(IllegalStateException("Controlled storage failure"))
-    } else {
-        val created = Project(
-            ProjectId(stored.value.size + 1L),
-            name,
-            snapshot.kind,
-            snapshot,
-            savedAt,
-            savedAt,
-        )
-        stored.update { listOf(created) + it }
-        Result.success(created)
-    }
-
-    override suspend fun update(id: ProjectId, snapshot: SkirtSnapshot, updatedAt: Instant) =
-        command { projects ->
-            val updated = projects.single { it.id == id }
-                .copy(snapshot = snapshot, updatedAt = updatedAt)
-            listOf(updated) + projects.filter { it.id != id }
-        }
-
-    override suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant) =
-        command { projects ->
-            val renamed = projects.single { it.id == id }.copy(name = name, updatedAt = renamedAt)
-            listOf(renamed) + projects.filter { it.id != id }
-        }
-
-    override suspend fun delete(id: ProjectId) = command { projects ->
-        projects.filter { it.id != id }
-    }
-
-    private suspend fun command(change: (List<Project>) -> List<Project>): Result<Unit> =
-        if (isCommandPending) {
-            awaitCancellation()
-        } else if (failsCommands) {
-            Result.failure(IllegalStateException("Controlled storage failure"))
-        } else {
-            Result.success(stored.update(change))
-        }
-}
