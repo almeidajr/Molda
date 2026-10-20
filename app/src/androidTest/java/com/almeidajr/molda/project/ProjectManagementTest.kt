@@ -35,10 +35,10 @@ import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 

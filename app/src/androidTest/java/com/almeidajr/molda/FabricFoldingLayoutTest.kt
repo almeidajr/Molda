@@ -29,7 +29,7 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import org.junit.Assert.assertTrue
+import kotlin.test.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -67,11 +67,11 @@ class FabricFoldingLayoutTest {
                 val layout = layouts.single()
                 // Text bounds can differ from rounded pixel size by a fraction of a pixel.
                 assertTrue(
-                    "$context must wrap within the available width",
                     (0 until layout.lineCount).all {
                         layout.getLineRight(it) <= layout.size.width + 1f &&
                             layout.getLineBottom(it) <= layout.size.height + 1f
                     },
+                    "$context must wrap within the available width",
                 )
                 val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
                 composeRule.waitUntil(15_000) {
@@ -178,10 +178,10 @@ class FabricFoldingLayoutTest {
             // Printed (logcat tag System.out) so each window's visible share can be read back.
             println("MoldaLead $context visible=${visible.height} of ${unclipped.height}")
             assertTrue(
-                "$context first instruction does not start in view with its first line whole: " +
-                    "$visible of $unclipped",
                 visible.top <= unclipped.top + 1f &&
                     visible.height >= layouts.single().getLineBottom(0) - 1f,
+                "$context first instruction does not start in view with its first line whole: " +
+                    "$visible of $unclipped",
             )
         } else {
             node.fullyVisibleBounds("$context lead")

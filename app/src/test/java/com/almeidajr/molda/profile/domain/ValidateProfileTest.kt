@@ -2,7 +2,7 @@ package com.almeidajr.molda.profile.domain
 
 import com.almeidajr.molda.measurement.Length
 import java.time.LocalDate
-import org.junit.Assert.assertEquals
+import kotlin.test.assertEquals
 import org.junit.Test
 
 class ValidateProfileTest {
@@ -59,9 +59,9 @@ class ValidateProfileTest {
     fun validate_zeroNegativeOrMalformedWaist_isRejected() {
         listOf("0", "-1", "Infinity", "", "80cm").forEach {
             assertEquals(
-                it,
                 ProfileValidation.Invalid(setOf(ProfileError.InvalidWaist)),
                 validate(waist = it),
+                it,
             )
         }
     }
@@ -70,9 +70,9 @@ class ValidateProfileTest {
     fun validate_impossibleOrMalformedDate_isRejected() {
         listOf("32/02/2026", "29/02/2025", "00/00/0000", "12/10/0000", "2026-10-12", "").forEach {
             assertEquals(
-                it,
                 ProfileValidation.Invalid(setOf(ProfileError.InvalidDate)),
                 validate(measurementDate = it),
+                it,
             )
         }
     }

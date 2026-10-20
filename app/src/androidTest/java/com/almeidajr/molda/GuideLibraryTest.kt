@@ -29,7 +29,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import org.junit.Assert.assertTrue
+import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -113,7 +113,7 @@ class GuideLibraryTest {
         val list = composeRule.screenTitle("Guias").assertIsDisplayed().getUnclippedBoundsInRoot()
         val label = composeRule.onNodeWithText("Exemplo — não são as suas medidas")
             .assertIsDisplayed().getUnclippedBoundsInRoot()
-        assertTrue("guide not beside the list: $list $label", list.right <= label.left)
+        assertTrue(list.right <= label.left, "guide not beside the list: $list $label")
         guideEntry().assertIsSelected()
         composeRule.onNodeWithText("Escolha um guia na lista.").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Fechar guia").assertDoesNotExist()

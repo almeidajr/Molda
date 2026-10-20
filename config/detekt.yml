@@ -51,3 +51,10 @@ style:
         value: 'android.os.SystemClock.sleep'
       - reason: 'Blocking on a latch waits on wall-clock time. Synchronize instead; see .agents/rules/kotlin-tests.md.'
         value: 'java.util.concurrent.CountDownLatch.await'
+  # One assertion library; see .agents/rules/kotlin-tests.md.
+  ForbiddenImport:
+    active: true
+    includes: ['**/test/**', '**/androidTest/**']
+    forbiddenImports:
+      - reason: 'Assert with kotlin.test; see .agents/rules/kotlin-tests.md.'
+        value: 'org.junit.Assert*'

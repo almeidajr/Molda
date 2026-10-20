@@ -57,9 +57,9 @@ import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -281,9 +281,9 @@ class ProfilePresentationTest {
             assertTrue(it(layouts))
         }
         val style = layouts.single().layoutInput.style
-        assertEquals("$label size", size.sp, style.fontSize)
-        assertEquals("$label line height", height.sp, style.lineHeight)
-        if (weight != null) assertEquals("$label weight", weight, style.fontWeight)
+        assertEquals(size.sp, style.fontSize, "$label size")
+        assertEquals(height.sp, style.lineHeight, "$label line height")
+        if (weight != null) assertEquals(weight, style.fontWeight, "$label weight")
     }
 
     @Test

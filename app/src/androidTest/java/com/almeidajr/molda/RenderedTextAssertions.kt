@@ -13,7 +13,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.toSize
 import java.util.Locale
-import org.junit.Assert.assertTrue
+import kotlin.test.assertTrue
 
 /** Text colour against the rendered pixel behind the text's top-left corner, at least 4.5:1. */
 internal fun SemanticsNodeInteraction.assertReadableTextContrast(context: String) {
@@ -45,7 +45,7 @@ private fun contrastRatio(first: Color, second: Color): Float {
 private fun assertContrast(context: String, contrast: Float, minimum: Float) {
     // Printed (logcat tag System.out) so each run's measured pairs can be read back per scheme.
     println("MoldaContrast $context contrast=${"%.2f".format(Locale.ROOT, contrast)}")
-    assertTrue("$context contrast=$contrast", contrast >= minimum)
+    assertTrue(contrast >= minimum, "$context contrast=$contrast")
 }
 
 /** The node's laid-out bounds in root pixels, whether or not it is scrolled into view. */
@@ -58,10 +58,10 @@ internal fun SemanticsNodeInteraction.layoutBounds(): Rect =
 internal fun SemanticsNodeInteraction.fullyVisibleBounds(context: String): Rect {
     val unclipped = layoutBounds()
     val visible = fetchSemanticsNode(context).boundsInRoot
-    assertTrue("$context has no size", unclipped.width > 0f && unclipped.height > 0f)
+    assertTrue(unclipped.width > 0f && unclipped.height > 0f, "$context has no size")
     assertTrue(
-        "$context is clipped: $visible of $unclipped",
         visible.width >= unclipped.width - 1f && visible.height >= unclipped.height - 1f,
+        "$context is clipped: $visible of $unclipped",
     )
     return unclipped
 }
@@ -88,6 +88,6 @@ internal fun SemanticsNodeInteraction.assertDrawnHeightIsAtLeast(
     val drawn = layout.getModifierInfo().filter { it.coordinates.isAttached }
         .minOf { it.coordinates.size.height }
     val required = with(layout.density) { minimum.roundToPx() }
-    assertTrue("drawn height $drawn px < $required px", drawn >= required)
+    assertTrue(drawn >= required, "drawn height $drawn px < $required px")
     return this
 }

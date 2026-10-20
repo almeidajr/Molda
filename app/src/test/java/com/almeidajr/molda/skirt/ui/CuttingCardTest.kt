@@ -5,9 +5,9 @@ import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -118,8 +118,8 @@ class CuttingCardTest {
             "não garante o caimento",
             "A margem de cintura de 1 cm avança para dentro; " +
                 "a margem de barra de 2,5 cm avança para fora.",
-        ).forEach { assertTrue(it, it in description) }
-        card.flatMap { it.entries }.forEach { assertFalse(it.value, it.value in description) }
+        ).forEach { assertTrue(it in description, it) }
+        card.flatMap { it.entries }.forEach { assertFalse(it.value in description, it.value) }
         assertFalse("coincidem" in description)
     }
 

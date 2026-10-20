@@ -1,9 +1,9 @@
 package com.almeidajr.molda.data
 
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class ResultOfTest {
@@ -21,7 +21,7 @@ class ResultOfTest {
 
     @Test
     fun resultOf_whenBlockIsCancelled_rethrowsTheCancellation() {
-        assertThrows(CancellationException::class.java) {
+        assertFailsWith<CancellationException> {
             runTest { resultOf { throw CancellationException("Left the screen") } }
         }
     }

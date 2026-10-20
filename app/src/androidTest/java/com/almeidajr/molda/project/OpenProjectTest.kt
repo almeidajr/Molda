@@ -48,9 +48,9 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -151,8 +151,8 @@ class OpenProjectTest {
         row.assertIsDisplayed().assertIsSelected()
         val title = composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         assertTrue(
-            "project not beside the list",
             title.getBoundsInRoot().left >= row.getBoundsInRoot().right,
+            "project not beside the list",
         )
         composeRule.onNodeWithText("Escolha um projeto na lista.").assertDoesNotExist()
         // A pane beside its list has no up arrow.

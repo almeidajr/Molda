@@ -1,7 +1,7 @@
 package com.almeidajr.molda.architecture
 
 import com.lemonappdev.konsist.api.Konsist
-import org.junit.Assert.assertEquals
+import kotlin.test.assertEquals
 import org.junit.Test
 
 class PackageCycleTest {
@@ -18,7 +18,7 @@ class PackageCycleTest {
             .groupBy({ it.first }, { it.second })
             .mapValues { (_, targets) -> targets.flatten().toSet() }
 
-        assertEquals("Package cycles found.", emptyList<List<String>>(), cycles(dependencies))
+        assertEquals(emptyList<List<String>>(), cycles(dependencies), "Package cycles found.")
     }
 
     private companion object {

@@ -8,11 +8,11 @@ import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.withProfiles
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProfileStorageTest {
@@ -92,7 +92,7 @@ class ProfileStorageTest {
                     } catch (_: DateTimeParseException) {
                         failed = true
                     }
-                    assertTrue("Invalid persisted measurements must fail to load", failed)
+                    assertTrue(failed, "Invalid persisted measurements must fail to load")
                 }
                 SQLiteDatabase.openDatabase(
                     context.getDatabasePath(databaseName).path,

@@ -1,7 +1,7 @@
 package com.almeidajr.molda.skirt.domain
 
 import com.almeidajr.molda.measurement.Length
-import org.junit.Assert.assertEquals
+import kotlin.test.assertEquals
 import org.junit.Test
 
 class ReadSkirtDraftTest {
@@ -47,9 +47,9 @@ class ReadSkirtDraftTest {
                 },
             ).forEach { (text, error) ->
                 assertEquals(
-                    "$field '$text'",
                     SkirtDraftReading.Invalid(mapOf(field to error)),
                     readSkirtDraft(valid + (field to text)),
+                    "$field '$text'",
                 )
             }
         }

@@ -1,8 +1,8 @@
 package com.almeidajr.molda.project.domain
 
 import java.time.LocalDate
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import org.junit.Test
 
 class ProjectNameTest {

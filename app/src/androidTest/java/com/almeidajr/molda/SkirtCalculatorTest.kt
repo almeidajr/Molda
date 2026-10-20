@@ -46,8 +46,8 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -600,13 +600,13 @@ class SkirtCalculatorTest {
         )
             .getUnclippedBoundsInRoot()
         assertTrue(
-            "diagram outside the card",
             diagram.top >= card.top && diagram.bottom <= card.bottom,
+            "diagram outside the card",
         )
         val guide = composeRule.onNodeWithText("Guia de dobra do tecido")
             .getUnclippedBoundsInRoot()
         val edit = composeRule.onNodeWithText("Editar medidas").getUnclippedBoundsInRoot()
-        assertTrue("actions above the card", guide.top >= card.bottom && edit.top >= card.bottom)
+        assertTrue(guide.top >= card.bottom && edit.top >= card.bottom, "actions above the card")
         val below = listOf(
             "Medidas utilizadas (cm)",
             "Limites do cálculo",
@@ -615,7 +615,7 @@ class SkirtCalculatorTest {
         ).map { composeRule.onNodeWithText(it).getUnclippedBoundsInRoot() }
         (listOf(maxOf(guide.bottom, edit.bottom)) + below.map { it.top })
             .zipWithNext().forEach { (upper, lower) ->
-                assertTrue("results out of order: $upper > $lower", upper <= lower)
+                assertTrue(upper <= lower, "results out of order: $upper > $lower")
             }
     }
 

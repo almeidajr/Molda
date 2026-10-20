@@ -10,11 +10,11 @@ import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtFieldError
 import java.time.LocalDate
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -30,8 +30,16 @@ class SkirtCalculatorViewModelTest {
 
         calculator.state.test {
             val radii = awaitItem().radii
-            assertEquals(11.4591559, radii?.waistStitching?.centimetres ?: 0.0, 1e-6)
-            assertEquals(63.4591559, radii?.hemCutting?.centimetres ?: 0.0, 1e-6)
+            assertEquals(
+                11.4591559,
+                radii?.waistStitching?.centimetres ?: 0.0,
+                absoluteTolerance = 1e-6,
+            )
+            assertEquals(
+                63.4591559,
+                radii?.hemCutting?.centimetres ?: 0.0,
+                absoluteTolerance = 1e-6,
+            )
         }
     }
 
@@ -211,7 +219,11 @@ class SkirtCalculatorViewModelTest {
             scenario.viewModel.state.test {
                 val snapshot = awaitItem().snapshot()
                 assertEquals(savedDraft.copy(ease = Length(3.0)), snapshot?.draft)
-                assertEquals(11.6382052, snapshot?.radii?.waistStitching?.centimetres ?: 0.0, 1e-6)
+                assertEquals(
+                    11.6382052,
+                    snapshot?.radii?.waistStitching?.centimetres ?: 0.0,
+                    absoluteTolerance = 1e-6,
+                )
                 assertEquals(ana, snapshot?.source)
             }
         }

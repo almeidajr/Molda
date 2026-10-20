@@ -43,7 +43,7 @@ import java.io.FileInputStream
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
-import org.junit.Assert.assertTrue
+import kotlin.test.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -98,10 +98,10 @@ class FabricMarkingGuideTest {
                 composeRule.mainClock.advanceTimeBy(1_000)
                 val stillPaused = drawing.captureToImage().toPixelMap()
                 assertTrue(
-                    "$description must remain still while paused",
                     (0 until paused.height step 8).all { y ->
                         (0 until paused.width step 8).all { x -> paused[x, y] == stillPaused[x, y] }
                     },
+                    "$description must remain still while paused",
                 )
                 composeRule.onNodeWithText("Continuar animação")
                     .performSemanticsAction(SemanticsActions.OnClick)
@@ -425,10 +425,10 @@ class FabricMarkingGuideTest {
                     // Restart brings the moving left half back over this known fabric point.
                     val restarted = drawing.captureToImage().toPixelMap()
                     assertTrue(
-                        "Replay must restart the fold, not only update its label",
                         colors.isFabric(
                             restarted[restarted.width / 4, restarted.height / 2].toArgb(),
                         ),
+                        "Replay must restart the fold, not only update its label",
                     )
                 }
                 replayed = true
@@ -437,16 +437,16 @@ class FabricMarkingGuideTest {
             val frame = IntArray(image.width * image.height)
             image.readPixels(frame)
             assertTrue(
+                frame.count(colors::isFabric) > 20,
                 "$description: fabric must remain visible throughout playback " +
                     "at ${elapsed}ms (${image.width}x${image.height}); most frequent colours: " +
                     frame.toList().groupingBy { Integer.toHexString(it) }.eachCount()
                         .entries.sortedByDescending { it.value }.take(6),
-                frame.count(colors::isFabric) > 20,
             )
             // Even the longest step has completed two full cycles by 18 seconds.
             if (elapsed > 18_000) lateFrames += frame.contentHashCode()
         }
-        assertTrue("$description must keep moving after two cycles", lateFrames.size > 3)
+        assertTrue(lateFrames.size > 3, "$description must keep moving after two cycles")
     }
 
     private fun assertCompletedFrameAfterReplay(
@@ -457,8 +457,8 @@ class FabricMarkingGuideTest {
         val start = SystemClock.elapsedRealtime()
         composeRule.waitUntil(5_000) {
             assertTrue(
-                "$description must retain the completed diagram with motion disabled",
                 completed.contentEquals(frame()),
+                "$description must retain the completed diagram with motion disabled",
             )
             SystemClock.elapsedRealtime() - start >= 500
         }

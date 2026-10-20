@@ -76,7 +76,8 @@ duplication and keep clear failure names.
 ## Assertions
 
 Use `kotlin.test` (`assertEquals`, `assertTrue`, `assertIs`, `assertFailsWith`,
-...) in both source sets, as Now in Android does; do not import `org.junit.Assert`.
+...) in both source sets, as Now in Android does; Detekt rejects `org.junit.Assert`
+imports. JUnit 4 stays the runner.
 Floating-point comparisons name their tolerance with `absoluteTolerance`, so the
 accepted precision is explicit.
 

@@ -1,7 +1,7 @@
 package com.almeidajr.molda.skirt.ui
 
 import com.almeidajr.molda.measurement.Length
-import org.junit.Assert.assertEquals
+import kotlin.test.assertEquals
 import org.junit.Test
 
 class ExampleInputsTest {

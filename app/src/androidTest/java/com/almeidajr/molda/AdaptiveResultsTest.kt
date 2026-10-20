@@ -38,7 +38,7 @@ import androidx.window.testing.layout.TestWindowLayoutInfo
 import androidx.window.testing.layout.WindowLayoutInfoPublisherRule
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import org.junit.Assert.assertTrue
+import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -77,12 +77,12 @@ class AdaptiveResultsTest {
             showCalculator(layout.size, layout.fontScale)
             calculateReferenceCase()
             val card = cuttingCard().layoutBounds()
-            assertTrue("$context card width", card.width <= 640.dp.value * pixelsPerDp + 1f)
+            assertTrue(card.width <= 640.dp.value * pixelsPerDp + 1f, "$context card width")
             val waist = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).layoutBounds()
             if (layout.isTwoPane) {
-                assertTrue("$context card beside inputs", card.left >= waist.right)
+                assertTrue(card.left >= waist.right, "$context card beside inputs")
             } else {
-                assertTrue("$context card below inputs", card.left < waist.right)
+                assertTrue(card.left < waist.right, "$context card below inputs")
             }
             assertDiagramInCard(card, layout.isDiagramBeside, context)
             openGuide()
@@ -101,7 +101,7 @@ class AdaptiveResultsTest {
             .fullyVisibleBounds("title")
         val up = composeRule.onNodeWithContentDescription("Voltar").fullyVisibleBounds("up")
         // One pixel of slack for dp-to-pixel rounding.
-        assertTrue("app bar title $title overlaps up arrow $up", up.right <= title.left + 1f)
+        assertTrue(up.right <= title.left + 1f, "app bar title $title overlaps up arrow $up")
         calculateReferenceCase()
         REFERENCE_RADII.forEach { radius ->
             composeRule.onNodeWithContentDescription(radius).performScrollTo()
@@ -114,7 +114,7 @@ class AdaptiveResultsTest {
             composeRule.onNodeWithContentDescription(it).layoutBounds()
         }
         radii.zipWithNext().forEach { (upper, lower) ->
-            assertTrue("radii overlap: $upper $lower", upper.bottom <= lower.top)
+            assertTrue(upper.bottom <= lower.top, "radii overlap: $upper $lower")
         }
         // The action row wraps rather than squeezing either label.
         val actionLabels = listOf("Guia de dobra do tecido", "Editar medidas")
@@ -124,7 +124,7 @@ class AdaptiveResultsTest {
         }
         // Both read at one scroll position.
         val (guide, edit) = actionLabels.map { composeRule.onNodeWithText(it).layoutBounds() }
-        assertTrue("actions overlap: $guide $edit", !guide.overlaps(edit))
+        assertTrue(!guide.overlaps(edit), "actions overlap: $guide $edit")
         listOf("Como levar os raios ao papel", "Fórmulas").forEach { label ->
             val disclosure = composeRule.onNode(hasText(label) and hasClickAction())
             disclosure.performScrollTo().performClick()
@@ -133,8 +133,8 @@ class AdaptiveResultsTest {
                 .assertTextFits(label).fullyVisibleBounds(label)
             // The 24dp chevron and the button's 12dp end padding stay whole beside the label.
             assertTrue(
-                "$label squeezes the chevron",
                 bounds.right - text.right >= 36.dp.value * pixelsPerDp - 1f,
+                "$label squeezes the chevron",
             )
         }
         openGuide()
@@ -151,12 +151,12 @@ class AdaptiveResultsTest {
             composeRule.onNodeWithContentDescription(REFERENCE_RADII.last()),
         ).forEach {
             val bounds = it.performScrollTo().fullyVisibleBounds("result")
-            assertTrue("result crosses the fold: $bounds", bounds.bottom <= hinge.top)
+            assertTrue(bounds.bottom <= hinge.top, "result crosses the fold: $bounds")
         }
         openGuide()
         listOf("Anterior", "Etapa 1 de 6", "Próximo").forEach {
             val bounds = composeRule.onNodeWithText(it).fullyVisibleBounds(it)
-            assertTrue("$it crosses the fold", bounds.bottom <= hinge.top)
+            assertTrue(bounds.bottom <= hinge.top, "$it crosses the fold")
         }
     }
 
@@ -170,8 +170,8 @@ class AdaptiveResultsTest {
         val waist = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
             .performScrollTo().fullyVisibleBounds("waist")
         val card = cuttingCard().layoutBounds()
-        assertTrue("inputs cross the fold", waist.right <= hinge.left)
-        assertTrue("card crosses the fold", card.left >= hinge.right)
+        assertTrue(waist.right <= hinge.left, "inputs cross the fold")
+        assertTrue(card.left >= hinge.right, "card crosses the fold")
         openGuide()
         assertPlayerOnOneSide(hinge)
     }
@@ -189,8 +189,8 @@ class AdaptiveResultsTest {
         val back = composeRule.onNodeWithText("Anterior").fullyVisibleBounds("Anterior")
         val forward = composeRule.onNodeWithText("Próximo").fullyVisibleBounds("Próximo")
         assertTrue(
-            "guide player does not span the flat fold: $back $forward",
             back.right <= hinge.left && forward.left >= hinge.right,
+            "guide player does not span the flat fold: $back $forward",
         )
     }
 
@@ -216,8 +216,8 @@ class AdaptiveResultsTest {
         val back = composeRule.onNodeWithText("Anterior").fullyVisibleBounds("Anterior")
         val forward = composeRule.onNodeWithText("Próximo").fullyVisibleBounds("Próximo")
         assertTrue(
-            "guide player does not span the flat fold: $back $forward",
             back.right <= hinge.left && forward.left >= hinge.right,
+            "guide player does not span the flat fold: $back $forward",
         )
     }
 
@@ -226,8 +226,8 @@ class AdaptiveResultsTest {
             .map { composeRule.onNodeWithText(it).fullyVisibleBounds(it) } +
             composeRule.onNodeWithContentDescription("Fechar guia").fullyVisibleBounds("close")
         assertTrue(
-            "guide player crosses the fold: $player",
             player.all { it.right <= hinge.left } || player.all { it.left >= hinge.right },
+            "guide player crosses the fold: $player",
         )
     }
 
@@ -304,23 +304,23 @@ class AdaptiveResultsTest {
         )
             .layoutBounds()
         assertTrue(
-            "$context diagram outside the card",
             card.contains(diagram.topLeft) && card.contains(diagram.bottomRight - Offset(1f, 1f)),
+            "$context diagram outside the card",
         )
         val radii = REFERENCE_RADII.map {
             composeRule.onNodeWithContentDescription(it).layoutBounds()
         }
         if (isBeside) {
             assertTrue(
-                "$context diagram not beside the radii",
                 radii.all { it.right <= diagram.left } && diagram.top < radii.last().bottom,
+                "$context diagram not beside the radii",
             )
         } else {
             assertTrue(
-                "$context diagram not below the radii",
                 radii.all {
                     it.bottom <= diagram.top
                 },
+                "$context diagram not below the radii",
             )
         }
     }
@@ -338,8 +338,8 @@ class AdaptiveResultsTest {
         val forward = composeRule.onNode(hasText("Próximo") and hasClickAction())
             .fullyVisibleBounds("$context Próximo")
         assertTrue(
-            "$context Próximo is shorter than 48dp",
             forward.height >= 48.dp.value * pixelsPerDp - 1f,
+            "$context Próximo is shorter than 48dp",
         )
         composeRule.onNode(hasContentDescription("Fechar guia"))
             .fullyVisibleBounds("$context close")
@@ -351,12 +351,12 @@ class AdaptiveResultsTest {
         val layout = layouts.single()
         // Text bounds can differ from rounded pixel size by a fraction of a pixel.
         assertTrue(
-            "$context text overflows",
             // Line width, not line right: centred text is laid out wider than it measures.
             (0 until layout.lineCount).all {
                 layout.getLineRight(it) - layout.getLineLeft(it) <= layout.size.width + 1f &&
                     layout.getLineBottom(it) <= layout.size.height + 1f
             },
+            "$context text overflows",
         )
         return this
     }

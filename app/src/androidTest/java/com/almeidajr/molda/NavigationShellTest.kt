@@ -38,8 +38,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -156,7 +156,7 @@ class NavigationShellTest {
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
         composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
         composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
-        assertTrue("keyboard opened by itself", !isKeyboardVisible())
+        assertTrue(!isKeyboardVisible(), "keyboard opened by itself")
     }
 
     @Test
@@ -176,15 +176,15 @@ class NavigationShellTest {
                 val title = composeRule.screenTitle("Moldes").getUnclippedBoundsInRoot()
                 if (isRail) {
                     assertTrue(
-                        "$size items not in a column",
                         items.all {
                             it.left == items[0].left
                         },
+                        "$size items not in a column",
                     )
-                    assertTrue("$size rail not at the start", items[0].right <= title.left)
+                    assertTrue(items[0].right <= title.left, "$size rail not at the start")
                 } else {
-                    assertTrue("$size items not in a row", items.all { it.top == items[0].top })
-                    assertTrue("$size bar not below content", items[0].top > title.bottom)
+                    assertTrue(items.all { it.top == items[0].top }, "$size items not in a row")
+                    assertTrue(items[0].top > title.bottom, "$size bar not below content")
                 }
                 assertEquals(destinations.size, items.distinct().size)
             }
@@ -206,7 +206,7 @@ class NavigationShellTest {
                 .performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
                     assertTrue(it(layouts))
                 }
-            assertTrue("$label overflows its item", !layouts.single().hasVisualOverflow)
+            assertTrue(!layouts.single().hasVisualOverflow, "$label overflows its item")
         }
     }
 
@@ -237,7 +237,7 @@ class NavigationShellTest {
         composeRule.selectDestination("Perfis")
         composeRule.onNode(hasText("Novo perfil de medidas") and isHeading()).assertIsFocused()
         composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
-        assertTrue("keyboard opened by itself", !isKeyboardVisible())
+        assertTrue(!isKeyboardVisible(), "keyboard opened by itself")
     }
 
     @Test

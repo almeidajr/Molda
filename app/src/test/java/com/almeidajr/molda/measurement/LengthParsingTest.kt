@@ -1,7 +1,7 @@
 package com.almeidajr.molda.measurement
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import org.junit.Test
 
 class LengthParsingTest {
@@ -23,12 +23,12 @@ class LengthParsingTest {
             "", " ", "NaN", "Infinity", "1e309", "1e2", "80cm", "80,", "1.000,5",
             "1,2,3", "0x10", "9".repeat(400),
         )
-            .forEach { assertEquals(it, ParsedLength.Malformed, parseLength(it)) }
+            .forEach { assertEquals(ParsedLength.Malformed, parseLength(it), it) }
     }
 
     @Test
     fun length_negativeOrNonfiniteCentimetres_isRejected() {
         listOf(-0.5, Double.NaN, Double.POSITIVE_INFINITY)
-            .forEach { assertThrows(IllegalArgumentException::class.java) { Length(it) } }
+            .forEach { assertFailsWith<IllegalArgumentException> { Length(it) } }
     }
 }

@@ -12,11 +12,11 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.withProjects
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
