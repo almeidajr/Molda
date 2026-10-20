@@ -43,7 +43,7 @@ style:
   # Tests synchronize instead of sleeping; see .agents/rules/kotlin-tests.md.
   ForbiddenMethodCall:
     active: true
-    includes: ['**/test/**', '**/androidTest/**']
+    includes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
     methods:
       - reason: 'Fixed sleeps make tests slow and flaky. Synchronize instead; see .agents/rules/kotlin-tests.md.'
         value: 'java.lang.Thread.sleep'
@@ -54,7 +54,7 @@ style:
   # One assertion library; see .agents/rules/kotlin-tests.md.
   ForbiddenImport:
     active: true
-    includes: ['**/test/**', '**/androidTest/**']
+    includes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
     forbiddenImports:
       - reason: 'Assert with kotlin.test; see .agents/rules/kotlin-tests.md.'
         value: 'org.junit.Assert*'

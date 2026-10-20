@@ -53,6 +53,10 @@ android {
     buildFeatures {
         compose = true
     }
+    // Shared fakes for local and device tests (app/src/testFixtures).
+    testFixtures {
+        enable = true
+    }
     testOptions {
         // Lets Robolectric tests resolve the app's string resources.
         unitTests.isIncludeAndroidResources = true
@@ -104,7 +108,12 @@ detekt {
     buildUponDefaultConfig = true
     failOnSeverity = dev.detekt.gradle.extensions.FailOnSeverity.Info
     config.setFrom(rootProject.file("config/detekt.yml"))
-    source.setFrom("src/main/java", "src/test/java", "src/androidTest/java")
+    source.setFrom(
+        "src/main/java",
+        "src/testFixtures/java",
+        "src/test/java",
+        "src/androidTest/java",
+    )
 }
 
 dependencies {
@@ -131,6 +140,10 @@ dependencies {
     implementation(libs.androidx.room3.runtime)
     implementation(libs.aboutlibraries.compose.m3)
     ksp(libs.androidx.room3.compiler)
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
+    // The Compose compiler plugin also compiles test fixtures and fails without the runtime.
+    testFixturesCompileOnly(platform(libs.androidx.compose.bom))
+    testFixturesCompileOnly(libs.androidx.compose.runtime)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.konsist)

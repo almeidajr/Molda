@@ -12,12 +12,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class ProfileStorageTest {
     @Test
-    fun updateAndDelete_reopenKeepsIdentityAndOtherProfilesWithDuplicateNames() = runBlocking {
+    fun updateAndDelete_reopenKeepsIdentityAndOtherProfilesWithDuplicateNames() = runTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val databaseName = "profiles-mutations-test.db"
         context.deleteDatabase(databaseName)
@@ -58,7 +58,7 @@ class ProfileStorageTest {
     }
 
     @Test
-    fun malformedPersistedMeasurements_failWithoutResettingOtherProfiles() = runBlocking {
+    fun malformedPersistedMeasurements_failWithoutResettingOtherProfiles() = runTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val databaseName = "profiles-invalid-test.db"
         context.deleteDatabase(databaseName)
@@ -111,7 +111,7 @@ class ProfileStorageTest {
     }
 
     @Test
-    fun reopen_keepsAllFieldsAndDuplicateNamesDistinct() = runBlocking {
+    fun reopen_keepsAllFieldsAndDuplicateNamesDistinct() = runTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val databaseName = "profiles-test.db"
         context.deleteDatabase(databaseName)

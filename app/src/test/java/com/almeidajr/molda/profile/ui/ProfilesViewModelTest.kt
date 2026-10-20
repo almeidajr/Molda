@@ -12,6 +12,7 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import java.time.Clock
 import java.time.Instant
@@ -23,12 +24,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -38,7 +35,7 @@ import org.robolectric.RobolectricTestRunner
 // Robolectric supplies the real Bundle that saved state is parcelled through.
 @RunWith(RobolectricTestRunner::class)
 class ProfilesViewModelTest {
-    private val storage = FakeProfiles()
+    private val storage = FakeProfileRepository(listOf(ana))
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -48,9 +45,9 @@ class ProfilesViewModelTest {
         val profiles = profilesViewModel()
         assertEquals(listOf(ana), profiles.state.value.profiles)
 
-        storage.stored.update { it + bia }
+        val added = storage.create(bia.measurements).getOrThrow()
 
-        assertEquals(listOf(ana, bia), profiles.state.value.profiles)
+        assertEquals(listOf(ana, added), profiles.state.value.profiles)
     }
 
     @Test
@@ -72,14 +69,15 @@ class ProfilesViewModelTest {
 
     @Test
     fun load_whileStillLoading_keepsOneRepositoryCollector() = runTest {
-        storage.holdsFirstEmission = true
-        val profiles = profilesViewModel()
+        storage.loadGate = CompletableDeferred()
+        val counted = CollectorCounting(storage)
+        val profiles = ProfilesViewModel(counted, SavedStateHandle(), clock)
 
         profiles.load()
         profiles.load()
-        storage.emissionGate.complete(Unit)
+        storage.loadGate?.complete(Unit)
 
-        assertEquals(1, storage.activeCollectors)
+        assertEquals(1, counted.activeCollectors)
         assertEquals(listOf(ana), profiles.state.value.profiles)
     }
 
@@ -217,40 +215,13 @@ private fun profile(id: Long, name: String, waist: Double) = MeasurementProfile(
     ProfileMeasurements(ProfileName(name), Length(waist), LocalDate.of(2026, 10, 12)),
 )
 
-/** In-memory profiles that emit again after each change, like the Room repository. */
-private class FakeProfiles : ProfileRepository {
-    val stored = MutableStateFlow(listOf(ana))
-    var failsLoad = false
-    var failsCommands = false
-    var holdsFirstEmission = false
-    val emissionGate = CompletableDeferred<Unit>()
+/** Counts the collectors of [profiles], to show a retry replaces the pending one. */
+private class CollectorCounting(private val profiles: ProfileRepository) :
+    ProfileRepository by profiles {
     var activeCollectors = 0
         private set
 
-    override fun profiles(): Flow<List<MeasurementProfile>> = flow {
-        check(!failsLoad) { "Controlled load failure" }
-        if (holdsFirstEmission) emissionGate.await()
-        emitAll(stored)
-    }
+    override fun profiles(): Flow<List<MeasurementProfile>> = profiles.profiles()
         .onStart { activeCollectors++ }
         .onCompletion { activeCollectors-- }
-
-    override suspend fun create(measurements: ProfileMeasurements) = command {
-        MeasurementProfile(ProfileId(stored.value.size + 1L), measurements)
-            .also { created -> stored.update { it + created } }
-    }
-
-    override suspend fun update(profile: MeasurementProfile) = command {
-        stored.update { profiles -> profiles.map { if (it.id == profile.id) profile else it } }
-    }
-
-    override suspend fun delete(id: ProfileId) = command {
-        stored.update { profiles -> profiles.filterNot { it.id == id } }
-    }
-
-    private fun <T> command(block: () -> T): Result<T> = if (failsCommands) {
-        Result.failure(IllegalStateException("Controlled storage failure"))
-    } else {
-        Result.success(block())
-    }
 }

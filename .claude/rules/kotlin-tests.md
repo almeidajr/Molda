@@ -1,6 +1,7 @@
 ---
 paths:
   - "app/src/test/**"
+  - "app/src/testFixtures/**"
   - "app/src/androidTest/**"
 ---
 
@@ -87,8 +88,9 @@ Prefer real value objects and small fakes; mock only when the interaction itself
 is the contract
 ([test doubles](https://developer.android.com/training/testing/fundamentals/test-doubles)).
 Fakes sit at the repository boundary: they implement `ProfileRepository` and
-`ProjectRepository` and are shared by local and device tests, not copied into
-single test files. A fake takes its seed data in its constructor, exposes its
+`ProjectRepository` and are shared by local and device tests through the test
+fixtures in `app/src/testFixtures` (package `com.almeidajr.molda.testing`), not
+copied into single test files. A fake takes its seed data in its constructor, exposes its
 current contents synchronously for assertions, and can be told to fail for
 failure-path tests. A mocked database or serializer does not verify that
 integration; Room behavior is covered by the repository and migration tests on

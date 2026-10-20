@@ -17,11 +17,9 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
-import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -47,19 +45,17 @@ import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
-import com.almeidajr.molda.data.room.openMoldaDatabase
-import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
+import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -68,14 +64,10 @@ class ProfilePresentationTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val databaseName = "profile-presentation-test.db"
-    private lateinit var storage: LocalProfileRepository
+    private val storage = FakeProfileRepository()
 
     @Before
     fun showIsolatedProfiles() {
-        composeRule.activity.deleteDatabase(databaseName)
-        storage =
-            LocalProfileRepository(openMoldaDatabase(composeRule.activity, databaseName).profiles())
         showContent()
         composeRule.showSkirtCalculator()
     }
@@ -118,13 +110,6 @@ class ProfilePresentationTest {
                 }
             }
         }
-    }
-
-    @After
-    fun removeIsolatedProfiles() {
-        composeRule.activityRule.scenario.close()
-        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-            .targetContext.deleteDatabase(databaseName)
     }
 
     @Test
@@ -373,19 +358,10 @@ class ProfilePresentationTest {
 
     private fun saveProfile(label: String = "Salvar perfil") {
         click(label)
-        // A profile name also matches its draft field while storage is still pending.
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(hasText("Nome ou apelido")).fetchSemanticsNodes().isEmpty()
-        }
+        composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
     }
 
     private fun click(label: String) {
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(
-                hasText(label) or hasContentDescription(label) and isEnabled() and
-                    !hasAnyAncestor(!isEnabled()),
-            ).fetchSemanticsNodes().isNotEmpty()
-        }
         val node = composeRule.onNode(hasText(label) or hasContentDescription(label))
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()

@@ -13,11 +13,9 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
-import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -33,10 +31,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MoldaRoute
-import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.destination
 import com.almeidajr.molda.measurement.Length
-import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
@@ -44,6 +40,7 @@ import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
+import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
 import java.time.Instant
@@ -52,9 +49,6 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.test.assertEquals
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -63,14 +57,10 @@ class MeasurementProfilesTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val databaseName = "profile-ui-test.db"
-    private lateinit var storage: LocalProfileRepository
+    private val storage = FakeProfileRepository()
 
     @Before
     fun showIsolatedProfiles() {
-        composeRule.activity.deleteDatabase(databaseName)
-        storage =
-            LocalProfileRepository(openMoldaDatabase(composeRule.activity, databaseName).profiles())
         showContent()
         composeRule.showSkirtCalculator()
     }
@@ -110,13 +100,6 @@ class MeasurementProfilesTest {
         }
     }
 
-    @After
-    fun removeIsolatedProfiles() {
-        composeRule.activityRule.scenario.close()
-        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-            .targetContext.deleteDatabase(databaseName)
-    }
-
     @Test
     fun deleteConfirmation_cancelAndBackPreserveSavedProfile() {
         manage()
@@ -128,7 +111,7 @@ class MeasurementProfilesTest {
         click("Ações: Ana")
         click("Excluir perfil")
         composeRule.onNodeWithText("Excluir perfil Ana?").assertIsDisplayed()
-        runBlocking { assertEquals(1, storage.profiles().first().size) }
+        assertEquals(1, storage.current.size)
         click("Cancelar")
         composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
         click("Ações: Ana")
@@ -141,7 +124,7 @@ class MeasurementProfilesTest {
         }
         composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
         composeRule.onNodeWithText("Ana").assertIsDisplayed()
-        runBlocking { assertEquals(1, storage.profiles().first().size) }
+        assertEquals(1, storage.current.size)
     }
 
     @Test
@@ -173,7 +156,7 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Cintura copiada do perfil: Ana")
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
-        runBlocking { assertEquals(ProfileId(2), storage.profiles().first().single().id) }
+        assertEquals(ProfileId(2), storage.current.single().id)
     }
 
     @Test
@@ -299,8 +282,7 @@ class MeasurementProfilesTest {
         click("Cancelar")
         click("Continuar editando")
         saveProfile()
-        val source = composeRule.onNodeWithText("Cintura copiada do perfil: Nova no seletor")
-        composeRule.waitUntil(5_000) { source.isDisplayed() }
+        composeRule.onNodeWithText("Cintura copiada do perfil: Nova no seletor").assertIsDisplayed()
         composeRule.onNodeWithText("Circunferência da cintura (cm)").assertTextContains("80")
         composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
         composeRule.destination("Moldes").assertIsSelected()
@@ -349,12 +331,10 @@ class MeasurementProfilesTest {
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Informe uma cintura positiva e finita, como 80,5.")
             .performScrollTo().assertIsDisplayed()
-        runBlocking {
-            val saved = storage.profiles().first().single().measurements
-            assertEquals(ProfileName("Ana"), saved.name)
-            assertEquals(Length(80.0), saved.waist)
-            assertEquals(LocalDate.of(2026, 10, 12), saved.measurementDate)
-        }
+        val saved = storage.current.single().measurements
+        assertEquals(ProfileName("Ana"), saved.name)
+        assertEquals(Length(80.0), saved.waist)
+        assertEquals(LocalDate.of(2026, 10, 12), saved.measurementDate)
     }
 
     @Test
@@ -366,10 +346,6 @@ class MeasurementProfilesTest {
             edit("Cintura do perfil (cm)", "80,123456789")
             edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
             saveProfile()
-            composeRule.waitUntil(5_000) {
-                composeRule.onAllNodes(hasText("Perfil salvo neste aparelho."))
-                    .fetchSemanticsNodes().isNotEmpty()
-            }
             composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
         }
         pick("Usar perfil: Ana — 80,123456789 cm — 12/10/2026")
@@ -407,7 +383,7 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Circunferência da cintura (cm)")
             .performScrollTo().assertTextContains("82,25")
         pick("Usar perfil: Ana — 80,123456789 cm — 12/10/2026")
-        runBlocking { assertEquals(ProfileId(2), storage.profiles().first().single().id) }
+        assertEquals(ProfileId(2), storage.current.single().id)
     }
 
     @Test
@@ -423,13 +399,6 @@ class MeasurementProfilesTest {
         edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
         edit("Observações (opcional)", "Medida no cós")
         saveProfile()
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(
-                hasText(
-                    "Teste reutilização",
-                ),
-            ).fetchSemanticsNodes().isNotEmpty()
-        }
         pick("Usar perfil: Teste reutilização — 80,5 cm — 12/10/2026")
         composeRule.onNodeWithText(
             "Cintura copiada do perfil: Teste reutilização",
@@ -461,12 +430,10 @@ class MeasurementProfilesTest {
             "Margem de costura da cintura (cm)",
         ).performScrollTo().assertTextContains("1")
         composeRule.onNodeWithText("Margem de barra (cm)").performScrollTo().assertTextContains("2")
-        runBlocking {
-            val saved = storage.profiles().first().single().measurements
-            assertEquals(ProfileName("Teste reutilização"), saved.name)
-            assertEquals(Length(80.5), saved.waist)
-            assertEquals("Medida no cós", saved.notes)
-        }
+        val saved = storage.current.single().measurements
+        assertEquals(ProfileName("Teste reutilização"), saved.name)
+        assertEquals(Length(80.5), saved.waist)
+        assertEquals("Medida no cós", saved.notes)
     }
 
     @Test
@@ -549,10 +516,7 @@ class MeasurementProfilesTest {
         composeRule.onNodeWithText("Observações (opcional)")
             .performScrollTo().performClick().assertIsDisplayed()
         saveProfile()
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(hasText("Perfil salvo neste aparelho."))
-                .fetchSemanticsNodes().isNotEmpty()
-        }
+        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Ana")
             .performScrollTo().assertIsDisplayed()
         click("Ana")
@@ -670,19 +634,10 @@ class MeasurementProfilesTest {
 
     private fun saveProfile(label: String = "Salvar perfil") {
         click(label)
-        // A profile name also matches its draft field while storage is still pending.
-        composeRule.waitUntil(10_000) {
-            composeRule.onAllNodes(hasText("Nome ou apelido")).fetchSemanticsNodes().isEmpty()
-        }
+        composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
     }
 
     private fun click(label: String) {
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(
-                hasText(label) or hasContentDescription(label) and isEnabled() and
-                    !hasAnyAncestor(!isEnabled()),
-            ).fetchSemanticsNodes().isNotEmpty()
-        }
         val node = composeRule.onNode(hasText(label) or hasContentDescription(label))
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()

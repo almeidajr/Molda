@@ -12,11 +12,9 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
-import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -40,6 +38,7 @@ import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
+import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
 import java.time.Instant
@@ -47,13 +46,6 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 
@@ -64,7 +56,7 @@ class ProfileFailuresTest {
     @Test
     fun saving_pendingStorageKeepsEditorAndDisablesDuplicateMutation() {
         val gate = CompletableDeferred<Unit>()
-        showProfiles(FailingProfiles(saveGate = gate))
+        showProfiles(existingProfiles().apply { commandGate = gate })
         composeRule.selectDestination("Perfis")
         click("Novo perfil")
         edit("Nome ou apelido", "Nova")
@@ -81,9 +73,7 @@ class ProfileFailuresTest {
             .sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Novo perfil de medidas").performScrollTo().assertIsDisplayed()
         gate.complete(Unit)
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(hasText("Nome ou apelido")).fetchSemanticsNodes().isEmpty()
-        }
+        composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
         composeRule.onNodeWithText("Nova").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
     }
@@ -91,7 +81,10 @@ class ProfileFailuresTest {
     @Test
     fun deleting_pendingStorageDisablesMutationsAndFailureKeepsRecords() {
         val gate = CompletableDeferred<Unit>()
-        val storage = FailingProfiles(deleteGate = gate)
+        val storage = existingProfiles().apply {
+            commandGate = gate
+            failsCommands = true
+        }
         showProfiles(storage)
         composeRule.selectDestination("Perfis")
         click("Ações: Existente")
@@ -106,12 +99,12 @@ class ProfileFailuresTest {
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
         composeRule.onNodeWithText("Existente").assertIsDisplayed()
-        runBlocking { assertEquals(2, storage.profiles().first().size) }
+        assertEquals(2, storage.current.size)
     }
 
     @Test
     fun legacyFutureDate_staysReadableAndRequiresCorrectionOnExplicitSave() {
-        val storage = FailingProfiles(measurementDate = LocalDate.of(2026, 10, 14))
+        val storage = existingProfiles(measurementDate = LocalDate.of(2026, 10, 14))
         showProfiles(storage)
         click("Usar perfil")
         composeRule.onNodeWithText(
@@ -131,8 +124,8 @@ class ProfileFailuresTest {
 
     @Test
     fun updateAndDeleteFailures_keepSavedRecordsDraftAndCalculationWithoutSuccess() {
-        val storage = FailingProfiles()
-        val original = runBlocking { storage.profiles().first() }
+        val storage = existingProfiles().apply { failsCommands = true }
+        val original = storage.current
         showProfiles(storage)
         edit("Circunferência da cintura (cm)", "95")
         edit("Comprimento acabado (cm)", "60")
@@ -163,27 +156,20 @@ class ProfileFailuresTest {
             .performScrollTo().assertTextContains("95")
         composeRule.onNodeWithText("Comprimento acabado (cm)")
             .performScrollTo().assertTextContains("60")
-        runBlocking { assertEquals(original, storage.profiles().first()) }
+        assertEquals(original, storage.current)
     }
 
     @Test
     fun loadFailure_blocksSavingAndRetryShowsExistingRecords() {
-        val storage = FailingProfiles(failLoad = true)
+        val storage = existingProfiles().apply { failsLoad = true }
         showProfiles(storage)
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithText("Não foi possível carregar os perfis.", substring = true)
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Nenhum perfil salvo.", substring = true).assertDoesNotExist()
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
-        composeRule.runOnUiThread { storage.failLoad = false }
+        storage.failsLoad = false
         composeRule.onNodeWithText("Tentar carregar novamente").performScrollTo().performClick()
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(
-                hasText(
-                    "Existente",
-                ),
-            ).fetchSemanticsNodes().isNotEmpty()
-        }
         composeRule.onNodeWithText("Existente")
             .performScrollTo().assertIsDisplayed()
     }
@@ -191,7 +177,7 @@ class ProfileFailuresTest {
     @Test
     fun loadingProfiles_manualCalculationRemainsAvailable() {
         val gate = CompletableDeferred<Unit>()
-        showProfiles(FailingProfiles(loadGate = gate))
+        showProfiles(existingProfiles().apply { loadGate = gate })
         click("Usar perfil")
         composeRule.onNodeWithText("Carregando perfis…").assertIsDisplayed()
         composeRule.onNodeWithText("Cancelar seleção").performClick()
@@ -210,7 +196,7 @@ class ProfileFailuresTest {
 
     @Test
     fun saveFailure_keepsFormAndExistingRecordsWithoutSuccess() {
-        showProfiles(FailingProfiles(failSave = true))
+        showProfiles(existingProfiles().apply { failsCommands = true })
         composeRule.selectDestination("Perfis")
         click("Novo perfil")
         edit("Nome ou apelido", "Nova")
@@ -230,7 +216,7 @@ class ProfileFailuresTest {
 
     @Test
     fun wideDeleteFailure_announcesOnce_andKeepsOtherEditorDraft() {
-        showProfiles(FailingProfiles(), wide = true)
+        showProfiles(existingProfiles().apply { failsCommands = true }, wide = true)
         composeRule.selectDestination("Perfis")
         click("Existente", useUnmergedTree = true)
         edit("Nome ou apelido", "Rascunho")
@@ -289,12 +275,6 @@ class ProfileFailuresTest {
     }
 
     private fun click(label: String, useUnmergedTree: Boolean = false) {
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(
-                hasText(label) or hasContentDescription(label) and isEnabled() and
-                    !hasAnyAncestor(!isEnabled()),
-            ).fetchSemanticsNodes().isNotEmpty()
-        }
         val node = composeRule.onNode(
             hasText(label) or hasContentDescription(label),
             useUnmergedTree,
@@ -304,16 +284,8 @@ class ProfileFailuresTest {
     }
 }
 
-private class FailingProfiles(
-    var failLoad: Boolean = false,
-    val failSave: Boolean = false,
-    val loadGate: CompletableDeferred<Unit>? = null,
-    val deleteGate: CompletableDeferred<Unit>? = null,
-    val saveGate: CompletableDeferred<Unit>? = null,
-    val measurementDate: LocalDate = LocalDate.of(2026, 10, 12),
-) : ProfileRepository {
-    // Emits again after each change, like the Room repository.
-    private val records = MutableStateFlow(
+private fun existingProfiles(measurementDate: LocalDate = LocalDate.of(2026, 10, 12)) =
+    FakeProfileRepository(
         listOf(
             MeasurementProfile(
                 ProfileId(1),
@@ -329,26 +301,3 @@ private class FailingProfiles(
             ),
         ),
     )
-    override fun profiles(): Flow<List<MeasurementProfile>> = flow {
-        loadGate?.await()
-        if (failLoad) error("Controlled load failure")
-        emitAll(records)
-    }
-    override suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile> {
-        saveGate?.await()
-        return if (failSave) {
-            Result.failure(IllegalStateException("Controlled save failure"))
-        } else {
-            Result.success(
-                MeasurementProfile(ProfileId(3), measurements)
-                    .also { created -> records.update { it + created } },
-            )
-        }
-    }
-    override suspend fun update(profile: MeasurementProfile): Result<Unit> =
-        Result.failure(IllegalStateException("Controlled update failure"))
-    override suspend fun delete(id: ProfileId): Result<Unit> {
-        deleteGate?.await()
-        return Result.failure(IllegalStateException("Controlled delete failure"))
-    }
-}
