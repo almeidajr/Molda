@@ -52,7 +52,10 @@ class FabricFoldingRenderingTest {
     val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     @Before
-    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
+    fun openSkirtCalculator() {
+        composeRule.showEmptyApp()
+        composeRule.openSkirtCalculator()
+    }
 
     @Test
     fun enabledMotion_everyStepLoopsAfterPlay_withoutBlankFrames() {

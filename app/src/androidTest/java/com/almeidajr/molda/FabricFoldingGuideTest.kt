@@ -3,7 +3,6 @@ package com.almeidajr.molda
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -23,7 +22,6 @@ import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.ui.FoldingStep
 import com.almeidajr.molda.skirt.ui.GuideFrame
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,41 +36,64 @@ class FabricFoldingGuideTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Before
-    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
-
     @Test
-    fun foldingSteps_canBeReadAndRevisited_beforeMarkingCurrentRadii() {
+    fun opening_showsFirstStepWithPreviousDisabled() {
         // Given
+        calculate()
+
+        // When
         openGuide()
+
+        // Then
         composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
-        composeRule.onNodeWithText("Anterior").assertIsNotEnabled()
         composeRule.onNodeWithText("Alise o tecido sem esticar e respeite o fio.")
             .assertIsDisplayed()
+        composeRule.onNodeWithText("Anterior").assertIsNotEnabled()
         expandDetails()
         composeRule.onNodeWithText("Comece com papel ou retalho.")
             .performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun previous_returnsToTheEarlierStep() {
+        // Given
+        calculate()
+        openGuide()
+        next(times = 2)
+        composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
 
         // When
-        repeat(2) { composeRule.onNodeWithText("Próximo").performClick() }
-        composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
         composeRule.onNodeWithText("Anterior").performClick()
+
+        // Then
         composeRule.onNodeWithText("Primeira dobra").assertIsDisplayed()
-        repeat(2) { composeRule.onNodeWithText("Próximo").performClick() }
+    }
+
+    @Test
+    fun markingStep_showsTheCurrentRadii() {
+        // Given
+        calculate()
+        openGuide()
+
+        // When
+        next(times = 3)
 
         // Then
         composeRule.onNodeWithText("Marcar os raios").assertIsDisplayed()
         composeRule.onNodeWithText("1. Costura da cintura: 13,05 cm")
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Anterior").performClick()
-        composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
     }
 
     @Test
-    fun cuttingAndUnfolding_showConstructionBoundaries_andConcluirClosesGuide() {
+    fun cuttingStep_warnsWhichLinesStayUncut() {
         // Given
+        calculate()
         openGuide()
-        repeat(4) { composeRule.onNodeWithText("Próximo").performClick() }
+
+        // When
+        next(times = 4)
+
+        // Then
         composeRule.onNodeWithText("Cortar os arcos").assertIsDisplayed()
         composeRule.onNodeWithText(
             "Corte o arco 2 e depois o arco 4, atravessando as quatro camadas alinhadas.",
@@ -86,7 +107,18 @@ class FabricFoldingGuideTest {
         expandDetails()
         composeRule.onNodeWithText("Pratique em papel ou retalho", substring = true)
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Próximo").performClick()
+    }
+
+    @Test
+    fun unfoldingStep_isLast_andWarnsItIsNoCompletePattern() {
+        // Given
+        calculate()
+        openGuide()
+
+        // When
+        next(times = 5)
+
+        // Then
         composeRule.onNodeWithText("Desdobrar o círculo").assertIsDisplayed()
         composeRule.onNodeWithText(
             "Centro do recorte da cintura: mesma origem de todos os raios, agora no centro do círculo.",
@@ -96,9 +128,17 @@ class FabricFoldingGuideTest {
         composeRule.onNodeWithText(
             "O círculo desdobrado não é um molde completo e não garante caimento.",
         ).performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun concluir_onLastStep_closesGuide() {
+        // Given
+        calculate()
+        openGuide()
+        next(times = 5)
 
         // When
-        composeRule.onNodeWithText("Concluir").assertIsEnabled().performClick()
+        composeRule.onNodeWithText("Concluir").performClick()
 
         // Then
         composeRule.onNodeWithText("Desdobrar o círculo").assertDoesNotExist()
@@ -106,30 +146,24 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun closingMarking_returnsToResults_andEditingInputDropsGuideEntry() {
+    fun editingInput_afterCalculating_removesGuideEntry() {
         // Given
-        openGuide()
-        repeat(3) { composeRule.onNodeWithText("Próximo").performClick() }
-        composeRule.onNodeWithText("Marcar os raios").assertIsDisplayed()
-        composeRule.onNodeWithText("1. Costura da cintura: 13,05 cm")
-            .performScrollTo().assertIsDisplayed()
+        calculate()
 
         // When
-        composeRule.onNodeWithContentDescription("Fechar guia").performClick()
-
-        // Then
-        composeRule.onNodeWithText("Como levar os raios ao papel")
-            .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(SkirtDraftField.FinishedLength.labelText)
             .performScrollTo().performTextReplacement("70")
+
+        // Then
         composeRule.onNodeWithText("Guia de dobra do tecido").assertDoesNotExist()
     }
 
     @Test
     fun back_closesPlayer_returningKeyboardFocusToEntry_withResultsUnchanged() {
         // Given
+        calculate()
         openGuide()
-        composeRule.onNodeWithText("Próximo").performClick()
+        next(times = 1)
         composeRule.onNodeWithText("Etapa 2 de 6").assertIsDisplayed()
         // Touch mode leaves buttons unfocusable; keyboard users are the ones who need focus back.
         val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -155,11 +189,13 @@ class FabricFoldingGuideTest {
     @Test
     fun recreation_keepsCurrentStep() {
         // Given
+        calculate()
         openGuide()
-        repeat(2) { composeRule.onNodeWithText("Próximo").performClick() }
+        next(times = 2)
 
         // When
         composeRule.activityRule.scenario.recreate()
+        composeRule.showEmptyApp()
 
         // Then
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
@@ -278,14 +314,24 @@ class FabricFoldingGuideTest {
         }
     }
 
-    private fun openGuide() {
+    /** Shows results for an 80 cm waist with 2 cm ease, 60 cm length and 1 and 2 cm allowances. */
+    private fun calculate() {
+        composeRule.showEmptyApp()
+        composeRule.openSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
             composeRule.onNodeWithText(field.labelText).performScrollTo()
                 .performTextReplacement(value)
         }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
+    }
+
+    private fun openGuide() {
         composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo().performClick()
+    }
+
+    private fun next(times: Int) = repeat(times) {
+        composeRule.onNodeWithText("Próximo").performClick()
     }
 
     /** Opens the current step's collapsed "Detalhes" disclosure. */

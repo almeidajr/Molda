@@ -1,11 +1,8 @@
 package com.almeidajr.molda
 
 import android.view.KeyEvent
-import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.DeviceConfigurationOverride
-import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
@@ -28,8 +25,8 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
-import com.almeidajr.molda.ui.theme.MoldaTheme
 import kotlin.test.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,12 +41,21 @@ class GuideLibraryTest {
     private val foldingSteps = 6
     private val markingStep = 3
 
+    @Before
+    fun showApp() = composeRule.showEmptyApp()
+
     @Test
     fun guias_listsFabricFoldingGuide_whichOpensOnExampleDimensionsLabelledOnEveryStep() {
+        // Given
         composeRule.selectDestination("Guias")
+        guideEntry().assertTextContains("Dobre", substring = true)
+
+        // When
         guideEntry()
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
             .performClick()
+
+        // Then
         // On a compact window the guide's step bar is the only bottom control.
         composeRule.destination("Guias").assertIsNotDisplayed()
         repeat(foldingSteps) { step ->
@@ -60,19 +66,34 @@ class GuideLibraryTest {
             }
             if (step < foldingSteps - 1) composeRule.onNodeWithText("Próximo").performClick()
         }
+    }
+
+    @Test
+    fun back_fromExampleGuide_returnsToGuias() {
+        // Given
+        composeRule.selectDestination("Guias")
+        guideEntry().performClick()
+
+        // When
         pressBack()
+
+        // Then
         composeRule.screenTitle("Guias").assertIsDisplayed()
-        guideEntry().assertTextContains("Dobre", substring = true)
     }
 
     @Test
     fun exampleGuide_calculateMySkirt_opensCalculatorInMoldes_keepingTheDraft() {
+        // Given
         composeRule.openSkirtCalculator()
         waistField().performTextReplacement("90")
         closeSoftKeyboard()
         composeRule.selectDestination("Guias")
         guideEntry().performClick()
+
+        // When
         composeRule.onNodeWithText("Calcular a minha saia").performClick()
+
+        // Then
         composeRule.destination("Moldes").assertIsSelected()
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
         waistField().assertTextContains("90")
@@ -80,6 +101,7 @@ class GuideLibraryTest {
 
     @Test
     fun resultGuide_opensOnMoldesWithCalculatedRadiiUnlabelled_andBackReturnsToResults() {
+        // Given
         composeRule.openSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("100", "0", "50", "1", "1")).forEach { (field, value) ->
             composeRule.onNodeWithText(field.labelText).performScrollTo()
@@ -87,8 +109,12 @@ class GuideLibraryTest {
         }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
+
+        // When
         composeRule.onNodeWithText(guideTitle).performScrollTo().performClick()
         repeat(markingStep) { composeRule.onNodeWithText("Próximo").performClick() }
+
+        // Then
         // 100 cm of waist plus no ease: 100 / 2π.
         composeRule.onNodeWithText("1. Costura da cintura: 15,92 cm").assertExists()
         composeRule.onNodeWithText("Exemplo — não são as suas medidas").assertDoesNotExist()
@@ -100,16 +126,15 @@ class GuideLibraryTest {
 
     @Test
     fun wideWindow_showsGuideBesideTheList_withPlaceholderUntilChosen() {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                DeviceConfigurationOverride(
-                    DeviceConfigurationOverride.ForcedSize(DpSize(1280.dp, 800.dp)),
-                ) { MoldaTheme { MoldaRoute() } }
-            }
-        }
+        // Given
+        composeRule.showEmptyApp(DpSize(1280.dp, 800.dp))
         composeRule.selectDestination("Guias")
         composeRule.onNodeWithText("Escolha um guia na lista.").assertIsDisplayed()
+
+        // When
         guideEntry().assertIsNotSelected().performClick()
+
+        // Then
         val list = composeRule.screenTitle("Guias").assertIsDisplayed().getUnclippedBoundsInRoot()
         val label = composeRule.onNodeWithText("Exemplo — não são as suas medidas")
             .assertIsDisplayed().getUnclippedBoundsInRoot()

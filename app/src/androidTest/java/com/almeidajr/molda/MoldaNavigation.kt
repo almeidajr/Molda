@@ -1,13 +1,38 @@
 package com.almeidajr.molda
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.DpSize
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.project.showRoute
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.ui.theme.MoldaTheme
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+
+/**
+ * Shows the app with no stored profiles or projects, at [size] when given, inside [frame] (the
+ * theme by default). Recreation restores the app's own content, so call it again after recreating.
+ */
+internal fun AndroidComposeTestRule<*, MainActivity>.showEmptyApp(
+    size: DpSize? = null,
+    frame: @Composable (route: @Composable () -> Unit) -> Unit = { MoldaTheme(content = it) },
+) = showRoute(
+    FakeProfileRepository(),
+    FakeProjectRepository(),
+    Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC),
+    size,
+    frame,
+)
 
 /** The navigation suite item labelled [label]: Moldes, Projetos, Guias or Perfis. */
 internal fun SemanticsNodeInteractionsProvider.destination(

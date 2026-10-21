@@ -59,14 +59,16 @@ internal fun SemanticsNodeInteractionsProvider.nameField(): SemanticsNodeInterac
     onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
 
 /**
- * Shows the app on [profiles] and [projects], at [size] when given. Recreation restores the app's
- * own content, so call it again after recreating the activity.
+ * Shows the app on [profiles] and [projects], at [size] when given, inside [frame] (the theme by
+ * default). Recreation restores the app's own content, so call it again after recreating the
+ * activity.
  */
 internal fun AndroidComposeTestRule<*, MainActivity>.showRoute(
     profiles: ProfileRepository,
     projects: ProjectRepository,
     clock: Clock,
     size: DpSize? = null,
+    frame: @Composable (route: @Composable () -> Unit) -> Unit = { MoldaTheme(content = it) },
 ) = runOnUiThread {
     activity.setContent {
         val profilesViewModel: ProfilesViewModel = viewModel(
@@ -83,7 +85,7 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showRoute(
         )
         val calculator: SkirtCalculatorViewModel = viewModel()
         val route = @Composable {
-            MoldaTheme {
+            frame {
                 MoldaRoute(
                     calculator = calculator,
                     profiles = profilesViewModel,

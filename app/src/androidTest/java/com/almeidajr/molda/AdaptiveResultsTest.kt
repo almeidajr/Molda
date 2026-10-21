@@ -1,9 +1,7 @@
 package com.almeidajr.molda
 
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -13,7 +11,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
-import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasAnyChild
 import androidx.compose.ui.test.hasClickAction
@@ -38,6 +35,7 @@ import androidx.window.testing.layout.TestWindowLayoutInfo
 import androidx.window.testing.layout.WindowLayoutInfoPublisherRule
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -73,9 +71,14 @@ class AdaptiveResultsTest {
             // A landscape phone: too short to pin the drawing above the instructions.
             ResultsLayout(DpSize(800.dp, 360.dp), 2f, isTwoPane = false, isDiagramBeside = false),
         ).forEach { layout ->
+            // Given
             val context = "size=${layout.size} fontScale=${layout.fontScale}"
             showCalculator(layout.size, layout.fontScale)
+
+            // When
             calculateReferenceCase()
+
+            // Then
             val card = cuttingCard().layoutBounds()
             assertTrue(card.width <= 640.dp.value * pixelsPerDp + 1f, "$context card width")
             val waist = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).layoutBounds()
@@ -96,7 +99,10 @@ class AdaptiveResultsTest {
 
     @Test
     fun doubleText_appBarCardDisclosuresAndGuideBar_neitherClipNorOverlap() {
+        // Given
         showCalculator(size = null, fontScale = 2f)
+
+        // When/Then: the app bar first, then each part of the results as it appears.
         val title = composeRule.onNodeWithText("Saia godê inteira").assertTextFits("title")
             .fullyVisibleBounds("title")
         val up = composeRule.onNodeWithContentDescription("Voltar").fullyVisibleBounds("up")
@@ -124,7 +130,7 @@ class AdaptiveResultsTest {
         }
         // Both read at one scroll position.
         val (guide, edit) = actionLabels.map { composeRule.onNodeWithText(it).layoutBounds() }
-        assertTrue(!guide.overlaps(edit), "actions overlap: $guide $edit")
+        assertFalse(guide.overlaps(edit), "actions overlap: $guide $edit")
         listOf("Como levar os raios ao papel", "Fórmulas").forEach { label ->
             val disclosure = composeRule.onNode(hasText(label) and hasClickAction())
             disclosure.performScrollTo().performClick()
@@ -143,9 +149,14 @@ class AdaptiveResultsTest {
 
     @Test
     fun tabletopHinge_keepsCuttingCardAndGuideBarAboveFold() {
+        // Given
         showCalculator(size = null, fontScale = 1f)
         val hinge = publishHinge(FoldingFeature.Orientation.HORIZONTAL)
+
+        // When
         calculateReferenceCase()
+
+        // Then
         listOf(
             composeRule.onNodeWithText("Raios para o molde"),
             composeRule.onNodeWithContentDescription(REFERENCE_RADII.last()),
@@ -162,11 +173,15 @@ class AdaptiveResultsTest {
 
     @Test
     fun halfOpenedVerticalHinge_splitsPanesAtFold_andKeepsGuidePlayerOnOneSide() {
-        // Wide enough on any device for both sides of an off-centre fold to hold a pane.
+        // Given: wide enough on any device for both sides of an off-centre fold to hold a pane.
         showCalculator(DpSize(1000.dp, 800.dp), fontScale = 1f)
         // Off centre, so panes that ignored the fold would put the card across it.
         val hinge = publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
+
+        // When
         calculateReferenceCase()
+
+        // Then
         val waist = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
             .performScrollTo().fullyVisibleBounds("waist")
         val card = cuttingCard().layoutBounds()
@@ -178,14 +193,18 @@ class AdaptiveResultsTest {
 
     @Test
     fun flatVerticalHinge_guidePlayerSpansFullWidth() {
-        // Whether the calculator behind it has one column or two, a flat fold splits neither.
+        // Given: whether the calculator behind it has one column or two, a flat fold splits neither.
         showCalculator(size = null, fontScale = 1f)
         calculateReferenceCase()
         openGuide()
+
+        // When
         val hinge = publishHinge(
             FoldingFeature.Orientation.VERTICAL,
             state = FoldingFeature.State.FLAT,
         )
+
+        // Then
         val back = composeRule.onNodeWithText("Anterior").fullyVisibleBounds("Anterior")
         val forward = composeRule.onNodeWithText("Próximo").fullyVisibleBounds("Próximo")
         assertTrue(
@@ -196,23 +215,32 @@ class AdaptiveResultsTest {
 
     @Test
     fun halfOpenedVerticalHinge_keepsSinglePaneExampleGuideOnOneSide() {
-        // Too narrow for the library beside the guide, so the example guide is a single pane.
+        // Given: too narrow for the library beside the guide, so the example guide is a single pane.
         showCalculator(DpSize(700.dp, 800.dp), fontScale = 1f)
         val hinge = publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
         composeRule.selectDestination("Guias")
+
+        // When
         composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
+
+        // Then
         assertPlayerOnOneSide(hinge)
     }
 
     @Test
     fun flatVerticalHinge_singlePaneExampleGuideSpansFullWidth() {
+        // Given
         showCalculator(DpSize(700.dp, 800.dp), fontScale = 1f)
         composeRule.selectDestination("Guias")
         composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
+
+        // When
         val hinge = publishHinge(
             FoldingFeature.Orientation.VERTICAL,
             state = FoldingFeature.State.FLAT,
         )
+
+        // Then
         val back = composeRule.onNodeWithText("Anterior").fullyVisibleBounds("Anterior")
         val forward = composeRule.onNodeWithText("Próximo").fullyVisibleBounds("Próximo")
         assertTrue(
@@ -232,25 +260,13 @@ class AdaptiveResultsTest {
     }
 
     private fun showCalculator(size: DpSize?, fontScale: Float) {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
-                    val content: @Composable () -> Unit = {
-                        pixelsPerDp = LocalDensity.current.density
-                        Box(
-                            Modifier.fillMaxSize()
-                                .onGloballyPositioned { contentBounds = it.boundsInWindow() },
-                        ) { MoldaTheme { MoldaRoute() } }
-                    }
-                    if (size == null) {
-                        content()
-                    } else {
-                        DeviceConfigurationOverride(
-                            DeviceConfigurationOverride.ForcedSize(size),
-                            content,
-                        )
-                    }
-                }
+        composeRule.showEmptyApp(size) { route ->
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
+                pixelsPerDp = LocalDensity.current.density
+                Box(
+                    Modifier.fillMaxSize()
+                        .onGloballyPositioned { contentBounds = it.boundsInWindow() },
+                ) { MoldaTheme(content = route) }
             }
         }
         composeRule.showSkirtCalculator()

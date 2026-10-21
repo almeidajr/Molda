@@ -2,7 +2,6 @@ package com.almeidajr.molda
 
 import android.animation.ValueAnimator
 import androidx.activity.BackEventCompat
-import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.SemanticsProperties.StateDescription
@@ -29,23 +28,23 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import kotlin.test.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/** The guide player's layout: what stays in view on every step, at normal and double text. */
 @RunWith(AndroidJUnit4::class)
 class FabricFoldingLayoutTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Before
-    fun openSkirtCalculator() = composeRule.showSkirtCalculator()
-
     @Test
-    fun fullGuide_keepsStepBarAndDrawingInView_onEveryStep() {
+    fun guide_atNormalAndDoubleText_keepsLeadAndStepBarInViewOnEveryStep() {
         listOf(false to 1f, true to 2f).forEach { (dark, fontScale) ->
+            // Given
             openGuide(dark, fontScale)
+
+            // When/Then: each step is checked, then left through its forward action.
             listOf(
                 "Preparar o tecido",
                 "Primeira dobra",
@@ -93,28 +92,30 @@ class FabricFoldingLayoutTest {
                     .assertWidthIsAtLeast(48.dp)
                     .performClick()
             }
-            composeRule.onNodeWithText("Etapa 6 de 6").assertDoesNotExist()
-            composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
-            composeRule.onNodeWithText(SkirtDraftField.FinishedLength.labelText).performScrollTo()
-                .performTextReplacement("70")
-            composeRule.onNodeWithText("Guia de dobra do tecido").assertDoesNotExist()
         }
     }
 
     @Test
-    fun closeAction_isTallEnough_andReturnsToResults() {
+    fun closeAction_atDoubleText_isTallEnough_andReturnsToResults() {
+        // Given
         openGuide(dark = false, fontScale = 2f)
+
+        // When
         composeRule.onNodeWithContentDescription("Fechar guia")
             .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
+
+        // Then
         composeRule.onNodeWithText("Preparar o tecido").assertDoesNotExist()
         composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
     }
 
     @Test
     fun predictiveBack_onGuide_previewsResultsBeneath_andCancelKeepsGuide() {
+        // Given
         openGuide(dark = false, fontScale = 1f)
-        composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
         val dispatcher = composeRule.activity.onBackPressedDispatcher
+
+        // When
         composeRule.runOnUiThread {
             dispatcher.dispatchOnBackStarted(
                 BackEventCompat(0f, 400f, 0f, BackEventCompat.EDGE_LEFT),
@@ -123,9 +124,15 @@ class FabricFoldingLayoutTest {
                 BackEventCompat(200f, 400f, 0.5f, BackEventCompat.EDGE_LEFT),
             )
         }
+
+        // Then
         composeRule.onNodeWithText("Preparar o tecido").assertExists()
         composeRule.onNodeWithText("Guia de dobra do tecido").assertExists()
+
+        // When
         composeRule.runOnUiThread { dispatcher.dispatchOnBackCancelled() }
+
+        // Then
         composeRule.onNodeWithText("Guia de dobra do tecido").assertDoesNotExist()
         composeRule.onNodeWithText("Preparar o tecido").assertIsDisplayed()
     }
@@ -213,13 +220,9 @@ class FabricFoldingLayoutTest {
     }
 
     private fun openGuide(dark: Boolean, fontScale: Float) {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
-                    MoldaTheme(darkTheme = dark, dynamicColor = false) {
-                        MoldaRoute()
-                    }
-                }
+        composeRule.showEmptyApp { route ->
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
+                MoldaTheme(darkTheme = dark, dynamicColor = false, content = route)
             }
         }
         composeRule.showSkirtCalculator()
