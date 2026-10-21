@@ -1,10 +1,9 @@
 package com.almeidajr.molda.project
 
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -189,11 +188,8 @@ class OpenProjectTest {
         showRoute(DpSize(1600.dp, 1000.dp))
         openProject()
 
-        // When: the detail pane's own menu, the right-hand one of the two beside each other.
-        composeRule.onAllNodes(hasText("Ações: Saia da formatura")).assertCountEquals(2)
-            .fetchSemanticsNodes()
-            .maxBy { it.boundsInRoot.left }
-            .let { composeRule.onNode(hasText("Ações: Saia da formatura") and isAt(it.id)) }
+        // When: the detail pane's own menu, beside its Editar button, not the list row's.
+        composeRule.onNode(hasText("Ações: Saia da formatura") and hasAnySibling(hasText("Editar")))
             .performClick()
         composeRule.click("Excluir projeto")
         composeRule.click("Confirmar exclusão")
@@ -207,8 +203,6 @@ class OpenProjectTest {
         composeRule.selectDestination("Projetos")
         composeRule.clickProject("Saia da formatura")
     }
-
-    private fun isAt(id: Int) = SemanticsMatcher("node $id") { it.id == id }
 
     private fun showRoute(
         size: DpSize? = null,

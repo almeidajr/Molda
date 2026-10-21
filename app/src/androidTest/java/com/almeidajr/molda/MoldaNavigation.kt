@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.isNotDisplayed
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
@@ -162,18 +163,14 @@ internal fun SemanticsNodeInteractionsProvider.openSkirtCalculator() {
 /** Shows the skirt calculator: selects Moldes when needed, then opens the skirt from the catalog. */
 internal fun SemanticsNodeInteractionsProvider.showSkirtCalculator() {
     showDestination("Moldes")
-    if (onAllNodes(hasText(SkirtTitle) and isHeading()).fetchSemanticsNodes().isEmpty()) {
-        openSkirtCalculator()
-    }
+    if (onNode(hasText(SkirtTitle) and isHeading()).isNotDisplayed()) openSkirtCalculator()
 }
 
 /** Shows Perfis, keeping any open editor: re-selecting it would return to its root. */
 internal fun SemanticsNodeInteractionsProvider.showProfiles() = showDestination("Perfis")
 
 private fun SemanticsNodeInteractionsProvider.showDestination(label: String) {
-    if (onAllNodes(hasText(label) and isSelectable() and isSelected()).fetchSemanticsNodes()
-            .isEmpty()
-    ) {
+    if (onNode(hasText(label) and isSelectable() and isSelected()).isNotDisplayed()) {
         selectDestination(label)
     }
 }
