@@ -34,6 +34,7 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -236,13 +237,16 @@ class FabricFoldingRenderingTest {
             }
             val image = drawing.captureToImage()
             val frame = image.pixels()
-            assertTrue(
-                frame.count(colors::isFabric) > 20,
-                "$description: fabric must remain visible throughout playback " +
-                    "at ${elapsed}ms (${image.width}x${image.height}); most frequent colours: " +
-                    frame.toList().groupingBy { Integer.toHexString(it) }.eachCount()
-                        .entries.sortedByDescending { it.value }.take(6),
-            )
+            // The histogram boxes and hex-formats every pixel, so build it only on failure.
+            if (frame.count(colors::isFabric) <= 20) {
+                fail(
+                    "$description: fabric must remain visible throughout playback " +
+                        "at ${elapsed}ms (${image.width}x${image.height}); " +
+                        "most frequent colours: " +
+                        frame.toList().groupingBy { Integer.toHexString(it) }.eachCount()
+                            .entries.sortedByDescending { it.value }.take(6),
+                )
+            }
             // Even the longest step has completed two full cycles by 18 seconds.
             if (elapsed > 18_000) lateFrames += frame.contentHashCode()
         }
