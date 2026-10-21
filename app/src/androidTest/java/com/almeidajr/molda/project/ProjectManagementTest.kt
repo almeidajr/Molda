@@ -37,51 +37,83 @@ class ProjectManagementTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
 
     @Test
-    fun rename_refusesBlankName_thenUpdatesTheList() {
+    fun rename_withBlankName_showsNameErrorAndKeepsTheName() {
+        // Given
         val projects = FakeProjectRepository(listOf(saiaAntiga))
         showProjetos(projects)
-
         click("Ações: Saia antiga")
         click("Renomear projeto")
+
+        // When
         composeRule.nameField().performTextReplacement("   ")
         click("Renomear")
+
+        // Then
         composeRule.onNodeWithText("Informe um nome para o projeto.").assertIsDisplayed()
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun rename_withNewName_updatesTheList() {
+        // Given
+        showProjetos(FakeProjectRepository(listOf(saiaAntiga)))
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+
+        // When
         composeRule.nameField().performTextReplacement("Saia da formatura")
         click("Renomear")
 
+        // Then
         composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
         composeRule.onNodeWithText("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Saia antiga").assertDoesNotExist()
     }
 
     @Test
-    fun delete_asksForConfirmation_thenRemovesTheProject() {
+    fun delete_cancelled_keepsTheProject() {
+        // Given
         val projects = FakeProjectRepository(listOf(saiaAntiga))
         showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
 
-        click("Ações: Saia antiga")
-        click("Excluir projeto")
-        composeRule.onNodeWithText("Excluir projeto Saia antiga?").assertIsDisplayed()
+        // When
         click("Cancelar")
+
+        // Then
         composeRule.onNodeWithText("Excluir projeto Saia antiga?").assertDoesNotExist()
-        assertEquals(1, projects.current.size)
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun delete_confirmed_removesTheProject() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+        showProjetos(projects)
         click("Ações: Saia antiga")
         click("Excluir projeto")
+
+        // When
         click("Confirmar exclusão")
 
+        // Then
         composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
-        assertEquals(emptyList<Project>(), projects.current)
+        assertEquals(emptyList(), projects.current)
     }
 
     @Test
     fun delete_whenStorageFails_showsFailureAndKeepsTheProject() {
+        // Given
         showProjetos(FakeProjectRepository(listOf(saiaAntiga)).apply { failsCommands = true })
-
         click("Ações: Saia antiga")
         click("Excluir projeto")
+
+        // When
         click("Confirmar exclusão")
 
+        // Then
         composeRule.onNodeWithText("Não foi possível excluir o projeto", substring = true)
             .assertIsDisplayed()
         click("Cancelar")
