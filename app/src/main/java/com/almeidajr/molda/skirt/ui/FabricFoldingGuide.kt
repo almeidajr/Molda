@@ -60,6 +60,23 @@ internal fun GuideAnimation(
     val file = worker?.let {
         rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), it)
     }
+    GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, replay, paused ->
+        GuideDrawing(loaded, radii, step, play, replay, paused)
+    }
+}
+
+/**
+ * The drawing's frame and its playback controls, which own replay and pause. Once [file] has
+ * loaded, [drawing] draws it, told whether to play, the replay count and whether it is paused.
+ */
+@Composable
+internal fun <T> GuideFrame(
+    file: Result<T>?,
+    step: FoldingStep,
+    motionEnabled: Boolean,
+    drawingSize: Dp,
+    drawing: @Composable (file: T, play: Boolean, replay: Int, paused: Boolean) -> Unit,
+) {
     var replay by remember(motionEnabled) { mutableIntStateOf(0) }
     var paused by remember(motionEnabled) { mutableStateOf(false) }
     Column(
@@ -80,10 +97,8 @@ internal fun GuideAnimation(
 
                     is Result.Error -> Text(stringResource(R.string.guide_animation_error))
 
-                    is Result.Success -> GuideDrawing(
+                    is Result.Success -> drawing(
                         file.value,
-                        radii,
-                        step,
                         motionEnabled && replay > 0,
                         replay,
                         paused,

@@ -7,17 +7,20 @@ import org.junit.Test
 
 class DomainIsolationTest {
     @Test
-    fun domainFiles_importNothingFromAndroidUiOrData() {
-        Konsist
+    fun pureFiles_inDomainOrMeasurement_importNoAndroidUiOrData() {
+        // Given
+        val files = Konsist
             .scopeFromProduction()
             .files
             // The shared measurement package is as pure as a domain.
             .withPackage("..domain..", "com.almeidajr.molda.measurement..")
-            .assertFalse(
-                additionalMessage = "Pure code must not depend on Android, UI or data code.",
-            ) { file ->
-                file.hasImport { import -> FORBIDDEN_IMPORT.matches(import.name) }
-            }
+
+        // When/Then
+        files.assertFalse(
+            additionalMessage = "Pure code must not depend on Android, UI or data code.",
+        ) { file ->
+            file.hasImport { import -> FORBIDDEN_IMPORT.matches(import.name) }
+        }
     }
 
     private companion object {

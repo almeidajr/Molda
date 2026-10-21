@@ -6,16 +6,19 @@ import org.junit.Test
 
 class RootPackageImportTest {
     @Test
-    fun onlyMainActivityImportsTheRootPackage() {
-        Konsist
+    fun productionFiles_otherThanMainActivity_importNoRootPackageCode() {
+        // Given
+        val files = Konsist
             .scopeFromProduction()
             .files
             .filterNot { it.name == "MainActivity" }
-            .assertFalse(
-                additionalMessage = "Only MainActivity may import root package code; R is exempt.",
-            ) { file ->
-                file.hasImport { import -> ROOT_IMPORT.matches(import.name) }
-            }
+
+        // When/Then
+        files.assertFalse(
+            additionalMessage = "Only MainActivity may import root package code; R is exempt.",
+        ) { file ->
+            file.hasImport { import -> ROOT_IMPORT.matches(import.name) }
+        }
     }
 
     private companion object {

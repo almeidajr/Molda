@@ -11,9 +11,11 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import java.time.LocalDate
+import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
+import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -29,8 +31,16 @@ class MoldaDatabaseMigrationTest {
         databaseClass = MoldaDatabase::class,
     )
 
+    // createDatabase refuses an existing file, such as one left by an interrupted run.
+    @Before
+    @After
+    fun deleteDatabase() {
+        instrumentation.targetContext.deleteDatabase(databaseName)
+    }
+
     @Test
-    fun version1WithProfiles_opensKeepingProfilesAndNoProjects() = runBlocking {
+    fun version1WithProfiles_opensKeepingProfilesAndNoProjects() = runTest {
+        // Given
         helper.createDatabase(1).apply {
             execSQL(
                 "INSERT INTO profiles (id, name, waist, measurement_date, notes) " +
@@ -38,9 +48,9 @@ class MoldaDatabaseMigrationTest {
             )
             close()
         }
-
-        // The app's own builder must migrate and pass Room's schema validation.
         val context = instrumentation.targetContext
+
+        // When/Then: the app's own builder must migrate and pass Room's schema validation.
         withProfiles(context, databaseName) { profiles ->
             assertEquals(
                 listOf(
@@ -58,7 +68,7 @@ class MoldaDatabaseMigrationTest {
             )
         }
         withProjects(context, databaseName) {
-            assertEquals(emptyList<Any>(), it.projects().first())
+            assertEquals(emptyList(), it.projects().first())
         }
     }
 }

@@ -53,6 +53,10 @@ android {
     buildFeatures {
         compose = true
     }
+    // Shared fakes for local and device tests (app/src/testFixtures).
+    testFixtures {
+        enable = true
+    }
     testOptions {
         // Lets Robolectric tests resolve the app's string resources.
         unitTests.isIncludeAndroidResources = true
@@ -104,7 +108,12 @@ detekt {
     buildUponDefaultConfig = true
     failOnSeverity = dev.detekt.gradle.extensions.FailOnSeverity.Info
     config.setFrom(rootProject.file("config/detekt.yml"))
-    source.setFrom("src/main/java", "src/test/java", "src/androidTest/java")
+    source.setFrom(
+        "src/main/java",
+        "src/testFixtures/java",
+        "src/test/java",
+        "src/androidTest/java",
+    )
 }
 
 dependencies {
@@ -124,6 +133,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    // Raises the coroutines that androidx pulls in transitively, so device tests can use coroutines-test.
+    implementation(platform(libs.kotlinx.coroutines.bom))
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
@@ -131,7 +142,12 @@ dependencies {
     implementation(libs.androidx.room3.runtime)
     implementation(libs.aboutlibraries.compose.m3)
     ksp(libs.androidx.room3.compiler)
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
+    // The Compose compiler plugin also compiles test fixtures and fails without the runtime.
+    testFixturesCompileOnly(platform(libs.androidx.compose.bom))
+    testFixturesCompileOnly(libs.androidx.compose.runtime)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.konsist)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
@@ -140,7 +156,10 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.espresso.idling.concurrent)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.kotlin.test)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.window.testing)
     androidTestImplementation(libs.androidx.room3.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

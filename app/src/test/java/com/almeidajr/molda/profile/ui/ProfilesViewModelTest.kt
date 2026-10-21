@@ -3,7 +3,6 @@ package com.almeidajr.molda.profile.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
-import app.cash.turbine.test
 import com.almeidajr.molda.R
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -12,30 +11,20 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
-import java.time.Clock
-import java.time.Instant
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.MainDispatcherRule
+import com.almeidajr.molda.testing.October13Clock
 import java.time.LocalDate
-import java.time.ZoneOffset
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -43,65 +32,79 @@ import org.robolectric.RobolectricTestRunner
 // Robolectric supplies the real Bundle that saved state is parcelled through.
 @RunWith(RobolectricTestRunner::class)
 class ProfilesViewModelTest {
-    private val storage = FakeProfiles()
+    private val storage = FakeProfileRepository(listOf(ana))
 
-    // Runs viewModelScope work eagerly, so each call has settled before the assertions.
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Before
-    fun useTestMainDispatcher() = Dispatchers.setMain(UnconfinedTestDispatcher())
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @After
-    fun resetMainDispatcher() = Dispatchers.resetMain()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun profiles_followTheRepositoryWithoutReloading() = runTest {
+    fun profiles_afterRepositoryChange_followItWithoutReload() = runTest {
+        // Given
         val profiles = profilesViewModel()
-        assertEquals(listOf(ana), profiles.state.value.profiles)
 
-        storage.stored.update { it + bia }
+        // When
+        val added = storage.create(bia.measurements).getOrThrow()
 
-        assertEquals(listOf(ana, bia), profiles.state.value.profiles)
+        // Then
+        assertEquals(listOf(ana, added), profiles.state.value.profiles)
     }
 
     @Test
-    fun load_afterLoadFailure_retryShowsStoredProfiles() = runTest {
+    fun load_whenRepositoryFails_showsLoadFailure() = runTest {
+        // Given
         storage.failsLoad = true
+
+        // When
         val profiles = profilesViewModel()
 
-        profiles.state.test {
-            assertEquals(R.string.profile_load_failed, awaitItem().loadError)
+        // Then
+        assertEquals(R.string.profile_load_failed, profiles.state.value.loadError)
+    }
 
-            storage.failsLoad = false
-            profiles.load()
+    @Test
+    fun load_retryAfterLoadFailure_showsStoredProfiles() = runTest {
+        // Given
+        storage.failsLoad = true
+        val profiles = profilesViewModel()
+        storage.failsLoad = false
 
-            val retried = expectMostRecentItem()
-            assertNull(retried.loadError)
-            assertEquals(listOf(ana), retried.profiles)
-        }
+        // When
+        profiles.load()
+
+        // Then
+        val retried = profiles.state.value
+        assertNull(retried.loadError)
+        assertEquals(listOf(ana), retried.profiles)
     }
 
     @Test
     fun load_whileStillLoading_keepsOneRepositoryCollector() = runTest {
-        storage.holdsFirstEmission = true
-        val profiles = profilesViewModel()
+        // Given
+        storage.loadGate = CompletableDeferred()
+        val counted = CollectorCounting(storage)
+        val profiles = ProfilesViewModel(counted, SavedStateHandle(), October13Clock)
 
+        // When
         profiles.load()
         profiles.load()
-        storage.emissionGate.complete(Unit)
+        storage.loadGate?.complete(Unit)
 
-        assertEquals(1, storage.activeCollectors)
+        // Then
+        assertEquals(1, counted.activeCollectors)
         assertEquals(listOf(ana), profiles.state.value.profiles)
     }
 
     @Test
     fun save_newProfile_closesTheFormAndListsIt() = runTest {
+        // Given
         val profiles = profilesViewModel()
-
         profiles.startCreating()
         profiles.fill(name = "Bia", waist = "95", date = "11/10/2026")
+
+        // When
         profiles.save()
 
+        // Then
         val saved = profiles.state.value
         assertEquals(listOf("Ana", "Bia"), saved.profiles.map { it.measurements.name.text })
         assertFalse(saved.isEditorOpen)
@@ -111,23 +114,29 @@ class ProfilesViewModelTest {
 
     @Test
     fun save_editedProfile_replacesItInTheList() = runTest {
+        // Given
         val profiles = profilesViewModel()
-
         profiles.startEditing(ana.id)
         profiles.edit(ProfileField.Waist, "82")
+
+        // When
         profiles.save()
 
+        // Then
         assertEquals(Length(82.0), profiles.state.value.profiles.single().measurements.waist)
     }
 
     @Test
-    fun save_withInvalidInputs_showsFieldErrors() = runTest {
+    fun save_withInvalidInputs_showsEachErrorOnItsField() = runTest {
+        // Given
         val profiles = profilesViewModel()
-
         profiles.startCreating()
         profiles.fill(name = " ", waist = "0", date = "14/10/2026")
+
+        // When
         profiles.save()
 
+        // Then
         assertEquals(
             mapOf(
                 ProfileField.Name to ProfileError.BlankName,
@@ -140,13 +149,16 @@ class ProfilesViewModelTest {
 
     @Test
     fun save_whenStorageFails_keepsTheFormAndShowsTheFailure() = runTest {
+        // Given
         storage.failsCommands = true
         val profiles = profilesViewModel()
-
         profiles.startCreating()
         profiles.fill(name = "Bia", waist = "95", date = "11/10/2026")
+
+        // When
         profiles.save()
 
+        // Then
         val failed = profiles.state.value
         assertEquals(R.string.profile_save_failed, failed.saveError)
         assertTrue(failed.isEditorOpen)
@@ -156,24 +168,30 @@ class ProfilesViewModelTest {
 
     @Test
     fun delete_profileBeingEdited_removesItAndClosesTheForm() = runTest {
+        // Given
         val profiles = profilesViewModel()
-
         profiles.startEditing(ana.id)
+
+        // When
         profiles.delete(ana.id)
 
+        // Then
         val deleted = profiles.state.value
-        assertEquals(emptyList<MeasurementProfile>(), deleted.profiles)
+        assertEquals(emptyList(), deleted.profiles)
         assertFalse(deleted.isEditorOpen)
         assertEquals(R.string.profile_deleted, deleted.savedMessage)
     }
 
     @Test
     fun delete_whenStorageFails_keepsTheProfileAndShowsTheFailure() = runTest {
+        // Given
         storage.failsCommands = true
         val profiles = profilesViewModel()
 
+        // When
         profiles.delete(ana.id)
 
+        // Then
         val failed = profiles.state.value
         assertEquals(R.string.profile_delete_failed, failed.saveError)
         assertEquals(ana.id, failed.deleteId)
@@ -181,26 +199,44 @@ class ProfilesViewModelTest {
     }
 
     @Test
-    fun edit_isDirtyOnlyWhileTheFormDiffersFromTheProfile() = runTest {
+    fun edit_awayFromTheProfile_makesTheFormDirty() = runTest {
+        // Given
         val profiles = profilesViewModel()
         profiles.startEditing(ana.id)
 
+        // When
         profiles.edit(ProfileField.Name, "Ana Maria")
-        assertTrue(profiles.state.value.isDirty)
 
+        // Then
+        assertTrue(profiles.state.value.isDirty)
+    }
+
+    @Test
+    fun edit_backToTheProfileValue_makesTheFormClean() = runTest {
+        // Given
+        val profiles = profilesViewModel()
+        profiles.startEditing(ana.id)
+        profiles.edit(ProfileField.Name, "Ana Maria")
+
+        // When
         profiles.edit(ProfileField.Name, "Ana")
+
+        // Then
         assertFalse(profiles.state.value.isDirty)
     }
 
     @Test
     fun recreate_afterProcessDeath_restoresTheForm() = runTest {
-        viewModelScenario { ProfilesViewModel(storage, createSavedStateHandle(), clock) }
+        viewModelScenario { ProfilesViewModel(storage, createSavedStateHandle(), October13Clock) }
             .use { scenario ->
+                // Given
                 scenario.viewModel.startEditing(ana.id)
                 scenario.viewModel.edit(ProfileField.Notes, "Sem folga")
 
+                // When
                 scenario.recreate()
 
+                // Then
                 val restored = scenario.viewModel.state.value
                 assertEquals(ana.id, restored.editingId)
                 assertEquals("Sem folga", restored.inputs[ProfileField.Notes])
@@ -209,15 +245,13 @@ class ProfilesViewModelTest {
             }
     }
 
-    private fun profilesViewModel() = ProfilesViewModel(storage, SavedStateHandle(), clock)
+    private fun profilesViewModel() = ProfilesViewModel(storage, SavedStateHandle(), October13Clock)
 
     private fun ProfilesViewModel.fill(name: String, waist: String, date: String) {
         edit(ProfileField.Name, name)
         edit(ProfileField.Waist, waist)
         edit(ProfileField.Date, date)
     }
-
-    private val clock = Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC)
 }
 
 private val ana = profile(1, "Ana", 80.0)
@@ -228,40 +262,13 @@ private fun profile(id: Long, name: String, waist: Double) = MeasurementProfile(
     ProfileMeasurements(ProfileName(name), Length(waist), LocalDate.of(2026, 10, 12)),
 )
 
-/** In-memory profiles that emit again after each change, like the Room repository. */
-private class FakeProfiles : ProfileRepository {
-    val stored = MutableStateFlow(listOf(ana))
-    var failsLoad = false
-    var failsCommands = false
-    var holdsFirstEmission = false
-    val emissionGate = CompletableDeferred<Unit>()
+/** Counts the collectors of [profiles], to show a retry replaces the pending one. */
+private class CollectorCounting(private val profiles: ProfileRepository) :
+    ProfileRepository by profiles {
     var activeCollectors = 0
         private set
 
-    override fun profiles(): Flow<List<MeasurementProfile>> = flow {
-        check(!failsLoad) { "Controlled load failure" }
-        if (holdsFirstEmission) emissionGate.await()
-        emitAll(stored)
-    }
+    override fun profiles(): Flow<List<MeasurementProfile>> = profiles.profiles()
         .onStart { activeCollectors++ }
         .onCompletion { activeCollectors-- }
-
-    override suspend fun create(measurements: ProfileMeasurements) = command {
-        MeasurementProfile(ProfileId(stored.value.size + 1L), measurements)
-            .also { created -> stored.update { it + created } }
-    }
-
-    override suspend fun update(profile: MeasurementProfile) = command {
-        stored.update { profiles -> profiles.map { if (it.id == profile.id) profile else it } }
-    }
-
-    override suspend fun delete(id: ProfileId) = command {
-        stored.update { profiles -> profiles.filterNot { it.id == id } }
-    }
-
-    private fun <T> command(block: () -> T): Result<T> = if (failsCommands) {
-        Result.failure(IllegalStateException("Controlled storage failure"))
-    } else {
-        Result.success(block())
-    }
 }

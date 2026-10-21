@@ -40,3 +40,53 @@ style:
     active: true
   VarCouldBeVal:
     active: true
+  # Tests synchronize instead of sleeping; see .agents/rules/kotlin-tests.md.
+  ForbiddenMethodCall:
+    active: true
+    includes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
+    methods:
+      - reason: 'Fixed sleeps make tests slow and flaky. Synchronize instead; see .agents/rules/kotlin-tests.md.'
+        value: 'java.lang.Thread.sleep'
+      - reason: 'Fixed sleeps make tests slow and flaky. Synchronize instead; see .agents/rules/kotlin-tests.md.'
+        value: 'android.os.SystemClock.sleep'
+      - reason: 'Blocking on a latch waits on wall-clock time. Synchronize instead; see .agents/rules/kotlin-tests.md.'
+        value: 'java.util.concurrent.CountDownLatch.await'
+      - reason: 'runBlocking ignores virtual time. Use runTest; see .agents/rules/kotlin-tests.md.'
+        value: 'kotlinx.coroutines.runBlocking'
+      - reason: 'Espresso Back skips Compose synchronization. Use pressBack in MoldaNavigation.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.test.espresso.Espresso.pressBack'
+      - reason: 'Espresso Back skips Compose synchronization. Use pressBack in MoldaNavigation.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.test.espresso.Espresso.pressBackUnconditionally'
+  # A second instance for the waits, so their one home, DeviceWaits.kt, stays under the bans above.
+  ForbiddenMethodCall/waits:
+    active: true
+    includes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
+    excludes: ['**/androidTest/java/com/almeidajr/molda/DeviceWaits.kt']
+    methods:
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntil'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntilAtLeastOneExists'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntilExactlyOneExists'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntilDoesNotExist'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.junit4.ComposeTestRule.waitUntilNodeCount'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.ComposeUiTest.waitUntil'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.waitUntilAtLeastOneExists'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.waitUntilExactlyOneExists'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.waitUntilDoesNotExist'
+      - reason: 'Wall-clock waits go through the named helpers in DeviceWaits.kt; see .agents/rules/kotlin-tests.md.'
+        value: 'androidx.compose.ui.test.waitUntilNodeCount'
+  # One assertion library; see .agents/rules/kotlin-tests.md.
+  ForbiddenImport:
+    active: true
+    includes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
+    forbiddenImports:
+      - reason: 'Assert with kotlin.test; see .agents/rules/kotlin-tests.md.'
+        value: 'org.junit.Assert*'

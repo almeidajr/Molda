@@ -6,19 +6,20 @@ import org.junit.Test
 
 class FeatureUiIsolationTest {
     @Test
-    fun featureUiFiles_importNoOtherFeatureUi() {
-        Konsist
-            .scopeFromProduction()
-            .files
-            .assertFalse(
-                additionalMessage = "One feature's UI must not import another feature's UI.",
-            ) { file ->
-                val feature = featureOf("${file.packagee?.name}.")
-                feature != null &&
-                    file.imports.any { import ->
-                        featureOf(import.name)?.let { it != feature } == true
-                    }
-            }
+    fun featureUiFiles_inAnyFeature_importNoOtherFeatureUi() {
+        // Given
+        val files = Konsist.scopeFromProduction().files
+
+        // When/Then
+        files.assertFalse(
+            additionalMessage = "One feature's UI must not import another feature's UI.",
+        ) { file ->
+            val feature = featureOf("${file.packagee?.name}.")
+            feature != null &&
+                file.imports.any { import ->
+                    featureOf(import.name)?.let { it != feature } == true
+                }
+        }
     }
 
     private fun featureOf(name: String): String? = FEATURE_UI.find(name)?.groupValues?.get(1)

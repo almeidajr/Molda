@@ -12,6 +12,7 @@ import com.almeidajr.molda.profile.data.ProfileDao
 import com.almeidajr.molda.profile.data.ProfileEntity
 import com.almeidajr.molda.project.data.ProjectDao
 import com.almeidajr.molda.project.data.ProjectEntity
+import kotlin.coroutines.CoroutineContext
 
 // Every schema change after version 1 ships a Migration (docs/adr/0002).
 @Database(entities = [ProfileEntity::class, ProjectEntity::class], version = 2)
@@ -37,9 +38,18 @@ val AddProjects = object : Migration(1, 2) {
     }
 }
 
-/** Opens Molda's database; the old `profiles.db` is deliberately not read (docs/adr/0002). */
-fun openMoldaDatabase(context: Context, name: String = "molda.db"): MoldaDatabase = Room
+/**
+ * Opens Molda's database; the old `profiles.db` is deliberately not read (docs/adr/0002).
+ * A [queryContext] replaces Room's own query dispatcher; journey tests pass one Espresso tracks
+ * (docs/adr/0004).
+ */
+fun openMoldaDatabase(
+    context: Context,
+    name: String = "molda.db",
+    queryContext: CoroutineContext? = null,
+): MoldaDatabase = Room
     .databaseBuilder<MoldaDatabase>(context.applicationContext, name)
     .setDriver(AndroidSQLiteDriver())
     .addMigrations(AddProjects)
+    .apply { queryContext?.let(::setQueryCoroutineContext) }
     .build()

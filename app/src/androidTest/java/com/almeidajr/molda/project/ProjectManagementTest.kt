@@ -1,6 +1,5 @@
 package com.almeidajr.molda.project
 
-import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
@@ -10,35 +9,24 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.MoldaRoute
+import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
-import com.almeidajr.molda.profile.data.LocalProfileRepository
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
-import com.almeidajr.molda.project.data.LocalProjectRepository
+import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
-import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.selectDestination
+import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
-import com.almeidajr.molda.ui.theme.MoldaTheme
-import java.time.Clock
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October18Clock
 import java.time.Instant
-import java.time.ZoneOffset
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert.assertEquals
+import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -47,125 +35,111 @@ class ProjectManagementTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val storage = IsolatedStorage("project-management-test.db")
-    private val database = storage.database
-    private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
-
-    @After
-    fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
-
     @Test
-    fun rename_refusesBlankName_thenUpdatesTheList() {
-        val projects = LocalProjectRepository(database.projects())
-        runBlocking { projects.create(ProjectName("Saia antiga"), snapshot, clock.instant()) }
+    fun rename_withBlankName_showsNameErrorAndKeepsTheName() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
         showProjetos(projects)
-
         click("Ações: Saia antiga")
         click("Renomear projeto")
-        composeRule.nameField().performTextReplacement("   ")
-        click("Renomear")
-        composeRule.onNodeWithText("Informe um nome para o projeto.").assertIsDisplayed()
-        composeRule.nameField().performTextReplacement("Saia da formatura")
+
+        // When
+        composeRule.dialogTextField().performTextReplacement("   ")
         click("Renomear")
 
+        // Then
+        composeRule.onNodeWithText("Informe um nome para o projeto.").assertIsDisplayed()
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun rename_withNewName_updatesTheList() {
+        // Given
+        showProjetos(FakeProjectRepository(listOf(saiaAntiga)))
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+
+        // When
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+        click("Renomear")
+
+        // Then
         composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
         composeRule.onNodeWithText("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Saia antiga").assertDoesNotExist()
     }
 
     @Test
-    fun delete_asksForConfirmation_thenRemovesTheProject() {
-        val projects = LocalProjectRepository(database.projects())
-        runBlocking { projects.create(ProjectName("Saia antiga"), snapshot, clock.instant()) }
+    fun delete_cancelled_keepsTheProject() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
         showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
 
-        click("Ações: Saia antiga")
-        click("Excluir projeto")
-        composeRule.onNodeWithText("Excluir projeto Saia antiga?").assertIsDisplayed()
+        // When
         click("Cancelar")
+
+        // Then
         composeRule.onNodeWithText("Excluir projeto Saia antiga?").assertDoesNotExist()
-        assertEquals(1, runBlocking { projects.projects().first() }.size)
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun delete_confirmed_removesTheProject() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+        showProjetos(projects)
         click("Ações: Saia antiga")
         click("Excluir projeto")
+
+        // When
         click("Confirmar exclusão")
 
+        // Then
         composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
-        assertEquals(emptyList<Project>(), runBlocking { projects.projects().first() })
+        assertEquals(emptyList(), projects.current)
     }
 
     @Test
     fun delete_whenStorageFails_showsFailureAndKeepsTheProject() {
-        showProjetos(
-            RefusingProjects(
-                listOf(
-                    Project(
-                        ProjectId(1),
-                        ProjectName("Saia antiga"),
-                        snapshot.kind,
-                        snapshot,
-                        Instant.parse("2026-10-01T12:00:00Z"),
-                        Instant.parse("2026-10-01T12:00:00Z"),
-                    ),
-                ),
-            ),
-        )
-
+        // Given
+        showProjetos(FakeProjectRepository(listOf(saiaAntiga)).apply { failsCommands = true })
         click("Ações: Saia antiga")
         click("Excluir projeto")
+
+        // When
         click("Confirmar exclusão")
 
+        // Then
         composeRule.onNodeWithText("Não foi possível excluir o projeto", substring = true)
             .assertIsDisplayed()
         click("Cancelar")
         composeRule.onNodeWithText("Saia antiga").assertIsDisplayed()
     }
 
-    private fun showProjetos(projectStorage: ProjectRepository) {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                val profiles: ProfilesViewModel = viewModel(
-                    key = "isolatedProfiles",
-                    factory = viewModelFactory {
-                        initializer {
-                            ProfilesViewModel(
-                                LocalProfileRepository(database.profiles()),
-                                createSavedStateHandle(),
-                                clock,
-                            )
-                        }
-                    },
-                )
-                val projects: ProjectsViewModel = viewModel(
-                    key = "isolatedProjects",
-                    factory = viewModelFactory {
-                        initializer {
-                            ProjectsViewModel(projectStorage, clock, createSavedStateHandle())
-                        }
-                    },
-                )
-                val calculator: SkirtCalculatorViewModel = viewModel()
-                MoldaTheme {
-                    MoldaRoute(calculator = calculator, profiles = profiles, projects = projects)
-                }
-            }
-        }
+    private fun showProjetos(projects: ProjectRepository) {
+        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
         composeRule.selectDestination("Projetos")
     }
 
     private fun click(label: String) {
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodes(hasText(label) and isEnabled()).fetchSemanticsNodes()
-                .isNotEmpty()
-        }
         val node = composeRule.onNode(hasText(label) and isEnabled())
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()
     }
 }
 
-private val snapshot = SkirtSnapshot(
-    SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
-    SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
-    source = null,
+private val saiaAntiga = Project(
+    ProjectId(1),
+    ProjectName("Saia antiga"),
+    PatternDraftKind.FullCircleSkirt,
+    SkirtSnapshot(
+        SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
+        SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
+        source = null,
+    ),
+    createdAt = Instant.parse("2026-10-01T12:00:00Z"),
+    updatedAt = Instant.parse("2026-10-01T12:00:00Z"),
 )
