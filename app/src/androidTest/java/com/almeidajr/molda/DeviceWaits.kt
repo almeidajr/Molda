@@ -1,6 +1,4 @@
-// The one home of wall-clock waits: Detekt bans waitUntil* in every other test file.
-@file:Suppress("ForbiddenMethodCall")
-
+// The one home of wall-clock waits: config/detekt.yml bans waitUntil* in every other test file.
 package com.almeidajr.molda
 
 import android.animation.ValueAnimator
