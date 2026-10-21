@@ -127,3 +127,21 @@ class AnimatorDurationScaleRule internal constructor(
                 }
             }
 }
+
+/**
+ * Takes the device out of touch mode for one test, as a keyboard user leaves it, and puts it back
+ * after the test, even when it fails. Touch mode leaves buttons unfocusable.
+ */
+class KeyboardModeRule : ExternalResource() {
+    private var isChanged = false
+
+    /** Leaves touch mode until the test ends. */
+    fun enter() {
+        isChanged = true
+        InstrumentationRegistry.getInstrumentation().setInTouchMode(false)
+    }
+
+    override fun after() {
+        if (isChanged) InstrumentationRegistry.getInstrumentation().setInTouchMode(true)
+    }
+}

@@ -15,7 +15,6 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import app.rive.Result
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.ui.FoldingStep
@@ -34,6 +33,9 @@ import org.junit.runner.RunWith
 class FabricFoldingGuideTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule
+    val keyboardMode = KeyboardModeRule()
 
     @Test
     fun opening_showsFirstStepWithPreviousDisabled() {
@@ -164,21 +166,16 @@ class FabricFoldingGuideTest {
         openGuide()
         next(times = 1)
         composeRule.onNodeWithText("Etapa 2 de 6").assertIsDisplayed()
-        // Touch mode leaves buttons unfocusable; keyboard users are the ones who need focus back.
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        try {
-            instrumentation.setInTouchMode(false)
+        // Keyboard users are the ones who need focus back.
+        keyboardMode.enter()
 
-            // When
-            composeRule.pressBack()
+        // When
+        composeRule.pressBack()
 
-            // Then
-            composeRule.onNodeWithText("Etapa 2 de 6").assertDoesNotExist()
-            composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
-                .assertIsFocused()
-        } finally {
-            instrumentation.setInTouchMode(true)
-        }
+        // Then
+        composeRule.onNodeWithText("Etapa 2 de 6").assertDoesNotExist()
+        composeRule.onNodeWithText("Guia de dobra do tecido").assertIsDisplayed()
+            .assertIsFocused()
         composeRule.onNodeWithContentDescription(
             "Linha 1, linha contínua. Costura da cintura: 13,05 cm",
         ).assertExists()
