@@ -44,8 +44,11 @@ import org.junit.runner.RunWith
 /** The navigation suite: Moldes, Projetos, Guias and Perfis, each with its own back stack. */
 @RunWith(AndroidJUnit4::class)
 class NavigationShellTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 1)
+    val keyboardMode = KeyboardModeRule(composeRule)
 
     private val destinations = listOf("Moldes", "Projetos", "Guias", "Perfis")
 
@@ -190,8 +193,8 @@ class NavigationShellTest {
     fun newProfileByKeyboard_opensEditorWithoutFocusingAField() {
         // Given
         composeRule.selectDestination("Perfis")
-        // A real key event leaves touch mode, so buttons join keyboard focus traversal.
-        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
+        // Out of touch mode, buttons join keyboard focus traversal.
+        keyboardMode.enter()
         composeRule.onNodeWithContentDescription("Novo perfil").requestFocus()
 
         // When
@@ -295,8 +298,8 @@ class NavigationShellTest {
 
     @Test
     fun arrowKeys_onNavigationItems_moveFocus_andEnterOrSpaceSelects() {
-        // Given: a real key event leaves touch mode, so navigation items join focus traversal.
-        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
+        // Given: out of touch mode, navigation items join keyboard focus traversal.
+        keyboardMode.enter()
         composeRule.destination("Moldes").requestFocus()
 
         // When/Then
@@ -313,8 +316,8 @@ class NavigationShellTest {
 
     @Test
     fun tab_fromAnyNavigationItem_leavesTheItemsInOneStep() {
-        // Given: a real key event leaves touch mode, so navigation items join focus traversal.
-        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
+        // Given: out of touch mode, navigation items join keyboard focus traversal.
+        keyboardMode.enter()
 
         listOf(0, KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON).forEach { metaState ->
             composeRule.destination("Projetos").requestFocus()

@@ -155,11 +155,14 @@ states it. A test that changes a global device setting, such as the animator
 duration scale, does it through a JUnit rule that restores the original value
 even when the test fails (`AnimatorDurationScaleRule` in the support file).
 
-Keep the keyboard out of tests that press Back in a dialog. The IME process
-drops its Back callback only once it finishes hiding; until then the callback
-follows focus to the dialog and takes the Back press. The app cannot see that
+Keep the keyboard out of tests that press Back in a dialog. While the keyboard
+shows or hides, Android registers an IME Back callback on the focused window,
+the dialog included, and it takes the Back press. The app cannot see that
 state, so no wait covers it: dirty a form through a non-text control instead.
-An opening keyboard also shrinks `imePadding` layouts frame by frame after
+Leave touch mode only through `KeyboardModeRule`, never with a Tab, Enter or
+arrow key: touch mode is global, Compose test clicks do not restore it, and
+every later test would run as a keyboard user, whose returning window focus
+raises the keyboard on a text field. An opening keyboard also shrinks `imePadding` layouts frame by frame after
 `awaitKeyboardVisible` returns, which can clip a button between scrolling to it
 and tapping it. Close the keyboard first with `closeKeyboard` when the test does
 not need it open.

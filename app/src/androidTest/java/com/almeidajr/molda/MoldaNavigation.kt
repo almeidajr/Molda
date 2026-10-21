@@ -102,7 +102,9 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showEmptyApp(
 /**
  * Sends a real key press with [metaState] to the focused window once Compose is idle. Key events
  * from Instrumentation bypass Compose's synchronization: sent right after an action, they reach
- * the UI from before it, for example before Back handling was enabled.
+ * the UI from before it, for example before Back handling was enabled. A navigation or typing key
+ * pressed in touch mode leaves it for every later test too: send those keys only after
+ * [KeyboardModeRule.enter].
  */
 internal fun ComposeTestRule.pressKey(keyCode: Int, metaState: Int = 0) {
     waitForIdle()

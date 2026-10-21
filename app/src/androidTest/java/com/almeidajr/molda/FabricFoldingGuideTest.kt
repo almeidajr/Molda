@@ -31,11 +31,11 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class FabricFoldingGuideTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @get:Rule
-    val keyboardMode = KeyboardModeRule()
+    @get:Rule(order = 1)
+    val keyboardMode = KeyboardModeRule(composeRule)
 
     @Test
     fun opening_showsFirstStepWithPreviousDisabled() {
