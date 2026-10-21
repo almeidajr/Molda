@@ -29,6 +29,7 @@ import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
 import com.almeidajr.molda.awaitKeyboardHidden
+import com.almeidajr.molda.click
 import com.almeidajr.molda.isKeyboardVisible
 import com.almeidajr.molda.pressKey
 import com.almeidajr.molda.showProfiles
@@ -47,7 +48,7 @@ class ProfilePresentationTest {
     @Test
     fun profileRows_withSameName_showTheirNotes() {
         // When
-        showProfiles(sameNameWithNotes())
+        composeRule.showProfiles(sameNameWithNotes())
 
         // Then
         composeRule.onNodeWithText("Medida com roupa leve").performScrollTo().assertIsDisplayed()
@@ -57,7 +58,7 @@ class ProfilePresentationTest {
     @Test
     fun pickerRows_withSameName_showTheirNotes() {
         // Given
-        showCalculator(sameNameWithNotes())
+        composeRule.showCalculator(sameNameWithNotes())
 
         // When
         composeRule.click("Usar perfil")
@@ -70,7 +71,7 @@ class ProfilePresentationTest {
     @Test
     fun newProfileEditor_explainsDateAndNotes() {
         // Given
-        showProfiles(FakeProfileRepository())
+        composeRule.showProfiles(FakeProfileRepository())
 
         // When
         composeRule.click("Novo perfil")
@@ -87,7 +88,7 @@ class ProfilePresentationTest {
     @Test
     fun newProfileEditor_dateField_startsEmpty() {
         // Given
-        showProfiles(FakeProfileRepository())
+        composeRule.showProfiles(FakeProfileRepository())
 
         // When
         composeRule.click("Novo perfil")
@@ -101,7 +102,7 @@ class ProfilePresentationTest {
     @Test
     fun saveNew_withMalformedDate_showsFormatErrorAndKeepsText() {
         // Given
-        showProfiles(FakeProfileRepository())
+        composeRule.showProfiles(FakeProfileRepository())
         composeRule.click("Novo perfil")
         composeRule.edit("Nome ou apelido", "Ana")
         composeRule.edit("Cintura do perfil (cm)", "80")
@@ -120,7 +121,7 @@ class ProfilePresentationTest {
     @Test
     fun saveNew_withFutureDate_asksForCorrection() {
         // Given
-        showProfiles(FakeProfileRepository())
+        composeRule.showProfiles(FakeProfileRepository())
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Ana", date = "14/10/2026")
 
@@ -136,7 +137,7 @@ class ProfilePresentationTest {
     @Test
     fun profileTexts_useAgreedTypography() {
         // Given
-        showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        composeRule.showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
 
         // When/Then
         assertTypography("Ana", 16, 24, FontWeight.Medium)
@@ -184,7 +185,7 @@ class ProfilePresentationTest {
     @Test
     fun profileButtons_atDefaultTextSize_drawAtLeast48dpTall() {
         // Given
-        showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        composeRule.showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
 
         // When/Then
         assertDrawnHeight("Perfis", "Ações: Ana")
@@ -203,7 +204,7 @@ class ProfilePresentationTest {
     @Test
     fun profileRow_openedWithKeyboard_focusesNoField() {
         // Given
-        showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        composeRule.showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
         // A real key event leaves touch mode, so the row joins keyboard focus traversal.
         composeRule.pressKey(KeyEvent.KEYCODE_TAB)
         composeRule.onNodeWithText("Ana").requestFocus().assertIsFocused()
@@ -247,16 +248,6 @@ class ProfilePresentationTest {
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
             composeRule.click("Cancelar")
         }
-    }
-
-    private fun showCalculator(storage: FakeProfileRepository) {
-        composeRule.showProfileRoute(storage)
-        composeRule.showSkirtCalculator()
-    }
-
-    private fun showProfiles(storage: FakeProfileRepository) {
-        composeRule.showProfileRoute(storage)
-        composeRule.showProfiles()
     }
 
     private fun sameNameWithNotes() = FakeProfileRepository(

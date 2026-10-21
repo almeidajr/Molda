@@ -7,13 +7,19 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.DpSize
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -124,6 +130,23 @@ internal fun SemanticsNodeInteractionsProvider.destination(
 internal fun SemanticsNodeInteractionsProvider.selectDestination(label: String) {
     destination(label).performClick()
 }
+
+/**
+ * Clicks the node whose text or content description is [label], scrolling to it when hidden. Pass
+ * [useUnmergedTree] to tap the label itself rather than the merged node around it.
+ */
+internal fun SemanticsNodeInteractionsProvider.click(
+    label: String,
+    useUnmergedTree: Boolean = false,
+) {
+    val node = onNode(hasText(label) or hasContentDescription(label), useUnmergedTree)
+    if (!node.isDisplayed()) node.performScrollTo()
+    node.performClick()
+}
+
+/** The text field of the open dialog, such as a project's name or the calendar's typed date. */
+internal fun SemanticsNodeInteractionsProvider.dialogTextField(): SemanticsNodeInteraction =
+    onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
 
 /** The top app bar heading reading [title]. */
 internal fun SemanticsNodeInteractionsProvider.screenTitle(

@@ -15,6 +15,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.Espresso.pressBack
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.click
+import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -64,10 +66,10 @@ class EditProjectTest {
         showRoute()
         openEditor()
         editEase("4")
-        click("Calcular")
+        composeRule.click("Calcular")
 
         // When
-        click("Salvar")
+        composeRule.click("Salvar")
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
@@ -83,11 +85,11 @@ class EditProjectTest {
         showRoute()
         openEditor()
         editEase("4")
-        click("Calcular")
+        composeRule.click("Calcular")
 
         // When
-        click("Salvar como novo")
-        composeRule.nameField().performTextReplacement("Saia de verão")
+        composeRule.click("Salvar como novo")
+        composeRule.dialogTextField().performTextReplacement("Saia de verão")
         composeRule.onNode(hasText("Salvar") and hasAnyAncestor(isDialog())).performClick()
 
         // Then
@@ -122,7 +124,7 @@ class EditProjectTest {
         composeRule.onNodeWithContentDescription("Voltar").performClick()
 
         // When
-        click("Continuar editando")
+        composeRule.click("Continuar editando")
 
         // Then
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
@@ -138,7 +140,7 @@ class EditProjectTest {
         composeRule.onNodeWithContentDescription("Voltar").performClick()
 
         // When
-        click("Descartar")
+        composeRule.click("Descartar")
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
@@ -187,7 +189,7 @@ class EditProjectTest {
         openEditor()
 
         // When
-        click("Usar perfil")
+        composeRule.click("Usar perfil")
         composeRule.onAllNodes(hasText("Usar perfil: Bia", substring = true))[0].performClick()
 
         // Then
@@ -214,8 +216,8 @@ class EditProjectTest {
 
     private fun openEditor() {
         composeRule.selectDestination("Projetos")
-        click("Saia da formatura")
-        click("Editar")
+        composeRule.clickProject("Saia da formatura")
+        composeRule.click("Editar")
     }
 
     private fun editEase(text: String) {
@@ -227,13 +229,6 @@ class EditProjectTest {
 
     private fun showRoute(profiles: FakeProfileRepository = FakeProfileRepository()) =
         composeRule.showRoute(profiles, projects, October18Clock)
-
-    private fun click(label: String) {
-        // Tap the label as a reader does: a small row's centre falls on its Ações button.
-        val text = composeRule.onAllNodes(hasText(label), useUnmergedTree = true)[0]
-        if (!text.isDisplayed()) text.performScrollTo()
-        text.performClick()
-    }
 
     private companion object {
         val SAVED_INPUTS = listOf(

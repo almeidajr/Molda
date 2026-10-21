@@ -11,6 +11,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
@@ -82,7 +83,7 @@ class ProjectSavingTest {
         // Then
         composeRule.onNodeWithText("Não foi possível salvar o projeto", substring = true)
             .assertIsDisplayed()
-        composeRule.nameField().assertTextContains("Saia godê · 18/10/2026")
+        composeRule.dialogTextField().assertTextContains("Saia godê · 18/10/2026")
         click("Cancelar")
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
     }

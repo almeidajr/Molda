@@ -8,12 +8,6 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -24,13 +18,16 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showRoute
+import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -78,19 +75,21 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showProfileRoute(
     }
 }
 
+/** Shows the app on [profiles] and opens the skirt calculator. */
+internal fun AndroidComposeTestRule<*, MainActivity>.showCalculator(profiles: ProfileRepository) {
+    showProfileRoute(profiles)
+    showSkirtCalculator()
+}
+
+/** Shows the app on [profiles] and selects Perfis. */
+internal fun AndroidComposeTestRule<*, MainActivity>.showProfiles(profiles: ProfileRepository) {
+    showProfileRoute(profiles)
+    showProfiles()
+}
+
 /** Replaces the text of the field labelled [label]. */
 internal fun SemanticsNodeInteractionsProvider.edit(label: String, value: String) {
     onNodeWithText(label).performScrollTo().performTextReplacement(value)
-}
-
-/** Clicks the node whose text or content description is [label], scrolling to it when hidden. */
-internal fun SemanticsNodeInteractionsProvider.click(
-    label: String,
-    useUnmergedTree: Boolean = false,
-) {
-    val node = onNode(hasText(label) or hasContentDescription(label), useUnmergedTree)
-    if (!node.isDisplayed()) node.performScrollTo()
-    node.performClick()
 }
 
 /** Fills the open profile editor's name, waist and date. */
@@ -121,5 +120,5 @@ internal fun SemanticsNodeInteractionsProvider.typeInCalendar(value: String) {
     val (day, month, year) = value.split('/')
     val parts = mapOf('d' to day, 'M' to month, 'y' to year)
     val input = DateFormat.getDateFormatOrder(context).joinToString("") { parts.getValue(it) }
-    onNode(hasSetTextAction() and hasAnyAncestor(isDialog())).performTextReplacement(input)
+    dialogTextField().performTextReplacement(input)
 }

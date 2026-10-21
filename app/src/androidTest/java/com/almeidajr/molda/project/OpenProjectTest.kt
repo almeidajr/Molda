@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.pressBack
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.click
+import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -54,7 +56,7 @@ class OpenProjectTest {
         composeRule.selectDestination("Projetos")
 
         // When
-        click("Saia da formatura")
+        composeRule.clickProject("Saia da formatura")
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
@@ -76,8 +78,8 @@ class OpenProjectTest {
         openProject()
 
         // When
-        click("Guia de dobra do tecido")
-        repeat(3) { click("Próximo") }
+        composeRule.click("Guia de dobra do tecido")
+        repeat(3) { composeRule.click("Próximo") }
 
         // Then
         composeRule.onNode(hasText("11,11 cm", substring = true)).performScrollTo()
@@ -89,7 +91,7 @@ class OpenProjectTest {
         // Given
         showRoute()
         openProject()
-        click("Guia de dobra do tecido")
+        composeRule.click("Guia de dobra do tecido")
 
         // When
         pressBack()
@@ -118,7 +120,7 @@ class OpenProjectTest {
         composeRule.selectDestination("Projetos")
 
         // When
-        click("Saia da formatura")
+        composeRule.clickProject("Saia da formatura")
 
         // Then
         val row = composeRule.onNode(hasText("Saia da formatura") and hasClickAction())
@@ -154,10 +156,10 @@ class OpenProjectTest {
         openProject()
 
         // When
-        click("Ações: Saia da formatura")
-        click("Renomear projeto")
-        composeRule.nameField().performTextReplacement("Saia de verão")
-        click("Renomear")
+        composeRule.click("Ações: Saia da formatura")
+        composeRule.click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia de verão")
+        composeRule.click("Renomear")
 
         // Then
         composeRule.screenTitle("Saia de verão").assertIsDisplayed()
@@ -173,9 +175,9 @@ class OpenProjectTest {
         openProject()
 
         // When
-        click("Ações: Saia da formatura")
-        click("Excluir projeto")
-        click("Confirmar exclusão")
+        composeRule.click("Ações: Saia da formatura")
+        composeRule.click("Excluir projeto")
+        composeRule.click("Confirmar exclusão")
 
         // Then
         composeRule.screenTitle("Projetos").assertIsDisplayed()
@@ -194,8 +196,8 @@ class OpenProjectTest {
             .maxBy { it.boundsInRoot.left }
             .let { composeRule.onNode(hasText("Ações: Saia da formatura") and isAt(it.id)) }
             .performClick()
-        click("Excluir projeto")
-        click("Confirmar exclusão")
+        composeRule.click("Excluir projeto")
+        composeRule.click("Confirmar exclusão")
 
         // Then
         composeRule.onNodeWithText("Escolha um projeto na lista.").assertIsDisplayed()
@@ -204,7 +206,7 @@ class OpenProjectTest {
 
     private fun openProject() {
         composeRule.selectDestination("Projetos")
-        click("Saia da formatura")
+        composeRule.clickProject("Saia da formatura")
     }
 
     private fun isAt(id: Int) = SemanticsMatcher("node $id") { it.id == id }
@@ -213,13 +215,6 @@ class OpenProjectTest {
         size: DpSize? = null,
         profiles: FakeProfileRepository = FakeProfileRepository(),
     ) = composeRule.showRoute(profiles, projects, October18Clock, size)
-
-    private fun click(label: String) {
-        // Tap the label as a reader does: a small row's centre falls on its Ações button.
-        val text = composeRule.onAllNodes(hasText(label), useUnmergedTree = true)[0]
-        if (!text.isDisplayed()) text.performScrollTo()
-        text.performClick()
-    }
 
     private companion object {
         val STORED_RADII = listOf(

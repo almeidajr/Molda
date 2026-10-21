@@ -1,10 +1,7 @@
 package com.almeidajr.molda.project
 
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.isDialog
+import com.almeidajr.molda.click
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.project.domain.PatternDraftKind
@@ -35,6 +32,6 @@ internal fun formaturaProject(savedAt: Instant) = Project(
     updatedAt = savedAt,
 )
 
-/** The name field of the open save or rename dialog. */
-internal fun SemanticsNodeInteractionsProvider.nameField(): SemanticsNodeInteraction =
-    onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
+/** Opens the saved project [name] by tapping its name: a short row's centre falls on its Ações button. */
+internal fun SemanticsNodeInteractionsProvider.clickProject(name: String) =
+    click(name, useUnmergedTree = true)

@@ -13,6 +13,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.click
+import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.project.data.LocalProjectRepository
@@ -53,11 +55,11 @@ class ProjectJourneyTest {
         listOf("80", "2", "60", "1", "2").zip(SkirtDraftField.entries).forEach { (text, field) ->
             editField(field, text)
         }
-        click("Calcular")
+        composeRule.click("Calcular")
 
         // When: saved from the result
-        click("Salvar projeto")
-        composeRule.nameField().performTextReplacement("Saia da formatura")
+        composeRule.click("Salvar projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
         confirmDialog("Salvar")
 
         // Then
@@ -66,11 +68,11 @@ class ProjectJourneyTest {
         composeRule.onNodeWithText("Saia godê · 18/10/2026").assertIsDisplayed()
 
         // When: opened, edited and saved in place
-        click("Saia da formatura")
-        click("Editar")
+        composeRule.clickProject("Saia da formatura")
+        composeRule.click("Editar")
         editField(SkirtDraftField.Ease, "4")
-        click("Calcular")
-        click("Salvar")
+        composeRule.click("Calcular")
+        composeRule.click("Salvar")
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
@@ -78,11 +80,11 @@ class ProjectJourneyTest {
         assertEquals(listOf("Saia da formatura" to 4.0), storedNamesAndEase())
 
         // When: edited again and saved as a copy
-        click("Editar")
+        composeRule.click("Editar")
         editField(SkirtDraftField.Ease, "5")
-        click("Calcular")
-        click("Salvar como novo")
-        composeRule.nameField().performTextReplacement("Saia de verão")
+        composeRule.click("Calcular")
+        composeRule.click("Salvar como novo")
+        composeRule.dialogTextField().performTextReplacement("Saia de verão")
         confirmDialog("Salvar")
 
         // Then
@@ -93,8 +95,8 @@ class ProjectJourneyTest {
         )
 
         // When: the copy is deleted
-        click("Ações: Saia de verão")
-        click("Excluir projeto")
+        composeRule.click("Ações: Saia de verão")
+        composeRule.click("Excluir projeto")
         confirmDialog("Confirmar exclusão")
 
         // Then
@@ -117,13 +119,6 @@ class ProjectJourneyTest {
         composeRule.onNode(hasText(label) and hasAnyAncestor(isDialog())).performClick()
         // The name field's keyboard may outlive the dialog and cover the next target.
         closeSoftKeyboard()
-    }
-
-    private fun click(label: String) {
-        // Tap the label as a reader does: a small row's centre falls on its Ações button.
-        val text = composeRule.onAllNodes(hasText(label), useUnmergedTree = true)[0]
-        if (!text.isDisplayed()) text.performScrollTo()
-        text.performClick()
     }
 
     private fun showRoute() =

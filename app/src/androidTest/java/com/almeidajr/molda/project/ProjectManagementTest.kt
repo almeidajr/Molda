@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
@@ -43,7 +44,7 @@ class ProjectManagementTest {
         click("Renomear projeto")
 
         // When
-        composeRule.nameField().performTextReplacement("   ")
+        composeRule.dialogTextField().performTextReplacement("   ")
         click("Renomear")
 
         // Then
@@ -59,7 +60,7 @@ class ProjectManagementTest {
         click("Renomear projeto")
 
         // When
-        composeRule.nameField().performTextReplacement("Saia da formatura")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
         click("Renomear")
 
         // Then
