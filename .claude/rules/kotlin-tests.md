@@ -154,6 +154,11 @@ states it. A test that changes a global device setting, such as the animator
 duration scale, does it through a JUnit rule that restores the original value
 even when the test fails (`AnimatorDurationScaleRule` in the support file).
 
+Keep the keyboard out of tests that press Back in a dialog. The IME process
+drops its Back callback only once it finishes hiding; until then the callback
+follows focus to the dialog and takes the Back press. The app cannot see that
+state, so no wait covers it: dirty a form through a non-text control instead.
+
 ## UI behavior
 
 Exercise user actions and assert visible content, semantics, enabled state,

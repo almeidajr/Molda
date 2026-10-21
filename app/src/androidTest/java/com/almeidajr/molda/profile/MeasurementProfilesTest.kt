@@ -202,9 +202,12 @@ class MeasurementProfilesTest {
     fun calendarBack_inDirtyEditor_closesOnlyTheCalendar() {
         // Given
         showNewProfileEditor()
-        composeRule.edit("Nome ou apelido", "Rascunho")
-        // Settle native IME dismissal before testing the calendar's own Back handling.
-        closeSoftKeyboard()
+        // Dirty the editor without the keyboard: until the IME process finishes hiding, its Back
+        // callback moves to the next focused window, so Back would close it instead of the calendar.
+        composeRule.openCalendar()
+        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 12)), ignoreCase = true)
+            .performClick()
+        composeRule.click("Confirmar data")
         composeRule.openCalendar()
         composeRule.awaitDialogFocus()
 
@@ -214,7 +217,7 @@ class MeasurementProfilesTest {
         // Then
         composeRule.onNodeWithText("Cancelar calendário").assertDoesNotExist()
         composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
-        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("12/10/2026")
     }
 
     @Test
