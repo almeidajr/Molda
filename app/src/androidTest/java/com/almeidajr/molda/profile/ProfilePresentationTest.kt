@@ -23,10 +23,12 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
+import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.isKeyboardVisible
 import com.almeidajr.molda.pressKey
 import com.almeidajr.molda.showProfiles
@@ -144,6 +146,9 @@ class ProfilePresentationTest {
             "Escolha a data em que a medida foi tomada, sem usar uma data futura.",
         ).forEach { assertTypography(it, 14, 20) }
         composeRule.edit("Data da medida (dd/mm/aaaa)", "32/02/2026")
+        // The opening keyboard resizes the editor, so a tap racing it can miss Salvar perfil.
+        closeSoftKeyboard()
+        composeRule.awaitKeyboardHidden()
         composeRule.click("Salvar perfil")
         assertTypography("Informe uma data válida no formato dd/mm/aaaa.", 14, 20)
         composeRule.click("Cancelar")
