@@ -7,16 +7,19 @@ import org.junit.Test
 
 class DataAccessTest {
     @Test
-    fun onlyDependencyInjection_importsDataLayer() {
-        Konsist
+    fun productionFiles_outsideDependencyInjectionAndData_importNoDataLayer() {
+        // Given
+        val files = Konsist
             .scopeFromProduction()
             .files
             .withoutPackage("com.almeidajr.molda.di..", "..data..")
-            .assertFalse(
-                additionalMessage = "Only dependency injection may import data-layer code.",
-            ) { file ->
-                file.hasImport { import -> DATA_IMPORT.matches(import.name) }
-            }
+
+        // When/Then
+        files.assertFalse(
+            additionalMessage = "Only dependency injection may import data-layer code.",
+        ) { file ->
+            file.hasImport { import -> DATA_IMPORT.matches(import.name) }
+        }
     }
 
     private companion object {
