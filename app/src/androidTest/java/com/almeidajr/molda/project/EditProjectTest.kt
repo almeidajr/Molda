@@ -73,7 +73,7 @@ class EditProjectTest {
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Projeto atualizado.").assertIsDisplayed()
-        composeRule.onNode(hasText("Folga de cintura: 4,00", substring = true))
+        composeRule.onNode(hasText("Folga de cintura: 4,00", substring = true))
             .performScrollTo().assertIsDisplayed()
         assertEquals(Length(4.0), projects.current.single().snapshot.draft.ease)
     }
