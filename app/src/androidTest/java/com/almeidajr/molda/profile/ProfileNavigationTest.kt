@@ -48,6 +48,12 @@ class ProfileNavigationTest {
     }
 
     @Test
+    fun calculator_whenOpened_inlinesNoProfileManagement() {
+        // When/Then: profile management's FAB belongs to Perfis, not to the calculator.
+        composeRule.onNodeWithContentDescription("Novo perfil").assertDoesNotExist()
+    }
+
+    @Test
     fun navigationSuite_withKeyboard_opensPerfis() {
         // Given
         // A real key event leaves touch mode, so navigation items join keyboard focus traversal.
