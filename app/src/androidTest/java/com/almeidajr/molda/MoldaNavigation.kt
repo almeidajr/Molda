@@ -1,7 +1,10 @@
 package com.almeidajr.molda
 
 import android.view.KeyEvent
+import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasText
@@ -12,13 +15,65 @@ import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
-import com.almeidajr.molda.project.showRoute
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.profile.ui.ProfilesViewModel
+import com.almeidajr.molda.project.domain.ProjectRepository
+import com.almeidajr.molda.project.ui.ProjectsViewModel
+import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import java.time.Clock
+
+/**
+ * Shows the app on [profiles] and [projects], at [size] when given, inside [frame] (the theme by
+ * default). Recreation restores the app's own content, so call it again after recreating the
+ * activity.
+ */
+internal fun AndroidComposeTestRule<*, MainActivity>.showRoute(
+    profiles: ProfileRepository,
+    projects: ProjectRepository,
+    clock: Clock,
+    size: DpSize? = null,
+    frame: @Composable (route: @Composable () -> Unit) -> Unit = { MoldaTheme(content = it) },
+) = runOnUiThread {
+    activity.setContent {
+        val profilesViewModel: ProfilesViewModel = viewModel(
+            key = "isolatedProfiles",
+            factory = viewModelFactory {
+                initializer { ProfilesViewModel(profiles, createSavedStateHandle(), clock) }
+            },
+        )
+        val projectsViewModel: ProjectsViewModel = viewModel(
+            key = "isolatedProjects",
+            factory = viewModelFactory {
+                initializer { ProjectsViewModel(projects, clock, createSavedStateHandle()) }
+            },
+        )
+        val calculator: SkirtCalculatorViewModel = viewModel()
+        val route = @Composable {
+            frame {
+                MoldaRoute(
+                    calculator = calculator,
+                    profiles = profilesViewModel,
+                    projects = projectsViewModel,
+                )
+            }
+        }
+        if (size == null) {
+            route()
+        } else {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(size), route)
+        }
+    }
+}
 
 /**
  * Shows the app with no stored profiles or projects, at [size] when given, inside [frame] (the

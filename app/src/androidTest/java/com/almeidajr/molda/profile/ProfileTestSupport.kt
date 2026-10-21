@@ -30,7 +30,7 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.project.showRoute
+import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
