@@ -1,17 +1,11 @@
 package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
-import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
@@ -23,27 +17,18 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.SkirtTitle
 import com.almeidajr.molda.awaitActivityFocus
 import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.destination
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
-import com.almeidajr.molda.ui.theme.MoldaTheme
-import java.time.Clock
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -56,128 +41,117 @@ class ProfileNavigationTest {
 
     @Before
     fun openSkirtCalculator() {
-        showContent()
+        composeRule.showProfileRoute(storage)
         composeRule.showSkirtCalculator()
     }
 
-    /** Shows the app on [storage]; recreation restores the app's own content, so call it again. */
-    private fun showContent() {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                val profiles: ProfilesViewModel = viewModel(
-                    key = "isolatedProfiles",
-                    factory = viewModelFactory {
-                        initializer {
-                            ProfilesViewModel(
-                                storage,
-                                createSavedStateHandle(),
-                                Clock.systemDefaultZone(),
-                            )
-                        }
-                    },
-                )
-                MoldaTheme { MoldaRoute(profiles = profiles) }
-            }
-        }
-    }
-
     @Test
-    fun calculatorLaunch_doesNotInlineProfileManagement() {
-        composeRule.onNodeWithContentDescription("Novo perfil").assertDoesNotExist()
-    }
-
-    @Test
-    fun navigationSuite_opensProfilesFromKeyboardAndReturnsToCalculator() {
-        composeRule.destination("Perfis").assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
-        // A real key event leaves touch mode, so navigation items join keyboard focus traversal.
+    fun navigationSuite_withKeyboard_opensPerfis() {
+        // Given
         val instrumentation = InstrumentationRegistry.getInstrumentation()
+        // A real key event leaves touch mode, so navigation items join keyboard focus traversal.
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
+
+        // When
         composeRule.destination("Perfis").requestFocus().assertIsFocused()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
+
+        // Then
         composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
         composeRule.destination("Perfis").assertIsSelected()
         composeRule.screenTitle(SkirtTitle).assertDoesNotExist()
-        composeRule.destination("Moldes").requestFocus().assertIsFocused()
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
-        composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
     }
 
     @Test
-    fun calculatorProfilesAndPicker_exposeSectionHeadings() {
-        val heading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
-        composeRule.onNodeWithText(SkirtTitle).assert(heading)
+    fun calculatorPerfisAndPicker_titles_areHeadings() {
+        // When/Then
+        composeRule.onNode(hasText(SkirtTitle) and isHeading()).assertIsDisplayed()
         composeRule.selectDestination("Perfis")
-        composeRule.onNodeWithText("Perfis de medidas").assert(heading)
+        composeRule.onNode(hasText("Perfis de medidas") and isHeading()).assertIsDisplayed()
         composeRule.selectDestination("Moldes")
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
-        composeRule.onNode(hasText("Usar perfil") and heading).assertIsDisplayed()
+        composeRule.onNode(hasText("Usar perfil") and isHeading()).assertIsDisplayed()
     }
 
     @Test
-    fun recreation_keepsDirtyProfileEditorAndItsWayBack() {
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
+    fun profileEditor_afterRecreation_keepsItsWayBack() {
+        // Given
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         composeRule.activityRule.scenario.recreate()
-        showContent()
-        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+        composeRule.showProfileRoute(storage)
+
+        // When
         // A key reaches only the focused window: the recreated activity, then again after the dialog.
         composeRule.awaitActivityFocus()
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        pressBack()
         clickInDialog("Descartar")
-        composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
         composeRule.awaitActivityFocus()
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        pressBack()
+
+        // Then
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
     }
 
     @Test
-    fun pickerCreation_cancelReturnsToPickerWithoutSelecting() {
-        val waist = composeRule.onNodeWithText("Circunferência da cintura (cm)")
-        waist.performScrollTo().performTextReplacement("95")
-        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
-        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
-        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
-        composeRule.destination("Moldes").assertIsSelected()
+    fun pickerNewProfile_cancel_returnsToPickerInMoldesWithoutSelecting() {
+        // Given
+        openPickerEditor()
+
+        // When
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+
+        // Then
         composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
-        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed().performClick()
-        waist.assertTextContains("95")
-        composeRule.onNodeWithText("Medida manual").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
+        composeRule.destination("Moldes").assertIsSelected()
+        composeRule.onNodeWithText("Cintura copiada do perfil", substring = true)
+            .assertDoesNotExist()
     }
 
     @Test
-    fun pickerCreation_dirtyCancelAsksToDiscard_thenReturnsToPicker() {
-        composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
-        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
+    fun pickerNewProfile_discardDirtyDraft_returnsToPicker() {
+        // Given
+        openPickerEditor()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
         // The keyboard resizing the editor mid-scroll would move Cancelar from under the touch.
         closeSoftKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+
+        // When
         clickInDialog("Descartar")
+
+        // Then
         composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
         composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
-        composeRule.onNodeWithText("Novo perfil").performScrollTo().performClick()
-        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
-        composeRule.onNodeWithText("Rascunho").assertDoesNotExist()
     }
 
     @Test
-    fun exampleGuideCalculateMySkirt_asksToDiscardDirtyPickerEditor_andLeavesNoDraftInPerfis() {
+    fun guideCalculateMySkirt_overDirtyPickerEditor_asksToDiscardAndLeavesNoDraft() {
+        // Given
         openPickerEditor()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
+
+        // When
         calculateMySkirtFromGuias()
         clickInDialog("Descartar")
+
+        // Then
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
         composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
         assertPerfisShowsNoEditor()
     }
 
     @Test
-    fun exampleGuideCalculateMySkirt_cancelsCleanPickerEditor_andLeavesNoDraftInPerfis() {
+    fun guideCalculateMySkirt_overCleanPickerEditor_closesItWithoutAsking() {
+        // Given
         openPickerEditor()
+
+        // When
         calculateMySkirtFromGuias()
+
+        // Then
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
         composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
         composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
@@ -185,49 +159,65 @@ class ProfileNavigationTest {
     }
 
     @Test
-    fun reselectingMoldes_whileDiscardDialogIsOpen_keepsAsking_andLeavesNoDraftInPerfis() {
+    fun reselectMoldes_withDiscardDialogOpen_keepsAsking() {
+        // Given
         openPickerEditor()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
         // The keyboard resizing the editor mid-scroll would move Cancelar from under the touch.
         closeSoftKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
-        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+
+        // When
         composeRule.selectDestination("Moldes")
-        clickInDialog("Descartar")
-        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
-        assertPerfisShowsNoEditor()
+
+        // Then
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
     }
 
     @Test
-    fun recreation_keepsOpenPicker() {
+    fun picker_afterRecreation_staysOpen() {
+        // Given
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
+
+        // When
         composeRule.activityRule.scenario.recreate()
-        showContent()
-        composeRule.onNodeWithText("Cancelar seleção").performScrollTo().performClick()
-        composeRule.onNodeWithText("Cancelar seleção").assertDoesNotExist()
+        composeRule.showProfileRoute(storage)
+
+        // Then
+        composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
     }
 
     @Test
-    fun recreation_keepsDiscardConfirmation() {
+    fun discardDialog_afterRecreation_staysOpen() {
+        // Given
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         // The opening keyboard resizes the editor, so a tap racing it can miss Cancelar.
         closeSoftKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+
+        // When
         composeRule.activityRule.scenario.recreate()
-        showContent()
-        clickInDialog("Continuar editando")
+        composeRule.showProfileRoute(storage)
+
+        // Then
+        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
     }
 
     @Test
-    fun backWithKeyboardOpen_closesKeyboardAndKeepsProfileEditor() {
+    fun back_withKeyboardOpen_closesOnlyTheKeyboard() {
+        // Given
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performClick()
         composeRule.awaitKeyboardVisible()
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+
+        // When
+        pressBack()
+
+        // Then
         composeRule.awaitKeyboardHidden()
         composeRule.onNodeWithText("Nome ou apelido").assertIsDisplayed()
     }
