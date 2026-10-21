@@ -1,14 +1,8 @@
 package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
-import android.view.WindowInsets
-import androidx.activity.compose.setContent
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.DeviceConfigurationOverride
-import androidx.compose.ui.test.FontScale
-import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
@@ -17,46 +11,30 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
-import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
+import com.almeidajr.molda.isKeyboardVisible
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.testing.FakeProfileRepository
-import com.almeidajr.molda.ui.theme.MoldaTheme
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -64,131 +42,128 @@ class ProfilePresentationTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val storage = FakeProfileRepository()
-
-    @Before
-    fun showIsolatedProfiles() {
-        showContent()
-        composeRule.showSkirtCalculator()
-    }
-
-    private fun showContent(
-        fontScale: Float = 1f,
-        width: Int = 400,
-        dark: Boolean = false,
-        dynamic: Boolean = true,
-    ) {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                val window = LocalWindowInfo.current.containerSize
-                // Forced density does not scale native IME insets; retain the physical viewport height.
-                val height = maxOf(900f, width * window.height.toFloat() / window.width)
-                val profiles: ProfilesViewModel = viewModel(
-                    key = "isolatedProfiles",
-                    factory = viewModelFactory {
-                        initializer {
-                            ProfilesViewModel(
-                                storage,
-                                createSavedStateHandle(),
-                                Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC),
-                            )
-                        }
-                    },
-                )
-                val calculator: SkirtCalculatorViewModel = viewModel()
-                DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
-                    DeviceConfigurationOverride(
-                        DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, height.dp)),
-                    ) {
-                        MoldaTheme(darkTheme = dark, dynamicColor = dynamic) {
-                            MoldaRoute(
-                                calculator = calculator,
-                                profiles = profiles,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     @Test
-    fun managementRows_showNotesToDistinguishOtherwiseIdenticalProfiles() {
-        manage()
-        listOf("Medida com roupa leve", "Conferida antes do corte").forEach { note ->
-            click("Novo perfil")
-            edit("Nome ou apelido", "Ana")
-            edit("Cintura do perfil (cm)", "80")
-            edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-            edit("Observações (opcional)", note)
-            saveProfile()
-        }
+    fun profileRows_withSameName_showTheirNotes() {
+        // When
+        showProfiles(sameNameWithNotes())
+
+        // Then
         composeRule.onNodeWithText("Medida com roupa leve").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Conferida antes do corte").performScrollTo().assertIsDisplayed()
-        composeRule.showSkirtCalculator()
-        click("Usar perfil")
-        composeRule.onNodeWithText("Conferida antes do corte").performScrollTo().performClick()
-        composeRule.onNodeWithText("Cintura copiada do perfil: Ana").assertIsDisplayed()
     }
 
     @Test
-    fun newProfile_explainsExplicitDateAndOptionalNotes_beforeSaving() {
-        manage()
-        click("Novo perfil")
+    fun pickerRows_withSameName_showTheirNotes() {
+        // Given
+        showCalculator(sameNameWithNotes())
+
+        // When
+        composeRule.click("Usar perfil")
+
+        // Then
+        composeRule.onNodeWithText("Medida com roupa leve").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Conferida antes do corte").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun newProfileEditor_explainsDateAndNotes() {
+        // Given
+        showProfiles(FakeProfileRepository())
+
+        // When
+        composeRule.click("Novo perfil")
+
+        // Then
         composeRule.onNodeWithText("Identificação e medidas").assertIsDisplayed()
         composeRule.onNodeWithText(
             "Escolha a data em que a medida foi tomada, sem usar uma data futura.",
-        )
-            .performScrollTo().assertIsDisplayed()
+        ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Use observações para distinguir perfis com o mesmo nome.")
             .performScrollTo().assertIsDisplayed()
     }
 
     @Test
-    fun profileGuidanceErrorsAndRowNames_useReadableAgreedTypography() {
-        manage()
-        click("Novo perfil")
+    fun newProfileEditor_dateField_startsEmpty() {
+        // Given
+        showProfiles(FakeProfileRepository())
+
+        // When
+        composeRule.click("Novo perfil")
+
+        // Then
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assert(
+            SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")),
+        )
+    }
+
+    @Test
+    fun saveNew_withMalformedDate_showsFormatErrorAndKeepsText() {
+        // Given
+        showProfiles(FakeProfileRepository())
+        composeRule.click("Novo perfil")
+        composeRule.edit("Nome ou apelido", "Ana")
+        composeRule.edit("Cintura do perfil (cm)", "80")
+        val cases = listOf("32/02/2026", "12/10/0000")
+
+        // When/Then
+        cases.forEach { date ->
+            composeRule.edit("Data da medida (dd/mm/aaaa)", date)
+            composeRule.click("Salvar perfil")
+            composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
+                .performScrollTo().assertIsDisplayed()
+            composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains(date)
+        }
+    }
+
+    @Test
+    fun saveNew_withFutureDate_asksForCorrection() {
+        // Given
+        showProfiles(FakeProfileRepository())
+        composeRule.click("Novo perfil")
+        composeRule.fillProfile("Ana", date = "14/10/2026")
+
+        // When
+        composeRule.click("Salvar perfil")
+
+        // Then
+        composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("14/10/2026")
+    }
+
+    @Test
+    fun profileTexts_useAgreedTypography() {
+        // Given
+        showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+
+        // When/Then
+        assertTypography("Ana", 16, 24, FontWeight.Medium)
+        composeRule.click("Novo perfil")
         listOf(
             "Nomes repetidos são permitidos.",
             "Escolha a data em que a medida foi tomada, sem usar uma data futura.",
         ).forEach { assertTypography(it, 14, 20) }
-        edit("Nome ou apelido", "Ana")
-        edit("Cintura do perfil (cm)", "80")
-        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)")
-            .performScrollTo().performTextReplacement("32/02/2026")
-        click("Salvar perfil")
-        assertTypography(
-            "Informe uma data válida no formato dd/mm/aaaa.",
-            14,
-            20,
-        )
-        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-        saveProfile()
-        assertTypography("Ana", 16, 24, FontWeight.Medium)
+        composeRule.edit("Data da medida (dd/mm/aaaa)", "32/02/2026")
+        composeRule.click("Salvar perfil")
+        assertTypography("Informe uma data válida no formato dd/mm/aaaa.", 14, 20)
+        composeRule.click("Cancelar")
+        composeRule.click("Descartar")
         composeRule.showSkirtCalculator()
-        click("Usar perfil")
+        composeRule.click("Usar perfil")
         assertTypography("Usar perfil: Ana — 80 cm — 12/10/2026", 16, 24, FontWeight.Medium)
     }
 
     @Test
-    fun pickerRows_standOutFromTheSheet_inEveryScheme() {
-        manage()
-        listOf("Ana" to "80", "Bia" to "72").forEach { (name, waist) ->
-            click("Novo perfil")
-            edit("Nome ou apelido", name)
-            edit("Cintura do perfil (cm)", waist)
-            edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-            saveProfile()
-        }
-        composeRule.showSkirtCalculator()
-        listOf(
-            false to false,
-            true to false,
-            false to true,
-            true to true,
-        ).forEach { (dark, dynamic) ->
-            showContent(dark = dark, dynamic = dynamic)
-            click("Usar perfil")
+    fun pickerRows_inEveryScheme_standOutFromTheSheet() {
+        // Given
+        val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Bia", 72.0)))
+        val schemes = listOf(false to false, true to false, false to true, true to true)
+
+        // When/Then
+        schemes.forEach { (dark, dynamic) ->
+            composeRule.showProfileRoute(storage, dark = dark, dynamic = dynamic)
+            composeRule.showSkirtCalculator()
+            composeRule.click("Usar perfil")
             listOf("Ana — 80", "Bia — 72").forEach {
                 val label = "Usar perfil: $it cm — 12/10/2026"
                 val context = "$label dark=$dark dynamic=$dynamic"
@@ -197,55 +172,95 @@ class ProfilePresentationTest {
                 composeRule.onNodeWithText(label, useUnmergedTree = true)
                     .assertReadableTextContrast(context)
             }
-            click("Cancelar seleção")
+            composeRule.click("Cancelar seleção")
         }
     }
 
     @Test
-    fun profileButtons_drawAtLeast48dpTall_atDefaultTextSize() {
-        manage()
-        assertDrawnHeight("Perfis")
-        click("Novo perfil")
-        assertDrawnHeight("Salvar perfil", "Cancelar")
-        edit("Nome ou apelido", "Ana")
-        edit("Cintura do perfil (cm)", "80")
-        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-        saveProfile()
-        assertDrawnHeight("Ações: Ana")
-        click("Ações: Ana")
-        click("Excluir perfil")
+    fun profileButtons_atDefaultTextSize_drawAtLeast48dpTall() {
+        // Given
+        showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+
+        // When/Then
+        assertDrawnHeight("Perfis", "Ações: Ana")
+        composeRule.click("Ações: Ana")
+        composeRule.click("Excluir perfil")
         assertDrawnHeight("Confirmar exclusão", "Cancelar")
-        click("Cancelar")
+        composeRule.click("Cancelar")
+        composeRule.click("Novo perfil")
+        assertDrawnHeight("Salvar perfil", "Cancelar")
+        composeRule.click("Cancelar")
         composeRule.showSkirtCalculator()
-        click("Usar perfil")
+        composeRule.click("Usar perfil")
         assertDrawnHeight("Cancelar seleção", "Novo perfil")
     }
 
     @Test
-    fun keyboard_editFromProfileRow_doesNotFocusAField() {
-        manage()
-        click("Novo perfil")
-        edit("Nome ou apelido", "Ana")
-        edit("Cintura do perfil (cm)", "80")
-        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-        saveProfile()
-        Espresso.closeSoftKeyboard()
+    fun profileRow_openedWithKeyboard_focusesNoField() {
+        // Given
+        showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         // A real key event leaves touch mode, so the row joins keyboard focus traversal.
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
         composeRule.onNodeWithText("Ana").requestFocus().assertIsFocused()
+
+        // When
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
+
+        // Then
         composeRule.onNodeWithText("Editar perfil de medidas").assertIsDisplayed()
         // The list leaves after the editor arrives; losing its focused row must not refocus a field.
         composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
-        composeRule.runOnUiThread {
-            assertEquals(
-                false,
-                composeRule.activity.window.decorView.rootWindowInsets
-                    .isVisible(WindowInsets.Type.ime()),
-            )
+        assertFalse(composeRule.isKeyboardVisible())
+    }
+
+    @Test
+    fun largeText_inEveryScheme_keepsProfileRowsAndActionsReachable() {
+        // Given
+        val name = "Ana Maria da Silva — medidas conferidas para a saia"
+        val notes = "Conferida antes do corte"
+        val storage = FakeProfileRepository(listOf(profile(1, name, notes = notes)))
+        val schemes = listOf(false to false, true to false, false to true, true to true)
+
+        // When/Then
+        schemes.forEach { (dark, dynamic) ->
+            composeRule.showProfileRoute(storage, fontScale = 2f, dark = dark, dynamic = dynamic)
+            composeRule.showProfiles()
+            composeRule.onNodeWithText(name).performScrollTo().assertIsDisplayed()
+                .assertHeightIsAtLeast(48.dp)
+            composeRule.onNodeWithText(notes).assertIsDisplayed()
+            listOf(name, notes).forEach { label ->
+                composeRule.onNodeWithText(label, useUnmergedTree = true)
+                    .assertReadableTextContrast("$label dark=$dark dynamic=$dynamic")
+            }
+            composeRule.onNodeWithText("Ações: $name").performScrollTo().assertIsDisplayed()
+                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
+            composeRule.onNodeWithContentDescription("Novo perfil").assertIsDisplayed()
+                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
+            composeRule.click("Ações: $name")
+            composeRule.click("Editar perfil")
+            composeRule.onNodeWithText("Salvar alterações").performScrollTo().assertIsDisplayed()
+                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
+            composeRule.click("Cancelar")
         }
     }
+
+    private fun showCalculator(storage: FakeProfileRepository) {
+        composeRule.showProfileRoute(storage)
+        composeRule.showSkirtCalculator()
+    }
+
+    private fun showProfiles(storage: FakeProfileRepository) {
+        composeRule.showProfileRoute(storage)
+        composeRule.showProfiles()
+    }
+
+    private fun sameNameWithNotes() = FakeProfileRepository(
+        listOf(
+            profile(1, "Ana", notes = "Medida com roupa leve"),
+            profile(2, "Ana", notes = "Conferida antes do corte"),
+        ),
+    )
 
     private fun assertDrawnHeight(vararg labels: String) = labels.forEach {
         val node = composeRule.onNodeWithText(it)
@@ -269,101 +284,5 @@ class ProfilePresentationTest {
         assertEquals(size.sp, style.fontSize, "$label size")
         assertEquals(height.sp, style.lineHeight, "$label line height")
         if (weight != null) assertEquals(weight, style.fontWeight, "$label weight")
-    }
-
-    @Test
-    fun enlargedText_themeVariants_keepProfileRowsAndSeparateActionsReachable() {
-        manage()
-        click("Novo perfil")
-        val name = "Ana Maria da Silva — medidas conferidas para a saia"
-        edit("Nome ou apelido", name)
-        edit("Cintura do perfil (cm)", "80")
-        edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
-        edit("Observações (opcional)", "Conferida antes do corte")
-        saveProfile()
-        listOf(
-            false to false,
-            true to false,
-            false to true,
-            true to true,
-        ).forEach { (dark, dynamic) ->
-            showContent(fontScale = 2f, dark = dark, dynamic = dynamic)
-            composeRule.onNodeWithText(name).performScrollTo().assertIsDisplayed()
-                .assertHeightIsAtLeast(48.dp)
-            composeRule.onNodeWithText("Conferida antes do corte").assertIsDisplayed()
-            listOf(name, "Conferida antes do corte").forEach { label ->
-                val text = composeRule.onNodeWithText(label, useUnmergedTree = true)
-                text.assertReadableTextContrast("$label dark=$dark dynamic=$dynamic")
-            }
-            composeRule.onNodeWithText("Ações: $name").performScrollTo().assertIsDisplayed()
-                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
-            composeRule.onNodeWithContentDescription("Novo perfil").assertIsDisplayed()
-                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
-            click("Ações: $name")
-            click("Editar perfil")
-            composeRule.onNodeWithText("Salvar alterações").performScrollTo().assertIsDisplayed()
-                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
-            click("Cancelar")
-        }
-    }
-
-    @Test
-    fun directDateEntry_usesDayMonthYear_andFailedEditsPreserveSavedDate() {
-        manage()
-        click("Novo perfil")
-        edit("Nome ou apelido", "Ana")
-        edit("Cintura do perfil (cm)", "80")
-        val date = composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)")
-        date.assert(
-            SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")),
-        )
-        date.performScrollTo().performTextReplacement("32/02/2026")
-        click("Salvar perfil")
-        composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
-            .performScrollTo().assertIsDisplayed()
-        date.assertTextContains("32/02/2026")
-        date.performTextReplacement("12/10/0000")
-        click("Salvar perfil")
-        composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
-            .performScrollTo().assertIsDisplayed()
-        date.assertTextContains("12/10/0000")
-        date.performTextReplacement("14/10/2026")
-        click("Salvar perfil")
-        composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
-            .performScrollTo().assertIsDisplayed()
-        date.assertTextContains("14/10/2026")
-        date.performTextReplacement("12/10/2026")
-        saveProfile()
-        composeRule.onNodeWithText("80 cm — 12/10/2026").performScrollTo().assertIsDisplayed()
-        click("Ana")
-        date.performScrollTo().performTextReplacement("14/10/2026")
-        click("Salvar alterações")
-        composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
-            .performScrollTo().assertIsDisplayed()
-        click("Cancelar")
-        click("Descartar")
-        click("Ana")
-        date.performScrollTo().assertTextContains("12/10/2026")
-    }
-
-    private fun edit(label: String, value: String) {
-        if (label == "Data da medida (dd/mm/aaaa)") {
-            composeRule.enterProfileDate(value)
-        } else {
-            composeRule.onNodeWithText(label).performScrollTo().performTextReplacement(value)
-        }
-    }
-
-    private fun manage() = composeRule.showProfiles()
-
-    private fun saveProfile(label: String = "Salvar perfil") {
-        click(label)
-        composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
-    }
-
-    private fun click(label: String) {
-        val node = composeRule.onNode(hasText(label) or hasContentDescription(label))
-        if (!node.isDisplayed()) node.performScrollTo()
-        node.performClick()
     }
 }
