@@ -527,14 +527,14 @@ class SkirtCalculatorTest {
         calculate()
 
         // When
-        composeRule.runOnUiThread { width.intValue = 400 }
+        composeRule.runOnIdle { width.intValue = 400 }
 
         // Then
         composeRule.onNodeWithContentDescription(REFERENCE_RADII.last())
             .performScrollTo().assertIsDisplayed()
 
         // When
-        composeRule.runOnUiThread {
+        composeRule.runOnIdle {
             width.intValue = 1000
             font.floatValue = 2f
         }
