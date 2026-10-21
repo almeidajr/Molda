@@ -67,7 +67,9 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showProfileRoute(
     dark: Boolean = false,
     dynamic: Boolean = true,
 ) = showRoute(profiles, FakeProjectRepository(), ProfileTestClock) { route ->
-    val theme = @Composable { MoldaTheme(darkTheme = dark, dynamicColor = dynamic, content = route) }
+    val theme = @Composable {
+        MoldaTheme(darkTheme = dark, dynamicColor = dynamic, content = route)
+    }
     val window = LocalWindowInfo.current.containerSize
     DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
         if (width == null) {
