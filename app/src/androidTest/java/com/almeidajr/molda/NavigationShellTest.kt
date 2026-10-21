@@ -199,8 +199,7 @@ class NavigationShellTest {
 
         // Then
         composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
-        composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
-        assertFalse(composeRule.isKeyboardVisible(), "keyboard opened by itself")
+        composeRule.assertNoTextFieldFocused()
     }
 
     @Test
@@ -291,8 +290,7 @@ class NavigationShellTest {
 
         // Then
         composeRule.onNode(hasText("Novo perfil de medidas") and isHeading()).assertIsFocused()
-        composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
-        assertFalse(composeRule.isKeyboardVisible(), "keyboard opened by itself")
+        composeRule.assertNoTextFieldFocused()
     }
 
     @Test

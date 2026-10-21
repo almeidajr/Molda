@@ -7,12 +7,14 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isNotDisplayed
 import androidx.compose.ui.test.isSelectable
@@ -148,6 +150,15 @@ internal fun SemanticsNodeInteractionsProvider.click(
 /** The text field of the open dialog, such as a project's name or the calendar's typed date. */
 internal fun SemanticsNodeInteractionsProvider.dialogTextField(): SemanticsNodeInteraction =
     onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
+
+/**
+ * Asserts that no text field holds focus once Compose is idle, so nothing can open the keyboard:
+ * a Compose field opens it only while focused. Reading the keyboard's insets instead would race the
+ * IME window, which shows after Compose is idle.
+ */
+internal fun SemanticsNodeInteractionsProvider.assertNoTextFieldFocused() {
+    onAllNodes(hasSetTextAction() and isFocused()).assertCountEquals(0)
+}
 
 /** The top app bar heading reading [title]. */
 internal fun SemanticsNodeInteractionsProvider.screenTitle(

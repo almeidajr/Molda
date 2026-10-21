@@ -32,7 +32,7 @@ internal fun AndroidComposeTestRule<*, *>.awaitKeyboardHidden() =
     waitUntil("keyboard hidden", DeviceWaitTimeout.inWholeMilliseconds) { !isKeyboardVisible() }
 
 /** Whether the activity window currently shows the soft keyboard. */
-internal fun AndroidComposeTestRule<*, *>.isKeyboardVisible(): Boolean = runOnUiThread {
+private fun AndroidComposeTestRule<*, *>.isKeyboardVisible(): Boolean = runOnUiThread {
     ViewCompat.getRootWindowInsets(activity.window.decorView)
         ?.isVisible(WindowInsetsCompat.Type.ime()) == true
 }

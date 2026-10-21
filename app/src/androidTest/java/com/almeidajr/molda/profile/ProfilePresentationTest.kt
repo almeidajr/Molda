@@ -8,7 +8,6 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.isDisplayed
@@ -26,17 +25,16 @@ import androidx.compose.ui.unit.sp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
+import com.almeidajr.molda.assertNoTextFieldFocused
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
 import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.click
-import com.almeidajr.molda.isKeyboardVisible
 import com.almeidajr.molda.pressKey
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -215,8 +213,7 @@ class ProfilePresentationTest {
         // Then
         composeRule.onNodeWithText("Editar perfil de medidas").assertIsDisplayed()
         // The list leaves after the editor arrives; losing its focused row must not refocus a field.
-        composeRule.onNodeWithText("Nome ou apelido").assertIsNotFocused()
-        assertFalse(composeRule.isKeyboardVisible())
+        composeRule.assertNoTextFieldFocused()
     }
 
     @Test
