@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.awaitDialogFocus
+import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
@@ -519,7 +520,7 @@ class MeasurementProfilesTest {
         composeRule.awaitKeyboardVisible()
 
         // When
-        saveProfile()
+        composeRule.click("Salvar perfil")
 
         // Then
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
@@ -626,6 +627,10 @@ class MeasurementProfilesTest {
     }
 
     private fun saveProfile(label: String = "Salvar perfil") {
+        // The keyboard the last edit opened shrinks the editor while it animates in, which can
+        // clip the button between scrolling to it and tapping it. Closing it only grows the editor.
+        closeSoftKeyboard()
+        composeRule.awaitKeyboardHidden()
         composeRule.click(label)
         composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
     }

@@ -158,6 +158,9 @@ Keep the keyboard out of tests that press Back in a dialog. The IME process
 drops its Back callback only once it finishes hiding; until then the callback
 follows focus to the dialog and takes the Back press. The app cannot see that
 state, so no wait covers it: dirty a form through a non-text control instead.
+An opening keyboard also shrinks `imePadding` layouts frame by frame after
+`awaitKeyboardVisible` returns, which can clip a button between scrolling to it
+and tapping it. Close the keyboard first when the test does not need it open.
 
 ## UI behavior
 
