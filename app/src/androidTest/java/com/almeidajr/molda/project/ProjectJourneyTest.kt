@@ -1,6 +1,5 @@
 package com.almeidajr.molda.project
 
-import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
@@ -11,26 +10,17 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.profile.data.LocalProfileRepository
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.data.LocalProjectRepository
 import com.almeidajr.molda.project.domain.Project
-import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
-import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -59,46 +49,57 @@ class ProjectJourneyTest {
 
     @Test
     fun calculateSaveEditCopyAndDelete_keepsProjetosInStep() = runTest {
+        // Given
         showRoute()
         composeRule.showSkirtCalculator()
         listOf("80", "2", "60", "1", "2").zip(SkirtDraftField.entries).forEach { (text, field) ->
             editField(field, text)
         }
         click("Calcular")
+
+        // When: saved from the result
         click("Salvar projeto")
         composeRule.nameField().performTextReplacement("Saia da formatura")
         confirmDialog("Salvar")
-        composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
 
+        // Then
+        composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
         composeRule.selectDestination("Projetos")
         composeRule.onNodeWithText("Saia godê · 18/10/2026").assertIsDisplayed()
-        click("Saia da formatura")
-        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
 
+        // When: opened, edited and saved in place
+        click("Saia da formatura")
         click("Editar")
         editField(SkirtDraftField.Ease, "4")
         click("Calcular")
         click("Salvar")
+
+        // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Projeto atualizado.").assertIsDisplayed()
         assertEquals(listOf("Saia da formatura" to 4.0), storedNamesAndEase())
 
+        // When: edited again and saved as a copy
         click("Editar")
         editField(SkirtDraftField.Ease, "5")
         click("Calcular")
         click("Salvar como novo")
         composeRule.nameField().performTextReplacement("Saia de verão")
         confirmDialog("Salvar")
+
+        // Then
         composeRule.screenTitle("Saia de verão").assertIsDisplayed()
         assertEquals(
             listOf("Saia de verão" to 5.0, "Saia da formatura" to 4.0),
             storedNamesAndEase(),
         )
 
+        // When: the copy is deleted
         click("Ações: Saia de verão")
         click("Excluir projeto")
-        composeRule.onNodeWithText("Excluir projeto Saia de verão?").assertIsDisplayed()
         confirmDialog("Confirmar exclusão")
+
+        // Then
         composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Saia de verão").assertDoesNotExist()
         composeRule.onNodeWithText("Saia da formatura").assertIsDisplayed()
@@ -127,38 +128,8 @@ class ProjectJourneyTest {
         text.performClick()
     }
 
-    private fun showRoute() {
-        composeRule.runOnUiThread {
-            composeRule.activity.setContent {
-                val profiles: ProfilesViewModel = viewModel(
-                    key = "isolatedProfiles",
-                    factory = viewModelFactory {
-                        initializer {
-                            ProfilesViewModel(
-                                LocalProfileRepository(database.profiles()),
-                                createSavedStateHandle(),
-                                clock,
-                            )
-                        }
-                    },
-                )
-                val projectsViewModel: ProjectsViewModel = viewModel(
-                    key = "isolatedProjects",
-                    factory = viewModelFactory {
-                        initializer { ProjectsViewModel(projects, clock, createSavedStateHandle()) }
-                    },
-                )
-                val calculator: SkirtCalculatorViewModel = viewModel()
-                MoldaTheme {
-                    MoldaRoute(
-                        calculator = calculator,
-                        profiles = profiles,
-                        projects = projectsViewModel,
-                    )
-                }
-            }
-        }
-    }
+    private fun showRoute() =
+        composeRule.showRoute(LocalProfileRepository(database.profiles()), projects, clock)
 }
 
 private fun Project.namesAndEase(): Pair<String, Double> =

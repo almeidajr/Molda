@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
-import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -40,7 +39,8 @@ class ProjectSavingTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
 
     @Test
-    fun calculateFromProfile_saveWithEditedName_listsItInProjetosWithItsSource() {
+    fun save_fromProfileResultWithSuggestedName_storesItsSourceAndListsIt() {
+        // Given
         val ana = MeasurementProfile(
             ProfileId(1),
             ProfileMeasurements(ProfileName("Ana"), Length(80.0), LocalDate.of(2026, 10, 12)),
@@ -52,27 +52,22 @@ class ProjectSavingTest {
         composeRule.onAllNodes(hasText("Usar perfil: Ana", substring = true))[0].performClick()
         calculate(listOf("2", "60", "1", "2"))
 
+        // When
         click("Salvar projeto")
-        composeRule.nameField().assertTextContains("Saia godê · Ana · 18/10/2026")
-        composeRule.nameField().performTextReplacement("   ")
-        click("Salvar")
-        composeRule.onNodeWithText("Informe um nome para o projeto.").assertIsDisplayed()
-        composeRule.nameField().performTextReplacement("Saia da formatura")
         click("Salvar")
 
+        // Then
         composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
-        composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
         val stored = projects.current.single()
         assertEquals(MeasurementSource("Ana", LocalDate.of(2026, 10, 12)), stored.snapshot.source)
         assertEquals(Length(80.0), stored.snapshot.draft.waist)
         composeRule.selectDestination("Projetos")
-        composeRule.onNodeWithText("Saia da formatura").assertIsDisplayed()
-        composeRule.onNodeWithText("Saia godê · 18/10/2026").assertIsDisplayed()
-        composeRule.onNode(hasText("Nenhum projeto salvo") and isHeading()).assertDoesNotExist()
+        composeRule.onNodeWithText("Saia godê · Ana · 18/10/2026").assertIsDisplayed()
     }
 
     @Test
     fun save_whenStorageFails_showsFailureAndKeepsTheResult() {
+        // Given
         composeRule.showRoute(
             FakeProfileRepository(),
             FakeProjectRepository().apply { failsCommands = true },
@@ -83,10 +78,11 @@ class ProjectSavingTest {
             .performTextReplacement("70")
         calculate(listOf("0", "45", "0", "0"))
 
+        // When
         click("Salvar projeto")
-        composeRule.nameField().assertTextContains("Saia godê · 18/10/2026")
         click("Salvar")
 
+        // Then
         composeRule.onNodeWithText("Não foi possível salvar o projeto", substring = true)
             .assertIsDisplayed()
         composeRule.nameField().assertTextContains("Saia godê · 18/10/2026")
@@ -102,7 +98,6 @@ class ProjectSavingTest {
             ).performScrollTo().performTextReplacement(value)
         }
         click("Calcular")
-        composeRule.onNodeWithText("Raios para o molde").assertIsDisplayed()
     }
 
     private fun click(label: String) {

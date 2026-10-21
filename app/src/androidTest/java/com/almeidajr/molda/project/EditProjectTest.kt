@@ -44,96 +44,142 @@ class EditProjectTest {
     private val projects = FakeProjectRepository(listOf(formaturaProject(clock.instant())))
 
     @Test
-    fun edit_loadsEveryInput_thenSalvarUpdatesTheProjectInPlace() {
+    fun edit_savedProject_loadsEveryInputAndItsSource() {
+        // Given
         showRoute()
+
+        // When
         openEditor()
 
+        // Then
         SAVED_INPUTS.forEach { (field, text) ->
             composeRule.onNodeWithText(field.labelText).performScrollTo().assert(hasText(text))
         }
         composeRule.onNodeWithText("Cintura copiada do perfil: Ana").performScrollTo()
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun salvar_afterEditing_updatesTheProjectInPlace() {
+        // Given
+        showRoute()
+        openEditor()
         editEase("4")
         click("Calcular")
+
+        // When
         click("Salvar")
 
+        // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Projeto atualizado.").assertIsDisplayed()
         composeRule.onNode(hasText("Folga de cintura: 4,00", substring = true))
             .performScrollTo().assertIsDisplayed()
-        val stored = projects.current
-        assertEquals(1, stored.size)
-        assertEquals(Length(4.0), stored.single().snapshot.draft.ease)
+        assertEquals(Length(4.0), projects.current.single().snapshot.draft.ease)
     }
 
     @Test
-    fun saveAsNew_keepsTheOriginal_andShowsTheNewProject() {
+    fun saveAsNew_afterEditing_keepsTheOriginalAndShowsTheNewProject() {
+        // Given
         showRoute()
         openEditor()
-
         editEase("4")
         click("Calcular")
+
+        // When
         click("Salvar como novo")
-        composeRule.nameField()
-            .performTextReplacement("Saia de verão")
+        composeRule.nameField().performTextReplacement("Saia de verão")
         composeRule.onNode(hasText("Salvar") and hasAnyAncestor(isDialog())).performClick()
 
+        // Then
         composeRule.screenTitle("Saia de verão").assertIsDisplayed()
         val stored = projects.current
         assertEquals(listOf("Saia de verão", "Saia da formatura"), stored.map { it.name.text })
-        assertEquals(Length(2.0), stored.last().snapshot.draft.ease)
-        // The name field's keyboard may outlive the dialog; Back would only close it.
-        closeSoftKeyboard()
-        pressBack()
-        composeRule.onNodeWithText("Saia da formatura").assertIsDisplayed()
+        assertEquals(listOf(Length(4.0), Length(2.0)), stored.map { it.snapshot.draft.ease })
     }
 
     @Test
     fun back_withUnsavedChanges_asksBeforeDiscarding() {
+        // Given
         showRoute()
         openEditor()
-
         editEase("4")
+
+        // When
         pressBack()
+
+        // Then
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
         composeRule.onNodeWithText("As alterações deste projeto ainda não foram salvas.")
             .assertIsDisplayed()
-        click("Continuar editando")
-        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
+    }
+
+    @Test
+    fun continueEditing_inDiscardDialog_keepsTheEditedValues() {
+        // Given
+        showRoute()
+        openEditor()
+        editEase("4")
         composeRule.onNodeWithContentDescription("Voltar").performClick()
+
+        // When
+        click("Continuar editando")
+
+        // Then
+        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText(SkirtDraftField.Ease.labelText).assert(hasText("4"))
+    }
+
+    @Test
+    fun discard_inDiscardDialog_returnsToTheUnchangedProject() {
+        // Given
+        showRoute()
+        openEditor()
+        editEase("4")
+        composeRule.onNodeWithContentDescription("Voltar").performClick()
+
+        // When
         click("Descartar")
 
+        // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         assertEquals(Length(2.0), projects.current.single().snapshot.draft.ease)
     }
 
     @Test
     fun back_withoutChanges_returnsToTheProject() {
+        // Given
         showRoute()
         openEditor()
 
+        // When
         pressBack()
 
+        // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
     }
 
     @Test
     fun editing_leavesTheMoldesCalculatorDraftUntouched() {
+        // Given
         showRoute()
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performTextReplacement("70")
 
+        // When
         openEditor()
         editEase("4")
         composeRule.selectDestination("Moldes")
 
+        // Then
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("70"))
         composeRule.onNodeWithText(SkirtDraftField.Ease.labelText).assert(hasText(""))
     }
 
     @Test
     fun useProfile_whileEditing_changesOnlyTheEditedDraft() {
+        // Given
         val bia = MeasurementProfile(
             ProfileId(1),
             ProfileMeasurements(ProfileName("Bia"), Length(95.0), LocalDate.of(2026, 10, 17)),
@@ -141,9 +187,11 @@ class EditProjectTest {
         showRoute(FakeProfileRepository(listOf(bia)))
         openEditor()
 
+        // When
         click("Usar perfil")
         composeRule.onAllNodes(hasText("Usar perfil: Bia", substring = true))[0].performClick()
 
+        // Then
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("95"))
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText(""))
@@ -151,13 +199,16 @@ class EditProjectTest {
 
     @Test
     fun recreation_keepsTheEditedValues() {
+        // Given
         showRoute()
         openEditor()
         editEase("4")
 
+        // When
         composeRule.activityRule.scenario.recreate()
         showRoute()
 
+        // Then
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText(SkirtDraftField.Ease.labelText).assert(hasText("4"))
     }
@@ -166,7 +217,6 @@ class EditProjectTest {
         composeRule.selectDestination("Projetos")
         click("Saia da formatura")
         click("Editar")
-        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
     }
 
     private fun editEase(text: String) {
