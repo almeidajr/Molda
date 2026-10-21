@@ -6,9 +6,12 @@ import org.junit.Test
 
 class PackageCycleTest {
     @Test
-    fun productionPackages_dependOnEachOtherWithoutCycles() {
+    fun productionPackages_throughTheirImports_formNoCycles() {
+        // Given
         val files = Konsist.scopeFromProduction().files
         val packages = files.mapNotNull { it.packagee?.name }.toSet()
+
+        // When
         val dependencies = files
             .mapNotNull { file ->
                 file.packagee?.name?.let { source ->
@@ -18,6 +21,7 @@ class PackageCycleTest {
             .groupBy({ it.first }, { it.second })
             .mapValues { (_, targets) -> targets.flatten().toSet() }
 
+        // Then
         assertEquals(emptyList<List<String>>(), cycles(dependencies), "Package cycles found.")
     }
 
