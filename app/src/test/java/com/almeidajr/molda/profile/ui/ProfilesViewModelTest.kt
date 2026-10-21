@@ -3,7 +3,6 @@ package com.almeidajr.molda.profile.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
-import app.cash.turbine.test
 import com.almeidajr.molda.R
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -41,54 +40,73 @@ class ProfilesViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun profiles_followTheRepositoryWithoutReloading() = runTest {
+    fun profiles_afterRepositoryChange_followItWithoutReload() = runTest {
+        // Given
         val profiles = profilesViewModel()
-        assertEquals(listOf(ana), profiles.state.value.profiles)
 
+        // When
         val added = storage.create(bia.measurements).getOrThrow()
 
+        // Then
         assertEquals(listOf(ana, added), profiles.state.value.profiles)
     }
 
     @Test
-    fun load_afterLoadFailure_retryShowsStoredProfiles() = runTest {
+    fun load_whenRepositoryFails_showsLoadFailure() = runTest {
+        // Given
         storage.failsLoad = true
+
+        // When
         val profiles = profilesViewModel()
 
-        profiles.state.test {
-            assertEquals(R.string.profile_load_failed, awaitItem().loadError)
+        // Then
+        assertEquals(R.string.profile_load_failed, profiles.state.value.loadError)
+    }
 
-            storage.failsLoad = false
-            profiles.load()
+    @Test
+    fun load_retryAfterLoadFailure_showsStoredProfiles() = runTest {
+        // Given
+        storage.failsLoad = true
+        val profiles = profilesViewModel()
+        storage.failsLoad = false
 
-            val retried = expectMostRecentItem()
-            assertNull(retried.loadError)
-            assertEquals(listOf(ana), retried.profiles)
-        }
+        // When
+        profiles.load()
+
+        // Then
+        val retried = profiles.state.value
+        assertNull(retried.loadError)
+        assertEquals(listOf(ana), retried.profiles)
     }
 
     @Test
     fun load_whileStillLoading_keepsOneRepositoryCollector() = runTest {
+        // Given
         storage.loadGate = CompletableDeferred()
         val counted = CollectorCounting(storage)
         val profiles = ProfilesViewModel(counted, SavedStateHandle(), clock)
 
+        // When
         profiles.load()
         profiles.load()
         storage.loadGate?.complete(Unit)
 
+        // Then
         assertEquals(1, counted.activeCollectors)
         assertEquals(listOf(ana), profiles.state.value.profiles)
     }
 
     @Test
     fun save_newProfile_closesTheFormAndListsIt() = runTest {
+        // Given
         val profiles = profilesViewModel()
-
         profiles.startCreating()
         profiles.fill(name = "Bia", waist = "95", date = "11/10/2026")
+
+        // When
         profiles.save()
 
+        // Then
         val saved = profiles.state.value
         assertEquals(listOf("Ana", "Bia"), saved.profiles.map { it.measurements.name.text })
         assertFalse(saved.isEditorOpen)
@@ -98,23 +116,29 @@ class ProfilesViewModelTest {
 
     @Test
     fun save_editedProfile_replacesItInTheList() = runTest {
+        // Given
         val profiles = profilesViewModel()
-
         profiles.startEditing(ana.id)
         profiles.edit(ProfileField.Waist, "82")
+
+        // When
         profiles.save()
 
+        // Then
         assertEquals(Length(82.0), profiles.state.value.profiles.single().measurements.waist)
     }
 
     @Test
-    fun save_withInvalidInputs_showsFieldErrors() = runTest {
+    fun save_withInvalidInputs_showsEachErrorOnItsField() = runTest {
+        // Given
         val profiles = profilesViewModel()
-
         profiles.startCreating()
         profiles.fill(name = " ", waist = "0", date = "14/10/2026")
+
+        // When
         profiles.save()
 
+        // Then
         assertEquals(
             mapOf(
                 ProfileField.Name to ProfileError.BlankName,
@@ -127,13 +151,16 @@ class ProfilesViewModelTest {
 
     @Test
     fun save_whenStorageFails_keepsTheFormAndShowsTheFailure() = runTest {
+        // Given
         storage.failsCommands = true
         val profiles = profilesViewModel()
-
         profiles.startCreating()
         profiles.fill(name = "Bia", waist = "95", date = "11/10/2026")
+
+        // When
         profiles.save()
 
+        // Then
         val failed = profiles.state.value
         assertEquals(R.string.profile_save_failed, failed.saveError)
         assertTrue(failed.isEditorOpen)
@@ -143,24 +170,30 @@ class ProfilesViewModelTest {
 
     @Test
     fun delete_profileBeingEdited_removesItAndClosesTheForm() = runTest {
+        // Given
         val profiles = profilesViewModel()
-
         profiles.startEditing(ana.id)
+
+        // When
         profiles.delete(ana.id)
 
+        // Then
         val deleted = profiles.state.value
-        assertEquals(emptyList<MeasurementProfile>(), deleted.profiles)
+        assertEquals(emptyList(), deleted.profiles)
         assertFalse(deleted.isEditorOpen)
         assertEquals(R.string.profile_deleted, deleted.savedMessage)
     }
 
     @Test
     fun delete_whenStorageFails_keepsTheProfileAndShowsTheFailure() = runTest {
+        // Given
         storage.failsCommands = true
         val profiles = profilesViewModel()
 
+        // When
         profiles.delete(ana.id)
 
+        // Then
         val failed = profiles.state.value
         assertEquals(R.string.profile_delete_failed, failed.saveError)
         assertEquals(ana.id, failed.deleteId)
@@ -168,14 +201,29 @@ class ProfilesViewModelTest {
     }
 
     @Test
-    fun edit_isDirtyOnlyWhileTheFormDiffersFromTheProfile() = runTest {
+    fun edit_awayFromTheProfile_makesTheFormDirty() = runTest {
+        // Given
         val profiles = profilesViewModel()
         profiles.startEditing(ana.id)
 
+        // When
         profiles.edit(ProfileField.Name, "Ana Maria")
-        assertTrue(profiles.state.value.isDirty)
 
+        // Then
+        assertTrue(profiles.state.value.isDirty)
+    }
+
+    @Test
+    fun edit_backToTheProfileValue_makesTheFormClean() = runTest {
+        // Given
+        val profiles = profilesViewModel()
+        profiles.startEditing(ana.id)
+        profiles.edit(ProfileField.Name, "Ana Maria")
+
+        // When
         profiles.edit(ProfileField.Name, "Ana")
+
+        // Then
         assertFalse(profiles.state.value.isDirty)
     }
 
@@ -183,11 +231,14 @@ class ProfilesViewModelTest {
     fun recreate_afterProcessDeath_restoresTheForm() = runTest {
         viewModelScenario { ProfilesViewModel(storage, createSavedStateHandle(), clock) }
             .use { scenario ->
+                // Given
                 scenario.viewModel.startEditing(ana.id)
                 scenario.viewModel.edit(ProfileField.Notes, "Sem folga")
 
+                // When
                 scenario.recreate()
 
+                // Then
                 val restored = scenario.viewModel.state.value
                 assertEquals(ana.id, restored.editingId)
                 assertEquals("Sem folga", restored.inputs[ProfileField.Notes])

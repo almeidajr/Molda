@@ -3,6 +3,7 @@ package com.almeidajr.molda.profile.domain
 import com.almeidajr.molda.measurement.Length
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import org.junit.Test
 
 class ValidateProfileTest {
@@ -16,7 +17,8 @@ class ValidateProfileTest {
     ) = validateProfile(name, waist, measurementDate, notes, today)
 
     @Test
-    fun validate_completeForm_returnsTrimmedMeasurements() {
+    fun validate_completeForm_trimsTheNameAndKeepsNotesAsTyped() {
+        // When/Then
         assertEquals(
             ProfileValidation.Valid(
                 ProfileMeasurements(
@@ -31,16 +33,20 @@ class ValidateProfileTest {
     }
 
     @Test
-    fun validate_measurementTakenToday_isAccepted() {
+    fun validate_measurementDateToday_isValid() {
+        // When
+        val validation = validate(measurementDate = "13/10/2026")
+
+        // Then
         assertEquals(
-            LocalDate.of(2026, 10, 13),
-            (validate(measurementDate = "13/10/2026") as ProfileValidation.Valid)
-                .measurements.measurementDate,
+            today,
+            assertIs<ProfileValidation.Valid>(validation).measurements.measurementDate,
         )
     }
 
     @Test
-    fun validate_futureDate_isRejected() {
+    fun validate_futureDate_reportsFutureDate() {
+        // When/Then
         assertEquals(
             ProfileValidation.Invalid(setOf(ProfileError.FutureDate)),
             validate(measurementDate = "14/10/2026"),
@@ -48,7 +54,8 @@ class ValidateProfileTest {
     }
 
     @Test
-    fun validate_blankName_isRejected() {
+    fun validate_blankName_reportsBlankName() {
+        // When/Then
         assertEquals(
             ProfileValidation.Invalid(setOf(ProfileError.BlankName)),
             validate(name = "   "),
@@ -56,29 +63,38 @@ class ValidateProfileTest {
     }
 
     @Test
-    fun validate_zeroNegativeOrMalformedWaist_isRejected() {
-        listOf("0", "-1", "Infinity", "", "80cm").forEach {
+    fun validate_zeroNegativeOrMalformedWaist_reportsInvalidWaist() {
+        // Given
+        val waists = listOf("0", "-1", "Infinity", "", "80cm")
+
+        // When/Then
+        waists.forEach { waist ->
             assertEquals(
                 ProfileValidation.Invalid(setOf(ProfileError.InvalidWaist)),
-                validate(waist = it),
-                it,
+                validate(waist = waist),
+                waist,
             )
         }
     }
 
     @Test
-    fun validate_impossibleOrMalformedDate_isRejected() {
-        listOf("32/02/2026", "29/02/2025", "00/00/0000", "12/10/0000", "2026-10-12", "").forEach {
+    fun validate_impossibleOrMalformedDate_reportsInvalidDate() {
+        // Given
+        val dates = listOf("32/02/2026", "29/02/2025", "00/00/0000", "12/10/0000", "2026-10-12", "")
+
+        // When/Then
+        dates.forEach { date ->
             assertEquals(
                 ProfileValidation.Invalid(setOf(ProfileError.InvalidDate)),
-                validate(measurementDate = it),
-                it,
+                validate(measurementDate = date),
+                date,
             )
         }
     }
 
     @Test
     fun validate_severalInvalidFields_reportsEveryError() {
+        // When/Then
         assertEquals(
             ProfileValidation.Invalid(
                 setOf(ProfileError.BlankName, ProfileError.InvalidWaist, ProfileError.InvalidDate),
