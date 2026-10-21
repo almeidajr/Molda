@@ -11,9 +11,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
+import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
@@ -166,6 +166,7 @@ class EditProjectTest {
         showRoute()
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performTextReplacement("70")
+        composeRule.closeKeyboard()
 
         // When
         openEditor()
@@ -223,7 +224,7 @@ class EditProjectTest {
         composeRule.onNodeWithText(SkirtDraftField.Ease.labelText).performScrollTo()
             .performTextReplacement(text)
         // The keyboard resizes the screen as it opens; let it settle before the next tap.
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
     }
 
     private fun showRoute(profiles: FakeProfileRepository = FakeProfileRepository()) =
