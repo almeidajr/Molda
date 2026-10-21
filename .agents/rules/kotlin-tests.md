@@ -130,7 +130,8 @@ on them. Never sleep: Detekt rejects `Thread.sleep`, `SystemClock.sleep` and
    bypass Compose do not wait: real key events, activity recreation and
    `runOnUiThread` act on the UI from before the last action. Use the shared
    `pressKey`, `pressBack` and `recreate` helpers (`MoldaNavigation.kt`), and
-   call `waitForIdle()` before dispatching on the UI thread yourself.
+   call `waitForIdle()` before dispatching on the UI thread yourself. Detekt
+   rejects Espresso's `pressBack` in test sources.
 2. **`mainClock` control** for anything Compose drives, such as animations:
    `mainClock.autoAdvance = false`, `advanceTimeBy`, `advanceTimeUntil`. Prefer
    virtual time to `waitUntil`.

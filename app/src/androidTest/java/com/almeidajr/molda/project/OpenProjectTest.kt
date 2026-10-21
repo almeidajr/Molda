@@ -16,11 +16,11 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.test.espresso.Espresso.pressBack
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
@@ -93,7 +93,7 @@ class OpenProjectTest {
         composeRule.click("Guia de dobra do tecido")
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()

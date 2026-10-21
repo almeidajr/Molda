@@ -12,12 +12,12 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.espresso.Espresso.closeSoftKeyboard
-import androidx.test.espresso.Espresso.pressBack
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
@@ -106,7 +106,7 @@ class EditProjectTest {
         editEase("4")
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
@@ -153,7 +153,7 @@ class EditProjectTest {
         openEditor()
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()

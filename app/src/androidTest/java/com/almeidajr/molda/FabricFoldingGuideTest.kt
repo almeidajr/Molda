@@ -14,7 +14,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
-import androidx.test.espresso.Espresso.pressBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.rive.Result
@@ -171,7 +170,7 @@ class FabricFoldingGuideTest {
             instrumentation.setInTouchMode(false)
 
             // When
-            pressBack()
+            composeRule.pressBack()
 
             // Then
             composeRule.onNodeWithText("Etapa 2 de 6").assertDoesNotExist()
