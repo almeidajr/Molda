@@ -194,7 +194,7 @@ class FabricFoldingGuideTest {
         next(times = 2)
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         composeRule.showEmptyApp()
 
         // Then

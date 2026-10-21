@@ -1,6 +1,5 @@
 package com.almeidajr.molda
 
-import android.view.KeyEvent
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHasClickAction
@@ -57,7 +56,7 @@ class AboutTest {
             aboutAction().assertDoesNotExist()
             // Profile management's FAB belongs to its own screens.
             composeRule.onNodeWithContentDescription("Novo perfil").assertDoesNotExist()
-            pressBack()
+            composeRule.pressBack()
             composeRule.screenTitle(title).assertIsDisplayed()
             composeRule.destination(destination).assertIsSelected()
         }
@@ -112,8 +111,4 @@ class AboutTest {
             listOf("Sobre o Molda"),
         ),
     )
-
-    private fun pressBack() {
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-    }
 }

@@ -1,6 +1,5 @@
 package com.almeidajr.molda
 
-import android.view.KeyEvent
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -23,7 +22,6 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import kotlin.test.assertTrue
 import org.junit.Before
@@ -75,7 +73,7 @@ class GuideLibraryTest {
         guideEntry().performClick()
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.screenTitle("Guias").assertIsDisplayed()
@@ -118,7 +116,7 @@ class GuideLibraryTest {
         // 100 cm of waist plus no ease: 100 / 2π.
         composeRule.onNodeWithText("1. Costura da cintura: 15,92 cm").assertExists()
         composeRule.onNodeWithText("Exemplo — não são as suas medidas").assertDoesNotExist()
-        pressBack()
+        composeRule.pressBack()
         composeRule.onNodeWithText(guideTitle).assertExists()
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
         composeRule.destination("Moldes").assertIsSelected()
@@ -148,8 +146,4 @@ class GuideLibraryTest {
     private fun waistField() = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
 
     private fun guideEntry() = composeRule.onNode(hasText(guideTitle) and !isHeading())
-
-    private fun pressBack() {
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-    }
 }

@@ -1,5 +1,6 @@
 package com.almeidajr.molda
 
+import android.view.KeyEvent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
@@ -8,8 +9,10 @@ import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.project.showRoute
 import com.almeidajr.molda.testing.FakeProfileRepository
@@ -33,6 +36,31 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showEmptyApp(
     size,
     frame,
 )
+
+/**
+ * Sends a real key press with [metaState] to the focused window once Compose is idle. Key events
+ * from Instrumentation bypass Compose's synchronization: sent right after an action, they reach
+ * the UI from before it, for example before Back handling was enabled.
+ */
+internal fun ComposeTestRule.pressKey(keyCode: Int, metaState: Int = 0) {
+    waitForIdle()
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).forEach { action ->
+        instrumentation.sendKeySync(KeyEvent(0, 0, action, keyCode, 0, metaState))
+    }
+}
+
+/** Sends a real Back key to the focused window once Compose is idle. */
+internal fun ComposeTestRule.pressBack() = pressKey(KeyEvent.KEYCODE_BACK)
+
+/**
+ * Recreates the activity once Compose is idle. Recreation bypasses Compose's synchronization:
+ * started right after an action, it saves the state from before that action took effect.
+ */
+internal fun AndroidComposeTestRule<ActivityScenarioRule<MainActivity>, MainActivity>.recreate() {
+    waitForIdle()
+    activityRule.scenario.recreate()
+}
 
 /** The navigation suite item labelled [label]: Moldes, Projetos, Guias or Perfis. */
 internal fun SemanticsNodeInteractionsProvider.destination(

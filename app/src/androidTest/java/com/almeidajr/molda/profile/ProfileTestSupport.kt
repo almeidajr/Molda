@@ -1,7 +1,6 @@
 package com.almeidajr.molda.profile
 
 import android.text.format.DateFormat
-import android.view.KeyEvent
 import androidx.compose.material3.R
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -130,7 +129,3 @@ internal fun SemanticsNodeInteractionsProvider.typeInCalendar(value: String) {
     val input = DateFormat.getDateFormatOrder(context).joinToString("") { parts.getValue(it) }
     onNode(hasSetTextAction() and hasAnyAncestor(isDialog())).performTextReplacement(input)
 }
-
-/** Sends a real Back key to the focused window. */
-internal fun pressBack() =
-    InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)

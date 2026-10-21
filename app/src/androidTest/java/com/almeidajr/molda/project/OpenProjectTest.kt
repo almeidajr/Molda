@@ -24,6 +24,7 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
+import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.testing.FakeProfileRepository
@@ -140,7 +141,7 @@ class OpenProjectTest {
         openProject()
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         showRoute()
 
         // Then

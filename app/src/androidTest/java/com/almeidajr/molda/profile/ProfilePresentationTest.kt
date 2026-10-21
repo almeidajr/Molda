@@ -23,12 +23,12 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
 import com.almeidajr.molda.isKeyboardVisible
+import com.almeidajr.molda.pressKey
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
@@ -199,13 +199,12 @@ class ProfilePresentationTest {
     fun profileRow_openedWithKeyboard_focusesNoField() {
         // Given
         showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
         // A real key event leaves touch mode, so the row joins keyboard focus traversal.
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
+        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
         composeRule.onNodeWithText("Ana").requestFocus().assertIsFocused()
 
         // When
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
+        composeRule.pressKey(KeyEvent.KEYCODE_ENTER)
 
         // Then
         composeRule.onNodeWithText("Editar perfil de medidas").assertIsDisplayed()

@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import kotlin.test.assertEquals
@@ -70,7 +69,7 @@ class NavigationShellTest {
         composeRule.openSkirtCalculator()
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.screenTitle("Moldes").assertIsDisplayed()
@@ -79,7 +78,7 @@ class NavigationShellTest {
     @Test
     fun back_onCatalog_leavesTheApp() {
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.awaitActivityFinishing()
@@ -143,7 +142,7 @@ class NavigationShellTest {
             composeRule.screenTitle(title).assertIsDisplayed()
 
             // When
-            pressBack()
+            composeRule.pressBack()
 
             // Then
             composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
@@ -176,7 +175,7 @@ class NavigationShellTest {
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         composeRule.showEmptyApp()
 
         // Then
@@ -192,11 +191,11 @@ class NavigationShellTest {
         // Given
         composeRule.selectDestination("Perfis")
         // A real key event leaves touch mode, so buttons join keyboard focus traversal.
-        pressKey(KeyEvent.KEYCODE_TAB)
+        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
         composeRule.onNodeWithContentDescription("Novo perfil").requestFocus()
 
         // When
-        pressKey(KeyEvent.KEYCODE_ENTER)
+        composeRule.pressKey(KeyEvent.KEYCODE_ENTER)
 
         // Then
         composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
@@ -274,7 +273,7 @@ class NavigationShellTest {
         composeRule.selectDestination("Perfis")
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.screenTitle("Moldes").assertIsFocused()
@@ -299,31 +298,31 @@ class NavigationShellTest {
     @Test
     fun arrowKeys_onNavigationItems_moveFocus_andEnterOrSpaceSelects() {
         // Given: a real key event leaves touch mode, so navigation items join focus traversal.
-        pressKey(KeyEvent.KEYCODE_TAB)
+        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
         composeRule.destination("Moldes").requestFocus()
 
         // When/Then
-        pressKey(KeyEvent.KEYCODE_DPAD_RIGHT)
+        composeRule.pressKey(KeyEvent.KEYCODE_DPAD_RIGHT)
         composeRule.destination("Projetos").assertIsFocused()
-        pressKey(KeyEvent.KEYCODE_SPACE)
+        composeRule.pressKey(KeyEvent.KEYCODE_SPACE)
         composeRule.destination("Projetos").assertIsSelected()
         composeRule.destination("Projetos").requestFocus()
-        pressKey(KeyEvent.KEYCODE_DPAD_RIGHT)
+        composeRule.pressKey(KeyEvent.KEYCODE_DPAD_RIGHT)
         composeRule.destination("Guias").assertIsFocused()
-        pressKey(KeyEvent.KEYCODE_ENTER)
+        composeRule.pressKey(KeyEvent.KEYCODE_ENTER)
         composeRule.destination("Guias").assertIsSelected()
     }
 
     @Test
     fun tab_fromAnyNavigationItem_leavesTheItemsInOneStep() {
         // Given: a real key event leaves touch mode, so navigation items join focus traversal.
-        pressKey(KeyEvent.KEYCODE_TAB)
+        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
 
-        listOf(false, true).forEach { isShifted ->
+        listOf(0, KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON).forEach { metaState ->
             composeRule.destination("Projetos").requestFocus()
 
             // When
-            pressKey(KeyEvent.KEYCODE_TAB, isShifted)
+            composeRule.pressKey(KeyEvent.KEYCODE_TAB, metaState)
 
             // Then
             destinations.forEach { composeRule.destination(it).assertIsNotFocused() }
@@ -331,14 +330,4 @@ class NavigationShellTest {
     }
 
     private fun waistField() = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
-
-    private fun pressBack() = pressKey(KeyEvent.KEYCODE_BACK)
-
-    private fun pressKey(keyCode: Int, isShifted: Boolean = false) {
-        val metaState = if (isShifted) KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON else 0
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).forEach { action ->
-            instrumentation.sendKeySync(KeyEvent(0, 0, action, keyCode, 0, metaState))
-        }
-    }
 }

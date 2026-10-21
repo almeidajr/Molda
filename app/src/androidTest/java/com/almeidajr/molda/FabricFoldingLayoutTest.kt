@@ -114,6 +114,8 @@ class FabricFoldingLayoutTest {
         // Given
         openGuide(dark = false, fontScale = 1f)
         val dispatcher = composeRule.activity.onBackPressedDispatcher
+        // Dispatching on the UI thread bypasses Compose's synchronization.
+        composeRule.waitForIdle()
 
         // When
         composeRule.runOnUiThread {

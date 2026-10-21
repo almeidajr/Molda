@@ -18,13 +18,15 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import androidx.test.espresso.Espresso.closeSoftKeyboard
-import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.SkirtTitle
 import com.almeidajr.molda.awaitActivityFocus
 import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.destination
+import com.almeidajr.molda.pressBack
+import com.almeidajr.molda.pressKey
+import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
@@ -48,13 +50,12 @@ class ProfileNavigationTest {
     @Test
     fun navigationSuite_withKeyboard_opensPerfis() {
         // Given
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
         // A real key event leaves touch mode, so navigation items join keyboard focus traversal.
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
+        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
 
         // When
         composeRule.destination("Perfis").requestFocus().assertIsFocused()
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)
+        composeRule.pressKey(KeyEvent.KEYCODE_ENTER)
 
         // Then
         composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
@@ -79,16 +80,16 @@ class ProfileNavigationTest {
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         composeRule.showProfileRoute(storage)
 
         // When
         // A key reaches only the focused window: the recreated activity, then again after the dialog.
         composeRule.awaitActivityFocus()
-        pressBack()
+        composeRule.pressBack()
         clickInDialog("Descartar")
         composeRule.awaitActivityFocus()
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
@@ -180,7 +181,7 @@ class ProfileNavigationTest {
         composeRule.onNodeWithText("Usar perfil").performScrollTo().performClick()
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         composeRule.showProfileRoute(storage)
 
         // Then
@@ -198,7 +199,7 @@ class ProfileNavigationTest {
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         composeRule.showProfileRoute(storage)
 
         // Then
@@ -215,7 +216,7 @@ class ProfileNavigationTest {
         composeRule.awaitKeyboardVisible()
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.awaitKeyboardHidden()

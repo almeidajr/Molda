@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.awaitKeyboardHidden
+import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
@@ -60,7 +61,7 @@ class ProfileFailuresTest {
         composeRule.click("Salvar perfil")
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.onNodeWithText("Novo perfil de medidas").performScrollTo().assertIsDisplayed()

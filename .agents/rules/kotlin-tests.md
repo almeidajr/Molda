@@ -126,7 +126,11 @@ on them. Never sleep: Detekt rejects `Thread.sleep`, `SystemClock.sleep` and
 [test stability](https://developer.android.com/training/testing/instrumented-tests/stability)):
 
 1. **Compose's automatic synchronization.** Assertions and actions already wait
-   for recomposition, layout and Compose-driven work to go idle.
+   for recomposition, layout and Compose-driven work to go idle. Calls that
+   bypass Compose do not wait: real key events, activity recreation and
+   `runOnUiThread` act on the UI from before the last action. Use the shared
+   `pressKey`, `pressBack` and `recreate` helpers (`MoldaNavigation.kt`), and
+   call `waitForIdle()` before dispatching on the UI thread yourself.
 2. **`mainClock` control** for anything Compose drives, such as animations:
    `mainClock.autoAdvance = false`, `advanceTimeBy`, `advanceTimeUntil`. Prefer
    virtual time to `waitUntil`.

@@ -14,9 +14,11 @@ import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.awaitDialogFocus
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
+import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
@@ -59,7 +61,7 @@ class MeasurementProfilesTest {
         composeRule.awaitDialogFocus()
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.onNodeWithText("Excluir perfil Ana?").assertDoesNotExist()
@@ -207,7 +209,7 @@ class MeasurementProfilesTest {
         composeRule.awaitDialogFocus()
 
         // When
-        pressBack()
+        composeRule.pressBack()
 
         // Then
         composeRule.onNodeWithText("Cancelar calendário").assertDoesNotExist()
@@ -352,7 +354,7 @@ class MeasurementProfilesTest {
         composeRule.edit("Observações (opcional)", "Conferir antes de cortar")
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         composeRule.showProfileRoute(storage)
 
         // Then
@@ -397,7 +399,7 @@ class MeasurementProfilesTest {
         composeRule.edit("Nome ou apelido", "Nova no seletor")
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         composeRule.showProfileRoute(storage)
 
         // Then
@@ -479,7 +481,7 @@ class MeasurementProfilesTest {
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         composeRule.showProfileRoute(storage)
 
         // Then

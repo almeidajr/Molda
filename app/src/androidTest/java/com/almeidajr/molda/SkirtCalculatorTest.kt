@@ -455,7 +455,7 @@ class SkirtCalculatorTest {
         fillInputs(values)
 
         // When
-        composeRule.activityRule.scenario.recreate()
+        composeRule.recreate()
         showCalculator()
 
         // Then
