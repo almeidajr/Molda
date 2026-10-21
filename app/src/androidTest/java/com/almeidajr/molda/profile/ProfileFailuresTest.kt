@@ -19,7 +19,6 @@ import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.click
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.showProfiles
-import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
 import java.time.LocalDate
 import kotlin.test.assertEquals
