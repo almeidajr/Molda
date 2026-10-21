@@ -13,10 +13,9 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.click
+import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.testing.FakeProfileRepository
@@ -36,6 +35,7 @@ class ProfileFailuresTest {
         composeRule.showProfiles(existingProfiles().apply { commandGate = CompletableDeferred() })
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
+        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Salvar perfil")
@@ -56,8 +56,7 @@ class ProfileFailuresTest {
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
         // Back must reach the editor, not close the keyboard.
-        closeSoftKeyboard()
-        composeRule.awaitKeyboardHidden()
+        composeRule.closeKeyboard()
         composeRule.click("Salvar perfil")
 
         // When
@@ -121,6 +120,7 @@ class ProfileFailuresTest {
         composeRule.showProfiles(storage)
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
+        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Salvar perfil")
@@ -142,6 +142,7 @@ class ProfileFailuresTest {
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.edit("Nome ou apelido", "Alterado")
         composeRule.edit("Cintura do perfil (cm)", "82")
+        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Salvar alterações")
@@ -272,7 +273,7 @@ class ProfileFailuresTest {
         composeRule.showProfiles()
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.edit("Nome ou apelido", "Rascunho")
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.click("Ações: Outra pessoa")
         composeRule.click("Excluir perfil")
 

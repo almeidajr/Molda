@@ -12,6 +12,7 @@ import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.FileInputStream
 import kotlin.time.Duration.Companion.seconds
@@ -35,6 +36,16 @@ internal fun AndroidComposeTestRule<*, *>.awaitKeyboardHidden() =
 private fun AndroidComposeTestRule<*, *>.isKeyboardVisible(): Boolean = runOnUiThread {
     ViewCompat.getRootWindowInsets(activity.window.decorView)
         ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+}
+
+/**
+ * Closes the soft keyboard and waits until the window no longer shows it. Call it after typing and
+ * before tapping a button low in an `imePadding` layout: an opening keyboard shrinks the layout
+ * frame by frame, which can clip the button between scrolling to it and tapping it.
+ */
+internal fun AndroidComposeTestRule<*, *>.closeKeyboard() {
+    closeSoftKeyboard()
+    awaitKeyboardHidden()
 }
 
 /**

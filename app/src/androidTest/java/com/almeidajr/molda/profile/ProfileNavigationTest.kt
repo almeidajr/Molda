@@ -17,12 +17,12 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.SkirtTitle
 import com.almeidajr.molda.awaitActivityFocus
 import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.awaitKeyboardVisible
+import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.destination
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.pressKey
@@ -123,7 +123,7 @@ class ProfileNavigationTest {
         openPickerEditor()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
         // The keyboard resizing the editor mid-scroll would move Cancelar from under the touch.
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
 
         // When
@@ -171,7 +171,7 @@ class ProfileNavigationTest {
         openPickerEditor()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
         // The keyboard resizing the editor mid-scroll would move Cancelar from under the touch.
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
 
         // When
@@ -201,7 +201,7 @@ class ProfileNavigationTest {
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         // The opening keyboard resizes the editor, so a tap racing it can miss Cancelar.
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
 
         // When
@@ -236,7 +236,7 @@ class ProfileNavigationTest {
     }
 
     private fun calculateMySkirtFromGuias() {
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.selectDestination("Guias")
         composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
         composeRule.onNodeWithText("Calcular a minha saia").performClick()

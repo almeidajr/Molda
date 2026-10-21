@@ -9,12 +9,11 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.awaitDialogFocus
-import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.click
+import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -242,7 +241,7 @@ class MeasurementProfilesTest {
         showNewProfileEditor()
         composeRule.edit("Nome ou apelido", "Rascunho")
         // A keyboard open under the dialog reopens once it closes, resizing the editor.
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Cancelar")
@@ -256,7 +255,7 @@ class MeasurementProfilesTest {
         // Given
         showNewProfileEditor()
         composeRule.edit("Nome ou apelido", "Rascunho")
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.click("Cancelar")
 
         // When
@@ -273,7 +272,7 @@ class MeasurementProfilesTest {
         composeRule.showProfiles(storage)
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Rascunho")
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.click("Cancelar")
 
         // When
@@ -316,6 +315,7 @@ class MeasurementProfilesTest {
         showNewProfileEditor(storage)
         composeRule.edit("Cintura do perfil (cm)", "NaN")
         composeRule.edit("Data da medida (dd/mm/aaaa)", "32/02/2026")
+        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Salvar perfil")
@@ -338,6 +338,7 @@ class MeasurementProfilesTest {
         composeRule.click("Ana")
         composeRule.edit("Nome ou apelido", "")
         composeRule.edit("Cintura do perfil (cm)", "Infinity")
+        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Salvar alterações")
@@ -620,10 +621,7 @@ class MeasurementProfilesTest {
     }
 
     private fun saveProfile(label: String = "Salvar perfil") {
-        // The keyboard the last edit opened shrinks the editor while it animates in, which can
-        // clip the button between scrolling to it and tapping it. Closing it only grows the editor.
-        closeSoftKeyboard()
-        composeRule.awaitKeyboardHidden()
+        composeRule.closeKeyboard()
         composeRule.click(label)
         composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
     }
