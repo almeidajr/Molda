@@ -9,20 +9,27 @@ import org.junit.Test
 class ResultOfTest {
     @Test
     fun resultOf_whenBlockSucceeds_returnsItsValue() = runTest {
+        // When/Then
         assertEquals(Result.success(42), resultOf { 42 })
     }
 
     @Test
     fun resultOf_whenBlockFails_returnsTheFailure() = runTest {
+        // Given
         val failure = IllegalStateException("Profile no longer exists")
 
-        assertEquals(Result.failure<Int>(failure), resultOf { throw failure })
+        // When
+        val result = resultOf<Int> { throw failure }
+
+        // Then
+        assertEquals(Result.failure(failure), result)
     }
 
     @Test
-    fun resultOf_whenBlockIsCancelled_rethrowsTheCancellation() {
+    fun resultOf_whenBlockIsCancelled_rethrowsTheCancellation() = runTest {
+        // When/Then
         assertFailsWith<CancellationException> {
-            runTest { resultOf { throw CancellationException("Left the screen") } }
+            resultOf { throw CancellationException("Left the screen") }
         }
     }
 }
