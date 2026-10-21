@@ -20,6 +20,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+/** Projects on real Room: each command, reopened from disk. */
 class ProjectStorageTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val databaseName = "projects-test.db"
@@ -31,7 +32,8 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun create_reopenListsEveryFieldMostRecentFirst() = runTest {
+    fun create_thenReopen_listsEveryFieldMostRecentFirst() = runTest {
+        // Given
         val saved = withProjects(context, databaseName) { storage ->
             listOf(
                 storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow(),
@@ -39,9 +41,12 @@ class ProjectStorageTest {
             )
         }
 
+        // When
         val listed = withProjects(context, databaseName) { it.projects().first() }
 
+        // Then
         assertEquals(saved.reversed(), listed)
+        assertEquals(PatternDraftKind.FullCircleSkirt, listed.last().kind)
         assertEquals(fromProfile, listed.last().snapshot)
         assertEquals(typedByHand, listed.first().snapshot)
         assertEquals(january, listed.last().createdAt)
@@ -49,18 +54,8 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun create_reopenKeepsThePatternDraftKind() = runTest {
-        withProjects(context, databaseName) { storage ->
-            storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow()
-        }
-
-        val listed = withProjects(context, databaseName) { it.projects().first() }
-
-        assertEquals(PatternDraftKind.FullCircleSkirt, listed.single().kind)
-    }
-
-    @Test
     fun create_whenStorageFails_reportsFailureAndKeepsOtherProjects() = runTest {
+        // Given
         val kept = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow()
         }
@@ -77,22 +72,29 @@ class ProjectStorageTest {
         }
 
         withProjects(context, databaseName) { storage ->
-            assertTrue(storage.create(ProjectName("Outra"), typedByHand, february).isFailure)
+            // When
+            val created = storage.create(ProjectName("Outra"), typedByHand, february)
+
+            // Then
+            assertTrue(created.isFailure)
             assertEquals(listOf(kept), storage.projects().first())
         }
     }
 
     @Test
     fun rename_storesTheNameAndListsItAsTheLatestChange() = runTest {
+        // Given
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
                 storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
         }
 
+        // When
         withProjects(context, databaseName) { storage ->
-            assertTrue(storage.rename(first.id, ProjectName("Saia da formatura"), march).isSuccess)
+            storage.rename(first.id, ProjectName("Saia da formatura"), march).getOrThrow()
         }
 
+        // Then
         val listed = withProjects(context, databaseName) { it.projects().first() }
         assertEquals(
             listOf(first.copy(name = ProjectName("Saia da formatura"), updatedAt = march), second),
@@ -102,15 +104,18 @@ class ProjectStorageTest {
 
     @Test
     fun update_replacesTheSnapshotInPlaceAsTheLatestChange() = runTest {
+        // Given
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
                 storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
         }
 
+        // When
         withProjects(context, databaseName) { storage ->
-            assertTrue(storage.update(first.id, typedByHand, march).isSuccess)
+            storage.update(first.id, typedByHand, march).getOrThrow()
         }
 
+        // Then
         val listed = withProjects(context, databaseName) { it.projects().first() }
         assertEquals(
             listOf(first.copy(snapshot = typedByHand, updatedAt = march), second),
@@ -120,23 +125,28 @@ class ProjectStorageTest {
 
     @Test
     fun delete_removesOnlyThatProject() = runTest {
+        // Given
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
                 storage.create(ProjectName("Saia manual"), typedByHand, february).getOrThrow()
         }
 
-        withProjects(context, databaseName) { storage ->
-            assertTrue(storage.delete(second.id).isSuccess)
-            assertEquals(listOf(first), storage.projects().first())
-        }
+        // When
+        withProjects(context, databaseName) { storage -> storage.delete(second.id).getOrThrow() }
+
+        // Then
+        val listed = withProjects(context, databaseName) { it.projects().first() }
+        assertEquals(listOf(first), listed)
     }
 
     @Test
-    fun renameAndDelete_ofAMissingProject_reportFailure() = runTest {
+    fun commands_onAMissingProject_reportFailure() = runTest {
         withProjects(context, databaseName) { storage ->
+            // Given
             val gone = storage.create(ProjectName("Saia"), typedByHand, january).getOrThrow()
             storage.delete(gone.id).getOrThrow()
 
+            // When/Then
             assertTrue(storage.rename(gone.id, ProjectName("Outra"), march).isFailure)
             assertTrue(storage.update(gone.id, fromProfile, march).isFailure)
             assertTrue(storage.delete(gone.id).isFailure)
@@ -144,10 +154,9 @@ class ProjectStorageTest {
     }
 
     private companion object {
-        val march: Instant = Instant.parse("2026-03-10T09:00:00Z")
-
         val january: Instant = Instant.parse("2026-01-10T09:00:00Z")
         val february: Instant = Instant.parse("2026-02-10T09:00:00Z")
+        val march: Instant = Instant.parse("2026-03-10T09:00:00Z")
 
         val fromProfile = SkirtSnapshot(
             SkirtDraft(
