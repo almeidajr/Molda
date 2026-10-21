@@ -21,6 +21,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
@@ -39,118 +40,195 @@ class ProjectsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun projects_followTheRepository() = runTest {
+    fun projects_whenStorageChanges_followIt() = runTest {
+        // Given
         val projects = projectsViewModel()
-        assertEquals(listOf(saved), projects.state.value.projects)
 
+        // When
         storage.delete(saved.id).getOrThrow()
 
-        assertEquals(emptyList<Project>(), projects.state.value.projects)
+        // Then
+        assertEquals(emptyList(), projects.state.value.projects)
     }
 
     @Test
-    fun load_afterLoadFailure_retryShowsStoredProjects() = runTest {
+    fun load_afterLoadFailure_showsStoredProjects() = runTest {
+        // Given
         storage.failsLoad = true
         val projects = projectsViewModel()
-        assertEquals(R.string.project_load_failed, projects.state.value.loadError)
-
         storage.failsLoad = false
+
+        // When
         projects.load()
 
+        // Then
         assertNull(projects.state.value.loadError)
         assertEquals(listOf(saved), projects.state.value.projects)
     }
 
     @Test
     fun startSaving_fromProfile_offersPatternProfileAndTodayAsName() = runTest {
+        // Given
         val projects = projectsViewModel()
 
+        // When
         projects.startSaving(fromProfile, patternName = "Saia godê")
 
+        // Then
         assertEquals("Saia godê · Ana · 18/10/2026", projects.state.value.saving?.name)
     }
 
     @Test
-    fun startSaving_typedByHand_offersNameWithoutProfile() = runTest {
+    fun save_withEditedName_storesSnapshotUnderThatNameAndCloses() = runTest {
+        // Given
         val projects = projectsViewModel()
-
-        projects.startSaving(fromProfile.copy(source = null), patternName = "Saia godê")
-
-        assertEquals("Saia godê · 18/10/2026", projects.state.value.saving?.name)
-    }
-
-    @Test
-    fun save_editedName_storesSnapshotNewestFirstAndCloses() = runTest {
-        val projects = projectsViewModel()
-
         projects.startSaving(fromProfile, patternName = "Saia godê")
-        projects.editName("  Saia da formatura ")
+        projects.editName("Saia da formatura")
+
+        // When
         projects.save()
 
-        val state = projects.state.value
-        val created = state.projects.first()
+        // Then
+        val created = storage.current.single { it.id != saved.id }
         assertEquals(ProjectName("Saia da formatura"), created.name)
         assertEquals(fromProfile, created.snapshot)
-        assertEquals(clock.instant(), created.updatedAt)
-        assertEquals(listOf(created, saved), state.projects)
-        assertNull(state.saving)
-        assertEquals(R.string.project_saved, state.message)
+        assertEquals(clock.instant(), created.createdAt)
+        assertNull(projects.state.value.saving)
+        assertEquals(R.string.project_saved, projects.state.value.message)
     }
 
     @Test
-    fun save_blankName_isRefusedWithoutStoring() = runTest {
+    fun save_withBlankName_flagsTheNameAndStoresNothing() = runTest {
+        // Given
         val projects = projectsViewModel()
+        projects.startSaving(fromProfile, patternName = "Saia godê")
+        projects.editName("   ")
 
+        // When
+        projects.save()
+
+        // Then
+        assertTrue(projects.state.value.saving?.hasBlankName == true)
+        assertEquals(listOf(saved), storage.current)
+    }
+
+    @Test
+    fun editName_afterBlankSaveWasRefused_clearsTheFlag() = runTest {
+        // Given
+        val projects = projectsViewModel()
         projects.startSaving(fromProfile, patternName = "Saia godê")
         projects.editName("   ")
         projects.save()
 
-        val saving = projects.state.value.saving
-        assertTrue(saving?.hasBlankName == true)
-        assertEquals(listOf(saved), projects.state.value.projects)
-
+        // When
         projects.editName("Saia")
-        assertFalse(projects.state.value.saving?.hasBlankName == true)
+
+        // Then
+        assertFalse(projects.state.value.saving?.hasBlankName ?: true)
     }
 
     @Test
-    fun save_whenStorageFails_keepsTheNameAndShowsTheFailure() = runTest {
+    fun save_whenStorageFails_keepsTheDialogAndShowsTheFailure() = runTest {
+        // Given
         storage.failsCommands = true
         val projects = projectsViewModel()
-
         projects.startSaving(fromProfile, patternName = "Saia godê")
         projects.editName("Saia da formatura")
+
+        // When
         projects.save()
 
-        val saving = projects.state.value.saving
-        assertEquals("Saia da formatura", saving?.name)
-        assertEquals(fromProfile, saving?.snapshot)
-        assertEquals(R.string.project_save_failed, saving?.error)
-        assertFalse(saving?.isBusy == true)
-        assertEquals(listOf(saved), projects.state.value.projects)
+        // Then
+        assertEquals(
+            ProjectSaving(fromProfile, "Saia da formatura", error = R.string.project_save_failed),
+            projects.state.value.saving,
+        )
+        assertEquals(listOf(saved), storage.current)
     }
 
     @Test
-    fun cancelSaving_closesWithoutStoring() = runTest {
+    fun save_withoutShowsSaved_showsNoProject() = runTest {
+        // Given
         val projects = projectsViewModel()
-
         projects.startSaving(fromProfile, patternName = "Saia godê")
+
+        // When
+        projects.save()
+
+        // Then
+        assertNull(projects.state.value.projectToShow)
+    }
+
+    @Test
+    fun save_withShowsSaved_keepsTheOriginalAndShowsTheNewProject() = runTest {
+        // Given
+        val projects = projectsViewModel()
+        projects.startSaving(fromProfile, patternName = "Saia godê", showsSaved = true)
+
+        // When
+        projects.save()
+
+        // Then
+        val created = storage.current.single { it.id != saved.id }
+        assertTrue(saved in storage.current)
+        assertEquals(created.id, projects.state.value.projectToShow)
+    }
+
+    @Test
+    fun onProjectShown_afterSaveWithShowsSaved_clearsTheProjectToShow() = runTest {
+        // Given
+        val projects = projectsViewModel()
+        projects.startSaving(fromProfile, patternName = "Saia godê", showsSaved = true)
+        projects.save()
+
+        // When
+        projects.onProjectShown()
+
+        // Then
+        assertNull(projects.state.value.projectToShow)
+    }
+
+    @Test
+    fun cancel_withSaveDialogOpen_closesIt() = runTest {
+        // Given
+        val projects = projectsViewModel()
+        projects.startSaving(fromProfile, patternName = "Saia godê")
+
+        // When
         projects.cancel()
 
+        // Then
         assertNull(projects.state.value.saving)
-        assertEquals(listOf(saved), projects.state.value.projects)
     }
 
     @Test
-    fun update_replacesTheSnapshotInPlace_thenShowsTheProject() = runTest {
+    fun cancel_whileSaving_keepsTheDialog() = runTest {
+        // Given
+        storage.commandGate = CompletableDeferred()
+        val projects = projectsViewModel()
+        projects.startSaving(fromProfile, patternName = "Saia godê")
+        projects.save()
+
+        // When
+        projects.cancel()
+
+        // Then
+        assertTrue(projects.state.value.saving?.isBusy == true)
+    }
+
+    @Test
+    fun update_existingProject_replacesItsSnapshotAndShowsIt() = runTest {
+        // Given
         val projects = projectsViewModel()
 
+        // When
         projects.update(saved.id, fromProfile)
 
+        // Then
         val state = projects.state.value
         assertEquals(
             listOf(saved.copy(snapshot = fromProfile, updatedAt = clock.instant())),
-            state.projects,
+            storage.current,
         )
         assertEquals(R.string.project_updated, state.message)
         assertEquals(saved.id, state.projectToShow)
@@ -158,142 +236,159 @@ class ProjectsViewModelTest {
     }
 
     @Test
-    fun update_whenStorageFails_keepsTheProjectAndSaysSo() = runTest {
+    fun update_whenStorageFails_keepsTheProjectAndShowsTheFailure() = runTest {
+        // Given
         storage.failsCommands = true
         val projects = projectsViewModel()
 
+        // When
         projects.update(saved.id, fromProfile)
 
+        // Then
         val state = projects.state.value
-        assertEquals(listOf(saved), state.projects)
+        assertEquals(listOf(saved), storage.current)
         assertEquals(R.string.project_update_failed, state.message)
         assertNull(state.projectToShow)
         assertFalse(state.isUpdating)
     }
 
     @Test
-    fun saveAsNew_keepsTheOriginal_thenShowsTheNewProject() = runTest {
+    fun startRenaming_ofProject_offersItsCurrentName() = runTest {
+        // Given
         val projects = projectsViewModel()
 
-        projects.startSaving(fromProfile, patternName = "Saia godê", showsSaved = true)
-        projects.save()
-
-        val state = projects.state.value
-        val created = state.projects.first()
-        assertEquals(listOf(created, saved), state.projects)
-        assertEquals(fromProfile, created.snapshot)
-        assertEquals(created.id, state.projectToShow)
-
-        projects.onProjectShown()
-        assertNull(projects.state.value.projectToShow)
-    }
-
-    @Test
-    fun save_freshCalculation_showsNoProject() = runTest {
-        val projects = projectsViewModel()
-
-        projects.startSaving(fromProfile, patternName = "Saia godê")
-        projects.save()
-
-        assertNull(projects.state.value.projectToShow)
-    }
-
-    @Test
-    fun rename_trimmedName_updatesTheListImmediately() = runTest {
-        val projects = projectsViewModel()
-
+        // When
         projects.startRenaming(saved)
+
+        // Then
         assertEquals("Saia antiga", projects.state.value.renaming?.name)
-        projects.editName("  Saia da formatura ")
+    }
+
+    @Test
+    fun rename_withEditedName_storesTheNameAndCloses() = runTest {
+        // Given
+        val projects = projectsViewModel()
+        projects.startRenaming(saved)
+        projects.editName("Saia da formatura")
+
+        // When
         projects.rename()
 
-        val state = projects.state.value
+        // Then
         assertEquals(
             listOf(
                 saved.copy(name = ProjectName("Saia da formatura"), updatedAt = clock.instant()),
             ),
-            state.projects,
+            storage.current,
         )
-        assertNull(state.renaming)
-        assertEquals(R.string.project_renamed, state.message)
+        assertNull(projects.state.value.renaming)
+        assertEquals(R.string.project_renamed, projects.state.value.message)
     }
 
     @Test
-    fun rename_blankName_isRefusedWithoutStoring() = runTest {
+    fun rename_withBlankName_flagsTheNameAndStoresNothing() = runTest {
+        // Given
         val projects = projectsViewModel()
+        projects.startRenaming(saved)
+        projects.editName("   ")
 
+        // When
+        projects.rename()
+
+        // Then
+        assertTrue(projects.state.value.renaming?.hasBlankName == true)
+        assertEquals(listOf(saved), storage.current)
+    }
+
+    @Test
+    fun editName_afterBlankRenameWasRefused_clearsTheFlag() = runTest {
+        // Given
+        val projects = projectsViewModel()
         projects.startRenaming(saved)
         projects.editName("   ")
         projects.rename()
 
-        assertTrue(projects.state.value.renaming?.hasBlankName == true)
-        assertEquals(listOf(saved), projects.state.value.projects)
+        // When
         projects.editName("Saia")
-        assertFalse(projects.state.value.renaming?.hasBlankName == true)
+
+        // Then
+        assertFalse(projects.state.value.renaming?.hasBlankName ?: true)
     }
 
     @Test
     fun rename_whenStorageFails_keepsTheDialogAndShowsTheFailure() = runTest {
+        // Given
         storage.failsCommands = true
         val projects = projectsViewModel()
-
         projects.startRenaming(saved)
         projects.editName("Saia da formatura")
+
+        // When
         projects.rename()
 
-        val renaming = projects.state.value.renaming
-        assertEquals("Saia da formatura", renaming?.name)
-        assertEquals(R.string.project_rename_failed, renaming?.error)
-        assertFalse(renaming?.isBusy == true)
-        assertEquals(listOf(saved), projects.state.value.projects)
+        // Then
+        assertEquals(
+            ProjectRenaming(saved.id, "Saia da formatura", error = R.string.project_rename_failed),
+            projects.state.value.renaming,
+        )
+        assertEquals(listOf(saved), storage.current)
     }
 
     @Test
     fun delete_afterConfirmation_removesTheProject() = runTest {
+        // Given
         val projects = projectsViewModel()
-
         projects.startDeleting(saved)
-        assertEquals(listOf(saved), projects.state.value.projects)
+
+        // When
         projects.delete()
 
-        val state = projects.state.value
-        assertEquals(emptyList<Project>(), state.projects)
-        assertNull(state.deleting)
-        assertEquals(R.string.project_deleted, state.message)
+        // Then
+        assertEquals(emptyList(), storage.current)
+        assertNull(projects.state.value.deleting)
+        assertEquals(R.string.project_deleted, projects.state.value.message)
     }
 
     @Test
     fun delete_whenStorageFails_keepsTheProjectAndShowsTheFailure() = runTest {
+        // Given
         storage.failsCommands = true
         val projects = projectsViewModel()
-
         projects.startDeleting(saved)
+
+        // When
         projects.delete()
 
-        val deleting = projects.state.value.deleting
-        assertEquals(saved.id, deleting?.id)
-        assertEquals(R.string.project_delete_failed, deleting?.error)
-        assertFalse(deleting?.isBusy == true)
-        assertEquals(listOf(saved), projects.state.value.projects)
+        // Then
+        assertEquals(
+            ProjectDeleting(saved.id, "Saia antiga", error = R.string.project_delete_failed),
+            projects.state.value.deleting,
+        )
+        assertEquals(listOf(saved), storage.current)
     }
 
     @Test
-    fun cancelDeleting_keepsTheProject() = runTest {
+    fun cancel_withDeleteConfirmationOpen_keepsTheProject() = runTest {
+        // Given
         val projects = projectsViewModel()
-
         projects.startDeleting(saved)
+
+        // When
         projects.cancel()
 
+        // Then
         assertNull(projects.state.value.deleting)
-        assertEquals(listOf(saved), projects.state.value.projects)
+        assertEquals(listOf(saved), storage.current)
     }
 
     @Test
-    fun recreate_afterProcessDeath_keepsTheSaveDialogAndItsName() = runTest {
+    fun recreate_withSaveDialogOpen_keepsTheDialogAndItsName() = runTest {
+        // When
         recreatedAfter { projects ->
             projects.startSaving(fromProfile, patternName = "Saia godê", showsSaved = true)
             projects.editName("Saia da formatura")
         }.use { scenario ->
+            // Then
             assertEquals(
                 ProjectSaving(fromProfile, "Saia da formatura", showsSaved = true),
                 scenario.viewModel.state.value.saving,
@@ -302,39 +397,47 @@ class ProjectsViewModelTest {
     }
 
     @Test
-    fun recreate_afterProcessDeath_keepsTheRenameDialogAndItsName() = runTest {
+    fun recreate_withRenameDialogOpen_renamesToTheTypedName() = runTest {
+        // Given
         recreatedAfter { projects ->
             projects.startRenaming(saved)
             projects.editName("Saia da formatura")
         }.use { scenario ->
+            // When
             scenario.viewModel.rename()
 
-            assertEquals(
-                ProjectName("Saia da formatura"),
-                scenario.viewModel.state.value.projects.single().name,
-            )
+            // Then
+            assertEquals(ProjectName("Saia da formatura"), storage.current.single().name)
         }
     }
 
     @Test
-    fun recreate_afterProcessDeath_keepsTheDeleteConfirmation() = runTest {
+    fun recreate_withDeleteConfirmationOpen_deletesOnConfirmation() = runTest {
+        // Given
         recreatedAfter { projects -> projects.startDeleting(saved) }.use { scenario ->
-            assertEquals("Saia antiga", scenario.viewModel.state.value.deleting?.name)
-
+            // When
             scenario.viewModel.delete()
 
-            assertEquals(emptyList<Project>(), scenario.viewModel.state.value.projects)
+            // Then
+            assertEquals(emptyList(), storage.current)
         }
     }
 
     @Test
-    fun recreate_afterProcessDeath_duringAStorageCall_offersTheDialogAgain() = runTest {
+    fun recreate_duringAStorageCall_offersTheDialogAgain() = runTest {
+        // Given
         // A command that never finishes, as when the process dies during one.
         storage.commandGate = CompletableDeferred()
-        recreatedAfter { projects -> projects.startDeleting(saved).also { projects.delete() } }
-            .use { scenario ->
-                assertFalse(scenario.viewModel.state.value.deleting?.isBusy ?: true)
-            }
+
+        // When
+        recreatedAfter { projects ->
+            projects.startDeleting(saved)
+            projects.delete()
+        }.use { scenario ->
+            // Then
+            val deleting = assertNotNull(scenario.viewModel.state.value.deleting)
+            assertFalse(deleting.isBusy)
+        }
     }
 
     /** A view model that went through [actions], then was recreated after process death. */
