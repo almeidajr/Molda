@@ -28,10 +28,8 @@ import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
-import java.time.Clock
-import java.time.Instant
+import com.almeidajr.molda.testing.October18Clock
 import java.time.LocalDate
-import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -41,8 +39,7 @@ class EditProjectTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
-    private val projects = FakeProjectRepository(listOf(formaturaProject(clock.instant())))
+    private val projects = FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
 
     @Test
     fun edit_savedProject_loadsEveryInputAndItsSource() {
@@ -228,7 +225,7 @@ class EditProjectTest {
     }
 
     private fun showRoute(profiles: FakeProfileRepository = FakeProfileRepository()) =
-        composeRule.showRoute(profiles, projects, clock)
+        composeRule.showRoute(profiles, projects, October18Clock)
 
     private fun click(label: String) {
         // Tap the label as a reader does: a small row's centre falls on its Ações button.

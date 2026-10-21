@@ -32,15 +32,9 @@ import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.showRoute
 import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
-
-/** "Today" in every profile screen test: 13/10/2026, so 14/10/2026 is a future date. */
-internal val ProfileTestClock: Clock =
-    Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC)
 
 /** A stored profile measured on 12/10/2026 unless [date] says otherwise. */
 internal fun profile(
@@ -55,7 +49,7 @@ internal fun profile(
 )
 
 /**
- * Shows the app on [profiles] at [ProfileTestClock], with [fontScale] and the theme given, forced
+ * Shows the app on [profiles] at [October13Clock], with [fontScale] and the theme given, forced
  * to [width] dp when given. Recreation restores the app's own content, so call it again after
  * recreating the activity.
  */
@@ -65,7 +59,7 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showProfileRoute(
     width: Int? = null,
     dark: Boolean = false,
     dynamic: Boolean = true,
-) = showRoute(profiles, FakeProjectRepository(), ProfileTestClock) { route ->
+) = showRoute(profiles, FakeProjectRepository(), October13Clock) { route ->
     val theme = @Composable {
         MoldaTheme(darkTheme = dark, dynamicColor = dynamic, content = route)
     }

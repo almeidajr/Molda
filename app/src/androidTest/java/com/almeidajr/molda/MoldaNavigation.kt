@@ -17,10 +17,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.project.showRoute
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
 
 /**
  * Shows the app with no stored profiles or projects, at [size] when given, inside [frame] (the
@@ -32,7 +30,7 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showEmptyApp(
 ) = showRoute(
     FakeProfileRepository(),
     FakeProjectRepository(),
-    Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC),
+    October13Clock,
     size,
     frame,
 )

@@ -15,10 +15,9 @@ import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
-import java.time.Clock
+import com.almeidajr.molda.testing.October18Clock
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -92,7 +91,7 @@ class ProjectsViewModelTest {
         val created = storage.current.single { it.id != saved.id }
         assertEquals(ProjectName("Saia da formatura"), created.name)
         assertEquals(fromProfile, created.snapshot)
-        assertEquals(clock.instant(), created.createdAt)
+        assertEquals(October18Clock.instant(), created.createdAt)
         assertNull(projects.state.value.saving)
         assertEquals(R.string.project_saved, projects.state.value.message)
     }
@@ -227,7 +226,7 @@ class ProjectsViewModelTest {
         // Then
         val state = projects.state.value
         assertEquals(
-            listOf(saved.copy(snapshot = fromProfile, updatedAt = clock.instant())),
+            listOf(saved.copy(snapshot = fromProfile, updatedAt = October18Clock.instant())),
             storage.current,
         )
         assertEquals(R.string.project_updated, state.message)
@@ -277,7 +276,10 @@ class ProjectsViewModelTest {
         // Then
         assertEquals(
             listOf(
-                saved.copy(name = ProjectName("Saia da formatura"), updatedAt = clock.instant()),
+                saved.copy(
+                    name = ProjectName("Saia da formatura"),
+                    updatedAt = October18Clock.instant(),
+                ),
             ),
             storage.current,
         )
@@ -441,15 +443,14 @@ class ProjectsViewModelTest {
     }
 
     /** A view model that went through [actions], then was recreated after process death. */
-    private fun recreatedAfter(actions: (ProjectsViewModel) -> Unit) =
-        viewModelScenario { ProjectsViewModel(storage, clock, createSavedStateHandle()) }.also {
-            actions(it.viewModel)
-            it.recreate()
-        }
+    private fun recreatedAfter(actions: (ProjectsViewModel) -> Unit) = viewModelScenario {
+        ProjectsViewModel(storage, October18Clock, createSavedStateHandle())
+    }.also {
+        actions(it.viewModel)
+        it.recreate()
+    }
 
-    private fun projectsViewModel() = ProjectsViewModel(storage, clock, SavedStateHandle())
-
-    private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
+    private fun projectsViewModel() = ProjectsViewModel(storage, October18Clock, SavedStateHandle())
 }
 
 private val fromProfile = SkirtSnapshot(

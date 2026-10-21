@@ -45,10 +45,8 @@ import com.almeidajr.molda.project.showRoute
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October18Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.Before
@@ -558,8 +556,6 @@ class SkirtCalculatorTest {
             "Linha 2, linha tracejada. Corte da cintura: 12,05 cm",
             "Linha 4, traço e ponto. Corte da barra: 75,05 cm",
         )
-
-        val clock: Clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
     }
 
     /** Shows the app on empty fakes inside [frame] (the theme by default), on the calculator. */
@@ -569,7 +565,7 @@ class SkirtCalculatorTest {
         composeRule.showRoute(
             FakeProfileRepository(),
             FakeProjectRepository(),
-            clock,
+            October18Clock,
             frame = frame,
         )
         composeRule.showSkirtCalculator()

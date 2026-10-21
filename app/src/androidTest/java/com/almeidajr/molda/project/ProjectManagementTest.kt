@@ -22,9 +22,8 @@ import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
-import java.time.Clock
+import com.almeidajr.molda.testing.October18Clock
 import java.time.Instant
-import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -33,8 +32,6 @@ import org.junit.Test
 class ProjectManagementTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
-
-    private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
 
     @Test
     fun rename_withBlankName_showsNameErrorAndKeepsTheName() {
@@ -121,7 +118,7 @@ class ProjectManagementTest {
     }
 
     private fun showProjetos(projects: ProjectRepository) {
-        composeRule.showRoute(FakeProfileRepository(), projects, clock)
+        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
         composeRule.selectDestination("Projetos")
     }
 

@@ -23,10 +23,8 @@ import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
-import java.time.Clock
-import java.time.Instant
+import com.almeidajr.molda.testing.October18Clock
 import java.time.LocalDate
-import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -36,8 +34,6 @@ class ProjectSavingTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
-
     @Test
     fun save_fromProfileResultWithSuggestedName_storesItsSourceAndListsIt() {
         // Given
@@ -46,7 +42,7 @@ class ProjectSavingTest {
             ProfileMeasurements(ProfileName("Ana"), Length(80.0), LocalDate.of(2026, 10, 12)),
         )
         val projects = FakeProjectRepository()
-        composeRule.showRoute(FakeProfileRepository(listOf(ana)), projects, clock)
+        composeRule.showRoute(FakeProfileRepository(listOf(ana)), projects, October18Clock)
         composeRule.showSkirtCalculator()
         click("Usar perfil")
         composeRule.onAllNodes(hasText("Usar perfil: Ana", substring = true))[0].performClick()
@@ -71,7 +67,7 @@ class ProjectSavingTest {
         composeRule.showRoute(
             FakeProfileRepository(),
             FakeProjectRepository().apply { failsCommands = true },
-            clock,
+            October18Clock,
         )
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()

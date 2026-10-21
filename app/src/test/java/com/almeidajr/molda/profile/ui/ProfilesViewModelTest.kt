@@ -13,10 +13,8 @@ import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
-import java.time.Clock
-import java.time.Instant
+import com.almeidajr.molda.testing.October13Clock
 import java.time.LocalDate
-import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -84,7 +82,7 @@ class ProfilesViewModelTest {
         // Given
         storage.loadGate = CompletableDeferred()
         val counted = CollectorCounting(storage)
-        val profiles = ProfilesViewModel(counted, SavedStateHandle(), clock)
+        val profiles = ProfilesViewModel(counted, SavedStateHandle(), October13Clock)
 
         // When
         profiles.load()
@@ -229,7 +227,7 @@ class ProfilesViewModelTest {
 
     @Test
     fun recreate_afterProcessDeath_restoresTheForm() = runTest {
-        viewModelScenario { ProfilesViewModel(storage, createSavedStateHandle(), clock) }
+        viewModelScenario { ProfilesViewModel(storage, createSavedStateHandle(), October13Clock) }
             .use { scenario ->
                 // Given
                 scenario.viewModel.startEditing(ana.id)
@@ -247,15 +245,13 @@ class ProfilesViewModelTest {
             }
     }
 
-    private fun profilesViewModel() = ProfilesViewModel(storage, SavedStateHandle(), clock)
+    private fun profilesViewModel() = ProfilesViewModel(storage, SavedStateHandle(), October13Clock)
 
     private fun ProfilesViewModel.fill(name: String, waist: String, date: String) {
         edit(ProfileField.Name, name)
         edit(ProfileField.Waist, waist)
         edit(ProfileField.Date, date)
     }
-
-    private val clock = Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC)
 }
 
 private val ana = profile(1, "Ana", 80.0)

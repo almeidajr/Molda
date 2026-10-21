@@ -21,9 +21,7 @@ import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
+import com.almeidajr.molda.testing.October18Clock
 import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -41,7 +39,6 @@ class ProjectJourneyTest {
 
     private val storage = IsolatedStorage("project-journey-test.db")
     private val database = storage.database
-    private val clock = Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC)
     private val projects = LocalProjectRepository(database.projects())
 
     @After
@@ -129,7 +126,7 @@ class ProjectJourneyTest {
     }
 
     private fun showRoute() =
-        composeRule.showRoute(LocalProfileRepository(database.profiles()), projects, clock)
+        composeRule.showRoute(LocalProfileRepository(database.profiles()), projects, October18Clock)
 }
 
 private fun Project.namesAndEase(): Pair<String, Double> =
