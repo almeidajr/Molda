@@ -2,7 +2,6 @@ package com.almeidajr.molda.profile
 
 import android.text.format.DateFormat
 import android.view.KeyEvent
-import androidx.activity.compose.setContent
 import androidx.compose.material3.R
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -24,22 +23,15 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.MoldaRoute
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
-import com.almeidajr.molda.project.ui.ProjectsViewModel
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
+import com.almeidajr.molda.project.showRoute
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.Clock
@@ -74,50 +66,19 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showProfileRoute(
     width: Int? = null,
     dark: Boolean = false,
     dynamic: Boolean = true,
-) = runOnUiThread {
-    activity.setContent {
-        val profilesViewModel: ProfilesViewModel = viewModel(
-            key = "isolatedProfiles",
-            factory = viewModelFactory {
-                initializer {
-                    ProfilesViewModel(profiles, createSavedStateHandle(), ProfileTestClock)
-                }
-            },
-        )
-        val projects: ProjectsViewModel = viewModel(
-            key = "isolatedProjects",
-            factory = viewModelFactory {
-                initializer {
-                    ProjectsViewModel(
-                        FakeProjectRepository(),
-                        ProfileTestClock,
-                        createSavedStateHandle(),
-                    )
-                }
-            },
-        )
-        val calculator: SkirtCalculatorViewModel = viewModel()
-        val window = LocalWindowInfo.current.containerSize
-        val route = @Composable {
-            MoldaTheme(darkTheme = dark, dynamicColor = dynamic) {
-                MoldaRoute(
-                    calculator = calculator,
-                    profiles = profilesViewModel,
-                    projects = projects,
-                )
-            }
-        }
-        DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
-            if (width == null) {
-                route()
-            } else {
-                // Forced density does not scale native IME insets; keep the physical proportions.
-                val height = maxOf(900f, width * window.height.toFloat() / window.width)
-                DeviceConfigurationOverride(
-                    DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, height.dp)),
-                    route,
-                )
-            }
+) = showRoute(profiles, FakeProjectRepository(), ProfileTestClock) { route ->
+    val theme = @Composable { MoldaTheme(darkTheme = dark, dynamicColor = dynamic, content = route) }
+    val window = LocalWindowInfo.current.containerSize
+    DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
+        if (width == null) {
+            theme()
+        } else {
+            // Forced density does not scale native IME insets; keep the physical proportions.
+            val height = maxOf(900f, width * window.height.toFloat() / window.width)
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, height.dp)),
+                theme,
+            )
         }
     }
 }
