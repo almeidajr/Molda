@@ -1,0 +1,128 @@
+package com.almeidajr.molda.profile.ui
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavKey
+import com.almeidajr.molda.R
+import com.almeidajr.molda.about.navigation.AboutKey
+import com.almeidajr.molda.profile.navigation.EditedProfile
+import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
+import com.almeidajr.molda.profile.navigation.ProfileEditorKey
+import com.almeidajr.molda.profile.navigation.ProfileManagementKey
+import com.almeidajr.molda.ui.adaptive.ReadablePane
+import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
+import com.almeidajr.molda.ui.navigation.Navigator
+
+internal fun ProfilesViewModel.openEditor(profile: EditedProfile) = when (profile) {
+    EditedProfile.New -> startCreating()
+    is EditedProfile.Existing -> startEditing(profile.id)
+}
+
+/**
+ * Perfis: the profiles beside the open editor, and the picker's editor. [onRequestEditor] opens an
+ * editor, asking first when the open one has changes; [onCancelEditor] closes it the same way.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+internal fun EntryProviderScope<NavKey>.profileSection(
+    navigator: Navigator,
+    profiles: ProfilesViewModel,
+    onRequestEditor: (EditedProfile) -> Unit,
+    onCancelEditor: () -> Unit,
+) {
+    entry<ProfileManagementKey>(
+        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
+            ProfilePane {
+                Text(stringResource(R.string.profile_select_or_create), Modifier.padding(16.dp))
+            }
+        }),
+    ) {
+        Column(Modifier.fillMaxSize()) {
+            MoldaTopAppBar(
+                stringResource(R.string.profile_manage),
+                onAbout = { navigator.push(AboutKey) },
+            )
+            ProfilePane { ProfileList(profiles, onRequestEditor) }
+        }
+    }
+    entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) {
+        OpenEditor(profiles, onCancelEditor)
+    }
+    entry<PickerProfileEditorKey> { OpenEditor(profiles, onCancelEditor) }
+}
+
+/**
+ * Keeps Perfis showing the editor [ProfilesViewModel] has open, unless the picker's editor holds
+ * it: the ViewModel owns whether the editor is open, since a save or delete also closes it.
+ */
+@Composable
+internal fun SyncProfileEditor(navigator: Navigator, profiles: ProfilesViewModel) {
+    val state by profiles.state.collectAsStateWithLifecycle()
+    // Closing the picker's editor on any stack can hand the open form back to Perfis.
+    val stackSizes = navigator.state.roots.map { navigator.state.stackOf(it).size }
+    LaunchedEffect(state.isEditorOpen, state.editingId, stackSizes) {
+        syncProfileEditor(navigator, state.form)
+    }
+}
+
+/**
+ * Shows the editor [form] has open above profile management, unless the picker's editor holds
+ * it, and drops any other editor from profile management.
+ */
+private fun syncProfileEditor(navigator: Navigator, form: ProfileForm) {
+    val stacks = navigator.state
+    val profile = form.editingId?.let(EditedProfile::Existing) ?: EditedProfile.New
+    val editor = ProfileEditorKey(profile).takeIf { form.isEditorOpen }
+    navigator.removeAll { it is ProfileEditorKey && it != editor }
+    if (editor != null && stacks.stackOf(ProfileManagementKey).last() == ProfileManagementKey &&
+        stacks.roots.none { PickerProfileEditorKey in stacks.stackOf(it) }
+    ) {
+        navigator.push(editor, root = ProfileManagementKey)
+    }
+}
+
+@Composable
+private fun OpenEditor(profiles: ProfilesViewModel, onCancel: () -> Unit) {
+    val state by profiles.state.collectAsStateWithLifecycle()
+    ProfilePane {
+        ProfileEditor(
+            state,
+            profiles::edit,
+            profiles::save,
+            onCancel,
+            Modifier,
+            profiles.today,
+            onRetry = profiles::load,
+        )
+    }
+}
+
+@Composable
+private fun ProfileList(profiles: ProfilesViewModel, onRequestEditor: (EditedProfile) -> Unit) {
+    val state by profiles.state.collectAsStateWithLifecycle()
+    ProfilesContent(
+        state,
+        profiles::load,
+        { onRequestEditor(EditedProfile.Existing(it)) },
+        profiles::delete,
+        Modifier.padding(16.dp),
+    )
+}
+
+@Composable
+private fun ProfilePane(content: @Composable () -> Unit) {
+    Box(Modifier.imePadding()) { ReadablePane(content) }
+}
