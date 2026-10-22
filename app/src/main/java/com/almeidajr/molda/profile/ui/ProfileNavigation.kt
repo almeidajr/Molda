@@ -23,6 +23,7 @@ import com.almeidajr.molda.profile.navigation.EditedProfile
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
+import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
@@ -59,9 +60,10 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         }
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) {
-        OpenEditor(profiles, onCancelEditor)
+        // Beside the list the editor is a pane, closed by Cancel, choosing from the list or Back.
+        OpenEditor(profiles, onCancelEditor, isUpShown = !LocalIsTwoPane.current)
     }
-    entry<PickerProfileEditorKey> { OpenEditor(profiles, onCancelEditor) }
+    entry<PickerProfileEditorKey> { OpenEditor(profiles, onCancelEditor, isUpShown = true) }
 }
 
 /**
@@ -95,18 +97,32 @@ private fun syncProfileEditor(navigator: Navigator, form: ProfileForm) {
 }
 
 @Composable
-private fun OpenEditor(profiles: ProfilesViewModel, onCancel: () -> Unit) {
+private fun OpenEditor(profiles: ProfilesViewModel, onCancel: () -> Unit, isUpShown: Boolean) {
     val state by profiles.state.collectAsStateWithLifecycle()
-    ProfilePane {
-        ProfileEditor(
-            state,
-            profiles::edit,
-            profiles::save,
-            onCancel,
-            Modifier,
-            profiles.today,
-            onRetry = profiles::load,
+    Column(Modifier.fillMaxSize()) {
+        MoldaTopAppBar(
+            stringResource(
+                if (state.editingId ==
+                    null
+                ) {
+                    R.string.profile_editor_new
+                } else {
+                    R.string.profile_editor_edit
+                },
+            ),
+            onUp = onCancel.takeIf { isUpShown },
         )
+        ProfilePane {
+            ProfileEditor(
+                state,
+                profiles::edit,
+                profiles::save,
+                onCancel,
+                Modifier,
+                profiles.today,
+                onRetry = profiles::load,
+            )
+        }
     }
 }
 

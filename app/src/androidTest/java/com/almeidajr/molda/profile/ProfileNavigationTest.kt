@@ -106,6 +106,21 @@ class ProfileNavigationTest {
     }
 
     @Test
+    fun perfisNewProfile_up_returnsToProfiles() {
+        // Given
+        composeRule.selectDestination("Perfis")
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
+        composeRule.screenTitle("Novo perfil de medidas").assertIsDisplayed()
+
+        // When
+        composeRule.onNodeWithContentDescription("Voltar").performClick()
+
+        // Then
+        composeRule.screenTitle("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
+    }
+
+    @Test
     fun pickerNewProfile_cancel_returnsToPickerInMoldesWithoutSelecting() {
         // Given
         openPickerEditor()
