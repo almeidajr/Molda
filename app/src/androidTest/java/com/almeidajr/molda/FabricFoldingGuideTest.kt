@@ -1,11 +1,18 @@
 package com.almeidajr.molda
 
+import android.view.KeyEvent
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -13,14 +20,19 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -34,9 +46,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * The guide's step flow and playback controls on the Compose test clock. Nothing here waits for
- * Rive: the player's steps never depend on the native file, and the controls are tested through
- * [GuideFrame] with a stand-in drawing. Native frames are [FabricFoldingRenderingTest]'s job.
+ * The guide's step flow and playback controls on the Compose test clock. The player's steps never
+ * depend on the native file, and the controls are tested through [GuideFrame] with a stand-in
+ * drawing; only the playback flow waits for Rive to load, since its control appears with the
+ * drawing. Native frames are [FabricFoldingRenderingTest]'s job.
  */
 @RunWith(AndroidJUnit4::class)
 class FabricFoldingGuideTest {
@@ -45,6 +58,9 @@ class FabricFoldingGuideTest {
 
     @get:Rule(order = 1)
     val keyboardMode = KeyboardModeRule(composeRule)
+
+    @get:Rule(order = 2)
+    val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     @Test
     fun opening_showsFirstStepWithPreviousDisabled() {
@@ -193,6 +209,48 @@ class FabricFoldingGuideTest {
     }
 
     @Test
+    fun nextAndPrevious_afterPausing_playTheStepShown() {
+        // Given
+        animatorScale.set(1f)
+        calculate()
+        openPlayingGuide()
+        next(times = 1)
+        drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo")).performClick()
+        drawing(FIRST_FOLD).assert(hasStateDescription("Pausado"))
+
+        // When
+        next(times = 1)
+
+        // Then
+        drawing(SECOND_FOLD).assert(hasStateDescription("Reproduzindo"))
+
+        // When: this step is paused too, then left.
+        drawing(SECOND_FOLD).performClick()
+        composeRule.onNodeWithText("Anterior").performClick()
+
+        // Then
+        drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo"))
+    }
+
+    @Test
+    fun recreation_afterPausing_playsTheStep() {
+        // Given
+        animatorScale.set(1f)
+        calculate()
+        openPlayingGuide()
+        next(times = 1)
+        drawing(FIRST_FOLD).performClick()
+        drawing(FIRST_FOLD).assert(hasStateDescription("Pausado"))
+
+        // When
+        composeRule.recreate()
+        composeRule.showEmptyApp()
+
+        // Then
+        drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo"))
+    }
+
+    @Test
     fun recreation_keepsCurrentStep() {
         // Given
         calculate()
@@ -209,83 +267,80 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun frame_beforePlay_offersPlayAndKeepsDrawingStill() {
+    fun frame_onceLoaded_playsWithoutPressing_andOffersPause() {
         // When
         showFrame(FoldingStep.FirstFold)
 
         // Then
-        composeRule.onNodeWithText("Reproduzir etapa").assertIsDisplayed()
-        composeRule.onNodeWithText("Pausar animação").assertDoesNotExist()
-        composeRule.onNodeWithText("play=false replay=0 paused=false").assertExists()
+        composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
+            .assertExists()
+        composeRule.onNode(isToggleable())
+            .assertContentDescriptionEquals("Dobra do tecido em Rive: etapa 2")
+            .assert(hasStateDescription("Reproduzindo"))
+            .assert(hasClickLabel("Pausar animação"))
+        badge("pause").assertIsDisplayed()
+        badge("play").assertDoesNotExist()
     }
 
     @Test
-    fun frame_play_startsDrawingAndOffersRepeatAndPause() {
+    fun frame_tap_pausesThenContinues() {
         // Given
         showFrame(FoldingStep.FirstFold)
 
         // When
-        composeRule.onNodeWithText("Reproduzir etapa").performClick()
+        composeRule.onNode(isToggleable()).performClick()
 
         // Then
-        composeRule.onNodeWithText("play=true replay=1 paused=false").assertExists()
-        composeRule.onNodeWithText("Repetir etapa").assertIsDisplayed()
-        composeRule.onNodeWithText("Pausar animação").assertIsDisplayed()
+        composeRule.onNodeWithText("play=true paused=true", useUnmergedTree = true)
+            .assertExists()
+        composeRule.onNode(isToggleable())
+            .assert(hasStateDescription("Pausado"))
+            .assert(hasClickLabel("Continuar animação"))
+        badge("play").assertIsDisplayed()
+        badge("pause").assertDoesNotExist()
+
+        // When
+        composeRule.onNode(isToggleable()).performClick()
+
+        // Then
+        composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
+            .assertExists()
+        composeRule.onNode(isToggleable()).assert(hasStateDescription("Reproduzindo"))
+        badge("pause").assertIsDisplayed()
     }
 
     @Test
-    fun frame_pause_holdsDrawingAndOffersContinue() {
+    fun frame_enterAndSpace_toggleTheFocusedDrawing() {
         // Given
         showFrame(FoldingStep.FirstFold)
-        composeRule.onNodeWithText("Reproduzir etapa").performClick()
+        keyboardMode.enter()
+        composeRule.onNode(isToggleable()).requestFocus().assertIsFocused()
 
         // When
-        composeRule.onNodeWithText("Pausar animação").performClick()
+        composeRule.pressKey(KeyEvent.KEYCODE_ENTER)
 
         // Then
-        composeRule.onNodeWithText("play=true replay=1 paused=true").assertExists()
-        composeRule.onNodeWithText("Continuar animação").assertIsDisplayed()
+        composeRule.onNode(isToggleable()).assert(hasStateDescription("Pausado"))
+
+        // When
+        composeRule.pressKey(KeyEvent.KEYCODE_SPACE)
+
+        // Then
+        composeRule.onNode(isToggleable()).assert(hasStateDescription("Reproduzindo"))
     }
 
     @Test
-    fun frame_repeatWhilePaused_restartsAndResumes() {
-        // Given
-        showFrame(FoldingStep.FirstFold)
-        composeRule.onNodeWithText("Reproduzir etapa").performClick()
-        composeRule.onNodeWithText("Pausar animação").performClick()
-
+    fun frame_withMotionDisabled_keepsDrawingStill_andIsNoControl() {
         // When
-        composeRule.onNodeWithText("Repetir etapa").performClick()
-
-        // Then
-        composeRule.onNodeWithText("play=true replay=2 paused=false").assertExists()
-        composeRule.onNodeWithText("Pausar animação").assertIsDisplayed()
-    }
-
-    @Test
-    fun frame_onMarking_namesItsMarking() {
-        // Given
-        showFrame(FoldingStep.Marking)
-        composeRule.onNodeWithText("Reproduzir marcação").assertIsDisplayed()
-
-        // When
-        composeRule.onNodeWithText("Reproduzir marcação").performClick()
-
-        // Then
-        composeRule.onNodeWithText("Repetir marcação").assertIsDisplayed()
-    }
-
-    @Test
-    fun frame_withMotionDisabled_replayKeepsDrawingStillWithoutPause() {
-        // Given
         showFrame(FoldingStep.FirstFold, motionEnabled = false)
 
-        // When
-        composeRule.onNodeWithText("Reproduzir etapa").performClick()
-
         // Then
-        composeRule.onNodeWithText("play=false replay=1 paused=false").assertExists()
-        composeRule.onNodeWithText("Pausar animação").assertDoesNotExist()
+        composeRule.onNodeWithText("play=false paused=false", useUnmergedTree = true)
+            .assertExists()
+        composeRule.onAllNodes(isToggleable()).assertCountEquals(0)
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
+        badge("pause").assertDoesNotExist()
+        badge("play").assertDoesNotExist()
     }
 
     @Test
@@ -298,6 +353,8 @@ class FabricFoldingGuideTest {
         // The 288dp frame less its 8dp padding on each side.
         composeRule.onNodeWithContentDescription("Dobra do tecido em Rive: etapa 3")
             .assertWidthIsEqualTo(272.dp).assertHeightIsEqualTo(272.dp)
+        composeRule.onAllNodes(isToggleable()).assertCountEquals(0)
+        badge("pause").assertDoesNotExist()
     }
 
     @Test
@@ -312,7 +369,8 @@ class FabricFoldingGuideTest {
         composeRule.onNodeWithText(
             "Não foi possível abrir a animação. Consulte as instruções abaixo.",
         ).assertIsDisplayed()
-        composeRule.onNodeWithText("Reproduzir etapa").assertDoesNotExist()
+        composeRule.onAllNodes(isToggleable()).assertCountEquals(0)
+        badge("pause").assertDoesNotExist()
     }
 
     @Test
@@ -330,7 +388,8 @@ class FabricFoldingGuideTest {
 
         // Then
         composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
-        composeRule.onNodeWithText("play=false replay=0 paused=false").assertIsDisplayed()
+        composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
+            .assertIsDisplayed()
     }
 
     @Test
@@ -366,16 +425,32 @@ class FabricFoldingGuideTest {
                     GuideFrame(file.value, step, motionEnabled, drawingSize = 288.dp) {
                             _,
                             play,
-                            replay,
                             paused,
                             onLoaded,
                         ->
                         LaunchedEffect(Unit) { onLoaded() }
-                        Text("play=$play replay=$replay paused=$paused")
+                        Text("play=$play paused=$paused")
                     }
                 }
             }
         }
+    }
+
+    /** The step's drawing frame labelled [description], once Rive has drawn it and it toggles. */
+    private fun drawing(description: String): SemanticsNodeInteraction {
+        composeRule.awaitRiveFrame(description)
+        return composeRule.onNode(isToggleable() and hasContentDescription(description))
+    }
+
+    /** The frame's decorative badge showing [glyph], "pause" or "play": what a tap does. */
+    private fun badge(glyph: String) =
+        composeRule.onNode(hasTestTag("guide_badge_$glyph"), useUnmergedTree = true)
+
+    private fun hasStateDescription(state: String) =
+        SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, state)
+
+    private fun hasClickLabel(label: String) = SemanticsMatcher("click label \"$label\"") {
+        it.config.getOrElseNullable(SemanticsActions.OnClick) { null }?.label == label
     }
 
     /** Shows results for an 80 cm waist with 2 cm ease, 60 cm length and 1 and 2 cm allowances. */
@@ -396,6 +471,18 @@ class FabricFoldingGuideTest {
         composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo().performClick()
     }
 
+    /**
+     * Opens the guide with motion on. A playing drawing keeps Compose busy, so the test clock
+     * drives the guide from here: each wait for a drawing advances it.
+     */
+    private fun openPlayingGuide() {
+        val entry = composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo()
+        composeRule.mainClock.autoAdvance = false
+        entry.performClick()
+        // Past the transition into the player.
+        composeRule.mainClock.advanceTimeBy(1_000)
+    }
+
     private fun next(times: Int) = repeat(times) {
         composeRule.onNodeWithText("Próximo").performClick()
     }
@@ -403,5 +490,10 @@ class FabricFoldingGuideTest {
     /** Opens the current step's collapsed "Detalhes" disclosure. */
     private fun expandDetails() {
         composeRule.onNodeWithText("Detalhes").performScrollTo().performClick()
+    }
+
+    private companion object {
+        const val FIRST_FOLD = "Dobra do tecido em Rive: etapa 2"
+        const val SECOND_FOLD = "Dobra do tecido em Rive: etapa 3"
     }
 }

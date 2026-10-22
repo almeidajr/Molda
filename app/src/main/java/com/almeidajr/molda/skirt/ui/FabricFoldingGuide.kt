@@ -1,37 +1,44 @@
 package com.almeidajr.molda.skirt.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
@@ -41,6 +48,7 @@ import app.rive.Result
 import app.rive.Rive
 import app.rive.RiveFile
 import app.rive.RiveFileSource
+import app.rive.RivePointerInputMode
 import app.rive.rememberArtboardResult
 import app.rive.rememberRiveFile
 import app.rive.rememberRiveWorkerOrNull
@@ -70,16 +78,17 @@ internal fun GuideAnimation(
     motionEnabled: Boolean,
     drawingSize: Dp,
 ) {
-    GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, replay, paused, onLoaded ->
-        GuideDrawing(loaded, radii, step, play, replay, paused, onLoaded)
+    GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, paused, onLoaded ->
+        GuideDrawing(loaded, radii, step, play, paused, onLoaded)
     }
 }
 
 /**
- * The drawing's frame and its playback controls, which own replay and pause. Once [file] has
- * loaded, [drawing] draws it, told whether to play, the replay count and whether it is paused,
- * and calls back once it has drawn or failed. Until then the frame stays empty at its final size,
- * described for TalkBack; a long load shows a progress indicator.
+ * The drawing's frame, which owns pausing. Once [file] has loaded, [drawing] draws it, told
+ * whether to play and whether it is paused, and calls back once it has drawn or failed. Until then
+ * the frame stays empty at its final size, described for TalkBack; a long load shows a progress
+ * indicator. With motion enabled, the drawn step plays at once and the whole frame toggles its
+ * pause, with a badge showing what a tap does.
  */
 @Composable
 internal fun <T> GuideFrame(
@@ -90,81 +99,88 @@ internal fun <T> GuideFrame(
     drawing: @Composable (
         file: T,
         play: Boolean,
-        replay: Int,
         paused: Boolean,
         onLoaded: () -> Unit,
     ) -> Unit,
 ) {
-    var replay by remember(motionEnabled) { mutableIntStateOf(0) }
     var paused by remember(motionEnabled) { mutableStateOf(false) }
     var isDrawingLoaded by remember { mutableStateOf(false) }
+    val isToggle = motionEnabled && isDrawingLoaded && file is Result.Success
+    val shape = MaterialTheme.shapes.large
+    val playingState = stringResource(R.string.guide_playing)
+    val pausedState = stringResource(R.string.guide_paused)
+    val toggleLabel = stringResource(if (paused) R.string.guide_resume else R.string.guide_pause)
+    // One modifier chain whether or not it toggles, so the drawing keeps its loaded state.
+    val toggle = if (isToggle) {
+        Modifier.clip(shape)
+            .semantics {
+                stateDescription = if (paused) pausedState else playingState
+                onClick(label = toggleLabel) {
+                    paused = !paused
+                    true
+                }
+            }
+            .toggleable(value = !paused, onValueChange = { paused = !it })
+    } else {
+        Modifier
+    }
     Column(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // The artboards are transparent: this frame is the page behind the drawing.
         Surface(
-            shape = MaterialTheme.shapes.large,
+            shape = shape,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            modifier = Modifier.width(drawingSize).heightIn(min = drawingSize),
+            modifier = Modifier.width(drawingSize).heightIn(min = drawingSize).then(toggle),
         ) {
-            Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
-                when (file) {
-                    null -> Text(stringResource(R.string.guide_animation_unavailable))
+            Box {
+                Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
+                    when (file) {
+                        null -> Text(stringResource(R.string.guide_animation_unavailable))
 
-                    is Result.Error -> Text(stringResource(R.string.guide_animation_error))
+                        is Result.Error -> Text(stringResource(R.string.guide_animation_error))
 
-                    else -> {
-                        val description = drawingDescription(step)
-                        Box(
-                            Modifier.fillMaxWidth().aspectRatio(1f).semantics {
-                                contentDescription = description
-                            },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (file is Result.Success) {
-                                drawing(file.value, motionEnabled && replay > 0, replay, paused) {
-                                    isDrawingLoaded = true
+                        else -> {
+                            val description = drawingDescription(step)
+                            Box(
+                                Modifier.fillMaxWidth().aspectRatio(1f).semantics {
+                                    contentDescription = description
+                                },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (file is Result.Success) {
+                                    drawing(file.value, motionEnabled, paused) {
+                                        isDrawingLoaded = true
+                                    }
                                 }
+                                GuideLoadingIndicator(!isDrawingLoaded, Modifier.matchParentSize())
                             }
-                            GuideLoadingIndicator(!isDrawingLoaded, Modifier.matchParentSize())
                         }
                     }
                 }
-            }
-        }
-        if (file is Result.Success) {
-            FlowRow(horizontalArrangement = Arrangement.Center) {
-                TextButton(onClick = {
-                    replay++
-                    paused = false
-                }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(replayLabel(step, hasPlayed = replay > 0)))
-                }
-                if (motionEnabled && replay > 0) {
-                    TextButton(
-                        onClick = { paused = !paused },
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) {
-                        Text(
-                            stringResource(
-                                if (paused) R.string.guide_resume else R.string.guide_pause,
-                            ),
-                        )
-                    }
-                }
+                if (isToggle) PlaybackBadge(paused, Modifier.align(Alignment.BottomEnd))
             }
         }
     }
 }
 
-/** The replay button's label: Marking names its marking, and a played step offers a repeat. */
-@StringRes
-private fun replayLabel(step: FoldingStep, hasPlayed: Boolean): Int = when {
-    step == FoldingStep.Marking && hasPlayed -> R.string.guide_replay_marking
-    step == FoldingStep.Marking -> R.string.guide_play_marking
-    hasPlayed -> R.string.guide_replay_step
-    else -> R.string.guide_play_step
+/** Shows what a tap on the frame does: pause, or play when paused. Decorative for TalkBack. */
+@Composable
+private fun PlaybackBadge(paused: Boolean, modifier: Modifier = Modifier) {
+    Box(
+        modifier.padding(8.dp).size(40.dp).clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painterResource(if (paused) R.drawable.ic_play_arrow else R.drawable.ic_pause),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            // Glyph-named so tests can tell the badge's two states apart.
+            modifier = Modifier.testTag(if (paused) "guide_badge_play" else "guide_badge_pause"),
+        )
+    }
 }
 
 @Composable
@@ -173,7 +189,6 @@ private fun GuideDrawing(
     radii: SkirtRadii,
     step: FoldingStep,
     play: Boolean,
-    replay: Int,
     paused: Boolean,
     onLoaded: () -> Unit,
 ) {
@@ -211,10 +226,7 @@ private fun GuideDrawing(
                 ready = true
                 onLoaded()
             }
-            LaunchedEffect(instance, play, replay) {
-                instance.setBoolean("play", play)
-                if (play) instance.fireTrigger("restart")
-            }
+            LaunchedEffect(instance, play) { instance.setBoolean("play", play) }
             if (ready) {
                 Rive(
                     file = file,
@@ -222,6 +234,8 @@ private fun GuideDrawing(
                     viewModelInstance = instance,
                     playing = play && !paused,
                     fit = Fit.Contain(),
+                    // The frame around the drawing takes the tap that pauses it.
+                    pointerInputMode = RivePointerInputMode.Observe,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

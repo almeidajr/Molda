@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- pt-BR text: lets Lint check spelling in the app's language instead of English. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt">
     <string name="skirt_title">Saia godê inteira</string>
     <string name="skirt_intro">Medidas em centímetros. Informe folga e margens explicitamente; zero é válido.</string>
     <string name="skirt_calculate">Calcular</string>
@@ -99,12 +100,10 @@
     <string name="guide_animation_unavailable">Não foi possível iniciar a animação. As instruções escritas continuam disponíveis.</string>
     <string name="guide_animation_error">Não foi possível abrir a animação. Consulte as instruções abaixo.</string>
     <string name="guide_measurements_error">Não foi possível aplicar as medidas. Consulte as instruções abaixo.</string>
-    <string name="guide_play_marking">Reproduzir marcação</string>
-    <string name="guide_replay_marking">Repetir marcação</string>
-    <string name="guide_play_step">Reproduzir etapa</string>
-    <string name="guide_replay_step">Repetir etapa</string>
     <string name="guide_resume">Continuar animação</string>
     <string name="guide_pause">Pausar animação</string>
+    <string name="guide_playing">Reproduzindo</string>
+    <string name="guide_paused">Pausado</string>
     <string name="guide_drawing_marking">Marcação proporcional em Rive</string>
     <string name="guide_drawing_cutting">Corte proporcional em Rive</string>
     <string name="guide_drawing_unfolding">Círculo desdobrado proporcional em Rive</string>
@@ -131,7 +130,7 @@
     <string name="guide_unfolding_center">Centro do recorte da cintura: mesma origem de todos os raios, agora no centro do círculo.</string>
 
     <string name="guide_details">Detalhes</string>
-    <string name="guide_details_motion">A imagem parada mostra o resultado da etapa. Reproduza ou repita a etapa para acompanhar o movimento em repetição contínua. Pause para observar; todas as instruções também estão escritas, para seguir sem animação ou cores.</string>
+    <string name="guide_details_motion">O desenho mostra cada etapa em repetição contínua. Toque nele para pausar e observar um momento; toque de novo para continuar. Todas as instruções também estão escritas, para seguir sem animação ou cores.</string>
     <string name="guide_details_preparation">No desenho plano, as ourelas estão à esquerda e à direita (bordas pontilhadas); o fio é paralelo a elas. As bordas cortadas estão em cima e embaixo (tracejadas).</string>
     <string name="guide_details_practice_material">Comece com papel ou retalho.</string>
     <string name="guide_details_first_fold">Resultado: dobra fechada à esquerda (linha contínua); ourelas juntas à direita (pontilhadas); bordas cortadas em cima e embaixo (tracejadas).</string>

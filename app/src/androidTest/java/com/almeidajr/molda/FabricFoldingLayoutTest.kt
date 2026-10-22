@@ -71,13 +71,12 @@ class FabricFoldingLayoutTest {
                     },
                     "$context must wrap within the available width",
                 )
-                val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
-                // The drawing and its controls change the pinned area's height once Rive loads.
+                // The drawing can change the pinned area's height once Rive loads.
                 composeRule.awaitRiveFrame(STEP_DRAWINGS[index])
                 assertLeadAndStepBarInView(STEP_LEADS[index], index, context, fontScale)
                 readDetails(isMarkingOrLater = index >= 3)
-                // Reading to the end of the details leaves the drawing's controls in view.
-                composeRule.onNodeWithText(playLabel).assertIsDisplayed()
+                // Reading to the end of the details leaves the drawing, its control, in view.
+                composeRule.onNodeWithContentDescription(STEP_DRAWINGS[index]).assertIsDisplayed()
                 if (index in 3..4) {
                     composeRule.onNodeWithText("Margem de cintura zero: as linhas 1 e 2 coincidem.")
                         .performScrollTo().assertIsDisplayed()
@@ -220,7 +219,7 @@ class FabricFoldingLayoutTest {
             composeRule.onNodeWithText("Antes de cortar tecido da peça", substring = true)
                 .performScrollTo().assertIsDisplayed()
         }
-        composeRule.onNodeWithText("A imagem parada mostra", substring = true)
+        composeRule.onNodeWithText("O desenho mostra cada etapa", substring = true)
             .performScrollTo().assertIsDisplayed()
     }
 

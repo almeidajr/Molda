@@ -1,5 +1,6 @@
 package com.almeidajr.molda
 
+import android.animation.ValueAnimator
 import android.graphics.Color
 import androidx.activity.compose.setContent
 import androidx.compose.material3.ColorScheme
@@ -7,12 +8,16 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties.StateDescription
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -64,25 +69,22 @@ class FabricFoldingRenderingTest {
     }
 
     @Test
-    fun enabledMotion_everyStepLoopsAfterPlay_withoutBlankFrames() {
+    fun enabledMotion_everyStepLoopsOnEntry_andHoldsStillWhilePaused() {
         // Given
         animatorScale.set(1f)
-        openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
         val colors = drawingColors()
+
+        // When
+        openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+
+        // Then: each step plays without pressing anything, even after the previous one was paused.
         STEP_DRAWINGS.forEachIndexed { index, description ->
-            val label = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
             composeRule.awaitRiveFrame(description) { it.pixels().count(colors::isFabric) > 20 }
-            val drawing = composeRule.onNodeWithContentDescription(description)
-            // Keep the rendered drawing onscreen while starting the infinite loop.
-            composeRule.mainClock.autoAdvance = false
-
-            // When
-            composeRule.onNodeWithText(label).performSemanticsAction(SemanticsActions.OnClick)
-
-            // Then
-            assertContinuousPlayback(description, index == 3, colors)
-            composeRule.onNodeWithText("Pausar animação")
-                .performSemanticsAction(SemanticsActions.OnClick)
+            assertContinuousPlayback(description, colors)
+            val frame = composeRule.onNode(isToggleable() and hasContentDescription(description))
+            // The accessible action: a tap's ripple fades over the drawing on wall-clock time.
+            frame.performSemanticsAction(SemanticsActions.OnClick)
+            val drawing = composeRule.onNodeWithContentDescription(description, true)
             composeRule.mainClock.advanceTimeBy(160)
             val paused = drawing.captureToImage().toPixelMap()
             composeRule.mainClock.advanceTimeBy(1_000)
@@ -93,12 +95,10 @@ class FabricFoldingRenderingTest {
                 },
                 "$description must remain still while paused",
             )
-            composeRule.onNodeWithText("Continuar animação")
-                .performSemanticsAction(SemanticsActions.OnClick)
-            composeRule.mainClock.advanceTimeBy(160)
-            composeRule.onNodeWithText("Pausar animação")
-                .performSemanticsAction(SemanticsActions.OnClick)
-            composeRule.mainClock.autoAdvance = true
+            // A tap reaches the frame through the drawn drawing and continues it.
+            frame.performClick().assert(
+                SemanticsMatcher.expectValue(StateDescription, "Reproduzindo"),
+            )
             advanceOrAssertConcluir(index)
         }
     }
@@ -118,14 +118,14 @@ class FabricFoldingRenderingTest {
                 hasAnyAncestor(hasContentDescription(description))
             composeRule.awaitRiveFrame(description) {
                 // Sampled on every poll, so it also holds while the drawing loads.
-                composeRule.onAllNodes(frameText).assertCountEquals(0)
+                composeRule.onAllNodes(frameText, useUnmergedTree = true).assertCountEquals(0)
                 it.pixels().count(colors::isFabric) > 20
             }
-            // Once shown, the resting drawing never drops back to an empty frame.
+            // Once shown, the playing drawing never drops back to an empty frame.
             repeat(5) {
                 composeRule.mainClock.advanceTimeBy(160)
                 assertTrue(
-                    composeRule.onNodeWithContentDescription(description).captureToImage()
+                    composeRule.onNodeWithContentDescription(description, true).captureToImage()
                         .pixels().count(colors::isFabric) > 20,
                     "$description must stay drawn once it appears",
                 )
@@ -135,7 +135,7 @@ class FabricFoldingRenderingTest {
     }
 
     @Test
-    fun disabledSystemMotion_keepsCompletedFramesAfterReplay_forEveryStep() {
+    fun disabledSystemMotion_keepsCompletedFrames_withoutControl_forEveryStep() {
         // Given
         animatorScale.set(1f)
         openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
@@ -143,6 +143,8 @@ class FabricFoldingRenderingTest {
 
         // When: the actual system preference changes while the guide is already open.
         animatorScale.set(0f)
+        // A still drawing lets Compose go idle again.
+        composeRule.mainClock.autoAdvance = true
 
         // Then
         STEP_DRAWINGS.forEachIndexed { index, description ->
@@ -153,24 +155,29 @@ class FabricFoldingRenderingTest {
             val completed = composeRule.awaitRiveFrame(description) {
                 it.pixels().count(colors::isInk) > 10
             }.pixels()
-            val playLabel = if (index == 3) "Reproduzir marcação" else "Reproduzir etapa"
-            composeRule.onNodeWithText(playLabel).performClick()
+            composeRule.onAllNodes(isToggleable()).assertCountEquals(0)
             composeRule.mainClock.advanceTimeBy(500)
             assertTrue(
                 completed.contentEquals(
-                    composeRule.onNodeWithContentDescription(description).captureToImage().pixels(),
+                    composeRule.onNodeWithContentDescription(description, true).captureToImage()
+                        .pixels(),
                 ),
                 "$description must retain the completed diagram with motion disabled",
             )
             advanceOrAssertConcluir(index)
         }
+        composeRule.mainClock.autoAdvance = false
         animatorScale.set(1f)
+        composeRule.mainClock.advanceTimeBy(160)
         composeRule.onNodeWithText(MOTION_OFF_NOTE).assertDoesNotExist()
-        composeRule.onNodeWithText("Reproduzir etapa").assertIsDisplayed()
+        composeRule.onNode(isToggleable())
+            .assert(SemanticsMatcher.expectValue(StateDescription, "Reproduzindo"))
     }
 
     @Test
     fun markingPixels_preserveCalculatedRatios_whenLengthChangesAndAllowancesAreZero() {
+        // The completed marking, held still.
+        animatorScale.set(0f)
         // Independently worked examples: waist 80 + ease 2, then 60/120 cm lengths.
         listOf(
             listOf("80", "2", "60", "1", "2") to listOf(0.173892, 0.160568, 0.973352, 1.0),
@@ -247,15 +254,9 @@ class FabricFoldingRenderingTest {
         }
     }
 
-    private fun assertContinuousPlayback(
-        description: String,
-        marking: Boolean,
-        colors: DrawingColors,
-    ) {
-        val drawing = composeRule.onNodeWithContentDescription(description)
+    private fun assertContinuousPlayback(description: String, colors: DrawingColors) {
+        val drawing = composeRule.onNodeWithContentDescription(description, true)
         val lateFrames = mutableSetOf<Int>()
-        val replayLabel = if (marking) "Repetir marcação" else "Repetir etapa"
-        var replayed = false
         val started = composeRule.mainClock.currentTime
         var elapsed = 0L
         // Samples a fixed span of test-clock time. A wall-clock wait would only measure how
@@ -263,23 +264,6 @@ class FabricFoldingRenderingTest {
         while (elapsed <= 22_000) {
             composeRule.mainClock.advanceTimeBy(160)
             elapsed = composeRule.mainClock.currentTime - started
-            if (elapsed > 1_000 && !replayed) {
-                // Invoke the accessible control without scrolling the drawing out of view.
-                composeRule.onNodeWithText(replayLabel)
-                    .performSemanticsAction(SemanticsActions.OnClick)
-                composeRule.mainClock.advanceTimeBy(160)
-                if (description == "Dobra do tecido em Rive: etapa 2") {
-                    // Restart brings the moving left half back over this known fabric point.
-                    val restarted = drawing.captureToImage().toPixelMap()
-                    assertTrue(
-                        colors.isFabric(
-                            restarted[restarted.width / 4, restarted.height / 2].toArgb(),
-                        ),
-                        "Replay must restart the fold, not only update its label",
-                    )
-                }
-                replayed = true
-            }
             val image = drawing.captureToImage()
             val frame = image.pixels()
             // The histogram boxes and hex-formats every pixel, so build it only on failure.
@@ -404,7 +388,12 @@ class FabricFoldingRenderingTest {
         }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
-        composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo().performClick()
+        val entry = composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo()
+        // A playing drawing keeps Compose busy, so the test clock drives the guide from here.
+        if (ValueAnimator.areAnimatorsEnabled()) composeRule.mainClock.autoAdvance = false
+        entry.performClick()
+        // Past the transition into the player.
+        composeRule.mainClock.advanceTimeBy(1_000)
         if (advanceToMarking) {
             repeat(3) { composeRule.onNodeWithText("Próximo").performClick() }
         }

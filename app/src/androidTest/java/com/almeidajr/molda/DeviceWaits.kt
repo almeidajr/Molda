@@ -79,28 +79,41 @@ internal fun AndroidComposeTestRule<*, *>.awaitActivityFinishing() =
     waitUntil("activity finishing", DeviceWaitTimeout.inWholeMilliseconds) { activity.isFinishing }
 
 /**
- * Waits until the Rive drawing labelled [description] shows a frame that [isExpected] accepts,
- * and returns that frame, never one covered by the frame's loading indicator. Rive loads and draws
- * on its own threads, which Compose cannot see.
+ * Waits until the Rive drawing labelled [description] shows a frame that [isExpected] accepts, by
+ * default any frame that is not blank, and returns that frame, never one covered by the frame's
+ * loading indicator. Rive loads and draws on its own threads, which Compose cannot see. It reads
+ * the unmerged tree: a playing drawing's frame is a toggle that merges the drawing, its badge and
+ * the indicator into one node. A playing drawing keeps Compose busy, so tests turn
+ * `mainClock.autoAdvance` off while one plays; each check then advances one frame itself.
  */
 @OptIn(ExperimentalTestApi::class)
 internal fun AndroidComposeTestRule<*, *>.awaitRiveFrame(
     description: String,
-    isExpected: (ImageBitmap) -> Boolean = { true },
+    isExpected: (ImageBitmap) -> Boolean = { it.isNotBlank() },
 ): ImageBitmap {
     val timeout = DeviceWaitTimeout.inWholeMilliseconds
+    // Shows the result of the last action, such as a step change, before looking for the drawing.
+    if (!mainClock.autoAdvance) mainClock.advanceTimeByFrame()
     waitUntilAtLeastOneExists(hasContentDescription(description), timeout)
     var frame: ImageBitmap? = null
     val indicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate) and
         hasAnyAncestor(hasContentDescription(description))
     waitUntil("$description rendered as expected", timeout) {
+        if (!mainClock.autoAdvance) mainClock.advanceTimeByFrame()
         // The indicator can appear after the first check, so it is part of every frame's check.
-        val isCovered = onAllNodes(indicator).fetchSemanticsNodes().isNotEmpty()
-        frame = onNodeWithContentDescription(description).captureToImage()
+        val isCovered = onAllNodes(indicator, useUnmergedTree = true).fetchSemanticsNodes()
+            .isNotEmpty()
+        frame = onNodeWithContentDescription(description, useUnmergedTree = true).captureToImage()
             .takeIf { !isCovered && isExpected(it) }
         frame != null
     }
     return checkNotNull(frame)
+}
+
+/** Whether the image holds more than one colour, as a drawn frame does and an empty one not. */
+private fun ImageBitmap.isNotBlank(): Boolean {
+    val pixels = IntArray(width * height).also { readPixels(it) }
+    return pixels.any { it != pixels.first() }
 }
 
 /**
