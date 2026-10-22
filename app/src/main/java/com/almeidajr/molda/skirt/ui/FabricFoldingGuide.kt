@@ -2,6 +2,7 @@ package com.almeidajr.molda.skirt.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
@@ -35,8 +35,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
@@ -83,12 +83,19 @@ internal fun GuideAnimation(
     }
 }
 
+/** How a step's drawing finished loading: drawn, or failed with its error sentence shown. */
+internal enum class DrawingLoad { Drawn, Failed }
+
+/** Test tags of the badge's two glyphs: nothing else tells its decorative states apart. */
+internal const val GUIDE_BADGE_PAUSE_TAG = "guide_badge_pause"
+internal const val GUIDE_BADGE_PLAY_TAG = "guide_badge_play"
+
 /**
  * The drawing's frame, which owns pausing. Once [file] has loaded, [drawing] draws it, told
- * whether to play and whether it is paused, and calls back once it has drawn or failed. Until then
- * the frame stays empty at its final size, described for TalkBack; a long load shows a loading
- * indicator. With motion enabled, the drawn step plays at once and the whole frame toggles its
- * pause, with a badge showing what a tap does.
+ * whether to play and whether it is paused, and reports how it loaded. Until then the frame stays
+ * empty at its final size, described for TalkBack; a long load shows a loading indicator. With
+ * motion enabled, a drawn step plays at once and the whole frame is a pause button, with a badge
+ * showing what a tap does; a failed one keeps only its error sentence.
  */
 @Composable
 internal fun <T> GuideFrame(
@@ -100,27 +107,21 @@ internal fun <T> GuideFrame(
         file: T,
         play: Boolean,
         paused: Boolean,
-        onLoaded: () -> Unit,
+        onLoaded: (DrawingLoad) -> Unit,
     ) -> Unit,
 ) {
     var paused by remember(motionEnabled) { mutableStateOf(false) }
-    var isDrawingLoaded by remember { mutableStateOf(false) }
-    val isToggle = motionEnabled && isDrawingLoaded && file is Result.Success
+    var load by remember { mutableStateOf<DrawingLoad?>(null) }
+    val isPausable = motionEnabled && load == DrawingLoad.Drawn && file is Result.Success
     val shape = MaterialTheme.shapes.large
     val playingState = stringResource(R.string.guide_playing)
     val pausedState = stringResource(R.string.guide_paused)
-    val toggleLabel = stringResource(if (paused) R.string.guide_resume else R.string.guide_pause)
-    // One modifier chain whether or not it toggles, so the drawing keeps its loaded state.
-    val toggle = if (isToggle) {
+    val pauseLabel = stringResource(if (paused) R.string.guide_resume else R.string.guide_pause)
+    // One modifier chain whether or not it pauses, so the drawing keeps its loaded state.
+    val pauseButton = if (isPausable) {
         Modifier.clip(shape)
-            .semantics {
-                stateDescription = if (paused) pausedState else playingState
-                onClick(label = toggleLabel) {
-                    paused = !paused
-                    true
-                }
-            }
-            .toggleable(value = !paused, onValueChange = { paused = !it })
+            .semantics { stateDescription = if (paused) pausedState else playingState }
+            .clickable(onClickLabel = pauseLabel, role = Role.Button) { paused = !paused }
     } else {
         Modifier
     }
@@ -132,7 +133,7 @@ internal fun <T> GuideFrame(
         Surface(
             shape = shape,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            modifier = Modifier.width(drawingSize).heightIn(min = drawingSize).then(toggle),
+            modifier = Modifier.width(drawingSize).heightIn(min = drawingSize).then(pauseButton),
         ) {
             Box {
                 Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
@@ -150,16 +151,14 @@ internal fun <T> GuideFrame(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 if (file is Result.Success) {
-                                    drawing(file.value, motionEnabled, paused) {
-                                        isDrawingLoaded = true
-                                    }
+                                    drawing(file.value, motionEnabled, paused) { load = it }
                                 }
-                                GuideLoadingIndicator(!isDrawingLoaded, Modifier.matchParentSize())
+                                GuideLoadingIndicator(load == null, Modifier.matchParentSize())
                             }
                         }
                     }
                 }
-                if (isToggle) PlaybackBadge(paused, Modifier.align(Alignment.BottomEnd))
+                if (isPausable) PlaybackBadge(paused, Modifier.align(Alignment.BottomEnd))
             }
         }
     }
@@ -177,8 +176,9 @@ private fun PlaybackBadge(paused: Boolean, modifier: Modifier = Modifier) {
             painterResource(if (paused) R.drawable.ic_play_arrow else R.drawable.ic_pause),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            // Glyph-named so tests can tell the badge's two states apart.
-            modifier = Modifier.testTag(if (paused) "guide_badge_play" else "guide_badge_pause"),
+            modifier = Modifier.testTag(
+                if (paused) GUIDE_BADGE_PLAY_TAG else GUIDE_BADGE_PAUSE_TAG,
+            ),
         )
     }
 }
@@ -190,48 +190,46 @@ private fun GuideDrawing(
     step: FoldingStep,
     play: Boolean,
     paused: Boolean,
-    onLoaded: () -> Unit,
+    onLoaded: (DrawingLoad) -> Unit,
 ) {
     // While the artboard or view-model instance loads, the frame stays empty.
     val artboard = rememberArtboardResult(file, step.artboard)
-    if (artboard is Result.Error) {
-        Text(stringResource(R.string.guide_animation_error))
-        LaunchedEffect(Unit) { onLoaded() }
+    val instance = if (artboard is Result.Success) rememberViewModelInstanceResult(file) else null
+    var ready by remember(instance, radii) { mutableStateOf(false) }
+    val load = when {
+        artboard is Result.Error || instance is Result.Error -> DrawingLoad.Failed
+        ready -> DrawingLoad.Drawn
+        else -> null
     }
-    if (artboard !is Result.Success) return
-    when (val result = rememberViewModelInstanceResult(file)) {
-        is Result.Loading -> Unit
+    LaunchedEffect(load) { load?.let(onLoaded) }
+    when {
+        artboard is Result.Error -> Text(stringResource(R.string.guide_animation_error))
 
-        is Result.Error -> {
-            Text(stringResource(R.string.guide_measurements_error))
-            LaunchedEffect(Unit) { onLoaded() }
-        }
+        instance is Result.Error -> Text(stringResource(R.string.guide_measurements_error))
 
-        is Result.Success -> {
-            val instance = result.value
+        artboard is Result.Success && instance is Result.Success -> {
+            val viewModel = instance.value
             val palette = guidePalette(MaterialTheme.colorScheme)
-            var ready by remember(instance, radii) { mutableStateOf(false) }
-            LaunchedEffect(instance, radii, palette) {
-                palette.forEach { (name, color) -> instance.setColor(name, color.toArgb()) }
+            LaunchedEffect(viewModel, radii, palette) {
+                palette.forEach { (name, color) -> viewModel.setColor(name, color.toArgb()) }
                 val markingDiameter = 800f
 
                 // Normalize before converting to Float; large valid centimetre values stay finite.
                 fun diameter(radius: Length) =
                     (markingDiameter * (radius.centimetres / radii.hemCutting.centimetres))
                         .toFloat()
-                instance.setNumber("waistStitching", diameter(radii.waistStitching))
-                instance.setNumber("waistCutting", diameter(radii.waistCutting))
-                instance.setNumber("finishedHem", diameter(radii.finishedHem))
-                instance.setNumber("hemCutting", markingDiameter)
+                viewModel.setNumber("waistStitching", diameter(radii.waistStitching))
+                viewModel.setNumber("waistCutting", diameter(radii.waistCutting))
+                viewModel.setNumber("finishedHem", diameter(radii.finishedHem))
+                viewModel.setNumber("hemCutting", markingDiameter)
                 ready = true
-                onLoaded()
             }
-            LaunchedEffect(instance, play) { instance.setBoolean("play", play) }
+            LaunchedEffect(viewModel, play) { viewModel.setBoolean("play", play) }
             if (ready) {
                 Rive(
                     file = file,
                     artboard = artboard.value,
-                    viewModelInstance = instance,
+                    viewModelInstance = viewModel,
                     playing = play && !paused,
                     fit = Fit.Contain(),
                     // The frame around the drawing takes the tap that pauses it.

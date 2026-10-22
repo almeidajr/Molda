@@ -6,7 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -22,10 +22,9 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -38,9 +37,16 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.rive.Result
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
+import com.almeidajr.molda.skirt.ui.DrawingLoad
 import com.almeidajr.molda.skirt.ui.FoldingStep
+import com.almeidajr.molda.skirt.ui.GUIDE_BADGE_PAUSE_TAG
+import com.almeidajr.molda.skirt.ui.GUIDE_BADGE_PLAY_TAG
 import com.almeidajr.molda.skirt.ui.GuideFrame
+import com.almeidajr.molda.skirt.ui.IndicatorDelay
+import com.almeidajr.molda.skirt.ui.IndicatorMinDuration
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -211,7 +217,6 @@ class FabricFoldingGuideTest {
     @Test
     fun nextAndPrevious_afterPausing_playTheStepShown() {
         // Given
-        animatorScale.set(1f)
         calculate()
         openPlayingGuide()
         next(times = 1)
@@ -235,7 +240,6 @@ class FabricFoldingGuideTest {
     @Test
     fun recreation_afterPausing_playsTheStep() {
         // Given
-        animatorScale.set(1f)
         calculate()
         openPlayingGuide()
         next(times = 1)
@@ -274,12 +278,15 @@ class FabricFoldingGuideTest {
         // Then
         composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
             .assertExists()
-        composeRule.onNode(isToggleable())
+        pauseButton()
             .assertContentDescriptionEquals("Dobra do tecido em Rive: etapa 2")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
             .assert(hasStateDescription("Reproduzindo"))
             .assert(hasClickLabel("Pausar animação"))
-        badge("pause").assertIsDisplayed()
-        badge("play").assertDoesNotExist()
+        // The frame's one click action: no inner control competes with it.
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(1)
+        badge(GUIDE_BADGE_PAUSE_TAG).assertIsDisplayed()
+        badge(GUIDE_BADGE_PLAY_TAG).assertDoesNotExist()
     }
 
     @Test
@@ -288,25 +295,25 @@ class FabricFoldingGuideTest {
         showFrame(FoldingStep.FirstFold)
 
         // When
-        composeRule.onNode(isToggleable()).performClick()
+        pauseButton().performClick()
 
         // Then
         composeRule.onNodeWithText("play=true paused=true", useUnmergedTree = true)
             .assertExists()
-        composeRule.onNode(isToggleable())
+        pauseButton()
             .assert(hasStateDescription("Pausado"))
             .assert(hasClickLabel("Continuar animação"))
-        badge("play").assertIsDisplayed()
-        badge("pause").assertDoesNotExist()
+        badge(GUIDE_BADGE_PLAY_TAG).assertIsDisplayed()
+        badge(GUIDE_BADGE_PAUSE_TAG).assertDoesNotExist()
 
         // When
-        composeRule.onNode(isToggleable()).performClick()
+        pauseButton().performClick()
 
         // Then
         composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
             .assertExists()
-        composeRule.onNode(isToggleable()).assert(hasStateDescription("Reproduzindo"))
-        badge("pause").assertIsDisplayed()
+        pauseButton().assert(hasStateDescription("Reproduzindo"))
+        badge(GUIDE_BADGE_PAUSE_TAG).assertIsDisplayed()
     }
 
     @Test
@@ -314,19 +321,19 @@ class FabricFoldingGuideTest {
         // Given
         showFrame(FoldingStep.FirstFold)
         keyboardMode.enter()
-        composeRule.onNode(isToggleable()).requestFocus().assertIsFocused()
+        pauseButton().requestFocus().assertIsFocused()
 
         // When
         composeRule.pressKey(KeyEvent.KEYCODE_ENTER)
 
         // Then
-        composeRule.onNode(isToggleable()).assert(hasStateDescription("Pausado"))
+        pauseButton().assert(hasStateDescription("Pausado"))
 
         // When
         composeRule.pressKey(KeyEvent.KEYCODE_SPACE)
 
         // Then
-        composeRule.onNode(isToggleable()).assert(hasStateDescription("Reproduzindo"))
+        pauseButton().assert(hasStateDescription("Reproduzindo"))
     }
 
     @Test
@@ -337,10 +344,9 @@ class FabricFoldingGuideTest {
         // Then
         composeRule.onNodeWithText("play=false paused=false", useUnmergedTree = true)
             .assertExists()
-        composeRule.onAllNodes(isToggleable()).assertCountEquals(0)
         composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
-        badge("pause").assertDoesNotExist()
-        badge("play").assertDoesNotExist()
+        badge(GUIDE_BADGE_PAUSE_TAG).assertDoesNotExist()
+        badge(GUIDE_BADGE_PLAY_TAG).assertDoesNotExist()
     }
 
     @Test
@@ -353,8 +359,8 @@ class FabricFoldingGuideTest {
         // The 288dp frame less its 8dp padding on each side.
         composeRule.onNodeWithContentDescription("Dobra do tecido em Rive: etapa 3")
             .assertWidthIsEqualTo(272.dp).assertHeightIsEqualTo(272.dp)
-        composeRule.onAllNodes(isToggleable()).assertCountEquals(0)
-        badge("pause").assertDoesNotExist()
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
+        badge(GUIDE_BADGE_PAUSE_TAG).assertDoesNotExist()
     }
 
     @Test
@@ -369,8 +375,25 @@ class FabricFoldingGuideTest {
         composeRule.onNodeWithText(
             "Não foi possível abrir a animação. Consulte as instruções abaixo.",
         ).assertIsDisplayed()
-        composeRule.onAllNodes(isToggleable()).assertCountEquals(0)
-        badge("pause").assertDoesNotExist()
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
+        badge(GUIDE_BADGE_PAUSE_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun frame_whenDrawingFails_keepsOnlyItsSentence() {
+        // Given
+        composeRule.mainClock.autoAdvance = false
+
+        // When
+        showFrame(FoldingStep.FirstFold, load = DrawingLoad.Failed)
+        composeRule.mainClock.advanceTimeBy(after(IndicatorDelay + IndicatorMinDuration))
+
+        // Then
+        composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
+            .assertIsDisplayed()
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
+        composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
+        badge(GUIDE_BADGE_PAUSE_TAG).assertDoesNotExist()
     }
 
     @Test
@@ -379,12 +402,12 @@ class FabricFoldingGuideTest {
         composeRule.mainClock.autoAdvance = false
         val file = mutableStateOf<Result<Unit>>(Result.Loading)
         showFrame(FoldingStep.FirstFold, file = file)
-        composeRule.mainClock.advanceTimeBy(350)
+        composeRule.mainClock.advanceTimeBy(before(IndicatorDelay))
         composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
 
         // When
         file.value = Result.Success(Unit)
-        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.mainClock.advanceTimeBy(after(IndicatorDelay + IndicatorMinDuration))
 
         // Then
         composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
@@ -398,26 +421,30 @@ class FabricFoldingGuideTest {
         composeRule.mainClock.autoAdvance = false
         val file = mutableStateOf<Result<Unit>>(Result.Loading)
         showFrame(FoldingStep.FirstFold, file = file)
-        composeRule.mainClock.advanceTimeBy(300)
+        composeRule.mainClock.advanceTimeBy(before(IndicatorDelay))
         composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
-        composeRule.mainClock.advanceTimeBy(200)
+        composeRule.mainClock.advanceTimeBy((Margin * 2).inWholeMilliseconds)
         composeRule.onNode(isLoadingIndicator).assertIsDisplayed()
 
-        // When: the drawing loads 100ms after the indicator appears.
+        // When: the drawing loads soon after the indicator appears.
         file.value = Result.Success(Unit)
-        composeRule.mainClock.advanceTimeBy(100)
+        composeRule.mainClock.advanceTimeBy(Margin.inWholeMilliseconds)
 
         // Then
         composeRule.onNode(isLoadingIndicator).assertIsDisplayed()
-        composeRule.mainClock.advanceTimeBy(500)
+        composeRule.mainClock.advanceTimeBy(IndicatorMinDuration.inWholeMilliseconds)
         composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
     }
 
-    /** Shows the drawing frame with a stand-in drawing that prints the playback it receives. */
+    /**
+     * Shows the drawing frame with a stand-in drawing that prints the playback it receives and
+     * reports [load] once shown.
+     */
     private fun showFrame(
         step: FoldingStep,
         motionEnabled: Boolean = true,
         file: State<Result<Unit>> = mutableStateOf(Result.Success(Unit)),
+        load: DrawingLoad = DrawingLoad.Drawn,
     ) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
@@ -428,7 +455,7 @@ class FabricFoldingGuideTest {
                             paused,
                             onLoaded,
                         ->
-                        LaunchedEffect(Unit) { onLoaded() }
+                        LaunchedEffect(Unit) { onLoaded(load) }
                         Text("play=$play paused=$paused")
                     }
                 }
@@ -436,18 +463,17 @@ class FabricFoldingGuideTest {
         }
     }
 
-    /** The step's drawing frame labelled [description], once Rive has drawn it and it toggles. */
+    /** The stand-in drawing's frame, the only clickable node once it pauses. */
+    private fun pauseButton() = composeRule.onNode(hasClickAction())
+
+    /** The step's drawing frame labelled [description], once Rive has drawn it and it pauses. */
     private fun drawing(description: String): SemanticsNodeInteraction {
         composeRule.awaitRiveFrame(description)
-        return composeRule.onNode(isToggleable() and hasContentDescription(description))
+        return composeRule.onNode(hasClickAction() and hasContentDescription(description))
     }
 
-    /** The frame's decorative badge showing [glyph], "pause" or "play": what a tap does. */
-    private fun badge(glyph: String) =
-        composeRule.onNode(hasTestTag("guide_badge_$glyph"), useUnmergedTree = true)
-
-    private fun hasStateDescription(state: String) =
-        SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, state)
+    /** The frame's decorative badge glyph tagged [tag]: what a tap does. */
+    private fun badge(tag: String) = composeRule.onNode(hasTestTag(tag), useUnmergedTree = true)
 
     private fun hasClickLabel(label: String) = SemanticsMatcher("click label \"$label\"") {
         it.config.getOrElseNullable(SemanticsActions.OnClick) { null }?.label == label
@@ -465,23 +491,23 @@ class FabricFoldingGuideTest {
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
     }
 
-    private val isLoadingIndicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
-
+    /** Opens the guide with motion off, so its drawings hold still and Compose goes idle. */
     private fun openGuide() {
-        composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo().performClick()
+        animatorScale.set(0f)
+        composeRule.openGuideFromResults()
     }
 
-    /**
-     * Opens the guide with motion on. A playing drawing keeps Compose busy, so the test clock
-     * drives the guide from here: each wait for a drawing advances it.
-     */
+    /** Opens the guide with motion on; the test clock drives it from here. */
     private fun openPlayingGuide() {
-        val entry = composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo()
-        composeRule.mainClock.autoAdvance = false
-        entry.performClick()
-        // Past the transition into the player.
-        composeRule.mainClock.advanceTimeBy(1_000)
+        animatorScale.set(1f)
+        composeRule.openGuideFromResults()
     }
+
+    /** Test-clock milliseconds just before [time]. */
+    private fun before(time: Duration) = (time - Margin).inWholeMilliseconds
+
+    /** Test-clock milliseconds just after [time]. */
+    private fun after(time: Duration) = (time + Margin).inWholeMilliseconds
 
     private fun next(times: Int) = repeat(times) {
         composeRule.onNodeWithText("Próximo").performClick()
@@ -495,5 +521,8 @@ class FabricFoldingGuideTest {
     private companion object {
         const val FIRST_FOLD = "Dobra do tecido em Rive: etapa 2"
         const val SECOND_FOLD = "Dobra do tecido em Rive: etapa 3"
+
+        /** Test-clock slack around the indicator's timings, a few frames. */
+        val Margin = 50.milliseconds
     }
 }

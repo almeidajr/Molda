@@ -1,6 +1,5 @@
 package com.almeidajr.molda
 
-import android.animation.ValueAnimator
 import android.graphics.Color
 import androidx.activity.compose.setContent
 import androidx.compose.material3.ColorScheme
@@ -8,16 +7,15 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties.StateDescription
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -81,10 +79,13 @@ class FabricFoldingRenderingTest {
         STEP_DRAWINGS.forEachIndexed { index, description ->
             composeRule.awaitRiveFrame(description) { it.pixels().count(colors::isFabric) > 20 }
             assertContinuousPlayback(description, colors)
-            val frame = composeRule.onNode(isToggleable() and hasContentDescription(description))
+            val frame = composeRule.onNode(hasClickAction() and hasContentDescription(description))
             // The accessible action: a tap's ripple fades over the drawing on wall-clock time.
             frame.performSemanticsAction(SemanticsActions.OnClick)
-            val drawing = composeRule.onNodeWithContentDescription(description, true)
+            val drawing = composeRule.onNodeWithContentDescription(
+                description,
+                useUnmergedTree = true,
+            )
             composeRule.mainClock.advanceTimeBy(160)
             val paused = drawing.captureToImage().toPixelMap()
             composeRule.mainClock.advanceTimeBy(1_000)
@@ -96,9 +97,7 @@ class FabricFoldingRenderingTest {
                 "$description must remain still while paused",
             )
             // A tap reaches the frame through the drawn drawing and continues it.
-            frame.performClick().assert(
-                SemanticsMatcher.expectValue(StateDescription, "Reproduzindo"),
-            )
+            frame.performClick().assert(hasStateDescription("Reproduzindo"))
             advanceOrAssertConcluir(index)
         }
     }
@@ -125,7 +124,10 @@ class FabricFoldingRenderingTest {
             repeat(5) {
                 composeRule.mainClock.advanceTimeBy(160)
                 assertTrue(
-                    composeRule.onNodeWithContentDescription(description, true).captureToImage()
+                    composeRule.onNodeWithContentDescription(
+                        description,
+                        useUnmergedTree = true,
+                    ).captureToImage()
                         .pixels().count(colors::isFabric) > 20,
                     "$description must stay drawn once it appears",
                 )
@@ -155,11 +157,15 @@ class FabricFoldingRenderingTest {
             val completed = composeRule.awaitRiveFrame(description) {
                 it.pixels().count(colors::isInk) > 10
             }.pixels()
-            composeRule.onAllNodes(isToggleable()).assertCountEquals(0)
+            composeRule.onAllNodes(hasClickAction() and hasContentDescription(description))
+                .assertCountEquals(0)
             composeRule.mainClock.advanceTimeBy(500)
             assertTrue(
                 completed.contentEquals(
-                    composeRule.onNodeWithContentDescription(description, true).captureToImage()
+                    composeRule.onNodeWithContentDescription(
+                        description,
+                        useUnmergedTree = true,
+                    ).captureToImage()
                         .pixels(),
                 ),
                 "$description must retain the completed diagram with motion disabled",
@@ -170,8 +176,8 @@ class FabricFoldingRenderingTest {
         animatorScale.set(1f)
         composeRule.mainClock.advanceTimeBy(160)
         composeRule.onNodeWithText(MOTION_OFF_NOTE).assertDoesNotExist()
-        composeRule.onNode(isToggleable())
-            .assert(SemanticsMatcher.expectValue(StateDescription, "Reproduzindo"))
+        composeRule.onNode(hasClickAction() and hasContentDescription(STEP_DRAWINGS.last()))
+            .assert(hasStateDescription("Reproduzindo"))
     }
 
     @Test
@@ -255,7 +261,7 @@ class FabricFoldingRenderingTest {
     }
 
     private fun assertContinuousPlayback(description: String, colors: DrawingColors) {
-        val drawing = composeRule.onNodeWithContentDescription(description, true)
+        val drawing = composeRule.onNodeWithContentDescription(description, useUnmergedTree = true)
         val lateFrames = mutableSetOf<Int>()
         val started = composeRule.mainClock.currentTime
         var elapsed = 0L
@@ -388,12 +394,7 @@ class FabricFoldingRenderingTest {
         }
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
-        val entry = composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo()
-        // A playing drawing keeps Compose busy, so the test clock drives the guide from here.
-        if (ValueAnimator.areAnimatorsEnabled()) composeRule.mainClock.autoAdvance = false
-        entry.performClick()
-        // Past the transition into the player.
-        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.openGuideFromResults()
         if (advanceToMarking) {
             repeat(3) { composeRule.onNodeWithText("Próximo").performClick() }
         }

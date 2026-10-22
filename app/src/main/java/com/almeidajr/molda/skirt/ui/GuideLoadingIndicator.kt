@@ -20,8 +20,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
 // Delay-then-hold: quick loads never flash the indicator, and a shown one never just blinks.
-private val IndicatorDelay = 400.milliseconds
-private val IndicatorMinDuration = 500.milliseconds
+internal val IndicatorDelay = 400.milliseconds
+internal val IndicatorMinDuration = 500.milliseconds
 
 /**
  * The drawing frame's loading indicator: it shows once [isLoading] has lasted [IndicatorDelay],
