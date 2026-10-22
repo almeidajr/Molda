@@ -15,7 +15,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Density
@@ -35,16 +34,15 @@ import androidx.navigation3.scene.Scene
 /**
  * One saveable back stack per top-level destination, each starting at its root key. The first
  * root is the start destination: its stack always sits below the selected one, so Back at another
- * root returns to it and Back at its own root leaves the app.
+ * root returns to it and Back at its own root leaves the app. [Navigator] changes it.
  */
 @Stable
 class TopLevelBackStacks internal constructor(
     val roots: List<NavKey>,
     selectedIndex: MutableIntState,
-    private val stacks: List<NavBackStack<NavKey>>,
-    private val onSwitch: () -> Unit,
+    internal val stacks: List<NavBackStack<NavKey>>,
 ) {
-    private var selectedIndex by selectedIndex
+    internal var selectedIndex by selectedIndex
 
     val selected: NavKey get() = roots[selectedIndex]
 
@@ -53,50 +51,6 @@ class TopLevelBackStacks internal constructor(
 
     /** The back stack of the destination whose root is [root], read-only. */
     fun stackOf(root: NavKey): List<NavKey> = stacks[roots.indexOf(root)]
-
-    /** Switches to [root]'s destination, or returns it to its root when already selected. */
-    fun select(root: NavKey) {
-        if (root == selected) {
-            popAbove(0)
-        } else {
-            switchTo(roots.indexOf(root))
-        }
-    }
-
-    /** Pops the selected stack; at another destination's root, returns to the start one. */
-    fun back() {
-        val stack = stacks[selectedIndex]
-        if (stack.size > 1) stack.removeAt(stack.lastIndex) else switchTo(0)
-    }
-
-    /** Pushes [key] onto the stack of the destination whose root is [root]. */
-    fun push(key: NavKey, root: NavKey = selected) {
-        stacks[roots.indexOf(root)].add(key)
-    }
-
-    /** Removes every key matching [predicate] from every stack; roots always stay. */
-    fun removeAll(predicate: (NavKey) -> Boolean) {
-        stacks.forEach { stack -> stack.removeAll { it !in roots && predicate(it) } }
-    }
-
-    /** Removes [key] from every stack. */
-    fun remove(key: NavKey) = removeAll { it == key }
-
-    /** Pops the selected stack down to [key], pushing it when the stack does not hold it. */
-    fun popTo(key: NavKey) {
-        val index = current.indexOf(key)
-        if (index < 0) push(key) else popAbove(index)
-    }
-
-    private fun switchTo(index: Int) {
-        if (index != selectedIndex) onSwitch()
-        selectedIndex = index
-    }
-
-    private fun popAbove(index: Int) {
-        val stack = stacks[selectedIndex]
-        stack.subList(index + 1, stack.size).clear()
-    }
 
     /** The entries to show: the start stack, then the selected stack when it is another one. */
     @Composable
@@ -118,18 +72,12 @@ class TopLevelBackStacks internal constructor(
     }
 }
 
-/**
- * Remembers one back stack per root in [roots], the first being the start destination; [onSwitch]
- * runs whenever another destination is about to be selected.
- */
+/** Remembers one back stack per root in [roots], the first being the start destination. */
 @Composable
-fun rememberTopLevelBackStacks(roots: List<NavKey>, onSwitch: () -> Unit): TopLevelBackStacks {
+fun rememberTopLevelBackStacks(roots: List<NavKey>): TopLevelBackStacks {
     val selectedIndex = rememberSaveable { mutableIntStateOf(0) }
     val stacks = roots.map { rememberNavBackStack(it) }
-    val currentOnSwitch by rememberUpdatedState(onSwitch)
-    return remember(roots) {
-        TopLevelBackStacks(roots, selectedIndex, stacks, onSwitch = { currentOnSwitch() })
-    }
+    return remember(roots) { TopLevelBackStacks(roots, selectedIndex, stacks) }
 }
 
 /** Marks each entry with the root of the destination whose stack holds it. */
