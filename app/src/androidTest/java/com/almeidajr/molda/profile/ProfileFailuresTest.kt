@@ -63,7 +63,7 @@ class ProfileFailuresTest {
         composeRule.pressBack()
 
         // Then
-        composeRule.onNodeWithText("Novo perfil de medidas").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
         gate.complete(Unit)
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Nova").performScrollTo().assertIsDisplayed()
