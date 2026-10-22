@@ -25,6 +25,8 @@ style:
     maxLineLength: 100
   MagicNumber:
     ignorePropertyDeclaration: true
+    # An enum entry names the values it declares, like a constant does.
+    ignoreEnums: true
   UnusedPrivateFunction:
     ignoreAnnotated: ['Preview']
   # Enable inactive rules that mirror Android Studio's redundancy inspections.

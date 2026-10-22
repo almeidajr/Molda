@@ -67,7 +67,7 @@ internal fun DraftingFigure(card: List<CuttingCardGroup>, description: String) {
         Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        SkirtDiagram(card.flatMap { it.entries }.sortedBy { it.number })
+        SkirtDiagram(card.flatMap { it.entries }.sortedBy { it.line.number })
         coincidenceNotes(card, LocalResources.current::getString).forEach { Text(it) }
         Text(
             stringResource(R.string.skirt_diagram_caption),
@@ -163,15 +163,15 @@ private fun SkirtDiagram(entries: List<CuttingCardEntry>) {
                 useCenter = false,
                 topLeft = Offset(center.x - radius, center.y - radius),
                 size = Size(radius * 2, radius * 2),
-                style = Stroke(2.dp.toPx(), pathEffect = linePathEffect(entry.lineStyle)),
+                style = Stroke(2.dp.toPx(), pathEffect = linePathEffect(entry.line.style)),
             )
         }
         drawCircle(ink, 3.dp.toPx(), center)
         entries.forEach { entry ->
             // Waist and hem lines sit at opposite ends of the arc so 1 and 2 never collide.
-            val angle = if (entry.number % 2 == 1) 0.35f else 1.2f
+            val angle = if (entry.line.number % 2 == 1) 0.35f else 1.2f
             val radius = extent * diagramFraction(entry)
-            val label = textMeasurer.measure(entry.number.toString(), labelStyle)
+            val label = textMeasurer.measure(entry.line.number.toString(), labelStyle)
             val labelCenter = center + Offset(radius * cos(angle), radius * sin(angle))
             // A paper-coloured disc keeps the number legible where it crosses its line.
             drawCircle(
@@ -188,8 +188,12 @@ private fun SkirtDiagram(entries: List<CuttingCardEntry>) {
 }
 
 /** Schematic radius as a fraction of the drawing, so even small allowances stay visible. */
-private fun diagramFraction(entry: CuttingCardEntry): Float =
-    DiagramFractions.getValue(minOf(entry.number, entry.coincidentLine ?: entry.number))
+private fun diagramFraction(entry: CuttingCardEntry): Float = DiagramFractions.getValue(
+    minOf(
+        entry.line.number,
+        entry.coincidentLine?.number ?: entry.line.number,
+    ),
+)
 
 // Waist arcs sit wider than to scale so lines 1 and 2 and their numbers stay legible.
 private val DiagramFractions = mapOf(1 to 0.42f, 2 to 0.3f, 3 to 0.84f, 4 to 0.96f)

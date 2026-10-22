@@ -28,12 +28,12 @@ class CuttingCardTest {
         assertEquals(
             listOf(
                 listOf(
-                    CuttingCardEntry(1, LineStyle.Solid, "Costura da cintura", "13,05 cm"),
-                    CuttingCardEntry(3, LineStyle.Dotted, "Barra acabada", "73,05 cm"),
+                    CuttingCardEntry(DraftingLine.WaistStitching, "Costura da cintura", "13,05 cm"),
+                    CuttingCardEntry(DraftingLine.FinishedHem, "Barra acabada", "73,05 cm"),
                 ),
                 listOf(
-                    CuttingCardEntry(2, LineStyle.Dashed, "Corte da cintura", "12,05 cm"),
-                    CuttingCardEntry(4, LineStyle.DashDot, "Corte da barra", "75,05 cm"),
+                    CuttingCardEntry(DraftingLine.WaistCutting, "Corte da cintura", "12,05 cm"),
+                    CuttingCardEntry(DraftingLine.HemCutting, "Corte da barra", "75,05 cm"),
                 ),
             ),
             card.map { it.entries },
@@ -48,7 +48,7 @@ class CuttingCardTest {
         // Then
         assertEquals(
             mapOf(1 to 2, 2 to 1, 3 to null, 4 to null),
-            card.flatMap { it.entries }.associate { it.number to it.coincidentLine },
+            card.flatMap { it.entries }.associate { it.line.number to it.coincidentLine?.number },
         )
     }
 
@@ -60,7 +60,7 @@ class CuttingCardTest {
         // Then
         assertEquals(
             mapOf(1 to null, 2 to null, 3 to 4, 4 to 3),
-            card.flatMap { it.entries }.associate { it.number to it.coincidentLine },
+            card.flatMap { it.entries }.associate { it.line.number to it.coincidentLine?.number },
         )
     }
 

@@ -765,7 +765,6 @@ private fun syncProfileEditor(navigation: TopLevelBackStacks, form: ProfileForm)
 }
 
 /** The skirt calculator; with [onSaveAsNewProject] it edits a saved project. */
-@Suppress("LongParameterList") // The destination's own callbacks, wired by MoldaRoute.
 @Composable
 private fun CalculatorDestination(
     calculator: SkirtCalculatorViewModel,

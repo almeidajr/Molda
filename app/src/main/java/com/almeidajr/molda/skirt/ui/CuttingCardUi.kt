@@ -117,8 +117,8 @@ private fun CuttingCardRadius(entry: CuttingCardEntry) {
     val ink = MaterialTheme.colorScheme.onSecondaryContainer
     val description = stringResource(
         R.string.skirt_card_radius_description,
-        entry.number,
-        stringResource(entry.lineStyle.description),
+        entry.line.number,
+        stringResource(entry.line.style.description),
         entry.label,
         entry.value,
     )
@@ -143,14 +143,14 @@ private fun LineKey(entry: CuttingCardEntry, ink: Color) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(entry.number.toString(), style = MaterialTheme.typography.labelLarge, color = ink)
+        Text(entry.line.number.toString(), style = MaterialTheme.typography.labelLarge, color = ink)
         Canvas(Modifier.size(width = 40.dp, height = 16.dp)) {
             drawLine(
                 color = ink,
                 start = Offset(0f, size.height / 2),
                 end = Offset(size.width, size.height / 2),
                 strokeWidth = 2.dp.toPx(),
-                pathEffect = linePathEffect(entry.lineStyle),
+                pathEffect = linePathEffect(entry.line.style),
             )
         }
         // Card ink, not onSurfaceVariant: the label is quieter through type, not off-role colour.

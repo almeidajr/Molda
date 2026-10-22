@@ -115,7 +115,6 @@ fun DeleteProjectDialog(
     )
 }
 
-@Suppress("LongParameterList") // The dialog's whole state, shared by saving and renaming.
 @Composable
 private fun ProjectNameDialog(
     title: String,

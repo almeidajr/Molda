@@ -15,7 +15,8 @@ class PackageCycleTest {
         val dependencies = files
             .mapNotNull { file ->
                 file.packagee?.name?.let { source ->
-                    source to file.imports.mapNotNull { packageOf(it.name, packages) } - source
+                    source to file.imports.mapNotNull { packageOf(it.name, packages) }
+                        .filterNot { it == source }
                 }
             }
             .groupBy({ it.first }, { it.second })
