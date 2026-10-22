@@ -97,10 +97,7 @@
     <string name="guide_step_unfolding">Desdobrar o círculo</string>
 
     <string name="guide_animation_unavailable">Não foi possível iniciar a animação. As instruções escritas continuam disponíveis.</string>
-    <string name="guide_animation_loading">Carregando animação…</string>
     <string name="guide_animation_error">Não foi possível abrir a animação. Consulte as instruções abaixo.</string>
-    <string name="guide_drawing_preparing">Preparando desenho. As instruções escritas continuam disponíveis.</string>
-    <string name="guide_measurements_loading">Preparando medidas…</string>
     <string name="guide_measurements_error">Não foi possível aplicar as medidas. Consulte as instruções abaixo.</string>
     <string name="guide_play_marking">Reproduzir marcação</string>
     <string name="guide_replay_marking">Repetir marcação</string>

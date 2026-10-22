@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -48,18 +49,27 @@ import com.almeidajr.molda.R
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
+/**
+ * The guide's Rive file, loaded once for the whole player so a step change only swaps the step's
+ * artboard; `null` when no Rive worker can start.
+ */
+@Composable
+internal fun rememberGuideFile(): Result<RiveFile>? {
+    // Vulkan avoids blank frames on software GLES drivers; Rive falls back when unavailable.
+    val worker = rememberRiveWorkerOrNull(renderBackend = RenderBackend.Vulkan)
+    return worker?.let {
+        rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), it)
+    }
+}
+
 @Composable
 internal fun GuideAnimation(
+    file: Result<RiveFile>?,
     radii: SkirtRadii,
     step: FoldingStep,
     motionEnabled: Boolean,
     drawingSize: Dp,
 ) {
-    // Vulkan avoids blank frames on software GLES drivers; Rive falls back when unavailable.
-    val worker = rememberRiveWorkerOrNull(renderBackend = RenderBackend.Vulkan)
-    val file = worker?.let {
-        rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), it)
-    }
     GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, replay, paused ->
         GuideDrawing(loaded, radii, step, play, replay, paused)
     }
@@ -68,6 +78,7 @@ internal fun GuideAnimation(
 /**
  * The drawing's frame and its playback controls, which own replay and pause. Once [file] has
  * loaded, [drawing] draws it, told whether to play, the replay count and whether it is paused.
+ * Until something draws, the frame stays empty at its final size, described for TalkBack.
  */
 @Composable
 internal fun <T> GuideFrame(
@@ -93,16 +104,21 @@ internal fun <T> GuideFrame(
                 when (file) {
                     null -> Text(stringResource(R.string.guide_animation_unavailable))
 
-                    is Result.Loading -> Text(stringResource(R.string.guide_animation_loading))
-
                     is Result.Error -> Text(stringResource(R.string.guide_animation_error))
 
-                    is Result.Success -> drawing(
-                        file.value,
-                        motionEnabled && replay > 0,
-                        replay,
-                        paused,
-                    )
+                    else -> {
+                        val description = drawingDescription(step)
+                        Box(
+                            Modifier.fillMaxWidth().aspectRatio(1f).semantics {
+                                contentDescription = description
+                            },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (file is Result.Success) {
+                                drawing(file.value, motionEnabled && replay > 0, replay, paused)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -149,13 +165,12 @@ private fun GuideDrawing(
     replay: Int,
     paused: Boolean,
 ) {
+    // While the artboard or view-model instance loads, the frame stays empty.
     val artboard = rememberArtboardResult(file, step.artboard)
-    if (artboard !is Result.Success) {
-        Text(stringResource(R.string.guide_drawing_preparing))
-        return
-    }
+    if (artboard is Result.Error) Text(stringResource(R.string.guide_animation_error))
+    if (artboard !is Result.Success) return
     when (val result = rememberViewModelInstanceResult(file)) {
-        is Result.Loading -> Text(stringResource(R.string.guide_measurements_loading))
+        is Result.Loading -> Unit
 
         is Result.Error -> Text(stringResource(R.string.guide_measurements_error))
 
@@ -181,12 +196,6 @@ private fun GuideDrawing(
                 instance.setBoolean("play", play)
                 if (play) instance.fireTrigger("restart")
             }
-            val description = when (step) {
-                FoldingStep.Marking -> stringResource(R.string.guide_drawing_marking)
-                FoldingStep.Cutting -> stringResource(R.string.guide_drawing_cutting)
-                FoldingStep.Unfolding -> stringResource(R.string.guide_drawing_unfolding)
-                else -> stringResource(R.string.guide_drawing_fold, step.ordinal + 1)
-            }
             if (ready) {
                 Rive(
                     file = file,
@@ -194,13 +203,20 @@ private fun GuideDrawing(
                     viewModelInstance = instance,
                     playing = play && !paused,
                     fit = Fit.Contain(),
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).semantics {
-                        contentDescription = description
-                    },
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
     }
+}
+
+/** What the step's drawing shows, for TalkBack. */
+@Composable
+private fun drawingDescription(step: FoldingStep): String = when (step) {
+    FoldingStep.Marking -> stringResource(R.string.guide_drawing_marking)
+    FoldingStep.Cutting -> stringResource(R.string.guide_drawing_cutting)
+    FoldingStep.Unfolding -> stringResource(R.string.guide_drawing_unfolding)
+    else -> stringResource(R.string.guide_drawing_fold, step.ordinal + 1)
 }
 
 /**

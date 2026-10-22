@@ -7,8 +7,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -28,6 +32,7 @@ import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.skirt.ui.FoldingStep
 import com.almeidajr.molda.skirt.ui.GuideAnimation
 import com.almeidajr.molda.skirt.ui.guidePalette
+import com.almeidajr.molda.skirt.ui.rememberGuideFile
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import com.almeidajr.molda.ui.theme.moldaColorScheme
 import kotlin.math.abs
@@ -94,6 +99,37 @@ class FabricFoldingRenderingTest {
             composeRule.onNodeWithText("Pausar animação")
                 .performSemanticsAction(SemanticsActions.OnClick)
             composeRule.mainClock.autoAdvance = true
+            advanceOrAssertConcluir(index)
+        }
+    }
+
+    @Test
+    fun openingAndNext_showEachDrawingInPlace_withoutTextOrBlankFrames() {
+        // Given
+        animatorScale.set(1f)
+        val colors = drawingColors()
+
+        // When
+        openGuide(listOf("80", "2", "60", "1", "2"), advanceToMarking = false)
+
+        // Then
+        STEP_DRAWINGS.forEachIndexed { index, description ->
+            val frameText = hasText("", substring = true) and
+                hasAnyAncestor(hasContentDescription(description))
+            composeRule.awaitRiveFrame(description) {
+                // Sampled on every poll, so it also holds while the drawing loads.
+                composeRule.onAllNodes(frameText).assertCountEquals(0)
+                it.pixels().count(colors::isFabric) > 20
+            }
+            // Once shown, the resting drawing never drops back to an empty frame.
+            repeat(5) {
+                composeRule.mainClock.advanceTimeBy(160)
+                assertTrue(
+                    composeRule.onNodeWithContentDescription(description).captureToImage()
+                        .pixels().count(colors::isFabric) > 20,
+                    "$description must stay drawn once it appears",
+                )
+            }
             advanceOrAssertConcluir(index)
         }
     }
@@ -199,7 +235,13 @@ class FabricFoldingRenderingTest {
             composeRule.activity.setContent {
                 // The full width of the narrowest phone; the still frame ignores motion.
                 MoldaTheme(darkTheme = darkTheme) {
-                    GuideAnimation(radii, step, motionEnabled = false, drawingSize = 288.dp)
+                    GuideAnimation(
+                        rememberGuideFile(),
+                        radii,
+                        step,
+                        motionEnabled = false,
+                        drawingSize = 288.dp,
+                    )
                 }
             }
         }

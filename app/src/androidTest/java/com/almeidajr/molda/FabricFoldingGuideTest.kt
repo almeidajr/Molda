@@ -2,10 +2,14 @@ package com.almeidajr.molda
 
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -280,12 +284,26 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun frame_whileFileLoads_showsLoadingWithoutControls() {
+    fun frame_whileFileLoads_isEmptyAtFinalSize_andKeepsStepDescription() {
         // When
-        showFrame(FoldingStep.FirstFold, file = Result.Loading)
+        showFrame(FoldingStep.SecondFold, file = Result.Loading)
 
         // Then
-        composeRule.onNodeWithText("Carregando animação…").assertIsDisplayed()
+        composeRule.onAllNodes(hasText("", substring = true)).assertCountEquals(0)
+        // The 288dp frame less its 8dp padding on each side.
+        composeRule.onNodeWithContentDescription("Dobra do tecido em Rive: etapa 3")
+            .assertWidthIsEqualTo(272.dp).assertHeightIsEqualTo(272.dp)
+    }
+
+    @Test
+    fun frame_whenFileFails_pointsToWrittenInstructions() {
+        // When
+        showFrame(FoldingStep.FirstFold, file = Result.Error(IllegalStateException("corrupt")))
+
+        // Then
+        composeRule.onNodeWithText(
+            "Não foi possível abrir a animação. Consulte as instruções abaixo.",
+        ).assertIsDisplayed()
         composeRule.onNodeWithText("Reproduzir etapa").assertDoesNotExist()
     }
 

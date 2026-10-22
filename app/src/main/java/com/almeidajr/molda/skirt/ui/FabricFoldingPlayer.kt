@@ -123,6 +123,7 @@ internal fun FabricFoldingPlayer(
         mutableStateOf(GuideProgress())
     }
     val motionEnabled = rememberSystemMotionEnabled()
+    val file = rememberGuideFile()
     Surface(modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             val drawingSize =
@@ -133,7 +134,7 @@ internal fun FabricFoldingPlayer(
                 if (onCalculateOwn != null) ExampleLabel(onCalculateOwn)
                 key(progress.step) {
                     val animation: @Composable () -> Unit = {
-                        GuideAnimation(radii, progress.step, motionEnabled, drawingSize)
+                        GuideAnimation(file, radii, progress.step, motionEnabled, drawingSize)
                     }
                     if (isDrawingPinned) animation()
                     Column(
