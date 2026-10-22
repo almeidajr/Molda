@@ -5,9 +5,12 @@ import android.animation.ValueAnimator
 import android.view.WindowManager
 import android.view.inspector.WindowInspector
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.core.view.ViewCompat
@@ -77,7 +80,8 @@ internal fun AndroidComposeTestRule<*, *>.awaitActivityFinishing() =
 
 /**
  * Waits until the Rive drawing labelled [description] shows a frame that [isExpected] accepts,
- * and returns that frame. Rive loads and draws on its own threads, which Compose cannot see.
+ * and returns that frame, never one covered by the frame's loading indicator. Rive loads and draws
+ * on its own threads, which Compose cannot see.
  */
 @OptIn(ExperimentalTestApi::class)
 internal fun AndroidComposeTestRule<*, *>.awaitRiveFrame(
@@ -87,8 +91,13 @@ internal fun AndroidComposeTestRule<*, *>.awaitRiveFrame(
     val timeout = DeviceWaitTimeout.inWholeMilliseconds
     waitUntilAtLeastOneExists(hasContentDescription(description), timeout)
     var frame: ImageBitmap? = null
+    val indicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate) and
+        hasAnyAncestor(hasContentDescription(description))
     waitUntil("$description rendered as expected", timeout) {
-        frame = onNodeWithContentDescription(description).captureToImage().takeIf(isExpected)
+        // The indicator can appear after the first check, so it is part of every frame's check.
+        val isCovered = onAllNodes(indicator).fetchSemanticsNodes().isNotEmpty()
+        frame = onNodeWithContentDescription(description).captureToImage()
+            .takeIf { !isCovered && isExpected(it) }
         frame != null
     }
     return checkNotNull(frame)

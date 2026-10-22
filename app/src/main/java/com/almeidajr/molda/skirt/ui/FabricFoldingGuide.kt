@@ -70,15 +70,16 @@ internal fun GuideAnimation(
     motionEnabled: Boolean,
     drawingSize: Dp,
 ) {
-    GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, replay, paused ->
-        GuideDrawing(loaded, radii, step, play, replay, paused)
+    GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, replay, paused, onLoaded ->
+        GuideDrawing(loaded, radii, step, play, replay, paused, onLoaded)
     }
 }
 
 /**
  * The drawing's frame and its playback controls, which own replay and pause. Once [file] has
- * loaded, [drawing] draws it, told whether to play, the replay count and whether it is paused.
- * Until something draws, the frame stays empty at its final size, described for TalkBack.
+ * loaded, [drawing] draws it, told whether to play, the replay count and whether it is paused,
+ * and calls back once it has drawn or failed. Until then the frame stays empty at its final size,
+ * described for TalkBack; a long load shows a progress indicator.
  */
 @Composable
 internal fun <T> GuideFrame(
@@ -86,10 +87,17 @@ internal fun <T> GuideFrame(
     step: FoldingStep,
     motionEnabled: Boolean,
     drawingSize: Dp,
-    drawing: @Composable (file: T, play: Boolean, replay: Int, paused: Boolean) -> Unit,
+    drawing: @Composable (
+        file: T,
+        play: Boolean,
+        replay: Int,
+        paused: Boolean,
+        onLoaded: () -> Unit,
+    ) -> Unit,
 ) {
     var replay by remember(motionEnabled) { mutableIntStateOf(0) }
     var paused by remember(motionEnabled) { mutableStateOf(false) }
+    var isDrawingLoaded by remember { mutableStateOf(false) }
     Column(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -115,8 +123,11 @@ internal fun <T> GuideFrame(
                             contentAlignment = Alignment.Center,
                         ) {
                             if (file is Result.Success) {
-                                drawing(file.value, motionEnabled && replay > 0, replay, paused)
+                                drawing(file.value, motionEnabled && replay > 0, replay, paused) {
+                                    isDrawingLoaded = true
+                                }
                             }
+                            GuideLoadingIndicator(!isDrawingLoaded, Modifier.matchParentSize())
                         }
                     }
                 }
@@ -164,15 +175,22 @@ private fun GuideDrawing(
     play: Boolean,
     replay: Int,
     paused: Boolean,
+    onLoaded: () -> Unit,
 ) {
     // While the artboard or view-model instance loads, the frame stays empty.
     val artboard = rememberArtboardResult(file, step.artboard)
-    if (artboard is Result.Error) Text(stringResource(R.string.guide_animation_error))
+    if (artboard is Result.Error) {
+        Text(stringResource(R.string.guide_animation_error))
+        LaunchedEffect(Unit) { onLoaded() }
+    }
     if (artboard !is Result.Success) return
     when (val result = rememberViewModelInstanceResult(file)) {
         is Result.Loading -> Unit
 
-        is Result.Error -> Text(stringResource(R.string.guide_measurements_error))
+        is Result.Error -> {
+            Text(stringResource(R.string.guide_measurements_error))
+            LaunchedEffect(Unit) { onLoaded() }
+        }
 
         is Result.Success -> {
             val instance = result.value
@@ -191,6 +209,7 @@ private fun GuideDrawing(
                 instance.setNumber("finishedHem", diameter(radii.finishedHem))
                 instance.setNumber("hemCutting", markingDiameter)
                 ready = true
+                onLoaded()
             }
             LaunchedEffect(instance, play, replay) {
                 instance.setBoolean("play", play)

@@ -2,6 +2,10 @@ package com.almeidajr.molda
 
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -9,6 +13,7 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -286,7 +291,7 @@ class FabricFoldingGuideTest {
     @Test
     fun frame_whileFileLoads_isEmptyAtFinalSize_andKeepsStepDescription() {
         // When
-        showFrame(FoldingStep.SecondFold, file = Result.Loading)
+        showFrame(FoldingStep.SecondFold, file = mutableStateOf(Result.Loading))
 
         // Then
         composeRule.onAllNodes(hasText("", substring = true)).assertCountEquals(0)
@@ -298,7 +303,10 @@ class FabricFoldingGuideTest {
     @Test
     fun frame_whenFileFails_pointsToWrittenInstructions() {
         // When
-        showFrame(FoldingStep.FirstFold, file = Result.Error(IllegalStateException("corrupt")))
+        showFrame(
+            FoldingStep.FirstFold,
+            file = mutableStateOf(Result.Error(IllegalStateException("corrupt"))),
+        )
 
         // Then
         composeRule.onNodeWithText(
@@ -307,21 +315,62 @@ class FabricFoldingGuideTest {
         composeRule.onNodeWithText("Reproduzir etapa").assertDoesNotExist()
     }
 
+    @Test
+    fun frame_quickLoad_neverShowsIndicator() {
+        // Given
+        composeRule.mainClock.autoAdvance = false
+        val file = mutableStateOf<Result<Unit>>(Result.Loading)
+        showFrame(FoldingStep.FirstFold, file = file)
+        composeRule.mainClock.advanceTimeBy(350)
+        composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
+
+        // When
+        file.value = Result.Success(Unit)
+        composeRule.mainClock.advanceTimeBy(1_000)
+
+        // Then
+        composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
+        composeRule.onNodeWithText("play=false replay=0 paused=false").assertIsDisplayed()
+    }
+
+    @Test
+    fun frame_longLoad_showsIndicatorAfterDelay_andHoldsItBeforeTheDrawing() {
+        // Given
+        composeRule.mainClock.autoAdvance = false
+        val file = mutableStateOf<Result<Unit>>(Result.Loading)
+        showFrame(FoldingStep.FirstFold, file = file)
+        composeRule.mainClock.advanceTimeBy(300)
+        composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
+        composeRule.mainClock.advanceTimeBy(200)
+        composeRule.onNode(isLoadingIndicator).assertIsDisplayed()
+
+        // When: the drawing loads 100ms after the indicator appears.
+        file.value = Result.Success(Unit)
+        composeRule.mainClock.advanceTimeBy(100)
+
+        // Then
+        composeRule.onNode(isLoadingIndicator).assertIsDisplayed()
+        composeRule.mainClock.advanceTimeBy(500)
+        composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
+    }
+
     /** Shows the drawing frame with a stand-in drawing that prints the playback it receives. */
     private fun showFrame(
         step: FoldingStep,
         motionEnabled: Boolean = true,
-        file: Result<Unit> = Result.Success(Unit),
+        file: State<Result<Unit>> = mutableStateOf(Result.Success(Unit)),
     ) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 MoldaTheme {
-                    GuideFrame(file, step, motionEnabled, drawingSize = 288.dp) {
+                    GuideFrame(file.value, step, motionEnabled, drawingSize = 288.dp) {
                             _,
                             play,
                             replay,
                             paused,
+                            onLoaded,
                         ->
+                        LaunchedEffect(Unit) { onLoaded() }
                         Text("play=$play replay=$replay paused=$paused")
                     }
                 }
@@ -340,6 +389,8 @@ class FabricFoldingGuideTest {
         closeSoftKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
     }
+
+    private val isLoadingIndicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
 
     private fun openGuide() {
         composeRule.onNodeWithText("Guia de dobra do tecido").performScrollTo().performClick()
