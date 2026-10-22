@@ -48,10 +48,11 @@ import org.junit.runner.RunWith
 class AdaptiveResultsTest {
     private val publisher = WindowLayoutInfoPublisherRule()
     private val composeRule = createAndroidComposeRule<MainActivity>()
+    private val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     // The publisher must replace the window tracker before the activity starts.
     @get:Rule
-    val rules: TestRule = RuleChain.outerRule(publisher).around(composeRule)
+    val rules: TestRule = RuleChain.outerRule(publisher).around(composeRule).around(animatorScale)
 
     // ForcedSize can shrink density to fit, so pixel checks use the density the content sees.
     private var pixelsPerDp = 1f
@@ -262,6 +263,8 @@ class AdaptiveResultsTest {
     }
 
     private fun showCalculator(size: DpSize?, fontScale: Float) {
+        // The guide's drawings hold still, so Compose goes idle.
+        animatorScale.set(0f)
         composeRule.showEmptyApp(size) { route ->
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                 pixelsPerDp = LocalDensity.current.density

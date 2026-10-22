@@ -32,15 +32,22 @@ import org.junit.runner.RunWith
 /** Guias: the library of guides and the fabric-folding guide opened from it or from a result. */
 @RunWith(AndroidJUnit4::class)
 class GuideLibraryTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 1)
+    val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     private val guideTitle = "Guia de dobra do tecido"
     private val foldingSteps = 6
     private val markingStep = 3
 
     @Before
-    fun showApp() = composeRule.showEmptyApp()
+    fun showApp() {
+        // The guide's drawings hold still, so Compose goes idle.
+        animatorScale.set(0f)
+        composeRule.showEmptyApp()
+    }
 
     @Test
     fun guias_listsFabricFoldingGuide_whichOpensOnExampleDimensionsLabelledOnEveryStep() {

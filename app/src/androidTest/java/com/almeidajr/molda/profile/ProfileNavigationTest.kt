@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
+import com.almeidajr.molda.AnimatorDurationScaleRule
 import com.almeidajr.molda.KeyboardModeRule
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.SkirtTitle
@@ -42,6 +43,9 @@ class ProfileNavigationTest {
 
     @get:Rule(order = 1)
     val keyboardMode = KeyboardModeRule(composeRule)
+
+    @get:Rule(order = 2)
+    val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     private val storage = FakeProfileRepository()
 
@@ -256,6 +260,8 @@ class ProfileNavigationTest {
 
     private fun calculateMySkirtFromGuias() {
         composeRule.closeKeyboard()
+        // The guide's drawings hold still, so Compose goes idle.
+        animatorScale.set(0f)
         composeRule.selectDestination("Guias")
         composeRule.onNode(hasText("Guia de dobra do tecido") and !isHeading()).performClick()
         composeRule.onNodeWithText("Calcular a minha saia").performClick()

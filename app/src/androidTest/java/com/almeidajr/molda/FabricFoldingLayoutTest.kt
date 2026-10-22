@@ -1,10 +1,8 @@
 package com.almeidajr.molda
 
-import android.animation.ValueAnimator
 import androidx.activity.BackEventCompat
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.SemanticsProperties.StateDescription
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.SemanticsMatcher
@@ -14,6 +12,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertWidthIsAtLeast
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -35,8 +34,11 @@ import org.junit.runner.RunWith
 /** The guide player's layout: what stays in view on every step, at normal and double text. */
 @RunWith(AndroidJUnit4::class)
 class FabricFoldingLayoutTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 1)
+    val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     @Test
     fun guide_atNormalAndDoubleText_keepsLeadAndStepBarInViewOnEveryStep() {
@@ -165,9 +167,9 @@ class FabricFoldingLayoutTest {
      * pinned drawing, so the action to take now is readable without hunting for it. At 100% text
      * the whole lead fits. At 200% on a compact phone (320x640 dp) the pinned drawing, a wrapped
      * title and the stacked step bar leave about three lead lines, fewer than the longer leads
-     * need, so there the lead must start in view with at least its first line whole. With system
-     * animations off, the motion note sits above the lead and takes that room at 200%, so there
-     * the note is the first instruction that must start in view.
+     * need. The guide opens with system animations off, so the motion note sits above the lead and
+     * takes that room at 200%: there the note must start in view with at least its first line
+     * whole.
      */
     private fun assertLeadAndStepBarInView(
         lead: String,
@@ -175,15 +177,10 @@ class FabricFoldingLayoutTest {
         context: String,
         fontScale: Float,
     ) {
-        val node = composeRule.onNodeWithText(lead)
         if (fontScale > 1f) {
-            val firstInstruction = if (ValueAnimator.areAnimatorsEnabled()) {
-                node
-            } else {
-                composeRule.onNodeWithText(
-                    "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
-                )
-            }
+            val firstInstruction = composeRule.onNodeWithText(
+                "Movimento desativado no sistema. O desenho mostra o resultado da etapa.",
+            )
             val layouts = mutableListOf<TextLayoutResult>()
             firstInstruction.performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
                 assertTrue(it(layouts))
@@ -199,7 +196,7 @@ class FabricFoldingLayoutTest {
                     "$visible of $unclipped",
             )
         } else {
-            node.fullyVisibleBounds("$context lead")
+            composeRule.onNodeWithText(lead).fullyVisibleBounds("$context lead")
         }
         listOf("Anterior", "Etapa ${index + 1} de 6", if (index == 5) "Concluir" else "Próximo")
             .forEach { composeRule.onNodeWithText(it).fullyVisibleBounds("$context $it") }
@@ -212,9 +209,9 @@ class FabricFoldingLayoutTest {
     private fun readDetails(isMarkingOrLater: Boolean) {
         composeRule.onNodeWithText("Detalhes").performScrollTo()
             .assertHeightIsAtLeast(48.dp)
-            .assert(SemanticsMatcher.expectValue(StateDescription, "Recolhido"))
+            .assert(hasStateDescription("Recolhido"))
             .performClick()
-            .assert(SemanticsMatcher.expectValue(StateDescription, "Expandido"))
+            .assert(hasStateDescription("Expandido"))
         if (isMarkingOrLater) {
             composeRule.onNodeWithText("Antes de cortar tecido da peça", substring = true)
                 .performScrollTo().assertIsDisplayed()
@@ -224,6 +221,8 @@ class FabricFoldingLayoutTest {
     }
 
     private fun openGuide(dark: Boolean, fontScale: Float) {
+        // The guide's drawings hold still, so Compose goes idle.
+        animatorScale.set(0f)
         composeRule.showEmptyApp { route ->
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                 MoldaTheme(darkTheme = dark, dynamicColor = false, content = route)
