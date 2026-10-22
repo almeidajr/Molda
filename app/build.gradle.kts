@@ -19,7 +19,8 @@ android {
         applicationId = "com.almeidajr.molda"
         minSdk = 36
         targetSdk = 37
-        // The release workflow passes these from the tag; local builds are never beta builds or releases.
+        // The release workflow passes these from the tag; local builds are never beta builds or
+        // releases.
         versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 1
         versionName = providers.gradleProperty("versionName").orNull ?: "0.0.0-dev"
 
@@ -27,7 +28,8 @@ android {
     }
 
     signingConfigs {
-        // Only the release workflow has the key (docs/adr/0001); elsewhere release builds stay unsigned.
+        // Only the release workflow has the key (docs/adr/0001); elsewhere release builds stay
+        // unsigned.
         providers.environmentVariable("RELEASE_KEYSTORE_FILE").orNull?.let { keystore ->
             create("release") {
                 storeFile = file(keystore)
@@ -62,7 +64,8 @@ android {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
             it.jvmArgs(
-                // Robolectric's bundled Conscrypt loads a native library; this silences the JDK warning.
+                // Robolectric's bundled Conscrypt loads a native library; this silences the JDK
+                // warning.
                 "--enable-native-access=ALL-UNNAMED",
                 // With app resources, Robolectric's application setup reflects into FileDescriptor.
                 "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED",
@@ -75,7 +78,8 @@ android {
         checkDependencies = true
         checkAllWarnings = true
         checkTestSources = true
-        // Opt-in library check: accessors for file-private Kotlin helpers are trivial and R8 inlines them.
+        // Opt-in library check: accessors for file-private Kotlin helpers are trivial and R8
+        // inlines them.
         disable += "SyntheticAccessor"
     }
 }
@@ -133,7 +137,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    // Raises the coroutines that androidx pulls in transitively, so device tests can use coroutines-test.
+    // Raises the coroutines that androidx pulls in transitively, so device tests can use
+    // coroutines-test.
     implementation(platform(libs.kotlinx.coroutines.bom))
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.hilt.android)

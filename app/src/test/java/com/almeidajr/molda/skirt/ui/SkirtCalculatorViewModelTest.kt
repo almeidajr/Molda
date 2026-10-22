@@ -18,7 +18,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 // The calculator sets its state synchronously and launches no coroutines, so tests read
-// `state.value` directly. Robolectric supplies the real Bundle that saved state is parcelled through.
+// `state.value` directly. Robolectric supplies the real Bundle that saved state is parcelled
+// through.
 @RunWith(RobolectricTestRunner::class)
 class SkirtCalculatorViewModelTest {
     @Test

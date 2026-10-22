@@ -91,6 +91,8 @@ implicit `it` is fine for a short, obvious lambda; name parameters in longer or
 nested lambdas. Boolean names read as affirmative predicates: `isEnabled`,
 `hasErrors`, `canRetry`, `shouldCache`, `wasProcessed`, `willExpire`. Follow
 Molda's PascalCase composable names and camelCase ordinary function names.
+Primitive and `String` constants are `const val` in `SCREAMING_SNAKE_CASE`;
+other deeply immutable top-level values, such as `Dp`, use PascalCase.
 
 **Comments and KDoc.** Let names and types explain the code. Add a short comment
 for a non-obvious constraint or reason. Write KDoc when callers need a contract,

@@ -206,7 +206,10 @@ class FabricFoldingLayoutTest {
             .forEach { composeRule.onNodeWithText(it).fullyVisibleBounds("$context $it") }
     }
 
-    /** The supporting detail starts collapsed under a labelled 48dp disclosure, then reads to the end. */
+    /**
+     * The supporting detail starts collapsed under a labelled 48dp disclosure, then reads to the
+     * end.
+     */
     private fun readDetails(isMarkingOrLater: Boolean) {
         composeRule.onNodeWithText("Detalhes").performScrollTo()
             .assertHeightIsAtLeast(48.dp)

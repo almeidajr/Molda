@@ -29,7 +29,9 @@ class PackageCycleTest {
         // R is generated into the root package; resources are not a dependency on root code.
         const val RESOURCES = "com.almeidajr.molda.R"
 
-        /** The longest production package holding [import]; null for external or resource imports. */
+        /**
+         * The longest production package holding [import]; null for external or resource imports.
+         */
         fun packageOf(import: String, packages: Set<String>): String? =
             if (import == RESOURCES || import.startsWith("$RESOURCES.")) {
                 null

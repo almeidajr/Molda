@@ -3,17 +3,26 @@ config:
 
 naming:
   FunctionNaming:
-    ignoreAnnotated: ['Composable', 'Test']
-  TopLevelPropertyNaming:
-    constantPattern: '[A-Z][A-Za-z0-9]*'
+    ignoreAnnotated: ['Composable']
 
 complexity:
+  # Mirror SonarCloud's S3776 locally; Sonar allows composables a higher limit, so leave them to it.
+  CognitiveComplexMethod:
+    active: true
+    ignoreAnnotated: ['Composable']
+    excludes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
+  # Mirror SonarCloud's S1192: a literal repeated 3 or more times becomes a constant.
+  StringLiteralDuplication:
+    active: true
   LongParameterList:
     ignoreDefaultParameters: true
     # Hoisted Compose state passes values in and one lambda per event out.
     ignoreAnnotated: ['Composable']
 
 style:
+  # The Android Kotlin style guide's limit, which .editorconfig also gives ktlint and Android Studio.
+  MaxLineLength:
+    maxLineLength: 100
   MagicNumber:
     ignorePropertyDeclaration: true
   UnusedPrivateFunction:

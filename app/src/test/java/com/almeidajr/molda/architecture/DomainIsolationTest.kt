@@ -24,7 +24,8 @@ class DomainIsolationTest {
     }
 
     private companion object {
-        // Any Android or AndroidX API, the shared design layer, and every feature's ui or data package.
+        // Any Android or AndroidX API, the shared design layer, and every feature's ui or data
+        // package.
         val FORBIDDEN_IMPORT =
             Regex("""^(androidx?|com\.almeidajr\.molda(\.\w+)*\.(ui|data))\..+""")
     }

@@ -13,6 +13,11 @@ ktlint_code_style = android_studio
 ktlint_function_naming_ignore_when_annotated_with = Composable
 ij_kotlin_allow_trailing_comma = true
 ij_kotlin_allow_trailing_comma_on_call_site = true
+max_line_length = 100
+# Android Studio never writes wildcard imports, which ktlint rejects and cannot fix.
+ij_kotlin_name_count_to_use_star_import = 2147483647
+ij_kotlin_name_count_to_use_star_import_for_members = 2147483647
+ij_kotlin_packages_to_use_import_on_demand = unset
 
 [*.{yml,yaml}]
 indent_size = 2
