@@ -22,6 +22,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.almeidajr.molda.KeyboardModeRule
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertNoTextFieldFocused
@@ -39,8 +40,11 @@ import org.junit.Rule
 import org.junit.Test
 
 class ProfilePresentationTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 1)
+    val keyboardMode = KeyboardModeRule(composeRule)
 
     @Test
     fun profileRows_withSameName_showTheirNotes() {
@@ -202,8 +206,8 @@ class ProfilePresentationTest {
     fun profileRow_openedWithKeyboard_focusesNoField() {
         // Given
         composeRule.showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
-        // A real key event leaves touch mode, so the row joins keyboard focus traversal.
-        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
+        // Out of touch mode, the row joins keyboard focus traversal.
+        keyboardMode.enter()
         composeRule.onNodeWithText("Ana").requestFocus().assertIsFocused()
 
         // When

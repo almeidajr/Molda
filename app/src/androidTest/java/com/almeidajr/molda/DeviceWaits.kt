@@ -141,15 +141,24 @@ class AnimatorDurationScaleRule internal constructor(
 
 /**
  * Takes the device out of touch mode for one test, as a keyboard user leaves it, and puts it back
- * after the test, even when it fails. Touch mode leaves buttons unfocusable.
+ * after the test, even when it fails. Touch mode leaves buttons unfocusable. Touch mode is global
+ * and Compose test clicks do not restore it, so never leave it with a navigation or typing key
+ * (Tab, Enter, arrows): every later test would run as a keyboard user, whose returning window
+ * focus raises the keyboard on a text field. Order it inside [composeRule], whose wait it uses.
  */
-class KeyboardModeRule : ExternalResource() {
+class KeyboardModeRule internal constructor(
+    private val composeRule: AndroidComposeTestRule<*, *>,
+) : ExternalResource() {
     private var isChanged = false
 
-    /** Leaves touch mode until the test ends. */
+    /** Leaves touch mode until the test ends, once the activity window has left it. */
     fun enter() {
         isChanged = true
         InstrumentationRegistry.getInstrumentation().setInTouchMode(false)
+        // The window learns of the change asynchronously.
+        composeRule.waitUntil("touch mode left", DeviceWaitTimeout.inWholeMilliseconds) {
+            composeRule.runOnUiThread { !composeRule.activity.window.decorView.isInTouchMode }
+        }
     }
 
     override fun after() {

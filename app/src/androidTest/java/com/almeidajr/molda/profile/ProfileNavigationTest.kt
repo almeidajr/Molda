@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
+import com.almeidajr.molda.KeyboardModeRule
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.SkirtTitle
 import com.almeidajr.molda.awaitActivityFocus
@@ -36,8 +37,11 @@ import org.junit.Rule
 import org.junit.Test
 
 class ProfileNavigationTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 1)
+    val keyboardMode = KeyboardModeRule(composeRule)
 
     private val storage = FakeProfileRepository()
 
@@ -56,8 +60,8 @@ class ProfileNavigationTest {
     @Test
     fun navigationSuite_withKeyboard_opensPerfis() {
         // Given
-        // A real key event leaves touch mode, so navigation items join keyboard focus traversal.
-        composeRule.pressKey(KeyEvent.KEYCODE_TAB)
+        // Out of touch mode, navigation items join keyboard focus traversal.
+        keyboardMode.enter()
 
         // When
         composeRule.destination("Perfis").requestFocus().assertIsFocused()
