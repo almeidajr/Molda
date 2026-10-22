@@ -277,8 +277,8 @@ private fun MarkingContext(radii: SkirtRadii) {
     val card = cuttingCard(radii, text)
     // The four radii read as one key: closer together than the paragraphs around them.
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        card.flatMap { it.entries }.sortedBy { it.number }.forEach { entry ->
-            Text("${entry.number}. ${entry.label}: ${entry.value}")
+        card.flatMap { it.entries }.sortedBy { it.line.number }.forEach { entry ->
+            Text("${entry.line.number}. ${entry.label}: ${entry.value}")
         }
     }
     Text(stringResource(R.string.guide_marking_references))

@@ -6,6 +6,10 @@ import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtRadii
+import com.almeidajr.molda.skirt.ui.DraftingLine.FinishedHem
+import com.almeidajr.molda.skirt.ui.DraftingLine.HemCutting
+import com.almeidajr.molda.skirt.ui.DraftingLine.WaistCutting
+import com.almeidajr.molda.skirt.ui.DraftingLine.WaistStitching
 import java.util.Locale
 
 /** Stroke patterns that tell the four drafting lines apart without relying on color. */
@@ -16,18 +20,25 @@ enum class LineStyle(@param:StringRes val description: Int) {
     DashDot(R.string.skirt_line_style_dash_dot),
 }
 
+/** The four drafting lines, numbered as the diagram and the cutting card key them. */
+enum class DraftingLine(val number: Int, val style: LineStyle, @param:StringRes val label: Int) {
+    WaistStitching(1, LineStyle.Solid, R.string.skirt_line_waist_stitching),
+    WaistCutting(2, LineStyle.Dashed, R.string.skirt_line_waist_cutting),
+    FinishedHem(3, LineStyle.Dotted, R.string.skirt_line_finished_hem),
+    HemCutting(4, LineStyle.DashDot, R.string.skirt_line_hem_cutting),
+}
+
 /**
- * One radius on the cutting card, keyed to the diagram by [number] and [lineStyle].
+ * One radius on the cutting card, keyed to the diagram by its [line].
  *
  * [value] keeps its unit behind a non-breaking space so they never wrap apart.
  * [coincidentLine] names the line drawn at the same radius when an allowance is zero.
  */
 data class CuttingCardEntry(
-    val number: Int,
-    val lineStyle: LineStyle,
+    val line: DraftingLine,
     val label: String,
     val value: String,
-    val coincidentLine: Int? = null,
+    val coincidentLine: DraftingLine? = null,
 )
 
 data class CuttingCardGroup(val title: String, val entries: List<CuttingCardEntry>)
@@ -36,47 +47,29 @@ data class CuttingCardGroup(val title: String, val entries: List<CuttingCardEntr
  * Maps calculated radii to the reference-line group followed by the cutting-line group,
  * resolving its titles and labels with [text].
  */
-@Suppress("MagicNumber") // Diagram numbers 1–4 are the fixed key shared with the diagram.
 fun cuttingCard(radii: SkirtRadii, text: (Int) -> String): List<CuttingCardGroup> {
     val waistCoincides = radii.waistCutting == radii.waistStitching
     val hemCoincides = radii.hemCutting == radii.finishedHem
+    fun entry(line: DraftingLine, radius: Length, partner: DraftingLine, coincides: Boolean) =
+        CuttingCardEntry(
+            line,
+            text(line.label),
+            formatCentimetres(radius),
+            partner.takeIf { coincides },
+        )
     return listOf(
         CuttingCardGroup(
             text(R.string.skirt_reference_lines),
             listOf(
-                CuttingCardEntry(
-                    1,
-                    LineStyle.Solid,
-                    text(R.string.skirt_line_waist_stitching),
-                    formatCentimetres(radii.waistStitching),
-                    2.takeIf { waistCoincides },
-                ),
-                CuttingCardEntry(
-                    3,
-                    LineStyle.Dotted,
-                    text(R.string.skirt_line_finished_hem),
-                    formatCentimetres(radii.finishedHem),
-                    4.takeIf { hemCoincides },
-                ),
+                entry(WaistStitching, radii.waistStitching, WaistCutting, waistCoincides),
+                entry(FinishedHem, radii.finishedHem, HemCutting, hemCoincides),
             ),
         ),
         CuttingCardGroup(
             text(R.string.skirt_cutting_lines),
             listOf(
-                CuttingCardEntry(
-                    2,
-                    LineStyle.Dashed,
-                    text(R.string.skirt_line_waist_cutting),
-                    formatCentimetres(radii.waistCutting),
-                    1.takeIf { waistCoincides },
-                ),
-                CuttingCardEntry(
-                    4,
-                    LineStyle.DashDot,
-                    text(R.string.skirt_line_hem_cutting),
-                    formatCentimetres(radii.hemCutting),
-                    3.takeIf { hemCoincides },
-                ),
+                entry(WaistCutting, radii.waistCutting, WaistStitching, waistCoincides),
+                entry(HemCutting, radii.hemCutting, FinishedHem, hemCoincides),
             ),
         ),
     )
@@ -91,10 +84,10 @@ fun formatDecimal(value: Double): String = String.format(PtBr, "%.2f", value)
 /** "Margem de … zero" notes for each pair of lines drawn at the same radius. */
 fun coincidenceNotes(card: List<CuttingCardGroup>, text: (Int) -> String): List<String> = card
     .flatMap { it.entries }
-    .filter { entry -> entry.coincidentLine?.let { it > entry.number } == true }
+    .filter { entry -> entry.coincidentLine?.let { it.number > entry.line.number } == true }
     .map { entry ->
         text(
-            if (entry.number == 1) {
+            if (entry.line == WaistStitching) {
                 R.string.skirt_waist_lines_coincide
             } else {
                 R.string.skirt_hem_lines_coincide
@@ -112,11 +105,11 @@ fun diagramDescription(
     hemAllowance: String,
     text: (Int) -> String,
 ): String {
-    val key = card.flatMap { it.entries }.sortedBy { it.number }.map { entry ->
+    val key = card.flatMap { it.entries }.sortedBy { it.line.number }.map { entry ->
         text(R.string.skirt_diagram_line_key).format(
             PtBr,
-            entry.number,
-            text(entry.lineStyle.description),
+            entry.line.number,
+            text(entry.line.style.description),
             entry.label.lowercase(),
         )
     }
