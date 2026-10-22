@@ -193,7 +193,8 @@ class AdaptiveResultsTest {
 
     @Test
     fun flatVerticalHinge_guidePlayerSpansFullWidth() {
-        // Given: whether the calculator behind it has one column or two, a flat fold splits neither.
+        // Given: whether the calculator behind it has one column or two, a flat fold splits
+        // neither.
         showCalculator(size = null, fontScale = 1f)
         calculateReferenceCase()
         openGuide()
@@ -215,7 +216,8 @@ class AdaptiveResultsTest {
 
     @Test
     fun halfOpenedVerticalHinge_keepsSinglePaneExampleGuideOnOneSide() {
-        // Given: too narrow for the library beside the guide, so the example guide is a single pane.
+        // Given: too narrow for the library beside the guide, so the example guide is a single
+        // pane.
         showCalculator(DpSize(700.dp, 800.dp), fontScale = 1f)
         val hinge = publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
         composeRule.selectDestination("Guias")

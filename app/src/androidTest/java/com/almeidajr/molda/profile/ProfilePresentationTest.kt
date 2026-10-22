@@ -215,7 +215,8 @@ class ProfilePresentationTest {
 
         // Then
         composeRule.onNodeWithText("Editar perfil de medidas").assertIsDisplayed()
-        // The list leaves after the editor arrives; losing its focused row must not refocus a field.
+        // The list leaves after the editor arrives; losing its focused row must not refocus a
+        // field.
         composeRule.assertNoTextFieldFocused()
     }
 

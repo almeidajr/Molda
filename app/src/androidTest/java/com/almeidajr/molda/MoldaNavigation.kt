@@ -173,7 +173,9 @@ internal fun SemanticsNodeInteractionsProvider.openSkirtCalculator() {
     screenTitle(SkirtTitle).assertExists()
 }
 
-/** Shows the skirt calculator: selects Moldes when needed, then opens the skirt from the catalog. */
+/**
+ * Shows the skirt calculator: selects Moldes when needed, then opens the skirt from the catalog.
+ */
 internal fun SemanticsNodeInteractionsProvider.showSkirtCalculator() {
     showDestination("Moldes")
     if (onNode(hasText(SkirtTitle) and isHeading()).isNotDisplayed()) openSkirtCalculator()

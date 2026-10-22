@@ -31,8 +31,8 @@ import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 
 /**
- * About Molda: what it does, the installed [versionName] and the open-source licences row. The space
- * below the rows is reserved for the GitHub Releases update check.
+ * About Molda: what it does, the installed [versionName] and the open-source licences row. The
+ * space below the rows is reserved for the GitHub Releases update check.
  */
 @Composable
 fun AboutScreen(

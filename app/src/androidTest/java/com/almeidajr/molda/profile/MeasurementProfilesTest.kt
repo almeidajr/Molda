@@ -204,7 +204,8 @@ class MeasurementProfilesTest {
         // Given
         showNewProfileEditor()
         // Dirty the editor without the keyboard: until the IME process finishes hiding, its Back
-        // callback moves to the next focused window, so Back would close it instead of the calendar.
+        // callback moves to the next focused window, so Back would close it instead of the
+        // calendar.
         composeRule.openCalendar()
         composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 12)), ignoreCase = true)
             .performClick()

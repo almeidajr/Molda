@@ -393,7 +393,8 @@ fun MoldaRoute(
             OpenedProject(key.id, projectState, onClose = { navigation.remove(key) }) { project ->
                 ProjectScreen(
                     project,
-                    // Beside the list the project is a pane, closed by choosing from the list or Back.
+                    // Beside the list the project is a pane, closed by choosing from the list or
+                    // Back.
                     onUp = if (LocalIsTwoPane.current) null else navigation::back,
                     onEdit = {
                         val snapshot = project.snapshot
@@ -666,7 +667,8 @@ fun MoldaRoute(
                                 modifier = Modifier
                                     .padding(padding)
                                     .padding(bottom = snackbarInset),
-                                // A narrow window shows one destination at a time, in a single pane.
+                                // A narrow window shows one destination at a time, in a single
+                                // pane.
                                 sceneStrategies = listOfNotNull(overlayStrategy, listDetail),
                                 transitionSpec = { materialTransition(density, isForward = true) },
                                 popTransitionSpec = {

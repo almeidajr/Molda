@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 
-/** In-memory projects, seeded with [projects], listed and re-emitted after each change like Room. */
+/**
+ * In-memory projects, seeded with [projects], listed and re-emitted after each change like Room.
+ */
 class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepository {
     private val stored = MutableStateFlow(projects.newestFirst())
 

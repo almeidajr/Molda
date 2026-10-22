@@ -38,7 +38,7 @@ class LocalProjectRepository internal constructor(private val dao: ProjectDao) :
         val updated = dao.update(
             SkirtUpdate(id.value, snapshot.toColumns(), updatedAt.toEpochMilli()),
         )
-        check(updated == 1) { "Project no longer exists" }
+        check(updated == 1) { PROJECT_MISSING }
     }
 
     override suspend fun rename(
@@ -47,14 +47,16 @@ class LocalProjectRepository internal constructor(private val dao: ProjectDao) :
         renamedAt: Instant,
     ): Result<Unit> = resultOf {
         check(dao.rename(id.value, name.text, renamedAt.toEpochMilli()) == 1) {
-            "Project no longer exists"
+            PROJECT_MISSING
         }
     }
 
     override suspend fun delete(id: ProjectId): Result<Unit> = resultOf {
-        check(dao.delete(id.value) == 1) { "Project no longer exists" }
+        check(dao.delete(id.value) == 1) { PROJECT_MISSING }
     }
 }
+
+private const val PROJECT_MISSING = "Project no longer exists"
 
 // Domain constructors validate every loaded row, so a malformed row fails the load.
 private fun ProjectEntity.toProject() = Project(

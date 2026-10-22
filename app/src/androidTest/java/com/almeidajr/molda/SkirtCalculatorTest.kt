@@ -210,7 +210,8 @@ class SkirtCalculatorTest {
             "Linha 4, traço e ponto: corte da barra.",
             "Diagrama esquemático",
             "não garante o caimento",
-            "A margem de cintura de 1 cm avança para dentro; a margem de barra de 2 cm avança para fora.",
+            "A margem de cintura de 1 cm avança para dentro; " +
+                "a margem de barra de 2 cm avança para fora.",
         ).forEach {
             composeRule.onNodeWithContentDescription(it, substring = true)
                 .performScrollTo().assertIsDisplayed()
@@ -251,7 +252,8 @@ class SkirtCalculatorTest {
         // Then
         listOf(
             "Transfira os raios ao papel",
-            "A margem de cintura de 1 cm avança para dentro; a margem de barra de 2 cm avança para fora.",
+            "A margem de cintura de 1 cm avança para dentro; " +
+                "a margem de barra de 2 cm avança para fora.",
         ).forEach {
             composeRule.onNodeWithText(it, substring = true).performScrollTo().assertIsDisplayed()
         }

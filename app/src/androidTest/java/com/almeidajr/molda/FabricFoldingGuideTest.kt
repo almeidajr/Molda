@@ -122,7 +122,8 @@ class FabricFoldingGuideTest {
         // Then
         composeRule.onNodeWithText("Desdobrar o círculo").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "Centro do recorte da cintura: mesma origem de todos os raios, agora no centro do círculo.",
+            "Centro do recorte da cintura: mesma origem de todos os raios, " +
+                "agora no centro do círculo.",
         ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Próximo").assertDoesNotExist()
         expandDetails()

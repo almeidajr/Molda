@@ -169,7 +169,9 @@ internal fun HingeSafeContent(
     }
 }
 
-/** A half-open (book posture) or physically separating fold splits one column; a flat one does not. */
+/**
+ * A half-open (book posture) or physically separating fold splits one column; a flat one does not.
+ */
 private val HingeInfo.splitsSingleColumn: Boolean get() = isSeparating || !isFlat
 
 /**

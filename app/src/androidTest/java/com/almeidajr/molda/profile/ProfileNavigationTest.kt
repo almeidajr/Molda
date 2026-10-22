@@ -93,8 +93,8 @@ class ProfileNavigationTest {
         composeRule.recreate()
         composeRule.showProfileRoute(storage)
 
-        // When
-        // A key reaches only the focused window: the recreated activity, then again after the dialog.
+        // When A key reaches only the focused window: the recreated activity, then again after the
+        // dialog.
         composeRule.awaitActivityFocus()
         composeRule.pressBack()
         clickInDialog("Descartar")

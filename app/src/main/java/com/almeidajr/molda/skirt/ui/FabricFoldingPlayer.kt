@@ -54,17 +54,14 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.ui.navigation.rememberTitleFocusRequester
 
-// Not `const`: ktlint then demands SCREAMING_SNAKE names, which Detekt's naming rule rejects.
 // Leaves most of a short window to the instructions while the drawing stays pinned.
-@Suppress("MayBeConstant")
-private val DrawingHeightFraction = 0.4f
+private const val DRAWING_HEIGHT_FRACTION = 0.4f
 
 // Below this height (landscape phones) the drawing scrolls with the text instead of being pinned.
 private val PinnedDrawingMinHeight = 560.dp
 
 // Above this text scale the step position moves above the buttons so nothing truncates.
-@Suppress("MayBeConstant")
-private val StackedStepBarFontScale = 1.3f
+private const val STACKED_STEP_BAR_FONT_SCALE = 1.3f
 
 /** The example draft of a guide opened from Guias, as its label lists it. */
 private val ExampleSkirtDraft = SkirtDraft(
@@ -128,7 +125,8 @@ internal fun FabricFoldingPlayer(
     val motionEnabled = rememberSystemMotionEnabled()
     Surface(modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            val drawingSize = min(min(maxWidth, 640.dp) - 32.dp, maxHeight * DrawingHeightFraction)
+            val drawingSize =
+                min(min(maxWidth, 640.dp) - 32.dp, maxHeight * DRAWING_HEIGHT_FRACTION)
             val isDrawingPinned = maxHeight >= PinnedDrawingMinHeight
             Column(Modifier.widthIn(max = 640.dp).fillMaxSize()) {
                 PlayerTopBar(stringResource(progress.step.title), onClose.takeIf { isCloseShown })
@@ -227,7 +225,7 @@ private fun ExampleLabel(onCalculateOwn: () -> Unit) {
 
 @Composable
 private fun StepBar(progress: GuideProgress, onPrevious: () -> Unit, onForward: () -> Unit) {
-    val isStacked = LocalDensity.current.fontScale > StackedStepBarFontScale
+    val isStacked = LocalDensity.current.fontScale > STACKED_STEP_BAR_FONT_SCALE
     val position: @Composable (Modifier) -> Unit = {
         Text(
             stringResource(

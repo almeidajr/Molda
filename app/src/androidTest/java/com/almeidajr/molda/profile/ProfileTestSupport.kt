@@ -109,7 +109,9 @@ internal fun SemanticsNodeInteractionsProvider.openCalendar() {
     onNodeWithContentDescription("Escolher data no calendário").performClick()
 }
 
-/** Opens the calendar in its text input mode and types [value] (dd/mm/yyyy) in the device's order. */
+/**
+ * Opens the calendar in its text input mode and types [value] (dd/mm/yyyy) in the device's order.
+ */
 // Material 3 exposes the localized mode toggle label only as a private resource.
 @Suppress("PrivateResource")
 internal fun SemanticsNodeInteractionsProvider.typeInCalendar(value: String) {
