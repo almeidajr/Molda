@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- Brazilian Portuguese (pt-rBR): Lint's spellchecker otherwise assumes English. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt-rBR">
     <string name="guide_fabric_folding_description">Dobre o tecido em quatro, marque os raios a partir das dobras e corte o círculo da saia.</string>
     <string name="guide_choose">Escolha um guia na lista.</string>
 

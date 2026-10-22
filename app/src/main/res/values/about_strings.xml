@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- Brazilian Portuguese (pt-rBR): Lint's spellchecker otherwise assumes English. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt-rBR">
     <string name="about_title">Sobre o Molda</string>
     <string name="about_description">Calcula moldes de costura a partir das suas medidas e mostra as fórmulas usadas. O resultado é um ponto de partida: confira as medidas e faça uma prova antes de cortar o tecido.</string>
     <string name="about_on_device">Funciona sem internet. As medidas e os perfis ficam só neste aparelho.</string>

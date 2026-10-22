@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- Brazilian Portuguese (pt-rBR): Lint's spellchecker otherwise assumes English. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt-rBR">
     <string name="project_pattern_skirt">Saia godê</string>
     <string name="project_save">Salvar projeto</string>
     <string name="project_field_name">Nome do projeto</string>

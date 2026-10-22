@@ -1,4 +1,5 @@
-<resources>
+<!-- Brazilian Portuguese (pt-rBR): Lint's spellchecker otherwise assumes English. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt-rBR">
     <string name="app_name">Molda</string>
     <string name="skirt_error_blank">Informe um valor, inclusive zero para folgas e margens.</string>
     <string name="skirt_error_not_a_number">Informe um número finito, como 80,5, sem separador de milhar.</string>

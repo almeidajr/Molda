@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- pt-BR text: lets Lint check spelling in the app's language instead of English. -->
-<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt">
+<!-- Brazilian Portuguese (pt-rBR): Lint's spellchecker otherwise assumes English. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt-rBR">
     <string name="skirt_title">Saia godê inteira</string>
     <string name="skirt_intro">Medidas em centímetros. Informe folga e margens explicitamente; zero é válido.</string>
     <string name="skirt_calculate">Calcular</string>
