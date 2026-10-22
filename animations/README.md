@@ -24,11 +24,14 @@ bound diameter. Numerals are stroked paths, since text would need an embedded fo
 The default `play=false` state shows the completed diagram without motion.
 Setting `play=true` starts continuous ping-pong playback: the arcs sweep out in
 line order over 120 frames at 60 fps, hold for 60 frames, then reverse smoothly to repeat without
-a discontinuous wrap. Android keeps the same artboard, view model, state machine,
-and rendering surface for play, replay, pause, and system-motion changes. The
-`restart` view-model trigger alternates between two active states sharing the
-same timeline, with `reset="true"`. Rive ignores self-transitions, so distinct
-states restart the timeline without replacing the surface.
+a discontinuous wrap. Android sets `play=true` as soon as a step's drawing
+appears, and keeps the same artboard, view model, state machine and rendering
+surface for pause and system-motion changes; pausing stops the Rive surface on
+its current frame rather than changing `play`. The `restart` view-model trigger
+alternates between two active states sharing the same timeline, with
+`reset="true"` (Rive ignores self-transitions, so distinct states restart the
+timeline without replacing the surface). The app no longer fires it, since it
+has no replay control.
 Setting `play=false` returns to an explicitly keyed completed pose, including
 when system motion is disabled during playback. Line patterns distinguish reference
 and cutting lines even in monochrome; zero allowances retain coincident paths.
@@ -48,8 +51,8 @@ This project contains no scripts and requires no signing or account upload.
 The Android calculator UI tests render the real asset and check radius locations
 in captured pixels for normal, longer-skirt, and zero-allowance calculations.
 The motion-enabled Android regression samples every step through more than two
-complete cycles, including Replay, and rejects a blank fabric viewport. It also
-checks Pause/Continue while retaining the existing reduced-motion and calculated
+complete cycles from entry and rejects a blank fabric viewport. It also checks
+that a tap on the drawing pauses and continues it, while retaining the existing reduced-motion and calculated
 geometry checks. Its frame clock is controlled explicitly because looping motion
 never becomes idle. Sewing validation remains the separate release gate.
 
@@ -58,15 +61,15 @@ never becomes idle. Sewing validation remains the separate release gate.
 `Preparation`, `First fold`, and `Second fold` share the `Marking` view model.
 Each has its own state machine: `play=false` presents the completed static step,
 while `play=true` loops its 120-frame demonstration, eased in and out, with a
-one-second completed hold and a smooth reverse. Playback remains on demand: press Play once to loop,
-use Pause/Continue to study a frame, or Replay to restart. Changing steps returns
-to the completed static drawing and waits for Play. The preparation
+one-second completed hold and a smooth reverse. Each step plays as soon as its
+drawing appears, on opening and on every step change; a tap on the drawing
+pauses on the current frame to study it, and another continues from there. The preparation
 animation grows the lengthwise grain arrow from its centre. The folding animations
 pivot a half about the crease by mirroring its horizontal/vertical scale; the layer
-being folded is drawn in `fabricFold`. The Android
-controls change playback properties without recreating the viewport. Written
-instructions remain available independently; system-disabled motion always shows
-the completed step even after Replay.
+being folded is drawn in `fabricFold`. Pausing on Android changes playback
+without recreating the viewport. Written instructions remain available
+independently; system-disabled motion always shows the completed step, with no
+pause control.
 
 Flat cloth has selvages left/right and raw ends top/bottom. Move the LEFT
 selvage to the RIGHT, then the TOP raw end to the BOTTOM. The retained quarter
@@ -120,7 +123,7 @@ rive . --screenshot=build/open-end.png --artboard=Unfolding --data=play=true --a
 Android rendered-pixel checks cover both artboards at normal and longer lengths
 and zero allowances, checking all unfolded quadrants, the waist cutout and the
 retained fabric. UI tests cover the complete calculator flow, step navigation,
-replay, construction warnings and stale results. The layout test exercises light/dark themes, heading semantics, wrapped text,
+autoplay and tap-to-pause, construction warnings and stale results. The layout test exercises light/dark themes, heading semantics, wrapped text,
 48 dp controls, construction warnings and stale results through the real native
 dialog. Font and window settings are changed on the connected device for the
 large-text/size runs; Compose configuration overrides alone do not verify a
