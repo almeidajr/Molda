@@ -65,12 +65,10 @@ fun AboutScreen(
                 }
                 HorizontalDivider()
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.about_version)) },
                     modifier = Modifier.semantics(mergeDescendants = true) {},
                     supportingContent = { Text(versionName) },
-                )
+                ) { Text(stringResource(R.string.about_version)) }
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.about_licences)) },
                     modifier = Modifier.heightIn(min = 56.dp).clickable(onClick = onOpenLicences),
                     leadingContent = {
                         Icon(painterResource(R.drawable.ic_license), contentDescription = null)
@@ -81,7 +79,7 @@ fun AboutScreen(
                             contentDescription = null,
                         )
                     },
-                )
+                ) { Text(stringResource(R.string.about_licences)) }
             }
         }
     }

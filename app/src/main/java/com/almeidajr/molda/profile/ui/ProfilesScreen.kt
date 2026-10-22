@@ -131,12 +131,6 @@ private fun ProfileManagementRow(
                 colors = ListItemDefaults.colors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
-                headlineContent = {
-                    Text(
-                        profile.measurements.name.text,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                },
                 supportingContent = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
@@ -154,7 +148,12 @@ private fun ProfileManagementRow(
                 modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) {
                     onStartEdit(profile.id)
                 },
-            )
+            ) {
+                Text(
+                    profile.measurements.name.text,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
             ProfileRowActions(profile, enabled, onStartEdit) { confirmDelete = true }
         }
     }
@@ -302,23 +301,22 @@ private fun PickerRow(
             colors = ListItemDefaults.colors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ),
-            headlineContent = {
-                Text(
-                    stringResource(
-                        R.string.profile_use_label,
-                        profile.measurements.name.text,
-                        lengthText(profile.measurements.waist),
-                        profileDateText(profile.measurements.measurementDate),
-                    ),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            },
             supportingContent = if (showNotes && profile.measurements.notes.isNotBlank()) {
                 { Text(profile.measurements.notes) }
             } else {
                 null
             },
             modifier = Modifier.fillMaxWidth().clickable { onSelect(profile) },
-        )
+        ) {
+            Text(
+                stringResource(
+                    R.string.profile_use_label,
+                    profile.measurements.name.text,
+                    lengthText(profile.measurements.waist),
+                    profileDateText(profile.measurements.measurementDate),
+                ),
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
     }
 }
