@@ -86,7 +86,7 @@ internal fun GuideAnimation(
 /**
  * The drawing's frame, which owns pausing. Once [file] has loaded, [drawing] draws it, told
  * whether to play and whether it is paused, and calls back once it has drawn or failed. Until then
- * the frame stays empty at its final size, described for TalkBack; a long load shows a progress
+ * the frame stays empty at its final size, described for TalkBack; a long load shows a loading
  * indicator. With motion enabled, the drawn step plays at once and the whole frame toggles its
  * pause, with a badge showing what a tap does.
  */
