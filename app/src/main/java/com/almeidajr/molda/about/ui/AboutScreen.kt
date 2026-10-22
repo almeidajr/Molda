@@ -1,6 +1,5 @@
 package com.almeidajr.molda.about.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,7 +68,8 @@ fun AboutScreen(
                     supportingContent = { Text(versionName) },
                 ) { Text(stringResource(R.string.about_version)) }
                 ListItem(
-                    modifier = Modifier.heightIn(min = 56.dp).clickable(onClick = onOpenLicences),
+                    onClick = onOpenLicences,
+                    modifier = Modifier.heightIn(min = 56.dp),
                     leadingContent = {
                         Icon(painterResource(R.drawable.ic_license), contentDescription = null)
                     },

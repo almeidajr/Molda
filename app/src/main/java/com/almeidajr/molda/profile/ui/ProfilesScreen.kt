@@ -1,7 +1,6 @@
 package com.almeidajr.molda.profile.ui
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -128,6 +127,8 @@ private fun ProfileManagementRow(
     ) {
         Column {
             ListItem(
+                onClick = { onStartEdit(profile.id) },
+                enabled = enabled,
                 colors = ListItemDefaults.colors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
@@ -145,9 +146,7 @@ private fun ProfileManagementRow(
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) {
-                    onStartEdit(profile.id)
-                },
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
                     profile.measurements.name.text,
@@ -298,6 +297,7 @@ private fun PickerRow(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         ListItem(
+            onClick = { onSelect(profile) },
             colors = ListItemDefaults.colors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ),
@@ -306,7 +306,7 @@ private fun PickerRow(
             } else {
                 null
             },
-            modifier = Modifier.fillMaxWidth().clickable { onSelect(profile) },
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
                 stringResource(
