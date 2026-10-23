@@ -237,6 +237,32 @@ class ProfileNavigationTest {
     }
 
     @Test
+    fun discard_inDiscardDialogAfterRecreation_closesTheEditor() {
+        // Given
+        openDiscardDialogAfterRecreation()
+
+        // When
+        clickInDialog("Descartar")
+
+        // Then
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
+    }
+
+    @Test
+    fun continueEditing_inDiscardDialogAfterRecreation_keepsTheEdits() {
+        // Given
+        openDiscardDialogAfterRecreation()
+
+        // When
+        clickInDialog("Continuar editando")
+
+        // Then
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+    }
+
+    @Test
     fun back_withKeyboardOpen_closesOnlyTheKeyboard() {
         // Given
         composeRule.selectDestination("Perfis")
@@ -250,6 +276,17 @@ class ProfileNavigationTest {
         // Then
         composeRule.awaitKeyboardHidden()
         composeRule.onNodeWithText("Nome ou apelido").assertIsDisplayed()
+    }
+
+    private fun openDiscardDialogAfterRecreation() {
+        composeRule.selectDestination("Perfis")
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
+        // The opening keyboard resizes the editor, so a tap racing it can miss Cancelar.
+        composeRule.closeKeyboard()
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        composeRule.recreate()
+        composeRule.showProfileRoute(storage)
     }
 
     private fun openPickerEditor() {

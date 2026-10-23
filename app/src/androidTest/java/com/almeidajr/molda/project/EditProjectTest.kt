@@ -1,8 +1,10 @@
 package com.almeidajr.molda.project
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -10,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
@@ -145,6 +148,32 @@ class EditProjectTest {
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         assertEquals(Length(2.0), projects.current.single().snapshot.draft.ease)
+    }
+
+    @Test
+    fun discard_inDiscardDialogAfterRecreation_returnsToTheUnchangedProject() {
+        // Given
+        openDiscardDialogAfterRecreation()
+
+        // When
+        clickInDialog("Descartar")
+
+        // Then
+        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
+        assertEquals(Length(2.0), projects.current.single().snapshot.draft.ease)
+    }
+
+    @Test
+    fun continueEditing_inDiscardDialogAfterRecreation_keepsTheEditedValues() {
+        // Given
+        openDiscardDialogAfterRecreation()
+
+        // When
+        clickInDialog("Continuar editando")
+
+        // Then
+        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText(SkirtDraftField.Ease.labelText).assert(hasText("4"))
     }
 
     @Test
@@ -292,6 +321,21 @@ class EditProjectTest {
         composeRule.selectDestination("Projetos")
         composeRule.clickProject("Saia da formatura")
         composeRule.click("Editar")
+    }
+
+    private fun openDiscardDialogAfterRecreation() {
+        showRoute()
+        openEditor()
+        editEase("4")
+        composeRule.onNodeWithContentDescription("Voltar").performClick()
+        composeRule.recreate()
+        showRoute()
+    }
+
+    private fun clickInDialog(label: String) {
+        // A semantics click needs no window focus, unlike a touch on a dialog still attaching.
+        composeRule.onNode(hasText(label) and hasClickAction())
+            .performSemanticsAction(SemanticsActions.OnClick)
     }
 
     private fun editEase(text: String) {
