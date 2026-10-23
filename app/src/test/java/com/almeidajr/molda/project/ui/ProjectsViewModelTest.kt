@@ -34,6 +34,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class ProjectsViewModelTest {
     private val storage = FakeProjectRepository(listOf(saved))
+    private val shown = mutableListOf<Int>()
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -85,7 +86,7 @@ class ProjectsViewModelTest {
         projects.editName("Saia da formatura")
 
         // When
-        projects.save()
+        projects.save(shown::add)
 
         // Then
         val created = storage.current.single { it.id != saved.id }
@@ -93,7 +94,7 @@ class ProjectsViewModelTest {
         assertEquals(fromProfile, created.snapshot)
         assertEquals(October18Clock.instant(), created.createdAt)
         assertNull(projects.state.value.saving)
-        assertEquals(R.string.project_saved, projects.state.value.message)
+        assertEquals(listOf(R.string.project_saved), shown)
     }
 
     @Test
@@ -104,7 +105,7 @@ class ProjectsViewModelTest {
         projects.editName("   ")
 
         // When
-        projects.save()
+        projects.save(shown::add)
 
         // Then
         assertTrue(projects.state.value.saving?.hasBlankName == true)
@@ -117,7 +118,7 @@ class ProjectsViewModelTest {
         val projects = projectsViewModel()
         projects.startSaving(fromProfile, patternName = "Saia godê")
         projects.editName("   ")
-        projects.save()
+        projects.save(shown::add)
 
         // When
         projects.editName("Saia")
@@ -135,13 +136,14 @@ class ProjectsViewModelTest {
         projects.editName("Saia da formatura")
 
         // When
-        projects.save()
+        projects.save(shown::add)
 
         // Then
         assertEquals(
             ProjectSaving(fromProfile, "Saia da formatura", error = R.string.project_save_failed),
             projects.state.value.saving,
         )
+        assertEquals(emptyList<Int>(), shown)
         assertEquals(listOf(saved), storage.current)
     }
 
@@ -152,7 +154,7 @@ class ProjectsViewModelTest {
         projects.startSaving(fromProfile, patternName = "Saia godê")
 
         // When
-        projects.save()
+        projects.save(shown::add)
 
         // Then
         assertNull(projects.state.value.projectToShow)
@@ -165,7 +167,7 @@ class ProjectsViewModelTest {
         projects.startSaving(fromProfile, patternName = "Saia godê", showsSaved = true)
 
         // When
-        projects.save()
+        projects.save(shown::add)
 
         // Then
         val created = storage.current.single { it.id != saved.id }
@@ -178,7 +180,7 @@ class ProjectsViewModelTest {
         // Given
         val projects = projectsViewModel()
         projects.startSaving(fromProfile, patternName = "Saia godê", showsSaved = true)
-        projects.save()
+        projects.save(shown::add)
 
         // When
         projects.onProjectShown()
@@ -206,7 +208,7 @@ class ProjectsViewModelTest {
         storage.commandGate = CompletableDeferred()
         val projects = projectsViewModel()
         projects.startSaving(fromProfile, patternName = "Saia godê")
-        projects.save()
+        projects.save(shown::add)
 
         // When
         projects.cancel()
@@ -221,7 +223,7 @@ class ProjectsViewModelTest {
         val projects = projectsViewModel()
 
         // When
-        projects.update(saved.id, fromProfile)
+        projects.update(saved.id, fromProfile, shown::add)
 
         // Then
         val state = projects.state.value
@@ -229,7 +231,7 @@ class ProjectsViewModelTest {
             listOf(saved.copy(snapshot = fromProfile, updatedAt = October18Clock.instant())),
             storage.current,
         )
-        assertEquals(R.string.project_updated, state.message)
+        assertEquals(listOf(R.string.project_updated), shown)
         assertEquals(saved.id, state.projectToShow)
         assertFalse(state.isUpdating)
     }
@@ -241,12 +243,12 @@ class ProjectsViewModelTest {
         val projects = projectsViewModel()
 
         // When
-        projects.update(saved.id, fromProfile)
+        projects.update(saved.id, fromProfile, shown::add)
 
         // Then
         val state = projects.state.value
         assertEquals(listOf(saved), storage.current)
-        assertEquals(R.string.project_update_failed, state.message)
+        assertEquals(listOf(R.string.project_update_failed), shown)
         assertNull(state.projectToShow)
         assertFalse(state.isUpdating)
     }
@@ -271,7 +273,7 @@ class ProjectsViewModelTest {
         projects.editName("Saia da formatura")
 
         // When
-        projects.rename()
+        projects.rename(shown::add)
 
         // Then
         assertEquals(
@@ -284,7 +286,7 @@ class ProjectsViewModelTest {
             storage.current,
         )
         assertNull(projects.state.value.renaming)
-        assertEquals(R.string.project_renamed, projects.state.value.message)
+        assertEquals(listOf(R.string.project_renamed), shown)
     }
 
     @Test
@@ -295,7 +297,7 @@ class ProjectsViewModelTest {
         projects.editName("   ")
 
         // When
-        projects.rename()
+        projects.rename(shown::add)
 
         // Then
         assertTrue(projects.state.value.renaming?.hasBlankName == true)
@@ -308,7 +310,7 @@ class ProjectsViewModelTest {
         val projects = projectsViewModel()
         projects.startRenaming(saved)
         projects.editName("   ")
-        projects.rename()
+        projects.rename(shown::add)
 
         // When
         projects.editName("Saia")
@@ -326,7 +328,7 @@ class ProjectsViewModelTest {
         projects.editName("Saia da formatura")
 
         // When
-        projects.rename()
+        projects.rename(shown::add)
 
         // Then
         assertEquals(
@@ -343,12 +345,12 @@ class ProjectsViewModelTest {
         projects.startDeleting(saved)
 
         // When
-        projects.delete()
+        projects.delete(shown::add)
 
         // Then
         assertEquals(emptyList(), storage.current)
         assertNull(projects.state.value.deleting)
-        assertEquals(R.string.project_deleted, projects.state.value.message)
+        assertEquals(listOf(R.string.project_deleted), shown)
     }
 
     @Test
@@ -359,7 +361,7 @@ class ProjectsViewModelTest {
         projects.startDeleting(saved)
 
         // When
-        projects.delete()
+        projects.delete(shown::add)
 
         // Then
         assertEquals(
@@ -406,7 +408,7 @@ class ProjectsViewModelTest {
             projects.editName("Saia da formatura")
         }.use { scenario ->
             // When
-            scenario.viewModel.rename()
+            scenario.viewModel.rename(shown::add)
 
             // Then
             assertEquals(ProjectName("Saia da formatura"), storage.current.single().name)
@@ -418,7 +420,7 @@ class ProjectsViewModelTest {
         // Given
         recreatedAfter { projects -> projects.startDeleting(saved) }.use { scenario ->
             // When
-            scenario.viewModel.delete()
+            scenario.viewModel.delete(shown::add)
 
             // Then
             assertEquals(emptyList(), storage.current)
@@ -434,7 +436,7 @@ class ProjectsViewModelTest {
         // When
         recreatedAfter { projects ->
             projects.startDeleting(saved)
-            projects.delete()
+            projects.delete(shown::add)
         }.use { scenario ->
             // Then
             val deleting = assertNotNull(scenario.viewModel.state.value.deleting)

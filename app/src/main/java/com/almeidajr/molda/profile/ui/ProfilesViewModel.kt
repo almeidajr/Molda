@@ -67,9 +67,8 @@ data class ProfilesState(
     val isSaving: Boolean = false,
     @param:StringRes val loadError: Int? = null,
     @param:StringRes val saveError: Int? = null,
-    @param:StringRes val savedMessage: Int? = null,
     /**
-     * The profile the last save created, until an editor opens again: kept past its message, since
+     * The profile the last save created, until an editor opens again: kept past the save, since
      * the picker's editor that sends it on may be on a stack another tab hides when the save ends.
      */
     val createdProfile: MeasurementProfile? = null,
@@ -121,7 +120,8 @@ class ProfilesViewModel @Inject constructor(
 
     fun edit(field: ProfileField, text: String) = transition { it.edited(field, text) }
 
-    fun save() {
+    /** Stores the open form; once stored, [onSaved] gets the message to show. */
+    fun save(onSaved: (Int) -> Unit) {
         val current = mutableState.value
         if (!current.canMutate || !current.isEditorOpen) return
         val validation = validateProfile(
@@ -143,22 +143,23 @@ class ProfilesViewModel @Inject constructor(
                 }
                 ?: repository.create(measurements).map(ProfileSave::Created)
             transition { it.savedWith(result) }
+            if (result.isSuccess) onSaved(R.string.profile_saved)
         }
     }
 
-    fun delete(id: ProfileId) {
+    /** Deletes profile [id]; once deleted, [onDeleted] gets the message to show. */
+    fun delete(id: ProfileId, onDeleted: (Int) -> Unit) {
         val current = mutableState.value
         if (!current.canMutate || current.profiles.none { it.id == id }) return
         transition { it.mutating(deleteId = id) }
         viewModelScope.launch {
             val result = repository.delete(id)
             transition { it.deletedWith(id, result) }
+            if (result.isSuccess) onDeleted(R.string.profile_deleted)
         }
     }
 
     fun cancel() = transition { it.cancelled() }
-
-    fun dismissMessage() = transition { it.copy(savedMessage = null) }
 
     // Main-thread only, so reading back the new value cannot race another transition.
     private fun transition(next: (ProfilesState) -> ProfilesState) {

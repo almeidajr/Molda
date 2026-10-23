@@ -18,7 +18,6 @@ internal fun ProfilesState.opened(form: ProfileForm) = if (canMutate) {
     copy(
         form = form,
         errors = emptyMap(),
-        savedMessage = null,
         createdProfile = null,
         saveError = null,
         deleteId = null,
@@ -56,7 +55,7 @@ internal fun ProfilesState.submitted(validation: ProfileValidation) = when (vali
 }
 
 internal fun ProfilesState.mutating(deleteId: ProfileId? = null) =
-    copy(isSaving = true, saveError = null, savedMessage = null, deleteId = deleteId)
+    copy(isSaving = true, saveError = null, deleteId = deleteId)
 
 /** What a successful save did to the stored profiles. */
 internal sealed interface ProfileSave {
@@ -70,7 +69,6 @@ internal fun ProfilesState.savedWith(result: Result<ProfileSave>) = result.fold(
     onSuccess = { save ->
         closed().copy(
             isSaving = false,
-            savedMessage = R.string.profile_saved,
             createdProfile = (save as? ProfileSave.Created)?.profile,
         )
     },
@@ -80,7 +78,7 @@ internal fun ProfilesState.savedWith(result: Result<ProfileSave>) = result.fold(
 internal fun ProfilesState.deletedWith(id: ProfileId, result: Result<Unit>) = result.fold(
     onSuccess = {
         (if (editingId == id) closed() else this)
-            .copy(isSaving = false, savedMessage = R.string.profile_deleted, deleteId = null)
+            .copy(isSaving = false, deleteId = null)
     },
     onFailure = { copy(isSaving = false, saveError = R.string.profile_delete_failed) },
 )

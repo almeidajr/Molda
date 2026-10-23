@@ -44,13 +44,15 @@ internal const val DISCARD_RESULT_KEY = "discard"
 
 /**
  * A saved project's skirt draft: its editor on [editor], a draft of its own so editing a project
- * never touches the calculator in Moldes, and its folding guides. [onCloseEditor] asks before the
+ * never touches the calculator in Moldes, and its folding guides. [onShowSnackbar] shows the
+ * outcome of updating the project; [onCloseEditor] asks before the
  * editor's changes are dropped.
  */
 internal fun EntryProviderScope<NavKey>.projectDraftSection(
     navigator: Navigator,
     projects: ProjectsViewModel,
     editor: SkirtCalculatorViewModel,
+    onShowSnackbar: (Int) -> Unit,
     onCloseEditor: () -> Unit,
 ) {
     entry<ProjectEditorKey> { key ->
@@ -63,7 +65,9 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
                 onUseProfile = { navigator.push(ProfilePickerKey(key.profileResultKey)) },
                 onOpenGuide = { navigator.push(ProjectEditorGuideKey) },
                 onSaveProject = { _ ->
-                    editor.state.value.snapshot()?.let { projects.update(key.id, it) }
+                    editor.state.value.snapshot()?.let {
+                        projects.update(key.id, it, onShowSnackbar)
+                    }
                 },
                 onSaveAsNewProject = { patternName ->
                     editor.state.value.snapshot()?.let {

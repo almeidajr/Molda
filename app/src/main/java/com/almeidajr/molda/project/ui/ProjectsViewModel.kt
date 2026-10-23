@@ -68,8 +68,6 @@ data class ProjectsState(
     val deleting: ProjectDeleting? = null,
     /** Whether an edited project's snapshot is being stored. */
     val isUpdating: Boolean = false,
-    /** The outcome of the latest command, to show until [ProjectsViewModel.dismissMessage]. */
-    @param:StringRes val message: Int? = null,
     /** A project just saved from an edit, to show until [ProjectsViewModel.onProjectShown]. */
     val projectToShow: ProjectId? = null,
 )
@@ -150,7 +148,8 @@ class ProjectsViewModel @Inject constructor(
         )
     }
 
-    fun save() {
+    /** Stores the named snapshot; once stored, [onShowSnackbar] gets the message to show. */
+    fun save(onShowSnackbar: (Int) -> Unit) {
         val saving = mutableState.value.saving?.takeUnless { it.isBusy } ?: return
         val name = readProjectName(saving.name)
             ?: return transition { it.copy(saving = saving.copy(hasBlankName = true)) }
@@ -160,27 +159,26 @@ class ProjectsViewModel @Inject constructor(
                 state.copy(saving = state.saving?.copy(isBusy = isBusy, error = error))
             },
             failure = R.string.project_save_failed,
+            report = { if (it) onShowSnackbar(R.string.project_saved) },
         ) { state, created ->
-            state.copy(
-                saving = null,
-                message = R.string.project_saved,
-                projectToShow = created.id.takeIf { saving.showsSaved },
-            )
+            state.copy(saving = null, projectToShow = created.id.takeIf { saving.showsSaved })
         }
     }
 
-    /** Stores [snapshot] as the project [id]'s, then shows that project. */
-    fun update(id: ProjectId, snapshot: SkirtSnapshot) {
+    /**
+     * Stores [snapshot] as the project [id]'s, then shows that project; [onShowSnackbar] gets the
+     * message of either outcome, since no dialog is there to show a failure.
+     */
+    fun update(id: ProjectId, snapshot: SkirtSnapshot, onShowSnackbar: (Int) -> Unit) {
         if (mutableState.value.isUpdating) return
         submit(
             command = { repository.update(id, snapshot, clock.instant()) },
-            progress = { state, isBusy, error ->
-                state.copy(isUpdating = isBusy, message = error ?: state.message)
-            },
+            progress = { state, isBusy, _ -> state.copy(isUpdating = isBusy) },
             failure = R.string.project_update_failed,
-        ) { state, _ ->
-            state.copy(isUpdating = false, message = R.string.project_updated, projectToShow = id)
-        }
+            report = {
+                onShowSnackbar(if (it) R.string.project_updated else R.string.project_update_failed)
+            },
+        ) { state, _ -> state.copy(isUpdating = false, projectToShow = id) }
     }
 
     fun onProjectShown() = transition { it.copy(projectToShow = null) }
@@ -189,7 +187,8 @@ class ProjectsViewModel @Inject constructor(
         it.copy(renaming = ProjectRenaming(project.id, project.name.text))
     }
 
-    fun rename() {
+    /** Stores the typed name; once stored, [onShowSnackbar] gets the message to show. */
+    fun rename(onShowSnackbar: (Int) -> Unit) {
         val renaming = mutableState.value.renaming?.takeUnless { it.isBusy } ?: return
         val name = readProjectName(renaming.name)
             ?: return transition { it.copy(renaming = renaming.copy(hasBlankName = true)) }
@@ -199,7 +198,8 @@ class ProjectsViewModel @Inject constructor(
                 state.copy(renaming = state.renaming?.copy(isBusy = isBusy, error = error))
             },
             failure = R.string.project_rename_failed,
-        ) { state, _ -> state.copy(renaming = null, message = R.string.project_renamed) }
+            report = { if (it) onShowSnackbar(R.string.project_renamed) },
+        ) { state, _ -> state.copy(renaming = null) }
     }
 
     /** Asks to confirm deleting [project]; nothing is deleted until [delete]. */
@@ -207,7 +207,8 @@ class ProjectsViewModel @Inject constructor(
         it.copy(deleting = ProjectDeleting(project.id, project.name.text))
     }
 
-    fun delete() {
+    /** Deletes the project being confirmed; once deleted, [onShowSnackbar] gets the message. */
+    fun delete(onShowSnackbar: (Int) -> Unit) {
         val deleting = mutableState.value.deleting?.takeUnless { it.isBusy } ?: return
         submit(
             command = { repository.delete(deleting.id) },
@@ -215,7 +216,8 @@ class ProjectsViewModel @Inject constructor(
                 state.copy(deleting = state.deleting?.copy(isBusy = isBusy, error = error))
             },
             failure = R.string.project_delete_failed,
-        ) { state, _ -> state.copy(deleting = null, message = R.string.project_deleted) }
+            report = { if (it) onShowSnackbar(R.string.project_deleted) },
+        ) { state, _ -> state.copy(deleting = null) }
     }
 
     /** Closes the open save, rename or delete dialog, unless its storage call is running. */
@@ -225,16 +227,16 @@ class ProjectsViewModel @Inject constructor(
         if (isBusy) state else state.copy(saving = null, renaming = null, deleting = null)
     }
 
-    fun dismissMessage() = transition { it.copy(message = null) }
-
     /**
      * Runs a storage [command], marking its dialog busy through [progress] meanwhile; a success
-     * moves on with [succeeded], a failure shows [failure] through [progress].
+     * moves on with [succeeded], a failure shows [failure] through [progress]; either way [report]
+     * then hears whether it succeeded.
      */
     private fun <T> submit(
         command: suspend () -> Result<T>,
         progress: (ProjectsState, isBusy: Boolean, error: Int?) -> ProjectsState,
         @StringRes failure: Int,
+        report: (isSuccess: Boolean) -> Unit,
         succeeded: (ProjectsState, T) -> ProjectsState,
     ) {
         transition { progress(it, true, null) }
@@ -246,6 +248,7 @@ class ProjectsViewModel @Inject constructor(
                     onFailure = { progress(state, false, failure) },
                 )
             }
+            report(result.isSuccess)
         }
     }
 

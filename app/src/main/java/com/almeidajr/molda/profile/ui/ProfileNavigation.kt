@@ -38,7 +38,8 @@ internal fun ProfilesViewModel.openEditor(profile: EditedProfile) = when (profil
 /**
  * Perfis: the profiles beside the open editor, and the picker's editor, which returns the profile
  * it creates to the calculator that opened the picker. [onRequestEditor] opens an editor, asking
- * first when the open one has changes; [onCancelEditor] closes it the same way.
+ * first when the open one has changes; [onCancelEditor] closes it the same way. [onShowSnackbar]
+ * shows the message of a stored or deleted profile.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.profileSection(
@@ -46,6 +47,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     profiles: ProfilesViewModel,
     onRequestEditor: (EditedProfile) -> Unit,
     onCancelEditor: () -> Unit,
+    onShowSnackbar: (Int) -> Unit,
 ) {
     entry<ProfileManagementKey>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
@@ -59,16 +61,16 @@ internal fun EntryProviderScope<NavKey>.profileSection(
                 stringResource(R.string.profile_manage),
                 onAbout = { navigator.push(AboutKey) },
             )
-            ProfilePane { ProfileList(profiles, onRequestEditor) }
+            ProfilePane { ProfileList(profiles, onRequestEditor, onShowSnackbar) }
         }
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) {
         // Beside the list the editor is a pane, closed by Cancel, choosing from the list or Back.
-        OpenEditor(profiles, onCancelEditor, isUpShown = !LocalIsTwoPane.current)
+        OpenEditor(profiles, onCancelEditor, onShowSnackbar, isUpShown = !LocalIsTwoPane.current)
     }
     entry<PickerProfileEditorKey> { key ->
         SendCreatedProfile(navigator, profiles, key)
-        OpenEditor(profiles, onCancelEditor, isUpShown = true)
+        OpenEditor(profiles, onCancelEditor, onShowSnackbar, isUpShown = true)
     }
 }
 
@@ -123,7 +125,12 @@ private fun syncProfileEditor(navigator: Navigator, form: ProfileForm) {
 }
 
 @Composable
-private fun OpenEditor(profiles: ProfilesViewModel, onCancel: () -> Unit, isUpShown: Boolean) {
+private fun OpenEditor(
+    profiles: ProfilesViewModel,
+    onCancel: () -> Unit,
+    onShowSnackbar: (Int) -> Unit,
+    isUpShown: Boolean,
+) {
     val state by profiles.state.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize()) {
         MoldaTopAppBar(
@@ -142,7 +149,7 @@ private fun OpenEditor(profiles: ProfilesViewModel, onCancel: () -> Unit, isUpSh
             ProfileEditor(
                 state,
                 profiles::edit,
-                profiles::save,
+                { profiles.save(onShowSnackbar) },
                 onCancel,
                 Modifier,
                 profiles.today,
@@ -153,13 +160,17 @@ private fun OpenEditor(profiles: ProfilesViewModel, onCancel: () -> Unit, isUpSh
 }
 
 @Composable
-private fun ProfileList(profiles: ProfilesViewModel, onRequestEditor: (EditedProfile) -> Unit) {
+private fun ProfileList(
+    profiles: ProfilesViewModel,
+    onRequestEditor: (EditedProfile) -> Unit,
+    onShowSnackbar: (Int) -> Unit,
+) {
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilesContent(
         state,
         profiles::load,
         { onRequestEditor(EditedProfile.Existing(it)) },
-        profiles::delete,
+        { profiles.delete(it, onShowSnackbar) },
         Modifier.padding(16.dp),
     )
 }

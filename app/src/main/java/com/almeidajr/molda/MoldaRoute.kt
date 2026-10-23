@@ -2,11 +2,11 @@ package com.almeidajr.molda
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -34,7 +34,6 @@ import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.ui.DeleteProjectDialog
-import com.almeidajr.molda.project.ui.ProjectFeedback
 import com.almeidajr.molda.project.ui.ProjectsState
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.RenameProjectDialog
@@ -51,6 +50,7 @@ import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.TitleFocus
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
+import kotlinx.coroutines.launch
 
 /**
  * The app: one back stack per top-level destination, each feature's section of entries, the
@@ -77,6 +77,13 @@ fun MoldaRoute(
         rememberTopLevelBackStacks(TopLevelRoots, resultBus),
         onSwitch = titleFocus::request,
     )
+    val snackbar = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    val scope = rememberCoroutineScope()
+    // One callback for every section; launched here, so it outlives the entry that asked.
+    val showSnackbar: (Int) -> Unit = { message ->
+        scope.launch { snackbar.showSnackbar(resources.getString(message)) }
+    }
     val app = MoldaApp(
         navigator,
         calculator,
@@ -86,20 +93,18 @@ fun MoldaRoute(
         // Read when the user acts: entries are remembered, so a captured status would go stale.
         status = { editorStatus(profileState, projectState, projectCalculatorState) },
     )
-    val snackbar = remember { SnackbarHostState() }
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
     SyncProfileEditor(navigator, profiles)
     ShowSavedProject(navigator, projects)
-    ProfileSaveFeedback(profiles, snackbar)
-    ProjectDialogs(projectState, projects, snackbar)
+    ProjectDialogs(projectState, projects, showSnackbar)
     MoldaShell(
         navigator,
         titleFocus,
         snackbar,
         onSelect = app::select,
         onBack = app::back,
-        entryProvider = entryProvider { with(app) { entries(versionName) } },
+        entryProvider = entryProvider { with(app) { entries(versionName, showSnackbar) } },
         modifier = modifier,
     ) { isTwoPane ->
         if (app.isManagingProfiles(isTwoPane)) {
@@ -150,7 +155,7 @@ private class MoldaApp(
         stacks.current.last() !in setOf(AboutKey, LicencesKey) &&
         (stacks.stackOf(ProfileManagementKey).none { it is ProfileEditorKey } || isTwoPane)
 
-    fun EntryProviderScope<NavKey>.entries(versionName: String) {
+    fun EntryProviderScope<NavKey>.entries(versionName: String, onShowSnackbar: (Int) -> Unit) {
         patternSection(navigator)
         skirtSection(
             navigator,
@@ -168,15 +173,20 @@ private class MoldaApp(
                 navigator.push(ProjectGuideKey(project.id))
             })
         }
-        projectDraftSection(navigator, projects, projectCalculator, onCloseEditor = {
-            perform(closeProjectEditor(status()))
-        })
+        projectDraftSection(
+            navigator,
+            projects,
+            projectCalculator,
+            onShowSnackbar,
+            onCloseEditor = { perform(closeProjectEditor(status())) },
+        )
         guideSection(navigator)
         profileSection(
             navigator,
             profiles,
             onRequestEditor = { perform(requestProfileEditor(it, status())) },
             onCancelEditor = { perform(cancelProfileEditor(status())) },
+            onShowSnackbar = onShowSnackbar,
         )
         aboutSection(navigator, versionName)
         overlaySection(
@@ -238,28 +248,25 @@ private class MoldaApp(
 private fun ProjectDialogs(
     state: ProjectsState,
     projects: ProjectsViewModel,
-    snackbar: SnackbarHostState,
+    onShowSnackbar: (Int) -> Unit,
 ) {
     state.saving?.let { saving ->
-        SaveProjectDialog(saving, projects::editName, projects::save, projects::cancel)
+        SaveProjectDialog(
+            saving,
+            projects::editName,
+            { projects.save(onShowSnackbar) },
+            projects::cancel,
+        )
     }
     state.renaming?.let { renaming ->
-        RenameProjectDialog(renaming, projects::editName, projects::rename, projects::cancel)
+        RenameProjectDialog(
+            renaming,
+            projects::editName,
+            { projects.rename(onShowSnackbar) },
+            projects::cancel,
+        )
     }
     state.deleting?.let { deleting ->
-        DeleteProjectDialog(deleting, projects::delete, projects::cancel)
-    }
-    ProjectFeedback(state, snackbar, projects::dismissMessage)
-}
-
-@Composable
-private fun ProfileSaveFeedback(profiles: ProfilesViewModel, snackbar: SnackbarHostState) {
-    val state by profiles.state.collectAsStateWithLifecycle()
-    val message = state.savedMessage?.let { stringResource(it) }
-    LaunchedEffect(message) {
-        message?.let {
-            snackbar.showSnackbar(it)
-            profiles.dismissMessage()
-        }
+        DeleteProjectDialog(deleting, { projects.delete(onShowSnackbar) }, projects::cancel)
     }
 }

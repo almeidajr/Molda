@@ -33,6 +33,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class ProfilesViewModelTest {
     private val storage = FakeProfileRepository(listOf(ana))
+    private val shown = mutableListOf<Int>()
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -102,13 +103,13 @@ class ProfilesViewModelTest {
         profiles.fill(name = "Bia", waist = "95", date = "11/10/2026")
 
         // When
-        profiles.save()
+        profiles.save(shown::add)
 
         // Then
         val saved = profiles.state.value
         assertEquals(listOf("Ana", "Bia"), saved.profiles.map { it.measurements.name.text })
         assertFalse(saved.isEditorOpen)
-        assertEquals(R.string.profile_saved, saved.savedMessage)
+        assertEquals(listOf(R.string.profile_saved), shown)
         assertEquals(saved.profiles.last(), saved.createdProfile)
     }
 
@@ -118,7 +119,7 @@ class ProfilesViewModelTest {
         val profiles = profilesViewModel()
         profiles.startCreating()
         profiles.fill(name = "Bia", waist = "95", date = "11/10/2026")
-        profiles.save()
+        profiles.save(shown::add)
 
         // When
         profiles.startCreating()
@@ -135,7 +136,7 @@ class ProfilesViewModelTest {
         profiles.edit(ProfileField.Waist, "82")
 
         // When
-        profiles.save()
+        profiles.save(shown::add)
 
         // Then
         assertEquals(Length(82.0), profiles.state.value.profiles.single().measurements.waist)
@@ -149,7 +150,7 @@ class ProfilesViewModelTest {
         profiles.fill(name = " ", waist = "0", date = "14/10/2026")
 
         // When
-        profiles.save()
+        profiles.save(shown::add)
 
         // Then
         assertEquals(
@@ -171,11 +172,12 @@ class ProfilesViewModelTest {
         profiles.fill(name = "Bia", waist = "95", date = "11/10/2026")
 
         // When
-        profiles.save()
+        profiles.save(shown::add)
 
         // Then
         val failed = profiles.state.value
         assertEquals(R.string.profile_save_failed, failed.saveError)
+        assertEquals(emptyList<Int>(), shown)
         assertTrue(failed.isEditorOpen)
         assertEquals("Bia", failed.inputs[ProfileField.Name])
         assertEquals(listOf(ana), failed.profiles)
@@ -188,13 +190,13 @@ class ProfilesViewModelTest {
         profiles.startEditing(ana.id)
 
         // When
-        profiles.delete(ana.id)
+        profiles.delete(ana.id, shown::add)
 
         // Then
         val deleted = profiles.state.value
         assertEquals(emptyList(), deleted.profiles)
         assertFalse(deleted.isEditorOpen)
-        assertEquals(R.string.profile_deleted, deleted.savedMessage)
+        assertEquals(listOf(R.string.profile_deleted), shown)
     }
 
     @Test
@@ -204,11 +206,12 @@ class ProfilesViewModelTest {
         val profiles = profilesViewModel()
 
         // When
-        profiles.delete(ana.id)
+        profiles.delete(ana.id, shown::add)
 
         // Then
         val failed = profiles.state.value
         assertEquals(R.string.profile_delete_failed, failed.saveError)
+        assertEquals(emptyList<Int>(), shown)
         assertEquals(ana.id, failed.deleteId)
         assertEquals(listOf(ana), failed.profiles)
     }

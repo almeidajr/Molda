@@ -10,11 +10,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -202,16 +200,4 @@ private fun ProjectNameField(
         keyboardActions = KeyboardActions(onDone = { onConfirm() }),
         modifier = Modifier.fillMaxWidth(),
     )
-}
-
-/** Shows the latest command's outcome once in [snackbar], then calls [onDismiss]. */
-@Composable
-fun ProjectFeedback(state: ProjectsState, snackbar: SnackbarHostState, onDismiss: () -> Unit) {
-    val message = state.message?.let { stringResource(it) }
-    LaunchedEffect(message) {
-        message?.let {
-            snackbar.showSnackbar(it)
-            onDismiss()
-        }
-    }
 }
