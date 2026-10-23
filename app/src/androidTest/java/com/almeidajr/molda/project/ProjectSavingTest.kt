@@ -1,20 +1,18 @@
 package com.almeidajr.molda.project
 
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
-import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.clickInDialog
+import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
@@ -23,6 +21,8 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showRoute
@@ -31,15 +31,35 @@ import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 /** Saving a calculated skirt as a project, from the result to the Projetos list. */
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class ProjectSavingTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createLaunchLaterComposeRule()
+
+    // Each test binds its own profiles and projects, then launches the app.
+    @BindValue @JvmField
+    var profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    var projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October18Clock
 
     @Test
     fun save_fromProfileResultWithSuggestedName_storesItsSourceAndListsIt() {
@@ -49,7 +69,10 @@ class ProjectSavingTest {
             ProfileMeasurements(ProfileName("Ana"), Length(80.0), LocalDate.of(2026, 10, 12)),
         )
         val projects = FakeProjectRepository()
-        composeRule.showRoute(FakeProfileRepository(listOf(ana)), projects, October18Clock)
+        profileRepository = FakeProfileRepository(listOf(ana))
+        projectRepository = projects
+        composeRule.activityRule.launch()
+        composeRule.showRoute()
         composeRule.showSkirtCalculator()
         click("Usar perfil")
         composeRule.onAllNodes(hasText("Usar perfil: Ana", substring = true))[0].performClick()
@@ -94,7 +117,7 @@ class ProjectSavingTest {
         composeRule.dialogTextField().performTextReplacement("   ")
 
         // When
-        clickInDialog("Salvar")
+        composeRule.clickInDialog("Salvar")
 
         // Then
         composeRule.onNodeWithText("Informe um nome para o projeto.").assertIsDisplayed()
@@ -111,8 +134,8 @@ class ProjectSavingTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
-        clickInDialog("Salvar")
+        composeRule.showRoute()
+        composeRule.clickInDialog("Salvar")
 
         // Then
         composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
@@ -123,17 +146,13 @@ class ProjectSavingTest {
 
     /** Shows the calculator's result for a 70 cm waist typed by hand, stored in [projects]. */
     private fun showCalculatedHandTypedSkirt(projects: FakeProjectRepository) {
-        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        projectRepository = projects
+        composeRule.activityRule.launch()
+        composeRule.showRoute()
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
             .performTextReplacement("70")
         calculate(listOf("0", "45", "0", "0"))
-    }
-
-    private fun clickInDialog(label: String) {
-        // A semantics click needs no window focus, unlike a touch on a dialog still attaching.
-        composeRule.onNode(hasText(label) and hasAnyAncestor(isDialog()))
-            .performSemanticsAction(SemanticsActions.OnClick)
     }
 
     /** Fills every field after the waist and calculates. */

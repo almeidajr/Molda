@@ -18,18 +18,16 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.MainActivityLauncher
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
-import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.showSkirtCalculator
-import com.almeidajr.molda.testing.FakeProjectRepository
-import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.LocalDate
 
@@ -46,17 +44,16 @@ internal fun profile(
 )
 
 /**
- * Shows the app on [profiles] at [October13Clock], with [fontScale] and the theme given, forced
- * to [width] dp when given. Recreation restores the app's own content, so call it again after
+ * Shows the app on the fakes the test binds, with [fontScale] and the theme given, forced to
+ * [width] dp when given. Recreation restores the app's own content, so call it again after
  * recreating the activity.
  */
 internal fun AndroidComposeTestRule<*, MainActivity>.showProfileRoute(
-    profiles: ProfileRepository,
     fontScale: Float = 1f,
     width: Int? = null,
     dark: Boolean = false,
     dynamic: Boolean = true,
-) = showRoute(profiles, FakeProjectRepository(), October13Clock) { route ->
+) = showRoute { route ->
     val theme = @Composable {
         MoldaTheme(darkTheme = dark, dynamicColor = dynamic, content = route)
     }
@@ -75,15 +72,28 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showProfileRoute(
     }
 }
 
-/** Shows the app on [profiles] and opens the skirt calculator. */
-internal fun AndroidComposeTestRule<*, MainActivity>.showCalculator(profiles: ProfileRepository) {
-    showProfileRoute(profiles)
+/**
+ * Launches the app on the fakes the test has bound, then shows it as [showProfileRoute] does.
+ */
+internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchProfileRoute(
+    fontScale: Float = 1f,
+    width: Int? = null,
+    dark: Boolean = false,
+    dynamic: Boolean = true,
+) {
+    activityRule.launch()
+    showProfileRoute(fontScale, width, dark, dynamic)
+}
+
+/** Launches the app on the fakes the test has bound and opens the skirt calculator. */
+internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchCalculator() {
+    launchProfileRoute()
     showSkirtCalculator()
 }
 
-/** Shows the app on [profiles] and selects Perfis. */
-internal fun AndroidComposeTestRule<*, MainActivity>.showProfiles(profiles: ProfileRepository) {
-    showProfileRoute(profiles)
+/** Launches the app on the fakes the test has bound and selects Perfis. */
+internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchProfiles() {
+    launchProfileRoute()
     showProfiles()
 }
 

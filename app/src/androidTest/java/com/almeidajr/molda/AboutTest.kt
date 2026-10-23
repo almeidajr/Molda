@@ -18,19 +18,45 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
  * The About screen, opened from every root top app bar, and its open-source licences. It runs on
- * the app's own content, since only [MainActivity] reads the installed version name; no test here
- * reads or writes stored data.
+ * the app's own content, since only [MainActivity] reads the installed version name, on empty
+ * fakes.
  */
 @RunWith(AndroidJUnit4::class)
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class AboutTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @BindValue @JvmField
+    val profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October13Clock
 
     @Test
     fun aboutAction_onEveryRoot_opensAbout_andBackReturnsThere() {

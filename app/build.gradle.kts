@@ -24,7 +24,8 @@ android {
         versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 1
         versionName = providers.gradleProperty("versionName").orNull ?: "0.0.0-dev"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Starts Hilt's test application, so device tests can replace bindings.
+        testInstrumentationRunner = "com.almeidajr.molda.MoldaTestRunner"
     }
 
     signingConfigs {
@@ -167,6 +168,8 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.window.testing)
     androidTestImplementation(libs.androidx.room3.testing)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

@@ -8,31 +8,57 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
-import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
 import com.almeidajr.molda.closeKeyboard
+import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.pressBack
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class ProfileFailuresTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createLaunchLaterComposeRule()
+
+    // Each test binds its own profiles, then launches the app on them.
+    @BindValue @JvmField
+    var profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October13Clock
 
     @Test
     fun save_whilePending_disablesEditor() {
         // Given
-        composeRule.showProfiles(existingProfiles().apply { commandGate = CompletableDeferred() })
+        profileRepository = existingProfiles().apply { commandGate = CompletableDeferred() }
+        composeRule.launchProfiles()
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
         composeRule.closeKeyboard()
@@ -52,7 +78,8 @@ class ProfileFailuresTest {
     fun back_whileSaving_keepsEditorUntilSaved() {
         // Given
         val gate = CompletableDeferred<Unit>()
-        composeRule.showProfiles(existingProfiles().apply { commandGate = gate })
+        profileRepository = existingProfiles().apply { commandGate = gate }
+        composeRule.launchProfiles()
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
         // Back must reach the editor, not close the keyboard.
@@ -72,7 +99,8 @@ class ProfileFailuresTest {
     @Test
     fun delete_whilePending_disablesEveryRowsActions() {
         // Given
-        composeRule.showProfiles(existingProfiles().apply { commandGate = CompletableDeferred() })
+        profileRepository = existingProfiles().apply { commandGate = CompletableDeferred() }
+        composeRule.launchProfiles()
         composeRule.click("Ações: Existente")
         composeRule.click("Excluir perfil")
 
@@ -88,7 +116,8 @@ class ProfileFailuresTest {
     @Test
     fun pickerRow_withStoredFutureDate_staysListed() {
         // Given
-        composeRule.showCalculator(existingProfiles(measurementDate = LocalDate.of(2026, 10, 14)))
+        profileRepository = existingProfiles(measurementDate = LocalDate.of(2026, 10, 14))
+        composeRule.launchCalculator()
 
         // When
         composeRule.click("Usar perfil")
@@ -101,7 +130,8 @@ class ProfileFailuresTest {
     @Test
     fun saveEdit_withStoredFutureDate_asksForCorrection() {
         // Given
-        composeRule.showProfiles(existingProfiles(measurementDate = LocalDate.of(2026, 10, 14)))
+        profileRepository = existingProfiles(measurementDate = LocalDate.of(2026, 10, 14))
+        composeRule.launchProfiles()
         composeRule.click("Existente", useUnmergedTree = true)
 
         // When
@@ -117,7 +147,8 @@ class ProfileFailuresTest {
     fun saveNew_whenStorageFails_keepsFormAndShowsError() {
         // Given
         val storage = existingProfiles().apply { failsCommands = true }
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
         composeRule.closeKeyboard()
@@ -138,7 +169,8 @@ class ProfileFailuresTest {
         // Given
         val storage = existingProfiles().apply { failsCommands = true }
         val original = storage.current
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.edit("Nome ou apelido", "Alterado")
         composeRule.edit("Cintura do perfil (cm)", "82")
@@ -163,7 +195,8 @@ class ProfileFailuresTest {
         // Given
         val storage = existingProfiles().apply { failsCommands = true }
         val original = storage.current
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         composeRule.click("Ações: Existente")
         composeRule.click("Excluir perfil")
 
@@ -184,7 +217,8 @@ class ProfileFailuresTest {
         val storage = existingProfiles().apply { failsLoad = true }
 
         // When
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
 
         // Then
         composeRule.onNodeWithText("Não foi possível carregar os perfis.", substring = true)
@@ -196,7 +230,8 @@ class ProfileFailuresTest {
     fun loadRetry_afterFailure_showsProfiles() {
         // Given
         val storage = existingProfiles().apply { failsLoad = true }
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         storage.failsLoad = false
 
         // When
@@ -209,7 +244,8 @@ class ProfileFailuresTest {
     @Test
     fun picker_whileProfilesLoad_showsLoading() {
         // Given
-        composeRule.showCalculator(existingProfiles().apply { loadGate = CompletableDeferred() })
+        profileRepository = existingProfiles().apply { loadGate = CompletableDeferred() }
+        composeRule.launchCalculator()
 
         // When
         composeRule.click("Usar perfil")
@@ -221,7 +257,8 @@ class ProfileFailuresTest {
     @Test
     fun calculate_whileProfilesLoad_showsResults() {
         // Given
-        composeRule.showCalculator(existingProfiles().apply { loadGate = CompletableDeferred() })
+        profileRepository = existingProfiles().apply { loadGate = CompletableDeferred() }
+        composeRule.launchCalculator()
         composeRule.edit("Circunferência da cintura (cm)", "80")
         composeRule.edit("Folga de cintura (cm)", "0")
         composeRule.edit("Comprimento acabado (cm)", "60")
@@ -238,12 +275,8 @@ class ProfileFailuresTest {
     @Test
     fun wideWindow_deleteFailure_announcesOnce() {
         // Given
-        composeRule.showProfileRoute(
-            existingProfiles().apply {
-                failsCommands = true
-            },
-            width = 1200,
-        )
+        profileRepository = existingProfiles().apply { failsCommands = true }
+        composeRule.launchProfileRoute(width = 1200)
         composeRule.showProfiles()
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.click("Ações: Outra pessoa")
@@ -264,12 +297,8 @@ class ProfileFailuresTest {
     @Test
     fun wideWindow_deleteFailure_keepsOtherProfilesDraft() {
         // Given
-        composeRule.showProfileRoute(
-            existingProfiles().apply {
-                failsCommands = true
-            },
-            width = 1200,
-        )
+        profileRepository = existingProfiles().apply { failsCommands = true }
+        composeRule.launchProfileRoute(width = 1200)
         composeRule.showProfiles()
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.edit("Nome ou apelido", "Rascunho")

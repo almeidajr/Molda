@@ -11,7 +11,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.isDisplayed
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
@@ -23,33 +22,60 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.almeidajr.molda.KeyboardModeRule
-import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.assertDrawnHeightIsAtLeast
 import com.almeidajr.molda.assertNoTextFieldFocused
 import com.almeidajr.molda.assertReadableTextContrast
 import com.almeidajr.molda.assertSurfaceStandsOut
 import com.almeidajr.molda.click
 import com.almeidajr.molda.closeKeyboard
+import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.pressKey
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class ProfilePresentationTest {
     @get:Rule(order = 0)
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
+    val composeRule = createLaunchLaterComposeRule()
+
+    @get:Rule(order = 2)
     val keyboardMode = KeyboardModeRule(composeRule)
+
+    // Each test binds its own profiles, then launches the app on them.
+    @BindValue @JvmField
+    var profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October13Clock
 
     @Test
     fun profileRows_withSameName_showTheirNotes() {
         // When
-        composeRule.showProfiles(sameNameWithNotes())
+        profileRepository = sameNameWithNotes()
+        composeRule.launchProfiles()
 
         // Then
         composeRule.onNodeWithText("Medida com roupa leve").performScrollTo().assertIsDisplayed()
@@ -59,7 +85,8 @@ class ProfilePresentationTest {
     @Test
     fun pickerRows_withSameName_showTheirNotes() {
         // Given
-        composeRule.showCalculator(sameNameWithNotes())
+        profileRepository = sameNameWithNotes()
+        composeRule.launchCalculator()
 
         // When
         composeRule.click("Usar perfil")
@@ -72,7 +99,7 @@ class ProfilePresentationTest {
     @Test
     fun newProfileEditor_explainsDateAndNotes() {
         // Given
-        composeRule.showProfiles(FakeProfileRepository())
+        composeRule.launchProfiles()
 
         // When
         composeRule.click("Novo perfil")
@@ -89,7 +116,7 @@ class ProfilePresentationTest {
     @Test
     fun newProfileEditor_dateField_startsEmpty() {
         // Given
-        composeRule.showProfiles(FakeProfileRepository())
+        composeRule.launchProfiles()
 
         // When
         composeRule.click("Novo perfil")
@@ -103,7 +130,7 @@ class ProfilePresentationTest {
     @Test
     fun saveNew_withMalformedDate_showsFormatErrorAndKeepsText() {
         // Given
-        composeRule.showProfiles(FakeProfileRepository())
+        composeRule.launchProfiles()
         composeRule.click("Novo perfil")
         composeRule.edit("Nome ou apelido", "Ana")
         composeRule.edit("Cintura do perfil (cm)", "80")
@@ -123,7 +150,7 @@ class ProfilePresentationTest {
     @Test
     fun saveNew_withFutureDate_asksForCorrection() {
         // Given
-        composeRule.showProfiles(FakeProfileRepository())
+        composeRule.launchProfiles()
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Ana", date = "14/10/2026")
         composeRule.closeKeyboard()
@@ -140,7 +167,8 @@ class ProfilePresentationTest {
     @Test
     fun profileTexts_useAgreedTypography() {
         // Given
-        composeRule.showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchProfiles()
 
         // When/Then
         assertTypography("Ana", 16, 24, FontWeight.Medium)
@@ -166,9 +194,12 @@ class ProfilePresentationTest {
         val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Bia", 72.0)))
         val schemes = listOf(false to false, true to false, false to true, true to true)
 
+        profileRepository = storage
+        composeRule.activityRule.launch()
+
         // When/Then
         schemes.forEach { (dark, dynamic) ->
-            composeRule.showProfileRoute(storage, dark = dark, dynamic = dynamic)
+            composeRule.showProfileRoute(dark = dark, dynamic = dynamic)
             composeRule.showSkirtCalculator()
             composeRule.click("Usar perfil")
             listOf("Ana — 80", "Bia — 72").forEach {
@@ -186,7 +217,8 @@ class ProfilePresentationTest {
     @Test
     fun profileButtons_atDefaultTextSize_drawAtLeast48dpTall() {
         // Given
-        composeRule.showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchProfiles()
 
         // When/Then
         assertDrawnHeight("Perfis", "Ações: Ana")
@@ -205,7 +237,8 @@ class ProfilePresentationTest {
     @Test
     fun profileRow_openedWithKeyboard_focusesNoField() {
         // Given
-        composeRule.showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchProfiles()
         // Out of touch mode, the row joins keyboard focus traversal.
         keyboardMode.enter()
         composeRule.onNodeWithText("Ana").requestFocus().assertIsFocused()
@@ -228,9 +261,12 @@ class ProfilePresentationTest {
         val storage = FakeProfileRepository(listOf(profile(1, name, notes = notes)))
         val schemes = listOf(false to false, true to false, false to true, true to true)
 
+        profileRepository = storage
+        composeRule.activityRule.launch()
+
         // When/Then
         schemes.forEach { (dark, dynamic) ->
-            composeRule.showProfileRoute(storage, fontScale = 2f, dark = dark, dynamic = dynamic)
+            composeRule.showProfileRoute(fontScale = 2f, dark = dark, dynamic = dynamic)
             composeRule.showProfiles()
             composeRule.onNodeWithText(name).performScrollTo().assertIsDisplayed()
                 .assertHeightIsAtLeast(48.dp)

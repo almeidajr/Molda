@@ -4,15 +4,17 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
+import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
@@ -27,15 +29,35 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import java.time.Instant
 import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 /** Renaming and deleting a project from the Projetos list. */
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class ProjectManagementTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createLaunchLaterComposeRule()
+
+    // Each test binds its own projects, then launches the app on them.
+    @BindValue @JvmField
+    val profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    var projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October18Clock
 
     @Test
     fun rename_withBlankName_showsNameErrorAndKeepsTheName() {
@@ -116,7 +138,7 @@ class ProjectManagementTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        composeRule.showRoute()
         click("Renomear")
 
         // Then
@@ -169,7 +191,7 @@ class ProjectManagementTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        composeRule.showRoute()
         click("Confirmar exclusão")
 
         // Then
@@ -211,8 +233,11 @@ class ProjectManagementTest {
         composeRule.onNodeWithText("Saia antiga").assertIsDisplayed()
     }
 
+    /** Binds [projects], then launches the app on them and selects Projetos. */
     private fun showProjetos(projects: ProjectRepository) {
-        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        projectRepository = projects
+        composeRule.activityRule.launch()
+        composeRule.showRoute()
         composeRule.selectDestination("Projetos")
     }
 

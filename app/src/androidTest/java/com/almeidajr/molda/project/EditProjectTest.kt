@@ -1,22 +1,21 @@
 package com.almeidajr.molda.project
 
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
-import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
+import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.closeKeyboard
+import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
@@ -25,7 +24,9 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
+import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.fillProfile
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
@@ -35,22 +36,42 @@ import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 /** Editing a saved project in the calculator: "Salvar", "Salvar como novo" and discarding. */
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class EditProjectTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createLaunchLaterComposeRule()
 
     private val projects = FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
+
+    // Each test binds its own profiles, then launches the app on them.
+    @BindValue @JvmField
+    var profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = projects
+
+    @BindValue @JvmField
+    val clock: Clock = October18Clock
 
     @Test
     fun edit_savedProject_loadsEveryInputAndItsSource() {
         // Given
-        showRoute()
+        launch()
 
         // When
         openEditor()
@@ -66,7 +87,7 @@ class EditProjectTest {
     @Test
     fun salvar_afterEditing_updatesTheProjectInPlace() {
         // Given
-        showRoute()
+        launch()
         openEditor()
         editEase("4")
         composeRule.click("Calcular")
@@ -85,7 +106,7 @@ class EditProjectTest {
     @Test
     fun saveAsNew_afterEditing_keepsTheOriginalAndShowsTheNewProject() {
         // Given
-        showRoute()
+        launch()
         openEditor()
         editEase("4")
         composeRule.click("Calcular")
@@ -105,7 +126,7 @@ class EditProjectTest {
     @Test
     fun back_withUnsavedChanges_asksBeforeDiscarding() {
         // Given
-        showRoute()
+        launch()
         openEditor()
         editEase("4")
 
@@ -121,7 +142,7 @@ class EditProjectTest {
     @Test
     fun continueEditing_inDiscardDialog_keepsTheEditedValues() {
         // Given
-        showRoute()
+        launch()
         openEditor()
         editEase("4")
         composeRule.onNodeWithContentDescription("Voltar").performClick()
@@ -137,7 +158,7 @@ class EditProjectTest {
     @Test
     fun discard_inDiscardDialog_returnsToTheUnchangedProject() {
         // Given
-        showRoute()
+        launch()
         openEditor()
         editEase("4")
         composeRule.onNodeWithContentDescription("Voltar").performClick()
@@ -156,7 +177,7 @@ class EditProjectTest {
         openDiscardDialogAfterRecreation()
 
         // When
-        clickInDialog("Descartar")
+        composeRule.clickInDialog("Descartar")
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
@@ -169,7 +190,7 @@ class EditProjectTest {
         openDiscardDialogAfterRecreation()
 
         // When
-        clickInDialog("Continuar editando")
+        composeRule.clickInDialog("Continuar editando")
 
         // Then
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
@@ -179,7 +200,7 @@ class EditProjectTest {
     @Test
     fun back_withoutChanges_returnsToTheProject() {
         // Given
-        showRoute()
+        launch()
         openEditor()
 
         // When
@@ -193,7 +214,7 @@ class EditProjectTest {
     @Test
     fun editing_leavesTheMoldesCalculatorDraftUntouched() {
         // Given
-        showRoute()
+        launch()
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performTextReplacement("70")
         composeRule.closeKeyboard()
@@ -211,7 +232,7 @@ class EditProjectTest {
     @Test
     fun useProfile_whileEditing_changesOnlyTheEditedDraft() {
         // Given
-        showRoute(FakeProfileRepository(listOf(BIA)))
+        launch(FakeProfileRepository(listOf(BIA)))
         openEditor()
 
         // When
@@ -227,7 +248,7 @@ class EditProjectTest {
     @Test
     fun createProfile_fromTheEditorsPicker_fillsTheEditedDraft() {
         // Given
-        showRoute()
+        launch()
         openEditor()
         composeRule.click("Usar perfil")
         composeRule.click("Novo perfil")
@@ -246,7 +267,7 @@ class EditProjectTest {
     @Test
     fun createProfile_afterSwitchingTabAndBack_fillsTheEditedDraft() {
         // Given
-        showRoute()
+        launch()
         openEditor()
         composeRule.click("Usar perfil")
         composeRule.click("Novo perfil")
@@ -267,7 +288,7 @@ class EditProjectTest {
     @Test
     fun useProfile_inMoldes_leavesTheEditedDraftUntouched() {
         // Given
-        showRoute(FakeProfileRepository(listOf(BIA)))
+        launch(FakeProfileRepository(listOf(BIA)))
         openEditor()
         composeRule.showSkirtCalculator()
 
@@ -285,13 +306,13 @@ class EditProjectTest {
     @Test
     fun useProfile_afterRecreationWithThePickerOpen_fillsTheEditedDraft() {
         // Given
-        showRoute(FakeProfileRepository(listOf(BIA)))
+        launch(FakeProfileRepository(listOf(BIA)))
         openEditor()
         composeRule.click("Usar perfil")
 
         // When
         composeRule.recreate()
-        showRoute(FakeProfileRepository(listOf(BIA)))
+        composeRule.showRoute()
         pickBia()
 
         // Then
@@ -304,13 +325,13 @@ class EditProjectTest {
     @Test
     fun recreation_keepsTheEditedValues() {
         // Given
-        showRoute()
+        launch()
         openEditor()
         editEase("4")
 
         // When
         composeRule.recreate()
-        showRoute()
+        composeRule.showRoute()
 
         // Then
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
@@ -324,18 +345,12 @@ class EditProjectTest {
     }
 
     private fun openDiscardDialogAfterRecreation() {
-        showRoute()
+        launch()
         openEditor()
         editEase("4")
         composeRule.onNodeWithContentDescription("Voltar").performClick()
         composeRule.recreate()
-        showRoute()
-    }
-
-    private fun clickInDialog(label: String) {
-        // A semantics click needs no window focus, unlike a touch on a dialog still attaching.
-        composeRule.onNode(hasText(label) and hasClickAction())
-            .performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.showRoute()
     }
 
     private fun editEase(text: String) {
@@ -353,8 +368,12 @@ class EditProjectTest {
     private fun pickBia() =
         composeRule.onAllNodes(hasText("Usar perfil: Bia", substring = true))[0].performClick()
 
-    private fun showRoute(profiles: FakeProfileRepository = FakeProfileRepository()) =
-        composeRule.showRoute(profiles, projects, October18Clock)
+    /** Binds [profiles], then launches the app on them. */
+    private fun launch(profiles: ProfileRepository = FakeProfileRepository()) {
+        profileRepository = profiles
+        composeRule.activityRule.launch()
+        composeRule.showRoute()
+    }
 
     private companion object {
         val BIA = MeasurementProfile(

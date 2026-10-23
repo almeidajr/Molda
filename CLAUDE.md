@@ -29,7 +29,7 @@ Single-activity Compose app organized by feature, each split into `domain` / `da
 - `profile/` — measurement profiles. `domain/ProfileRepository` is the boundary; `data/LocalProfileRepository` implements it (a `Flow` query plus commands returning `Result`).
 - `project/` — saved projetos: a named snapshot of a pattern draft's measurements, assumptions and stored radii, never recalculated on open. `domain/ProjectRepository` is the boundary, `data/LocalProjectRepository` implements it, and `ui/ProjectsViewModel` owns the list and the save, rename and delete dialogs.
 
-Both repositories share one Room 3 database, `data/room/MoldaDatabase.kt` (`molda.db`), opened in `di/AppModule`. The schema is exported to `app/schemas/`; every schema change needs a real `Migration`, never destructive fallback (`docs/adr/0002`).
+Both repositories share one Room 3 database, `data/room/MoldaDatabase.kt` (`molda.db`), opened in `di/DatabaseModule`. The schema is exported to `app/schemas/`; every schema change needs a real `Migration`, never destructive fallback (`docs/adr/0002`).
 
 Entry flow: `MainActivity` (calls `Rive.init`) → `MoldaRoute.kt`, following Navigation 3's recipes (`docs/adr/0005`; `docs/adr/0006` for results, dialogs and ViewModels):
 

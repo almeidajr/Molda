@@ -8,7 +8,7 @@ Molda's device tests polled the UI with about 60 `waitUntil` calls and scattered
 
 - **Keep polling, but through named helpers with one shared timeout.** Rejected: it renames the wall-clock wait without removing it, so tests stay slow and still flake under load.
 - **Real Room with an idling resource in every device test.** Rejected: screen tests would pay for database setup and isolation, and would verify Room again instead of the screen. Room is already covered by the repository and migration tests.
-- **Fakes everywhere, journeys included.** Rejected: no device test would exercise the wiring from the UI through `di/AppModule` to the real database, which is what journey tests exist for.
+- **Fakes everywhere, journeys included.** Rejected: no device test would exercise the wiring from the UI through the `di` modules to the real database, which is what journey tests exist for.
 
 ## Consequences
 
