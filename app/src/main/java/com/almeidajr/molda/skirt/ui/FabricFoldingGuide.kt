@@ -141,6 +141,7 @@ internal fun <T> GuideFrame(
 
                         else -> {
                             val description = drawingDescription(progress.step)
+                            val isPlaying = progress.isPlaying(motionEnabled)
                             Box(
                                 Modifier.fillMaxWidth().aspectRatio(1f).semantics {
                                     contentDescription = description
@@ -148,10 +149,7 @@ internal fun <T> GuideFrame(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 if (file is Result.Success) {
-                                    drawing(file.value, progress.isPlaying(motionEnabled)) {
-                                        load =
-                                            it
-                                    }
+                                    drawing(file.value, isPlaying) { load = it }
                                 }
                                 GuideLoadingIndicator(load == null, Modifier.matchParentSize())
                             }
@@ -177,7 +175,11 @@ private fun PlaybackBadge(progress: GuideProgress, modifier: Modifier = Modifier
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.testTag(
-                if (progress.isPaused) GUIDE_BADGE_PLAY_TAG else GUIDE_BADGE_PAUSE_TAG,
+                if (progress.badgeIcon == R.drawable.ic_play_arrow) {
+                    GUIDE_BADGE_PLAY_TAG
+                } else {
+                    GUIDE_BADGE_PAUSE_TAG
+                },
             ),
         )
     }

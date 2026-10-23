@@ -31,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -123,7 +122,9 @@ internal fun FabricFoldingPlayer(
     var progress by rememberSaveable(stateSaver = GuideProgressSaver) {
         mutableStateOf(GuideProgress())
     }
-    val motionEnabled = rememberSystemMotionEnabled { progress = progress.motionChanged() }
+    val motionEnabled = rememberSystemMotionEnabled()
+    // The first run is a no-op: a new or restored progress is never paused.
+    LaunchedEffect(motionEnabled) { progress = progress.motionChanged() }
     val file = rememberGuideFile()
     Surface(modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -263,24 +264,16 @@ private fun StepBar(progress: GuideProgress, onPrevious: () -> Unit, onForward: 
     }
 }
 
-/**
- * Follows the system animator scale, including changes made while the player is open, calling
- * [onChange] each time motion is switched on or off.
- */
+/** Follows the system animator scale, including changes made while the player is open. */
 @Composable
-private fun rememberSystemMotionEnabled(onChange: () -> Unit): Boolean {
+private fun rememberSystemMotionEnabled(): Boolean {
     var motionEnabled by remember { mutableStateOf(ValueAnimator.areAnimatorsEnabled()) }
-    val currentOnChange by rememberUpdatedState(onChange)
     DisposableEffect(Unit) {
-        fun follow(isEnabled: Boolean) {
-            if (isEnabled != motionEnabled) {
-                motionEnabled = isEnabled
-                currentOnChange()
-            }
+        val listener = ValueAnimator.DurationScaleChangeListener { scale ->
+            motionEnabled = scale > 0f
         }
-        val listener = ValueAnimator.DurationScaleChangeListener { follow(it > 0f) }
         ValueAnimator.registerDurationScaleChangeListener(listener)
-        follow(ValueAnimator.areAnimatorsEnabled())
+        motionEnabled = ValueAnimator.areAnimatorsEnabled()
         onDispose { ValueAnimator.unregisterDurationScaleChangeListener(listener) }
     }
     return motionEnabled
