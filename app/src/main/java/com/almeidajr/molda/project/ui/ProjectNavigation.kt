@@ -250,7 +250,7 @@ internal fun OpenedProject(
     id: ProjectId,
     onClose: () -> Unit,
     failed: @Composable (onRetry: () -> Unit) -> Unit = {
-        ProjectLoadFailure(R.string.project_load_failed, it, Modifier.padding(16.dp))
+        ProjectLoadFailure(it, Modifier.padding(16.dp))
     },
     content: @Composable (Project) -> Unit,
 ) {

@@ -68,7 +68,7 @@ fun ProjectsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 when (load) {
-                    is LoadResult.Error -> ProjectLoadFailure(R.string.project_load_failed, onRetry)
+                    is LoadResult.Error -> ProjectLoadFailure(onRetry)
 
                     LoadResult.Loading -> Text(stringResource(R.string.project_loading))
 
@@ -89,15 +89,11 @@ fun ProjectsScreen(
     }
 }
 
-/** The projects failed to load: shows [error] and offers [onRetry]. */
+/** The projects failed to load: says so and offers [onRetry]. */
 @Composable
-internal fun ProjectLoadFailure(
-    @StringRes error: Int,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+internal fun ProjectLoadFailure(onRetry: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(error), color = MaterialTheme.colorScheme.error)
+        Text(stringResource(R.string.project_load_failed), color = MaterialTheme.colorScheme.error)
         TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.action_retry_load))
         }
