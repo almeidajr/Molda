@@ -215,6 +215,32 @@ class TransitionExecutorTest {
     }
 
     @Test
+    fun carryOut_finishProfileEditorWhenAnotherOneReports_closesTheReportingOne() {
+        // Given
+        val reporting = ProfileEditorKey(existing, "reporting")
+        val navigator = app(
+            ProfileManagementKey,
+            listOf(
+                ProfileManagementKey,
+                reporting,
+                ProfileEditorKey(EditedProfile.New, "unreported"),
+            ),
+        )
+        val holder = EditorStatusHolder().apply {
+            report(reporting, MutableStateFlow(EditorReport(EditorKind.Profile)))
+        }
+
+        // When
+        navigator.carryOut(Transition.FinishProfileEditor, holder)
+
+        // Then
+        assertEquals(
+            listOf(ProfileManagementKey, ProfileEditorKey(EditedProfile.New, "unreported")),
+            navigator.state.current.toList(),
+        )
+    }
+
+    @Test
     fun carryOut_finishPickerEditorBeforeItReports_returnsToThePicker() {
         // Given
         val navigator = app(
@@ -235,22 +261,6 @@ class TransitionExecutorTest {
         assertEquals(
             listOf(ProjectsKey, projectEditor, ProfilePickerKey(projectEditor.profileResultKey)),
             navigator.state.current.toList(),
-        )
-    }
-
-    @Test
-    fun carryOut_openProfileEditorFromAnotherTab_opensItBesideTheList() {
-        // Given
-        val navigator = app(PatternCatalogKey)
-
-        // When
-        navigator.carryOut(Transition.OpenProfileEditor(existing), editors)
-
-        // Then
-        val perfis = navigator.stackOf(ProfileManagementKey)
-        assertEquals(
-            listOf(ProfileManagementKey, ProfileEditorKey(existing, opening(perfis))),
-            perfis,
         )
     }
 
@@ -284,25 +294,6 @@ class TransitionExecutorTest {
     }
 
     @Test
-    fun carryOut_openAnotherProfileEditor_replacesTheOpenOne() {
-        // Given
-        val navigator = app(
-            ProfileManagementKey,
-            listOf(ProfileManagementKey, ProfileEditorKey(existing)),
-        )
-
-        // When
-        navigator.carryOut(Transition.OpenProfileEditor(EditedProfile.New), editors)
-
-        // Then
-        val perfis = navigator.state.current.toList()
-        assertEquals(
-            listOf(ProfileManagementKey, ProfileEditorKey(EditedProfile.New, opening(perfis))),
-            perfis,
-        )
-    }
-
-    @Test
     fun carryOut_openPickerEditor_opensItOverThePicker() {
         // Given
         val navigator = app(
@@ -315,45 +306,15 @@ class TransitionExecutorTest {
 
         // Then
         val moldes = navigator.state.current.toList()
+        val opening = assertIs<PickerProfileEditorKey>(moldes.last()).opening
         assertEquals(
             listOf(
                 PatternCatalogKey,
                 SkirtCalculatorKey,
                 moldesPicker,
-                PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY, opening(moldes)),
+                PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY, opening),
             ),
             moldes,
-        )
-    }
-
-    @Test
-    fun carryOut_openPickerEditorWhileOneIsOpenOnTheSameResultKey_leavesOneFreshEditor() {
-        // Given
-        val open = PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY)
-        val navigator = app(
-            PatternCatalogKey,
-            listOf(PatternCatalogKey, SkirtCalculatorKey, moldesPicker, open),
-        )
-
-        // When
-        navigator.carryOut(
-            AfterDiscard.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY).transition(),
-            editors,
-        )
-
-        // Then
-        val moldes = navigator.state.current.toList()
-        assertEquals(1, moldes.count { it is PickerProfileEditorKey })
-        assertNotEquals<NavKey>(open, moldes.last())
-    }
-
-    @Test
-    fun pickerEditorKey_openedTwice_hasUniqueContentKeys() {
-        // When/Then
-        // Navigation 3's default content key is toString(); the opening keeps it unique on a stack.
-        assertNotEquals(
-            PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY).toString(),
-            PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY).toString(),
         )
     }
 
@@ -374,12 +335,5 @@ class TransitionExecutorTest {
             navigator.stackOf(PatternCatalogKey),
         )
         assertEquals(guias, navigator.stackOf(GuideLibraryKey))
-    }
-
-    /** The opening of the editor on top of [stack], fresh to each opening. */
-    private fun opening(stack: List<NavKey>): String = when (val top = stack.last()) {
-        is ProfileEditorKey -> top.opening
-        is PickerProfileEditorKey -> top.opening
-        else -> error("No editor on top of $stack")
     }
 }

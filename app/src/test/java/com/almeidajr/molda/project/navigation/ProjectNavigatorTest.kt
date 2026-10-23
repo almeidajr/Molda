@@ -124,5 +124,42 @@ class ProjectNavigatorTest {
         )
     }
 
+    @Test
+    fun closeProjectEditor_withNoneOpen_changesNothing() {
+        // Given
+        val navigator = projetos(ProjectKey(first))
+
+        // When
+        navigator.closeProjectEditor()
+
+        // Then
+        assertEquals(listOf(listOf(ProjectsKey, ProjectKey(first))), navigator.stacks)
+    }
+
+    @Test
+    fun closeProjectEditor_withTheEditorOpen_returnsToTheProject() {
+        // Given
+        val navigator = projetos(ProjectKey(first), ProjectEditorKey(first, snapshot))
+
+        // When
+        navigator.closeProjectEditor()
+
+        // Then
+        assertEquals(listOf(listOf(ProjectsKey, ProjectKey(first))), navigator.stacks)
+    }
+
+    @Test
+    fun closeProjectEditor_withItsGuideAbove_closesOnlyTheEditor() {
+        // Given
+        val guide = ProjectEditorGuideKey(snapshot.radii)
+        val navigator = projetos(ProjectKey(first), ProjectEditorKey(first, snapshot), guide)
+
+        // When
+        navigator.closeProjectEditor()
+
+        // Then
+        assertEquals(listOf(listOf(ProjectsKey, ProjectKey(first), guide)), navigator.stacks)
+    }
+
     private data object OtherKey : NavKey
 }

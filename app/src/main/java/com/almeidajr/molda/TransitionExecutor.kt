@@ -4,7 +4,7 @@ import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.profile.navigation.openPickerEditor
 import com.almeidajr.molda.profile.navigation.openProfileEditor
-import com.almeidajr.molda.project.navigation.ProjectEditorKey
+import com.almeidajr.molda.project.navigation.closeProjectEditor
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.ui.navigation.EditorKind
 import com.almeidajr.molda.ui.navigation.EditorStatusHolder
@@ -27,7 +27,7 @@ internal fun Navigator.carryOut(transition: Transition, editors: EditorStatusHol
         // The selected stack's profile editor; the picker's returns to the picker below it.
         Transition.FinishProfileEditor -> editors.profileEditorOn(state.current)?.let(::remove)
 
-        Transition.CloseProjectEditor -> removeAll { it is ProjectEditorKey }
+        Transition.CloseProjectEditor -> closeProjectEditor()
 
         // Popping to the calculator also closes the picker and its editor above it.
         Transition.ShowCalculator -> popTo(SkirtCalculatorKey)

@@ -22,3 +22,6 @@ internal fun Navigator.showProject(id: ProjectId) {
     }
     push(ProjectKey(id), root = ProjectsKey)
 }
+
+/** Closes the project editor, back to what was under it. */
+internal fun Navigator.closeProjectEditor() = removeAll { it is ProjectEditorKey }
