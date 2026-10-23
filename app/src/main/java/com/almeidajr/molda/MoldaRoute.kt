@@ -164,5 +164,5 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
     /** The status of the editor an action on [stack] concerns, read when the sewist acts. */
     private fun status(stack: List<NavKey>) = editors.editorOn(stack)?.report.editorStatus()
 
-    private fun perform(transition: Transition) = navigator.carryOut(transition, editors)
+    private fun perform(transition: Transition) = navigator.carryOut(transition)
 }

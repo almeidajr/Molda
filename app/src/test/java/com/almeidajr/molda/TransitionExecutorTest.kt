@@ -22,16 +22,12 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.navigation.FabricFoldingGuideKey
 import com.almeidajr.molda.skirt.navigation.MOLDES_PROFILE_RESULT_KEY
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
-import com.almeidajr.molda.ui.navigation.EditorKind
-import com.almeidajr.molda.ui.navigation.EditorReport
-import com.almeidajr.molda.ui.navigation.EditorStatusHolder
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.navigatorOf
 import com.almeidajr.molda.ui.navigation.stacks
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Test
 
 class TransitionExecutorTest {
@@ -43,7 +39,6 @@ class TransitionExecutorTest {
     private val projectEditor = ProjectEditorKey(ProjectId(1), snapshot)
     private val moldesPicker = ProfilePickerKey(MOLDES_PROFILE_RESULT_KEY)
     private val existing = EditedProfile.Existing(ProfileId(2))
-    private val editors = EditorStatusHolder()
 
     /** The app's stacks: [stacks] for the destinations they start at, the others at their roots. */
     private fun app(selected: NavKey, vararg stacks: List<NavKey>): Navigator = navigatorOf(
@@ -59,7 +54,7 @@ class TransitionExecutorTest {
         val navigator = app(PatternCatalogKey, listOf(PatternCatalogKey, SkirtCalculatorKey))
 
         // When
-        navigator.carryOut(Transition.None, editors)
+        navigator.carryOut(Transition.None)
 
         // Then
         assertEquals(
@@ -74,7 +69,7 @@ class TransitionExecutorTest {
         val navigator = app(GuideLibraryKey, listOf(GuideLibraryKey, ExampleFabricFoldingGuideKey))
 
         // When
-        navigator.carryOut(Transition.Back, editors)
+        navigator.carryOut(Transition.Back)
 
         // Then
         assertEquals(listOf(GuideLibraryKey), navigator.state.current.toList())
@@ -89,7 +84,7 @@ class TransitionExecutorTest {
         )
 
         // When
-        navigator.carryOut(Transition.Select(ProjectsKey), editors)
+        navigator.carryOut(Transition.Select(ProjectsKey))
 
         // Then
         assertEquals(
@@ -107,7 +102,7 @@ class TransitionExecutorTest {
         )
 
         // When
-        navigator.carryOut(AfterDiscard.ShowProjects.transition(), editors)
+        navigator.carryOut(AfterDiscard.ShowProjects.transition())
 
         // Then
         assertEquals(listOf(ProjectsKey), navigator.state.current.toList())
@@ -120,7 +115,7 @@ class TransitionExecutorTest {
         val ask = Transition.AskToDiscard(AfterDiscard.CloseProjectEditor)
 
         // When
-        navigator.carryOut(ask, editors)
+        navigator.carryOut(ask)
 
         // Then
         assertEquals(
@@ -138,7 +133,7 @@ class TransitionExecutorTest {
         )
 
         // When
-        navigator.carryOut(Transition.CloseProjectEditor, editors)
+        navigator.carryOut(Transition.CloseProjectEditor)
 
         // Then
         assertEquals(
@@ -161,7 +156,7 @@ class TransitionExecutorTest {
         )
 
         // When
-        navigator.carryOut(Transition.ShowCalculator, editors)
+        navigator.carryOut(Transition.ShowCalculator)
 
         // Then
         assertEquals(
@@ -176,7 +171,7 @@ class TransitionExecutorTest {
         val navigator = app(PatternCatalogKey)
 
         // When
-        navigator.carryOut(Transition.ShowCalculator, editors)
+        navigator.carryOut(Transition.ShowCalculator)
 
         // Then
         assertEquals(
@@ -192,7 +187,7 @@ class TransitionExecutorTest {
         val navigator = app(PatternCatalogKey, listOf(PatternCatalogKey, SkirtCalculatorKey, guide))
 
         // When
-        navigator.carryOut(Transition.ShowCalculator, editors)
+        navigator.carryOut(Transition.ShowCalculator)
 
         // Then
         assertEquals(
@@ -208,40 +203,14 @@ class TransitionExecutorTest {
         val navigator = app(ProfileManagementKey, listOf(ProfileManagementKey, editor))
 
         // When
-        navigator.carryOut(Transition.FinishProfileEditor, editors)
+        navigator.carryOut(Transition.FinishProfileEditor)
 
         // Then
         assertEquals(listOf(ProfileManagementKey), navigator.state.current.toList())
     }
 
     @Test
-    fun carryOut_finishProfileEditorWhenAnotherOneReports_closesTheReportingOne() {
-        // Given
-        val reporting = ProfileEditorKey(existing, "reporting")
-        val navigator = app(
-            ProfileManagementKey,
-            listOf(
-                ProfileManagementKey,
-                reporting,
-                ProfileEditorKey(EditedProfile.New, "unreported"),
-            ),
-        )
-        val holder = EditorStatusHolder().apply {
-            report(reporting, MutableStateFlow(EditorReport(EditorKind.Profile)))
-        }
-
-        // When
-        navigator.carryOut(Transition.FinishProfileEditor, holder)
-
-        // Then
-        assertEquals(
-            listOf(ProfileManagementKey, ProfileEditorKey(EditedProfile.New, "unreported")),
-            navigator.state.current.toList(),
-        )
-    }
-
-    @Test
-    fun carryOut_finishPickerEditorBeforeItReports_returnsToThePicker() {
+    fun carryOut_finishPickerEditor_returnsToThePicker() {
         // Given
         val navigator = app(
             ProjectsKey,
@@ -252,10 +221,9 @@ class TransitionExecutorTest {
                 PickerProfileEditorKey(projectEditor.profileResultKey),
             ),
         )
-        editors.report(projectEditor, MutableStateFlow(EditorReport(EditorKind.Project)))
 
         // When
-        navigator.carryOut(Transition.FinishProfileEditor, editors)
+        navigator.carryOut(Transition.FinishProfileEditor)
 
         // Then
         assertEquals(
@@ -271,7 +239,7 @@ class TransitionExecutorTest {
         val navigator = app(ProfileManagementKey, listOf(ProfileManagementKey, open))
 
         // When
-        navigator.carryOut(Transition.OpenProfileEditor(existing), editors)
+        navigator.carryOut(Transition.OpenProfileEditor(existing))
 
         // Then
         assertEquals(listOf(ProfileManagementKey, open), navigator.state.current.toList())
@@ -284,7 +252,7 @@ class TransitionExecutorTest {
         val navigator = app(ProfileManagementKey, listOf(ProfileManagementKey, open))
 
         // When
-        navigator.carryOut(AfterDiscard.OpenEditor(existing).transition(), editors)
+        navigator.carryOut(AfterDiscard.OpenEditor(existing).transition())
 
         // Then
         val perfis = navigator.state.current.toList()
@@ -302,7 +270,7 @@ class TransitionExecutorTest {
         )
 
         // When
-        navigator.carryOut(Transition.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY), editors)
+        navigator.carryOut(Transition.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY))
 
         // Then
         val moldes = navigator.state.current.toList()
@@ -325,8 +293,8 @@ class TransitionExecutorTest {
         val navigator = app(GuideLibraryKey, guias)
 
         // When
-        navigator.carryOut(Transition.Select(PatternCatalogKey), editors)
-        navigator.carryOut(calculateOwn(navigator.state.current, EditorStatus.None), editors)
+        navigator.carryOut(Transition.Select(PatternCatalogKey))
+        navigator.carryOut(calculateOwn(navigator.state.current, EditorStatus.None))
 
         // Then
         assertEquals(PatternCatalogKey, navigator.state.selected)

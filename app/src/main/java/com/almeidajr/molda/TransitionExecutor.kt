@@ -1,20 +1,17 @@
 package com.almeidajr.molda
 
-import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.profile.navigation.openPickerEditor
 import com.almeidajr.molda.profile.navigation.openProfileEditor
 import com.almeidajr.molda.project.navigation.closeProjectEditor
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
-import com.almeidajr.molda.ui.navigation.EditorKind
-import com.almeidajr.molda.ui.navigation.EditorStatusHolder
 import com.almeidajr.molda.ui.navigation.Navigator
 
 /**
- * Carries out [transition], decided in MoldaTransitions.kt, on the top-level back stacks; [editors]
- * answer which profile editor finishing closes. An editor's ViewModel leaves with its key.
+ * Carries out [transition], decided in MoldaTransitions.kt, on the top-level back stacks. An
+ * editor's ViewModel leaves with its key.
  */
-internal fun Navigator.carryOut(transition: Transition, editors: EditorStatusHolder) {
+internal fun Navigator.carryOut(transition: Transition) {
     when (transition) {
         Transition.None -> Unit
 
@@ -25,7 +22,9 @@ internal fun Navigator.carryOut(transition: Transition, editors: EditorStatusHol
         is Transition.AskToDiscard -> push(DiscardChangesKey(transition.afterDiscard))
 
         // The selected stack's profile editor; the picker's returns to the picker below it.
-        Transition.FinishProfileEditor -> editors.profileEditorOn(state.current)?.let(::remove)
+        Transition.FinishProfileEditor -> state.current.lastOrNull {
+            it.isProfileEditor
+        }?.let(::remove)
 
         Transition.CloseProjectEditor -> closeProjectEditor()
 
@@ -38,11 +37,3 @@ internal fun Navigator.carryOut(transition: Transition, editors: EditorStatusHol
         is Transition.OpenPickerEditor -> openPickerEditor(transition.resultKey)
     }
 }
-
-/**
- * The profile editor that finishing closes on [stack]: the one the holder answers, or the topmost
- * profile editor there in the frame before a just-pushed one first reports.
- */
-private fun EditorStatusHolder.profileEditorOn(stack: List<NavKey>): NavKey? = editorOn(stack)
-    ?.takeIf { it.report.kind == EditorKind.Profile }?.key
-    ?: stack.lastOrNull { it.isProfileEditor }
