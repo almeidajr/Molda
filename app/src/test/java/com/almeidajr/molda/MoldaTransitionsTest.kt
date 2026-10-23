@@ -340,7 +340,7 @@ class MoldaTransitionsTest {
     }
 
     @Test
-    fun discards_eachFollowUp_namesTheEditorItDrops() {
+    fun discardedEditor_eachFollowUp_namesTheEditorItDrops() {
         // When/Then
         assertEquals(
             listOf(
@@ -358,7 +358,7 @@ class MoldaTransitionsTest {
                 AfterDiscard.CalculateOwn,
                 AfterDiscard.CloseProjectEditor,
                 AfterDiscard.ShowProjects,
-            ).map { it.discards },
+            ).map { it.discardedEditor },
         )
     }
 }

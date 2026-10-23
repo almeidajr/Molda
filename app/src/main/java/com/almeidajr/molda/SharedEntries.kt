@@ -124,7 +124,7 @@ internal fun EntryProviderScope<NavKey>.overlaySection(
         )
     }
     entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
-        val body = when (key.afterDiscard.discards) {
+        val body = when (key.afterDiscard.discardedEditor) {
             EditorKind.Profile -> R.string.profile_discard_body
             EditorKind.Project -> R.string.project_discard_body
         }

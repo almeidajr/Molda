@@ -38,7 +38,7 @@ internal sealed interface AfterDiscard {
 internal data class DiscardChangesKey(val afterDiscard: AfterDiscard) : NavKey
 
 /** Which editor [this] discards, which the discard dialog names. */
-internal val AfterDiscard.discards: EditorKind
+internal val AfterDiscard.discardedEditor: EditorKind
     get() = when (this) {
         AfterDiscard.CloseEditor,
         is AfterDiscard.OpenEditor,
