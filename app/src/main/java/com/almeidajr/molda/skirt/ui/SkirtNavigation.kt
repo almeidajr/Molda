@@ -11,9 +11,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.result.ResultEffect
 import com.almeidajr.molda.R
 import com.almeidajr.molda.guide.navigation.ExampleFabricFoldingGuideKey
+import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
+import com.almeidajr.molda.profile.navigation.ProfileRequester
 import com.almeidajr.molda.skirt.navigation.FabricFoldingGuideKey
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
@@ -33,11 +36,15 @@ internal fun EntryProviderScope<NavKey>.skirtSection(
     onCalculateOwn: () -> Unit,
 ) {
     entry<SkirtCalculatorKey> {
+        val requester = ProfileRequester.MoldesCalculator
+        ResultEffect<MeasurementProfile>(requester.resultKey) { profile ->
+            calculator.useProfile(profile)
+        }
         CalculatorDestination(
             calculator,
             title = stringResource(R.string.skirt_title),
             onUp = navigator::back,
-            onUseProfile = { navigator.push(ProfilePickerKey) },
+            onUseProfile = { navigator.push(ProfilePickerKey(requester)) },
             onOpenGuide = { navigator.push(FabricFoldingGuideKey) },
             onSaveProject = onSaveProject,
         )
@@ -56,6 +63,10 @@ internal fun EntryProviderScope<NavKey>.skirtSection(
         )
     }
 }
+
+/** Fills the waist with [profile]'s, copied from it. */
+internal fun SkirtCalculatorViewModel.useProfile(profile: MeasurementProfile) =
+    selectProfile(profile.measurements.waist, profile.measurements.source)
 
 /** The skirt calculator; with [onSaveAsNewProject] it edits a saved project. */
 @Composable

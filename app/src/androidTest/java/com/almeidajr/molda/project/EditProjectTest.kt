@@ -181,18 +181,51 @@ class EditProjectTest {
     @Test
     fun useProfile_whileEditing_changesOnlyTheEditedDraft() {
         // Given
-        val bia = MeasurementProfile(
-            ProfileId(1),
-            ProfileMeasurements(ProfileName("Bia"), Length(95.0), LocalDate.of(2026, 10, 17)),
-        )
-        showRoute(FakeProfileRepository(listOf(bia)))
+        showRoute(FakeProfileRepository(listOf(BIA)))
         openEditor()
 
         // When
         composeRule.click("Usar perfil")
-        composeRule.onAllNodes(hasText("Usar perfil: Bia", substring = true))[0].performClick()
+        pickBia()
 
         // Then
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("95"))
+        composeRule.showSkirtCalculator()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText(""))
+    }
+
+    @Test
+    fun useProfile_inMoldes_leavesTheEditedDraftUntouched() {
+        // Given
+        showRoute(FakeProfileRepository(listOf(BIA)))
+        openEditor()
+        composeRule.showSkirtCalculator()
+
+        // When
+        composeRule.click("Usar perfil")
+        pickBia()
+
+        // Then
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("95"))
+        composeRule.selectDestination("Projetos")
+        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("80"))
+    }
+
+    @Test
+    fun useProfile_afterRecreationWithThePickerOpen_fillsTheEditedDraft() {
+        // Given
+        showRoute(FakeProfileRepository(listOf(BIA)))
+        openEditor()
+        composeRule.click("Usar perfil")
+
+        // When
+        composeRule.recreate()
+        showRoute(FakeProfileRepository(listOf(BIA)))
+        pickBia()
+
+        // Then
+        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("95"))
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText(""))
@@ -227,10 +260,18 @@ class EditProjectTest {
         composeRule.closeKeyboard()
     }
 
+    private fun pickBia() =
+        composeRule.onAllNodes(hasText("Usar perfil: Bia", substring = true))[0].performClick()
+
     private fun showRoute(profiles: FakeProfileRepository = FakeProfileRepository()) =
         composeRule.showRoute(profiles, projects, October18Clock)
 
     private companion object {
+        val BIA = MeasurementProfile(
+            ProfileId(1),
+            ProfileMeasurements(ProfileName("Bia"), Length(95.0), LocalDate.of(2026, 10, 17)),
+        )
+
         val SAVED_INPUTS = listOf(
             SkirtDraftField.Waist to "80",
             SkirtDraftField.Ease to "2",

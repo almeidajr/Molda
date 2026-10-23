@@ -13,7 +13,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.result.LocalResultEventBus
+import androidx.navigation3.runtime.result.ResultEffect
+import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
+import com.almeidajr.molda.profile.navigation.ProfileRequester
 import com.almeidajr.molda.profile.ui.ProfilePicker
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
@@ -26,6 +30,7 @@ import com.almeidajr.molda.skirt.ui.CalculatorDestination
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.skirt.ui.snapshot
+import com.almeidajr.molda.skirt.ui.useProfile
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
 
@@ -46,12 +51,14 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
     onCloseEditor: () -> Unit,
 ) {
     entry<ProjectEditorKey> { key ->
+        val requester = ProfileRequester.ProjectEditor(key.id)
+        ResultEffect<MeasurementProfile>(requester.resultKey) { editor.useProfile(it) }
         OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
             CalculatorDestination(
                 editor,
                 title = stringResource(R.string.project_edit_title, project.name.text),
                 onUp = onCloseEditor,
-                onUseProfile = { navigator.push(ProfilePickerKey) },
+                onUseProfile = { navigator.push(ProfilePickerKey(requester)) },
                 onOpenGuide = { navigator.push(ProjectEditorGuideKey) },
                 onSaveProject = { _ ->
                     editor.state.value.snapshot()?.let { projects.update(key.id, it) }
@@ -77,21 +84,21 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
 }
 
 /**
- * The profile picker over the calculator [pickerCalculator] names, which [onCreateProfile] leaves
+ * The profile picker, which sends the chosen profile to its requester or [onCreateProfile] leaves
  * for a new profile's editor, and the dialog that confirms [onDiscard] of a dirty editor.
  */
 internal fun EntryProviderScope<NavKey>.overlaySection(
     navigator: Navigator,
     profiles: ProfilesViewModel,
-    pickerCalculator: () -> SkirtCalculatorViewModel,
     onCreateProfile: () -> Unit,
     onDiscard: (AfterDiscard) -> Unit,
 ) {
-    entry<ProfilePickerKey>(metadata = windowOverlay()) {
+    entry<ProfilePickerKey>(metadata = windowOverlay()) { key ->
+        val results = LocalResultEventBus.current
         AppProfilePicker(
             profiles,
-            pickerCalculator(),
-            onDismiss = { navigator.remove(ProfilePickerKey) },
+            onSelect = { results.sendResult(key.requester.resultKey, it) },
+            onDismiss = { navigator.remove(key) },
             onCreate = onCreateProfile,
         )
     }
@@ -135,14 +142,13 @@ private fun DiscardDialog(@StringRes body: Int, onDismiss: () -> Unit, onDiscard
 @Composable
 private fun AppProfilePicker(
     profiles: ProfilesViewModel,
-    calculator: SkirtCalculatorViewModel,
+    onSelect: (MeasurementProfile) -> Unit,
     onDismiss: () -> Unit,
     onCreate: () -> Unit,
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilePicker(state, onDismiss, profiles::load, onSelect = {
-        val measurements = it.measurements
-        calculator.selectProfile(measurements.waist, measurements.source)
+        onSelect(it)
         onDismiss()
     }, onCreate = onCreate)
 }

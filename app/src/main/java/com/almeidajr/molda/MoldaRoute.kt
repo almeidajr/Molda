@@ -12,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.result.rememberResultEventBus
 import com.almeidajr.molda.about.navigation.AboutKey
 import com.almeidajr.molda.about.navigation.LicencesKey
 import com.almeidajr.molda.about.ui.aboutSection
@@ -72,8 +73,10 @@ fun MoldaRoute(
     val projectState by projects.state.collectAsStateWithLifecycle()
     val projectCalculatorState by projectCalculator.state.collectAsStateWithLifecycle()
     val titleFocus = remember { TitleFocus() }
+    // One bus for every stack, so a result reaches its requester whichever stack holds it.
+    val resultBus = rememberResultEventBus()
     val navigator = rememberNavigator(
-        rememberTopLevelBackStacks(TopLevelRoots),
+        rememberTopLevelBackStacks(TopLevelRoots, resultBus),
         onSwitch = titleFocus::request,
     )
     val app = MoldaApp(
@@ -154,7 +157,7 @@ private class MoldaApp(
         if (target != null) {
             val measurements = profile.measurements
             target.selectProfile(measurements.waist, measurements.source)
-            navigator.removeAll { it == PickerProfileEditorKey || it == ProfilePickerKey }
+            navigator.removeAll { it == PickerProfileEditorKey || it is ProfilePickerKey }
         }
     }
 
@@ -190,9 +193,6 @@ private class MoldaApp(
         overlaySection(
             navigator,
             profiles,
-            pickerCalculator = {
-                if (stacks.selected == ProjectsKey) projectCalculator else calculator
-            },
             onCreateProfile = { perform(requestPickerEditor(status())) },
             onDiscard = { perform(it.transition()) },
         )

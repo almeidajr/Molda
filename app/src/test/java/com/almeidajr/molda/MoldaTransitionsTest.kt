@@ -9,6 +9,7 @@ import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
+import com.almeidajr.molda.profile.navigation.ProfileRequester
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectKey
@@ -181,8 +182,8 @@ class MoldaTransitionsTest {
     @Test
     fun calculateOwn_overCleanPickerEditor_finishesItFirst() {
         // Given
-        val stack =
-            listOf(PatternCatalogKey, SkirtCalculatorKey, ProfilePickerKey, PickerProfileEditorKey)
+        val picker = ProfilePickerKey(ProfileRequester.MoldesCalculator)
+        val stack = listOf(PatternCatalogKey, SkirtCalculatorKey, picker, PickerProfileEditorKey)
 
         // When/Then
         assertEquals(
