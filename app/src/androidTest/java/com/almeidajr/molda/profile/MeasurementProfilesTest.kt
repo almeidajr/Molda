@@ -428,6 +428,28 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun pickerNewProfile_whilePerfisEditOpen_leavesThatEditIntact() {
+        // Given
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchProfiles()
+        composeRule.click("Ana", useUnmergedTree = true)
+        composeRule.edit("Nome ou apelido", "Ana Maria")
+        composeRule.closeKeyboard()
+        composeRule.showSkirtCalculator()
+        composeRule.click("Usar perfil")
+        composeRule.click("Novo perfil")
+        composeRule.fillProfile("Nova no seletor")
+
+        // When
+        saveProfile()
+
+        // Then
+        composeRule.showProfiles()
+        composeRule.onNodeWithText("Nome ou apelido").performScrollTo()
+            .assertTextContains("Ana Maria")
+    }
+
+    @Test
     fun pickerNewProfile_afterRecreation_keepsDraft() {
         // Given
         composeRule.launchCalculator()

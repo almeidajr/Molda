@@ -99,7 +99,7 @@ class ProfileFailuresTest {
     }
 
     @Test
-    fun pickerNewProfile_afterRecreationWithHiddenSaveHeld_waitsForTheSave() {
+    fun pickerNewProfile_afterRecreationWithHiddenSaveHeld_opensItsOwnEditor() {
         // Given
         profileRepository = existingProfiles().apply { commandGate = CompletableDeferred() }
         // The app's own content, so the recreated activity composes the same route.
@@ -118,7 +118,36 @@ class ProfileFailuresTest {
 
         // Then
         composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
+        // Its own blank form, not the Perfis draft being saved.
+        composeRule.onNodeWithText("Nova").assertDoesNotExist()
+    }
+
+    @Test
+    fun saveHeld_afterRecreation_storesOnceAndShowsTheMessageOnce() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val storage = existingProfiles().apply { commandGate = gate }
+        profileRepository = storage
+        // The app's own content, so the recreated activity composes the same route.
+        composeRule.activityRule.launch()
+        composeRule.showProfiles()
+        composeRule.click("Novo perfil")
+        composeRule.fillProfile("Nova", waist = "90")
+        composeRule.closeKeyboard()
+        composeRule.click("Salvar perfil")
+        composeRule.recreate()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        assertEquals(3, storage.current.size)
+        // A new activity has a new snackbar host: the message shows again only if sent again.
+        composeRule.recreate()
+        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
     }
 
     @Test
