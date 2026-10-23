@@ -42,21 +42,40 @@ class EditorStatusHolderTest {
     }
 
     @Test
-    fun editorStatusHolderSaver_keepsOnlyUnsavedChanges() {
+    fun editorStatusHolderSaver_afterProcessDeath_restoresOnlyUnsavedChanges() {
         // Given
         val scope = SaverScope { true }
         val holder = EditorStatusHolder()
         holder.report(Editor) { EditorReport(isDirty = true, isSaving = true) }
         holder.report(OtherEditor) { EditorReport(isUnavailable = true) }
+        val saved = with(editorStatusHolderSaver(holder)) { scope.save(holder) }
 
         // When
-        val saved = with(EditorStatusHolderSaver) { scope.save(holder) }
-        val restored = saved?.let(EditorStatusHolderSaver::restore)
+        val restored = saved?.let(editorStatusHolderSaver(EditorStatusHolder())::restore)
 
         // Then
         assertEquals(
             mapOf<NavKey, EditorReport>(Editor to EditorReport(isDirty = true)),
             restored?.reports(listOf(Editor, OtherEditor)),
+        )
+    }
+
+    @Test
+    fun editorStatusHolderSaver_afterConfigurationChange_keepsTheLiveReports() {
+        // Given
+        val scope = SaverScope { true }
+        val holder = EditorStatusHolder()
+        holder.report(Editor) { EditorReport(isDirty = true, isSaving = true) }
+        val saver = editorStatusHolderSaver(holder)
+        val saved = with(saver) { scope.save(holder) }
+
+        // When
+        val restored = saved?.let(saver::restore)
+
+        // Then
+        assertEquals(
+            mapOf<NavKey, EditorReport>(Editor to EditorReport(isDirty = true, isSaving = true)),
+            restored?.reports(listOf(Editor)),
         )
     }
 }

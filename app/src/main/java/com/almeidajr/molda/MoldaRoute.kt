@@ -6,7 +6,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -44,12 +43,11 @@ import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.skirt.ui.skirtSection
 import com.almeidajr.molda.skirt.ui.snapshot
 import com.almeidajr.molda.ui.navigation.EditorReport
-import com.almeidajr.molda.ui.navigation.EditorStatusHolder
-import com.almeidajr.molda.ui.navigation.EditorStatusHolderSaver
 import com.almeidajr.molda.ui.navigation.LocalEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.TitleFocus
 import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
+import com.almeidajr.molda.ui.navigation.rememberEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
 import kotlinx.coroutines.launch
@@ -77,7 +75,7 @@ fun MoldaRoute(
         rememberTopLevelBackStacks(TopLevelRoots, resultBus),
         onSwitch = titleFocus::request,
     )
-    val editors = rememberSaveable(saver = EditorStatusHolderSaver) { EditorStatusHolder() }
+    val editors = rememberEditorStatusHolder()
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
@@ -96,7 +94,7 @@ fun MoldaRoute(
         projects,
         projectCalculator,
         // Read when the user acts: entries are remembered, so a captured status would go stale.
-        status = { editorStatus(editors.reports(navigator.state.allKeys)) },
+        status = { navigator.state.allKeys.let { editorStatus(it, editors.reports(it)) } },
     )
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
@@ -120,12 +118,12 @@ fun MoldaRoute(
 
 private val TopLevelBackStacks.allKeys: List<NavKey> get() = roots.flatMap(::stackOf)
 
-/** The editors' status from what each editor entry on the back stacks [reports]. */
-private fun editorStatus(reports: Map<NavKey, EditorReport>): EditorStatus {
+/** The editors' status from the back stacks' [keys] and what their editor entries [reports]. */
+private fun editorStatus(keys: List<NavKey>, reports: Map<NavKey, EditorReport>): EditorStatus {
     val profileEditors = reports.filterKeys { it.isProfileEditor }.values
     val projectEditors = reports.filterKeys { it is ProjectEditorKey }.values
     return EditorStatus(
-        isProfileEditorOpen = profileEditors.isNotEmpty(),
+        isProfileEditorOpen = keys.any { it.isProfileEditor },
         isProfileDirty = profileEditors.any { it.isDirty },
         isProfileSaving = profileEditors.any { it.isSaving },
         isProfileUnavailable = profileEditors.any { it.isUnavailable },

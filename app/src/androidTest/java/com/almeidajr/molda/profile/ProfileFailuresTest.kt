@@ -20,7 +20,9 @@ import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.domain.ProjectRepository
+import com.almeidajr.molda.recreate
 import com.almeidajr.molda.showProfiles
+import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October13Clock
@@ -94,6 +96,29 @@ class ProfileFailuresTest {
         gate.complete(Unit)
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Nova").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun pickerNewProfile_afterRecreationWithHiddenSaveHeld_waitsForTheSave() {
+        // Given
+        profileRepository = existingProfiles().apply { commandGate = CompletableDeferred() }
+        // The app's own content, so the recreated activity composes the same route.
+        composeRule.activityRule.launch()
+        composeRule.showProfiles()
+        composeRule.click("Novo perfil")
+        composeRule.fillProfile("Nova", waist = "90")
+        composeRule.closeKeyboard()
+        composeRule.click("Salvar perfil")
+        composeRule.showSkirtCalculator()
+        composeRule.recreate()
+        composeRule.click("Usar perfil")
+
+        // When
+        composeRule.click("Novo perfil")
+
+        // Then
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
     }
 
     @Test
