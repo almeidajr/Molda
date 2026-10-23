@@ -147,6 +147,26 @@ class FabricFoldingGuideTest {
     }
 
     @Test
+    fun reopening_afterAnotherCalculation_showsTheNewRadii() {
+        // Given
+        calculate()
+        openGuide()
+        composeRule.pressBack()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
+            .performTextReplacement("90")
+        closeSoftKeyboard()
+        composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
+
+        // When
+        openGuide()
+        next(times = 3)
+
+        // Then
+        composeRule.onNodeWithText("1. Costura da cintura: 14,64 cm")
+            .performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun cuttingStep_warnsWhichLinesStayUncut() {
         // Given
         calculate()
