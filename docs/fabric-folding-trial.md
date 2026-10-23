@@ -55,7 +55,7 @@ misunderstanding of the folds or cutting lines.
 ## Observe the full sequence
 
 For each case, record what the participant actually does, not just whether they
-agree with an explanation. Let them use previous, next and replay at their own
+agree with an explanation. Let them use previous, next and pause at their own
 pace. Record each request for help, observer intervention, mistaken action and
 recovery, including the step and the wording or frame that caused difficulty.
 Do not silently coach them into a successful result. Record one pass using

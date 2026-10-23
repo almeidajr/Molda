@@ -1,5 +1,6 @@
 package com.almeidajr.molda
 
+import android.animation.ValueAnimator
 import android.view.KeyEvent
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
@@ -21,6 +22,7 @@ import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.DpSize
@@ -179,6 +181,18 @@ internal fun SemanticsNodeInteractionsProvider.openSkirtCalculator() {
 internal fun SemanticsNodeInteractionsProvider.showSkirtCalculator() {
     showDestination("Moldes")
     if (onNode(hasText(SkirtTitle) and isHeading()).isNotDisplayed()) openSkirtCalculator()
+}
+
+/**
+ * Opens the fabric-folding guide from the skirt's results. With motion on a playing drawing keeps
+ * Compose busy, so the test clock drives the guide from here: each wait for a drawing advances it.
+ */
+internal fun AndroidComposeTestRule<*, *>.openGuideFromResults() {
+    val entry = onNodeWithText("Guia de dobra do tecido").performScrollTo()
+    if (ValueAnimator.areAnimatorsEnabled()) mainClock.autoAdvance = false
+    entry.performClick()
+    // Past the transition into the player.
+    mainClock.advanceTimeBy(1_000)
 }
 
 /** Shows Perfis, keeping any open editor: re-selecting it would return to its root. */

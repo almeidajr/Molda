@@ -5,9 +5,13 @@ import android.animation.ValueAnimator
 import android.view.WindowManager
 import android.view.inspector.WindowInspector
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.core.view.ViewCompat
@@ -75,23 +79,46 @@ internal fun AndroidComposeTestRule<*, *>.awaitActivityFocus() =
 internal fun AndroidComposeTestRule<*, *>.awaitActivityFinishing() =
     waitUntil("activity finishing", DeviceWaitTimeout.inWholeMilliseconds) { activity.isFinishing }
 
+/** The drawing frame's loading indicator. */
+internal val isLoadingIndicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
+
 /**
- * Waits until the Rive drawing labelled [description] shows a frame that [isExpected] accepts,
- * and returns that frame. Rive loads and draws on its own threads, which Compose cannot see.
+ * Waits until the Rive drawing labelled [description] shows a frame that [isExpected] accepts, by
+ * default any frame that is not blank, and returns that frame, never one covered by the frame's
+ * loading indicator. Rive loads and draws on its own threads, which Compose cannot see. It reads
+ * the unmerged tree: a playing drawing's frame is a button that merges the drawing, its badge and
+ * the indicator into one node. A playing drawing keeps Compose busy, so tests turn
+ * `mainClock.autoAdvance` off while one plays; each check then advances one frame itself.
  */
 @OptIn(ExperimentalTestApi::class)
 internal fun AndroidComposeTestRule<*, *>.awaitRiveFrame(
     description: String,
-    isExpected: (ImageBitmap) -> Boolean = { true },
+    isExpected: (ImageBitmap) -> Boolean = { it.isNotBlank() },
 ): ImageBitmap {
     val timeout = DeviceWaitTimeout.inWholeMilliseconds
+    // Shows the result of the last action, such as a step change, before looking for the drawing.
+    if (!mainClock.autoAdvance) mainClock.advanceTimeByFrame()
     waitUntilAtLeastOneExists(hasContentDescription(description), timeout)
     var frame: ImageBitmap? = null
+    val indicator = onNode(
+        isLoadingIndicator and hasAnyAncestor(hasContentDescription(description)),
+        useUnmergedTree = true,
+    )
     waitUntil("$description rendered as expected", timeout) {
-        frame = onNodeWithContentDescription(description).captureToImage().takeIf(isExpected)
+        if (!mainClock.autoAdvance) mainClock.advanceTimeByFrame()
+        // The indicator can appear after the first check, so it is part of every frame's check.
+        val isCovered = indicator.isDisplayed()
+        frame = onNodeWithContentDescription(description, useUnmergedTree = true).captureToImage()
+            .takeIf { !isCovered && isExpected(it) }
         frame != null
     }
     return checkNotNull(frame)
+}
+
+/** Whether the image holds more than one colour, as a drawn frame does and an empty one not. */
+private fun ImageBitmap.isNotBlank(): Boolean {
+    val pixels = IntArray(width * height).also { readPixels(it) }
+    return pixels.any { it != pixels.first() }
 }
 
 /**

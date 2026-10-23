@@ -40,6 +40,8 @@ the notice. `SyntheticAccessor` is disabled because R8 inlines those accessors. 
 fix findings or explain a narrow suppression.
 Detekt currently uses a pinned 2.x alpha for the Gradle 9/JDK 25 toolchain;
 review compatibility when updating it.
+Material 3 is pinned to 1.5.0-beta02 over the Compose BOM for the guide's expressive
+LoadingIndicator; return it to the BOM once 1.5.0 is stable.
 
 Use JUnit 4 in `app/src/test` for logic and AndroidJUnit4/Compose tests in
 `app/src/androidTest` for UI behavior. Name classes `*Test` and methods after

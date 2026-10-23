@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.almeidajr.molda.AnimatorDurationScaleRule
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
 import com.almeidajr.molda.dialogTextField
@@ -38,8 +39,11 @@ import org.junit.Test
 
 /** Opening a saved project: its stored result read-only, its guide and its source profile. */
 class OpenProjectTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 1)
+    val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     private val projects = FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
 
@@ -76,7 +80,7 @@ class OpenProjectTest {
         openProject()
 
         // When
-        composeRule.click("Guia de dobra do tecido")
+        openGuide()
         repeat(3) { composeRule.click("Próximo") }
 
         // Then
@@ -89,7 +93,7 @@ class OpenProjectTest {
         // Given
         showRoute()
         openProject()
-        composeRule.click("Guia de dobra do tecido")
+        openGuide()
 
         // When
         composeRule.pressBack()
@@ -202,6 +206,12 @@ class OpenProjectTest {
     private fun openProject() {
         composeRule.selectDestination("Projetos")
         composeRule.clickProject("Saia da formatura")
+    }
+
+    private fun openGuide() {
+        // The guide's drawings hold still, so Compose goes idle.
+        animatorScale.set(0f)
+        composeRule.click("Guia de dobra do tecido")
     }
 
     private fun showRoute(

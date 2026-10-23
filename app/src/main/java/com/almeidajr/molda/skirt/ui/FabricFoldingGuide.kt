@@ -1,36 +1,44 @@
 package com.almeidajr.molda.skirt.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
@@ -40,6 +48,7 @@ import app.rive.Result
 import app.rive.Rive
 import app.rive.RiveFile
 import app.rive.RiveFileSource
+import app.rive.RivePointerInputMode
 import app.rive.rememberArtboardResult
 import app.rive.rememberRiveFile
 import app.rive.rememberRiveWorkerOrNull
@@ -48,26 +57,45 @@ import com.almeidajr.molda.R
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
+/**
+ * The guide's Rive file, loaded once for the whole player so a step change only swaps the step's
+ * artboard; `null` when no Rive worker can start.
+ */
+@Composable
+internal fun rememberGuideFile(): Result<RiveFile>? {
+    // Vulkan avoids blank frames on software GLES drivers; Rive falls back when unavailable.
+    val worker = rememberRiveWorkerOrNull(renderBackend = RenderBackend.Vulkan)
+    return worker?.let {
+        rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), it)
+    }
+}
+
 @Composable
 internal fun GuideAnimation(
+    file: Result<RiveFile>?,
     radii: SkirtRadii,
     step: FoldingStep,
     motionEnabled: Boolean,
     drawingSize: Dp,
 ) {
-    // Vulkan avoids blank frames on software GLES drivers; Rive falls back when unavailable.
-    val worker = rememberRiveWorkerOrNull(renderBackend = RenderBackend.Vulkan)
-    val file = worker?.let {
-        rememberRiveFile(RiveFileSource.RawRes.from(R.raw.fabric_folding), it)
-    }
-    GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, replay, paused ->
-        GuideDrawing(loaded, radii, step, play, replay, paused)
+    GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, paused, onLoaded ->
+        GuideDrawing(loaded, radii, step, play, paused, onLoaded)
     }
 }
 
+/** How a step's drawing finished loading: drawn, or failed with its error sentence shown. */
+internal enum class DrawingLoad { Drawn, Failed }
+
+/** Test tags of the badge's two glyphs: nothing else tells its decorative states apart. */
+internal const val GUIDE_BADGE_PAUSE_TAG = "guide_badge_pause"
+internal const val GUIDE_BADGE_PLAY_TAG = "guide_badge_play"
+
 /**
- * The drawing's frame and its playback controls, which own replay and pause. Once [file] has
- * loaded, [drawing] draws it, told whether to play, the replay count and whether it is paused.
+ * The drawing's frame, which owns pausing. Once [file] has loaded, [drawing] draws it, told
+ * whether to play and whether it is paused, and reports how it loaded. Until then the frame stays
+ * empty at its final size, described for TalkBack; a long load shows a loading indicator. With
+ * motion enabled, a drawn step plays at once and the whole frame is a pause button, with a badge
+ * showing what a tap does; a failed one keeps only its error sentence.
  */
 @Composable
 internal fun <T> GuideFrame(
@@ -75,69 +103,84 @@ internal fun <T> GuideFrame(
     step: FoldingStep,
     motionEnabled: Boolean,
     drawingSize: Dp,
-    drawing: @Composable (file: T, play: Boolean, replay: Int, paused: Boolean) -> Unit,
+    drawing: @Composable (
+        file: T,
+        play: Boolean,
+        paused: Boolean,
+        onLoaded: (DrawingLoad) -> Unit,
+    ) -> Unit,
 ) {
-    var replay by remember(motionEnabled) { mutableIntStateOf(0) }
     var paused by remember(motionEnabled) { mutableStateOf(false) }
+    var load by remember { mutableStateOf<DrawingLoad?>(null) }
+    val isPausable = motionEnabled && load == DrawingLoad.Drawn && file is Result.Success
+    val shape = MaterialTheme.shapes.large
+    val playingState = stringResource(R.string.guide_playing)
+    val pausedState = stringResource(R.string.guide_paused)
+    val pauseLabel = stringResource(if (paused) R.string.guide_resume else R.string.guide_pause)
+    // One modifier chain whether or not it pauses, so the drawing keeps its loaded state.
+    val pauseButton = if (isPausable) {
+        Modifier.clip(shape)
+            .semantics { stateDescription = if (paused) pausedState else playingState }
+            .clickable(onClickLabel = pauseLabel, role = Role.Button) { paused = !paused }
+    } else {
+        Modifier
+    }
     Column(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // The artboards are transparent: this frame is the page behind the drawing.
         Surface(
-            shape = MaterialTheme.shapes.large,
+            shape = shape,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            modifier = Modifier.width(drawingSize).heightIn(min = drawingSize),
+            modifier = Modifier.width(drawingSize).heightIn(min = drawingSize).then(pauseButton),
         ) {
-            Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
-                when (file) {
-                    null -> Text(stringResource(R.string.guide_animation_unavailable))
+            Box {
+                Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
+                    when (file) {
+                        null -> Text(stringResource(R.string.guide_animation_unavailable))
 
-                    is Result.Loading -> Text(stringResource(R.string.guide_animation_loading))
+                        is Result.Error -> Text(stringResource(R.string.guide_animation_error))
 
-                    is Result.Error -> Text(stringResource(R.string.guide_animation_error))
-
-                    is Result.Success -> drawing(
-                        file.value,
-                        motionEnabled && replay > 0,
-                        replay,
-                        paused,
-                    )
-                }
-            }
-        }
-        if (file is Result.Success) {
-            FlowRow(horizontalArrangement = Arrangement.Center) {
-                TextButton(onClick = {
-                    replay++
-                    paused = false
-                }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(replayLabel(step, hasPlayed = replay > 0)))
-                }
-                if (motionEnabled && replay > 0) {
-                    TextButton(
-                        onClick = { paused = !paused },
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) {
-                        Text(
-                            stringResource(
-                                if (paused) R.string.guide_resume else R.string.guide_pause,
-                            ),
-                        )
+                        else -> {
+                            val description = drawingDescription(step)
+                            Box(
+                                Modifier.fillMaxWidth().aspectRatio(1f).semantics {
+                                    contentDescription = description
+                                },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (file is Result.Success) {
+                                    drawing(file.value, motionEnabled, paused) { load = it }
+                                }
+                                GuideLoadingIndicator(load == null, Modifier.matchParentSize())
+                            }
+                        }
                     }
                 }
+                if (isPausable) PlaybackBadge(paused, Modifier.align(Alignment.BottomEnd))
             }
         }
     }
 }
 
-/** The replay button's label: Marking names its marking, and a played step offers a repeat. */
-@StringRes
-private fun replayLabel(step: FoldingStep, hasPlayed: Boolean): Int = when {
-    step == FoldingStep.Marking && hasPlayed -> R.string.guide_replay_marking
-    step == FoldingStep.Marking -> R.string.guide_play_marking
-    hasPlayed -> R.string.guide_replay_step
-    else -> R.string.guide_play_step
+/** Shows what a tap on the frame does: pause, or play when paused. Decorative for TalkBack. */
+@Composable
+private fun PlaybackBadge(paused: Boolean, modifier: Modifier = Modifier) {
+    Box(
+        modifier.padding(8.dp).size(40.dp).clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painterResource(if (paused) R.drawable.ic_play_arrow else R.drawable.ic_pause),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag(
+                if (paused) GUIDE_BADGE_PLAY_TAG else GUIDE_BADGE_PAUSE_TAG,
+            ),
+        )
+    }
 }
 
 @Composable
@@ -146,61 +189,65 @@ private fun GuideDrawing(
     radii: SkirtRadii,
     step: FoldingStep,
     play: Boolean,
-    replay: Int,
     paused: Boolean,
+    onLoaded: (DrawingLoad) -> Unit,
 ) {
+    // While the artboard or view-model instance loads, the frame stays empty.
     val artboard = rememberArtboardResult(file, step.artboard)
-    if (artboard !is Result.Success) {
-        Text(stringResource(R.string.guide_drawing_preparing))
-        return
+    val instance = if (artboard is Result.Success) rememberViewModelInstanceResult(file) else null
+    var ready by remember(instance, radii) { mutableStateOf(false) }
+    val load = when {
+        artboard is Result.Error || instance is Result.Error -> DrawingLoad.Failed
+        ready -> DrawingLoad.Drawn
+        else -> null
     }
-    when (val result = rememberViewModelInstanceResult(file)) {
-        is Result.Loading -> Text(stringResource(R.string.guide_measurements_loading))
+    LaunchedEffect(load) { load?.let(onLoaded) }
+    when {
+        artboard is Result.Error -> Text(stringResource(R.string.guide_animation_error))
 
-        is Result.Error -> Text(stringResource(R.string.guide_measurements_error))
+        instance is Result.Error -> Text(stringResource(R.string.guide_measurements_error))
 
-        is Result.Success -> {
-            val instance = result.value
+        artboard is Result.Success && instance is Result.Success -> {
+            val viewModel = instance.value
             val palette = guidePalette(MaterialTheme.colorScheme)
-            var ready by remember(instance, radii) { mutableStateOf(false) }
-            LaunchedEffect(instance, radii, palette) {
-                palette.forEach { (name, color) -> instance.setColor(name, color.toArgb()) }
+            LaunchedEffect(viewModel, radii, palette) {
+                palette.forEach { (name, color) -> viewModel.setColor(name, color.toArgb()) }
                 val markingDiameter = 800f
 
                 // Normalize before converting to Float; large valid centimetre values stay finite.
                 fun diameter(radius: Length) =
                     (markingDiameter * (radius.centimetres / radii.hemCutting.centimetres))
                         .toFloat()
-                instance.setNumber("waistStitching", diameter(radii.waistStitching))
-                instance.setNumber("waistCutting", diameter(radii.waistCutting))
-                instance.setNumber("finishedHem", diameter(radii.finishedHem))
-                instance.setNumber("hemCutting", markingDiameter)
+                viewModel.setNumber("waistStitching", diameter(radii.waistStitching))
+                viewModel.setNumber("waistCutting", diameter(radii.waistCutting))
+                viewModel.setNumber("finishedHem", diameter(radii.finishedHem))
+                viewModel.setNumber("hemCutting", markingDiameter)
                 ready = true
             }
-            LaunchedEffect(instance, play, replay) {
-                instance.setBoolean("play", play)
-                if (play) instance.fireTrigger("restart")
-            }
-            val description = when (step) {
-                FoldingStep.Marking -> stringResource(R.string.guide_drawing_marking)
-                FoldingStep.Cutting -> stringResource(R.string.guide_drawing_cutting)
-                FoldingStep.Unfolding -> stringResource(R.string.guide_drawing_unfolding)
-                else -> stringResource(R.string.guide_drawing_fold, step.ordinal + 1)
-            }
+            LaunchedEffect(viewModel, play) { viewModel.setBoolean("play", play) }
             if (ready) {
                 Rive(
                     file = file,
                     artboard = artboard.value,
-                    viewModelInstance = instance,
+                    viewModelInstance = viewModel,
                     playing = play && !paused,
                     fit = Fit.Contain(),
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).semantics {
-                        contentDescription = description
-                    },
+                    // The frame around the drawing takes the tap that pauses it.
+                    pointerInputMode = RivePointerInputMode.Observe,
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
     }
+}
+
+/** What the step's drawing shows, for TalkBack. */
+@Composable
+private fun drawingDescription(step: FoldingStep): String = when (step) {
+    FoldingStep.Marking -> stringResource(R.string.guide_drawing_marking)
+    FoldingStep.Cutting -> stringResource(R.string.guide_drawing_cutting)
+    FoldingStep.Unfolding -> stringResource(R.string.guide_drawing_unfolding)
+    else -> stringResource(R.string.guide_drawing_fold, step.ordinal + 1)
 }
 
 /**

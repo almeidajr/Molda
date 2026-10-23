@@ -12,7 +12,7 @@ The repeatable practical-trial protocol for [#45](https://github.com/almeidajr/M
 - Create the guide animations with Rive, following `animations/AGENTS.md`.
 - Assume fabric large enough to hold the pattern and state that condition explicitly.
 - Open the guide from the calculator results, beside the existing drafting explanation.
-- Play each Rive step on demand, with replay, previous, and next controls and a written explanation.
+- Play each Rive step on entry, paused and continued with a tap on the drawing, with previous and next controls and a written explanation.
 - Preserve the proportions of the current calculation's radii in the marking and cutting diagrams, resizing the drawing to fit the screen. Label dimensions and state that the drawing is not actual size.
 - Use an illustrative piece large enough for the pattern in the flat-fabric and folding stages; distinguish its illustrative size from calculated pattern dimensions.
 - Demonstrate folding and circular cuts, then explicitly explain that the opening, closure allowances, and waistband require separate instructions before cutting garment fabric. The unfolded circle is not a complete garment pattern.

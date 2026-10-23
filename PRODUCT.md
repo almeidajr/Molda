@@ -39,7 +39,7 @@ It is a native, offline, private app written in Brazilian Portuguese.
 
 - Full-circle skirt (saia godê inteira) calculator in woven fabric with waistband and closure. Inputs: waist, explicit waist ease, finished skirt length, waist seam allowance, hem allowance. Outputs: four radii, shown to two decimals in cm. The math stays unrounded until display.
 - Measurement profiles hold a name or nickname, waist, measurement date and optional notes. Profiles are optional. A profile fills only the waist field and is never changed silently by a calculation.
-- Fabric-folding guide (Rive) opens from the results. It plays step by step with replay, previous and next controls. The drawing is proportional, labelled, and marked as not actual size.
+- Fabric-folding guide (Rive) opens from the results. Each step plays as soon as it appears, a tap on the drawing pauses and continues it, and previous and next move between steps. The drawing is proportional, labelled, and marked as not actual size.
 - pt-BR only, centimetres only, decimal commas accepted. Ease and allowances need explicit values, which may be zero. There are no hidden assumptions.
 - Android API 36+, Jetpack Compose and Material 3, and adaptive layouts for wide windows and foldables.
 - Excluded for now: other circle fractions or garments, printable or 1:1 templates, fit diagnosis, panel layout, closure allowances, waistband drafting, yardage, accounts, sync, backup and calculation history. The roadmap lists follow-ups whose priority is undecided.
