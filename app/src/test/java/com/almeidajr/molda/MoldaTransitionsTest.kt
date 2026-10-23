@@ -12,6 +12,7 @@ import com.almeidajr.molda.profile.navigation.ProfileManagementKey
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.SkirtSnapshot
+import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
@@ -117,6 +118,20 @@ class MoldaTransitionsTest {
     }
 
     @Test
+    fun selectDestination_currentOneOverDirtyProjectEditorUnderAGuide_asksToDiscard() {
+        // When/Then
+        assertEquals(
+            Transition.AskToDiscard(AfterDiscard.ShowProjects),
+            selectDestination(
+                ProjectsKey,
+                ProjectsKey,
+                projectEditor + ProjectEditorGuideKey(snapshot.radii),
+                EditorStatus.Project(isDirty = true),
+            ),
+        )
+    }
+
+    @Test
     fun selectDestination_currentOneOverUpdatingProjectEditor_waits() {
         // When/Then
         assertEquals(
@@ -163,6 +178,15 @@ class MoldaTransitionsTest {
                 projectEditor,
                 EditorStatus.Project(isDirty = true, isUpdating = true),
             ),
+        )
+    }
+
+    @Test
+    fun closeProjectEditor_withADirtyProfileEditorOnTop_closesIt() {
+        // When/Then
+        assertEquals(
+            Transition.CloseProjectEditor,
+            closeProjectEditor(EditorStatus.Profile(isDirty = true)),
         )
     }
 
@@ -239,6 +263,15 @@ class MoldaTransitionsTest {
     }
 
     @Test
+    fun requestProfileEditor_overDirtyProjectEditor_opensIt() {
+        // When/Then
+        assertEquals(
+            Transition.OpenProfileEditor(EditedProfile.New),
+            requestProfileEditor(EditedProfile.New, EditorStatus.Project(isDirty = true)),
+        )
+    }
+
+    @Test
     fun requestProfileEditor_openEditorHasChanges_asksToDiscard() {
         // When/Then
         assertEquals(
@@ -268,6 +301,15 @@ class MoldaTransitionsTest {
                 MOLDES_PROFILE_RESULT_KEY,
                 EditorStatus.Profile(isDirty = true),
             ),
+        )
+    }
+
+    @Test
+    fun requestPickerEditor_overDirtyProjectEditor_opensIt() {
+        // When/Then
+        assertEquals(
+            Transition.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY),
+            requestPickerEditor(MOLDES_PROFILE_RESULT_KEY, EditorStatus.Project(isDirty = true)),
         )
     }
 
