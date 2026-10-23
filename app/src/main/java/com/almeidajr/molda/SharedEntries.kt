@@ -69,7 +69,11 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         val update = hiltViewModel<ProjectUpdateViewModel, ProjectUpdateViewModel.Factory> {
             it.create(key)
         }
-        ReportEditorStatus(key) {
+        val report = EditorReport(
+            editor.state.collectAsStateWithLifecycle().value.isDirty,
+            update.state.collectAsStateWithLifecycle().value.isUpdating,
+        )
+        ReportEditorStatus(key, report) {
             EditorReport(editor.state.value.isDirty, update.state.value.isUpdating)
         }
         ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)

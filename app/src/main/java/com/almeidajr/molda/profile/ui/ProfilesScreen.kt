@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -52,8 +53,10 @@ fun ProfilesContent(
     onStartEdit: (ProfileId) -> Unit,
     onDelete: (ProfileId) -> Unit,
     modifier: Modifier = Modifier,
+    /** False while the open editor saves, which no row may replace. */
+    enabled: Boolean = true,
 ) {
-    val canMutate = !state.isLoading && state.loadError == null && !state.isSaving
+    val canMutate = enabled && !state.isLoading && state.loadError == null && !state.isSaving
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -89,16 +92,17 @@ fun ProfilesContent(
     }
 }
 
-/** Opens a new profile's editor; [onCreate] waits while the open editor saves. */
+/** Opens a new profile's editor; not [enabled] while the open editor saves. */
 @Composable
-fun ProfileCreateAction(onCreate: () -> Unit, modifier: Modifier = Modifier) {
+fun ProfileCreateAction(onCreate: () -> Unit, enabled: Boolean, modifier: Modifier = Modifier) {
     val label = stringResource(R.string.profile_new)
+    // Material 3 FABs have no enabled state, so a disabled one ignores taps and says so.
     ExtendedFloatingActionButton(
         text = { Text(label) },
         // This overload hides the text from accessibility and names the FAB by its icon.
         icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = label) },
-        onClick = onCreate,
-        modifier = modifier,
+        onClick = { if (enabled) onCreate() },
+        modifier = modifier.semantics { if (!enabled) disabled() },
     )
 }
 

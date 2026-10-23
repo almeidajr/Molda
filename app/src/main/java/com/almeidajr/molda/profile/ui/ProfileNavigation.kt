@@ -50,6 +50,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     onRequestEditor: (EditedProfile) -> Unit,
     onCancelEditor: () -> Unit,
     onShowSnackbar: (Int) -> Unit,
+    isEditorSaving: () -> Boolean,
 ) {
     entry<ProfileManagementKey>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
@@ -65,12 +66,12 @@ internal fun EntryProviderScope<NavKey>.profileSection(
                 stringResource(R.string.profile_manage),
                 onAbout = { navigator.push(AboutKey) },
             )
-            ProfilePane { ProfileList(profiles, onRequestEditor) }
+            ProfilePane { ProfileList(profiles, onRequestEditor, enabled = !isEditorSaving()) }
         }
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
         val editor = editorViewModel(key.profile)
-        ReportEditorStatus(key) { editor.state.value.editorReport }
+        ReportEditorStatus(key, editor.collectedReport()) { editor.state.value.editorReport }
         ProfileSavedEffect(editor) {
             onShowSnackbar(R.string.profile_saved)
             navigator.remove(key)
@@ -80,7 +81,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     }
     entry<PickerProfileEditorKey> { key ->
         val editor = editorViewModel(EditedProfile.New)
-        ReportEditorStatus(key) { editor.state.value.editorReport }
+        ReportEditorStatus(key, editor.collectedReport()) { editor.state.value.editorReport }
         val results = LocalResultEventBus.current
         ProfileSavedEffect(editor) { save ->
             onShowSnackbar(R.string.profile_saved)
@@ -90,6 +91,10 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         OpenEditor(editor, onCancelEditor, isUpShown = true)
     }
 }
+
+@Composable
+private fun ProfileEditorViewModel.collectedReport() =
+    state.collectAsStateWithLifecycle().value.editorReport
 
 @Composable
 private fun editorViewModel(profile: EditedProfile) =
@@ -152,7 +157,11 @@ private fun OpenEditor(editor: ProfileEditorViewModel, onCancel: () -> Unit, isU
 }
 
 @Composable
-private fun ProfileList(profiles: ProfileListViewModel, onRequestEditor: (EditedProfile) -> Unit) {
+private fun ProfileList(
+    profiles: ProfileListViewModel,
+    onRequestEditor: (EditedProfile) -> Unit,
+    enabled: Boolean,
+) {
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilesContent(
         state,
@@ -160,6 +169,7 @@ private fun ProfileList(profiles: ProfileListViewModel, onRequestEditor: (Edited
         { onRequestEditor(EditedProfile.Existing(it)) },
         profiles::delete,
         Modifier.padding(16.dp),
+        enabled,
     )
 }
 

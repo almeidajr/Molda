@@ -327,6 +327,24 @@ class ProfileFailuresTest {
     }
 
     @Test
+    fun wideWindow_whileTheEditorSaves_disablesOpeningAnother() {
+        // Given
+        profileRepository = existingProfiles().apply { commandGate = CompletableDeferred() }
+        composeRule.launchProfileRoute(width = 1200)
+        composeRule.showProfiles()
+        composeRule.click("Existente", useUnmergedTree = true)
+        composeRule.edit("Nome ou apelido", "Rascunho")
+        composeRule.closeKeyboard()
+
+        // When
+        composeRule.click("Salvar perfil")
+
+        // Then
+        composeRule.onNodeWithContentDescription("Novo perfil").assertIsNotEnabled()
+        composeRule.onNodeWithText("Ações: Outra pessoa").assertIsNotEnabled()
+    }
+
+    @Test
     fun wideWindow_deleteFailure_announcesOnce() {
         // Given
         profileRepository = existingProfiles().apply { failsCommands = true }

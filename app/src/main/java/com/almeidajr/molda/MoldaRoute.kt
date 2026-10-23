@@ -72,6 +72,7 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
         navigator,
         // Read when the user acts: entries are remembered, so a captured status would go stale.
         status = { stack -> editorStatus(stack, editors.reports(navigator.state.allKeys)) },
+        composedReport = editors::composedReport,
     )
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
@@ -86,7 +87,7 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
             modifier = modifier,
         ) { isTwoPane ->
             if (app.isManagingProfiles(isTwoPane)) {
-                ProfileCreateAction(app::createProfile)
+                ProfileCreateAction(app::createProfile, enabled = !app.isPerfisEditorSaving())
             }
         }
     }
@@ -122,6 +123,7 @@ private fun editorStatus(stack: List<NavKey>, reports: Map<NavKey, EditorReport>
 private class MoldaApp(
     private val navigator: Navigator,
     private val status: (stack: List<NavKey>) -> EditorStatus,
+    private val composedReport: (NavKey) -> EditorReport?,
 ) {
     private val stacks get() = navigator.state
 
@@ -145,6 +147,15 @@ private class MoldaApp(
     fun isManagingProfiles(isTwoPane: Boolean): Boolean = stacks.selected == ProfileManagementKey &&
         stacks.current.last() !in setOf(AboutKey, LicencesKey) &&
         (stacks.stackOf(ProfileManagementKey).none { it is ProfileEditorKey } || isTwoPane)
+
+    /**
+     * Whether the Perfis editor beside the list saves, so no other editor may open; observable
+     * state, for the controls that would open one.
+     */
+    fun isPerfisEditorSaving(): Boolean = stacks.stackOf(ProfileManagementKey)
+        .lastOrNull { it is ProfileEditorKey }
+        ?.let(composedReport)
+        ?.isSaving == true
 
     fun EntryProviderScope<NavKey>.entries(versionName: String, onShowSnackbar: (Int) -> Unit) {
         patternSection(navigator)
@@ -174,6 +185,7 @@ private class MoldaApp(
             onRequestEditor = { perform(requestProfileEditor(it, perfisStatus())) },
             onCancelEditor = { perform(cancelProfileEditor(status(stacks.current))) },
             onShowSnackbar = onShowSnackbar,
+            isEditorSaving = ::isPerfisEditorSaving,
         )
         aboutSection(navigator, versionName)
         overlaySection(

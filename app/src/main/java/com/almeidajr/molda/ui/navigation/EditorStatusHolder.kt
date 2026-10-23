@@ -1,7 +1,9 @@
 package com.almeidajr.molda.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
@@ -14,12 +16,14 @@ data class EditorReport(val isDirty: Boolean = false, val isSaving: Boolean = fa
 
 /**
  * The status of each editor entry on the back stacks, which the app reads when the sewist acts.
- * Not observable state. An editor reports while composed; its last source stays until its key
- * leaves the back stacks, since a hidden tab or a screen above it takes it out of composition.
+ * An editor reports while composed; its last source stays until its key leaves the back stacks,
+ * since a hidden tab or a screen above it takes it out of composition. Only [composedReport] is
+ * observable state.
  */
 class EditorStatusHolder {
     // Keyed like Navigation 3's default content key, so a restored report finds its entry.
     private val sources = mutableMapOf<String, () -> EditorReport>()
+    private val composed = mutableStateMapOf<String, EditorReport>()
 
     /** Reads the status of the editor on [key] from [source] until [key] leaves the stacks. */
     fun report(key: NavKey, source: () -> EditorReport) {
@@ -31,6 +35,20 @@ class EditorStatusHolder {
         val byId = keys.associateBy(NavKey::toString)
         sources.keys.retainAll(byId.keys)
         return sources.mapNotNull { (id, source) -> byId[id]?.let { it to source() } }.toMap()
+    }
+
+    /**
+     * The status of the editor on [key] while it is composed, or null; observable, so controls
+     * shown beside the editor can follow it.
+     */
+    fun composedReport(key: NavKey): EditorReport? = composed[key.toString()]
+
+    internal fun showComposed(key: NavKey, report: EditorReport) {
+        composed[key.toString()] = report
+    }
+
+    internal fun hideComposed(key: NavKey) {
+        composed -= key.toString()
     }
 
     internal fun dirtyIds(): List<String> = sources.filterValues { it().isDirty }.keys.toList()
@@ -67,12 +85,17 @@ val LocalEditorStatusHolder = staticCompositionLocalOf<EditorStatusHolder> {
 }
 
 /**
- * Reports the status of the editor entry on [key] while it is composed. [source] is read whenever
- * the sewist acts, also once the entry is out of composition, so it must read state that outlives
- * the composition, such as a ViewModel's.
+ * Reports the status of the editor entry on [key] while it is composed, with [report], its
+ * collected status, for [EditorStatusHolder.composedReport]. [source] is read whenever the sewist
+ * acts, also once the entry is out of composition, so it must read state that outlives the
+ * composition, such as a ViewModel's.
  */
 @Composable
-fun ReportEditorStatus(key: NavKey, source: () -> EditorReport) {
+fun ReportEditorStatus(key: NavKey, report: EditorReport, source: () -> EditorReport) {
     val holder = LocalEditorStatusHolder.current
     SideEffect { holder.report(key, source) }
+    DisposableEffect(holder, key, report) {
+        holder.showComposed(key, report)
+        onDispose { holder.hideComposed(key) }
+    }
 }
