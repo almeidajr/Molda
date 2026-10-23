@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectDateFormat
@@ -48,7 +49,7 @@ import java.time.ZoneId
  */
 @Composable
 fun ProjectsScreen(
-    state: ProjectsState,
+    load: LoadResult<List<Project>>,
     onRetry: () -> Unit,
     onSeePatterns: () -> Unit,
     onAbout: () -> Unit,
@@ -66,15 +67,14 @@ fun ProjectsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                val loadError = state.loadError
-                when {
-                    loadError != null -> ProjectLoadFailure(loadError, onRetry)
+                when (load) {
+                    is LoadResult.Error -> ProjectLoadFailure(R.string.project_load_failed, onRetry)
 
-                    state.isLoading -> Text(stringResource(R.string.project_loading))
+                    LoadResult.Loading -> Text(stringResource(R.string.project_loading))
 
-                    state.projects.isEmpty() -> EmptyProjects(onSeePatterns)
+                    is LoadResult.Success if load.value.isEmpty() -> EmptyProjects(onSeePatterns)
 
-                    else -> state.projects.forEach { project ->
+                    is LoadResult.Success -> load.value.forEach { project ->
                         ProjectRow(
                             project,
                             selection(project.id),

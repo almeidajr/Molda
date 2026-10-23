@@ -17,6 +17,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.R
 import com.almeidajr.molda.about.navigation.AboutKey
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
@@ -257,10 +258,14 @@ internal fun OpenedProject(
         it.create(ProjectKey(id))
     }
     val state by opened.state.collectAsStateWithLifecycle()
-    when (val current = state) {
-        is OpenedProjectState.Shown -> content(current.project)
-        OpenedProjectState.Gone -> LaunchedEffect(Unit) { onClose() }
-        OpenedProjectState.Failed -> failed(opened::retry)
-        OpenedProjectState.Loading -> Unit
+    when (val load = state) {
+        LoadResult.Loading -> Unit
+
+        is LoadResult.Error -> failed(opened::retry)
+
+        is LoadResult.Success -> when (val project = load.value) {
+            null -> LaunchedEffect(Unit) { onClose() }
+            else -> content(project)
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.almeidajr.molda.testing
 
+import com.almeidajr.molda.data.resultOf
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
@@ -70,7 +71,7 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
         return if (failsCommands) {
             Result.failure(IllegalStateException("Controlled storage failure"))
         } else {
-            runCatching(block)
+            resultOf { block() }
         }
     }
 }

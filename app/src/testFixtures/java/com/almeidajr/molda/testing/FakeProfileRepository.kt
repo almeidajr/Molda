@@ -1,5 +1,6 @@
 package com.almeidajr.molda.testing
 
+import com.almeidajr.molda.data.resultOf
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
@@ -56,7 +57,7 @@ class FakeProfileRepository(profiles: List<MeasurementProfile> = emptyList()) : 
         return if (failsCommands) {
             Result.failure(IllegalStateException("Controlled storage failure"))
         } else {
-            runCatching(block)
+            resultOf { block() }
         }
     }
 }

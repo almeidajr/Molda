@@ -58,11 +58,14 @@ class LocalProjectRepository internal constructor(private val dao: ProjectDao) :
 
 private const val PROJECT_MISSING = "Project no longer exists"
 
-// Domain constructors validate every loaded row, so a malformed row fails the load.
+// Domain constructors validate every loaded row, so a malformed row, or one of a kind this
+// version does not know, fails the load as storage expects.
 private fun ProjectEntity.toProject() = Project(
     id = ProjectId(id),
     name = ProjectName(name),
-    kind = PatternDraftKind.entries.single { it.storedName == patternKind },
+    kind = checkNotNull(PatternDraftKind.entries.find { it.storedName == patternKind }) {
+        "Unknown pattern draft kind: $patternKind"
+    },
     snapshot = skirt.toSnapshot(),
     createdAt = Instant.ofEpochMilli(createdAt),
     updatedAt = Instant.ofEpochMilli(updatedAt),
