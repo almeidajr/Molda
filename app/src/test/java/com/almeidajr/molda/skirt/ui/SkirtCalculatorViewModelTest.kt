@@ -159,7 +159,7 @@ class SkirtCalculatorViewModelTest {
         val calculator = SkirtCalculatorViewModel(SavedStateHandle())
 
         // When
-        calculator.selectProfile(waist = "68,5", ana)
+        calculator.selectProfile(Length(68.5), ana)
 
         // Then
         val form = calculator.state.value.form
@@ -168,10 +168,47 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
+    fun selectProfile_withManyDecimals_fillsWaistExactly() {
+        // Given
+        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
+
+        // When
+        calculator.selectProfile(Length(80.123456789), ana)
+
+        // Then
+        assertEquals("80,123456789", calculator.state.value.form.inputs[SkirtDraftField.Waist])
+    }
+
+    @Test
+    fun selectProfile_withAWholeWaist_hasNoTrailingZeros() {
+        // Given
+        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
+
+        // When
+        calculator.selectProfile(Length(80.0), ana)
+
+        // Then
+        assertEquals("80", calculator.state.value.form.inputs[SkirtDraftField.Waist])
+    }
+
+    @Test
+    fun selectProfile_afterCalculating_clearsTheResult() {
+        // Given
+        val calculator = calculatorWith(validDraft)
+        calculator.calculate()
+
+        // When
+        calculator.selectProfile(Length(68.5), ana)
+
+        // Then
+        assertNull(calculator.state.value.result)
+    }
+
+    @Test
     fun edit_waistAfterSelectingProfile_dropsTheSource() {
         // Given
         val calculator = SkirtCalculatorViewModel(SavedStateHandle())
-        calculator.selectProfile(waist = "68,5", ana)
+        calculator.selectProfile(Length(68.5), ana)
 
         // When
         calculator.edit(SkirtDraftField.Waist, "70")
@@ -184,7 +221,7 @@ class SkirtCalculatorViewModelTest {
     fun recreate_afterProcessDeath_restoresTheForm() {
         viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
             // Given
-            scenario.viewModel.selectProfile(waist = "70", ana)
+            scenario.viewModel.selectProfile(Length(70.0), ana)
             scenario.viewModel.edit(SkirtDraftField.Ease, "2")
             scenario.viewModel.calculate()
 
@@ -263,7 +300,7 @@ class SkirtCalculatorViewModelTest {
         calculator.load(savedDraft, source = null)
 
         // When
-        calculator.selectProfile("70,125", ana)
+        calculator.selectProfile(Length(70.125), ana)
 
         // Then
         assertTrue(calculator.state.value.isDirty)

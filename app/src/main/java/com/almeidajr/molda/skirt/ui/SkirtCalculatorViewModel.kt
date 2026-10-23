@@ -3,6 +3,7 @@ package com.almeidajr.molda.skirt.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.serialization.saved
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.measurement.ParsedLength
 import com.almeidajr.molda.measurement.lengthText
@@ -83,7 +84,7 @@ class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle)
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
 
     /** Uses the [waist] taken from the profile [source]. */
-    fun selectProfile(waist: String, source: MeasurementSource) =
+    fun selectProfile(waist: Length, source: MeasurementSource) =
         transition { it.withProfileWaist(waist, source) }
 
     /** Replaces the form with a saved [draft] and its [source], then calculates it. */
@@ -111,10 +112,10 @@ class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle)
 }
 
 private fun CalculatorState.withProfileWaist(
-    waist: String,
+    waist: Length,
     source: MeasurementSource,
 ): CalculatorState {
-    val edited = edited(SkirtDraftField.Waist, waist)
+    val edited = edited(SkirtDraftField.Waist, lengthText(waist))
     return edited.copy(form = edited.form.copy(source = source))
 }
 

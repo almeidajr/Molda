@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.profile.ui.ProfilePicker
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
@@ -143,7 +142,7 @@ private fun AppProfilePicker(
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilePicker(state, onDismiss, profiles::load, onSelect = {
         val measurements = it.measurements
-        calculator.selectProfile(lengthText(measurements.waist), measurements.source)
+        calculator.selectProfile(measurements.waist, measurements.source)
         onDismiss()
     }, onCreate = onCreate)
 }
