@@ -54,7 +54,7 @@ class ProjectStorageTest {
 
         // Then
         assertEquals(saved.reversed(), listed)
-        assertEquals(PatternDraftKind.FullCircleSkirt, listed.last().kind)
+        assertEquals(PatternDraftKind.FullCircleSkirt, listed.last().snapshot.kind)
         assertEquals(fromProfile, listed.last().snapshot)
         assertEquals(typedByHand, listed.first().snapshot)
         assertEquals(january, listed.last().createdAt)

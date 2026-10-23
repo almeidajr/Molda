@@ -44,7 +44,7 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
     override suspend fun create(name: ProjectName, snapshot: SkirtSnapshot, savedAt: Instant) =
         command {
             val id = ProjectId((current.maxOfOrNull { it.id.value } ?: 0) + 1)
-            Project(id, name, snapshot.kind, snapshot, savedAt, savedAt)
+            Project(id, name, snapshot, savedAt, savedAt)
                 .also { created -> stored.update { (it + created).newestFirst() } }
         }
 

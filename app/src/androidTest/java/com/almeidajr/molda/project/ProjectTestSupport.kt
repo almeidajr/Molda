@@ -4,7 +4,6 @@ import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import com.almeidajr.molda.click
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
-import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
@@ -22,7 +21,6 @@ import java.time.LocalDate
 internal fun formaturaProject(savedAt: Instant) = Project(
     ProjectId(1),
     ProjectName("Saia da formatura"),
-    PatternDraftKind.FullCircleSkirt,
     SkirtSnapshot(
         SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(1.5)),
         SkirtRadii(Length(11.11), Length(71.11), Length(10.11), Length(73.11)),

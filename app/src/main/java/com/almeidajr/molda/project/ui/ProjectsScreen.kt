@@ -158,7 +158,7 @@ private fun ProjectRow(
             Text(
                 stringResource(
                     R.string.project_summary,
-                    stringResource(project.kind.label),
+                    stringResource(project.snapshot.kind.label),
                     project.updatedAt.atZone(ZoneId.systemDefault()).format(ProjectDateFormat),
                 ),
                 style = MaterialTheme.typography.bodyMedium,

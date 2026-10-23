@@ -2,7 +2,6 @@ package com.almeidajr.molda.project.ui
 
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
-import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
@@ -23,7 +22,6 @@ internal val fromProfile = SkirtSnapshot(
 internal val saved = Project(
     ProjectId(1),
     ProjectName("Saia antiga"),
-    PatternDraftKind.FullCircleSkirt,
     fromProfile.copy(source = null),
     createdAt = Instant.parse("2026-09-01T10:00:00Z"),
     updatedAt = Instant.parse("2026-09-01T10:00:00Z"),

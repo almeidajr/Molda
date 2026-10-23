@@ -58,18 +58,22 @@ class LocalProjectRepository internal constructor(private val dao: ProjectDao) :
 
 private const val PROJECT_MISSING = "Project no longer exists"
 
-// Domain constructors validate every loaded row, so a malformed row, or one of a kind this
-// version does not know, fails the load as storage expects.
-private fun ProjectEntity.toProject() = Project(
-    id = ProjectId(id),
-    name = ProjectName(name),
-    kind = checkNotNull(PatternDraftKind.entries.find { it.storedName == patternKind }) {
-        "Unknown pattern draft kind: $patternKind"
-    },
-    snapshot = skirt.toSnapshot(),
-    createdAt = Instant.ofEpochMilli(createdAt),
-    updatedAt = Instant.ofEpochMilli(updatedAt),
-)
+// Domain constructors validate every loaded row, so a malformed row fails the load as storage
+// expects. So does a stored kind that is not the snapshot's: unknown to this version or
+// disagreeing with the columns.
+private fun ProjectEntity.toProject(): Project {
+    val snapshot = skirt.toSnapshot()
+    check(patternKind == snapshot.kind.storedName) {
+        "Stored pattern draft kind $patternKind is not the snapshot's ${snapshot.kind.storedName}"
+    }
+    return Project(
+        id = ProjectId(id),
+        name = ProjectName(name),
+        snapshot = snapshot,
+        createdAt = Instant.ofEpochMilli(createdAt),
+        updatedAt = Instant.ofEpochMilli(updatedAt),
+    )
+}
 
 private fun SkirtColumns.toSnapshot() = SkirtSnapshot(
     SkirtDraft(

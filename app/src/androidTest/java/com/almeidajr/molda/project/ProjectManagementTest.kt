@@ -17,7 +17,6 @@ import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
@@ -338,7 +337,6 @@ class ProjectManagementTest {
 private val saiaAntiga = Project(
     ProjectId(1),
     ProjectName("Saia antiga"),
-    PatternDraftKind.FullCircleSkirt,
     SkirtSnapshot(
         SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
         SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),

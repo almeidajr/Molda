@@ -44,11 +44,10 @@ data class SkirtSnapshot(
     val kind: PatternDraftKind get() = PatternDraftKind.FullCircleSkirt
 }
 
-/** A named, saved pattern draft of the stored [kind]; [updatedAt] is its last change. */
+/** A named, saved pattern draft, whose kind is its [snapshot]'s; [updatedAt] is its last change. */
 data class Project(
     val id: ProjectId,
     val name: ProjectName,
-    val kind: PatternDraftKind,
     val snapshot: SkirtSnapshot,
     val createdAt: Instant,
     val updatedAt: Instant,
