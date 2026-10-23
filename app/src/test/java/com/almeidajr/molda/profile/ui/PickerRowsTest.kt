@@ -1,11 +1,6 @@
 package com.almeidajr.molda.profile.ui
 
 import com.almeidajr.molda.data.LoadResult
-import com.almeidajr.molda.measurement.Length
-import com.almeidajr.molda.profile.domain.MeasurementProfile
-import com.almeidajr.molda.profile.domain.ProfileId
-import com.almeidajr.molda.profile.domain.ProfileMeasurements
-import com.almeidajr.molda.profile.domain.ProfileName
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import org.junit.Test
@@ -28,7 +23,6 @@ class PickerRowsTest {
     @Test
     fun pickerRows_differingInOneOfNameWaistOrDate_doNotShowNotes() {
         // Given
-        val ana = profile(1, "Ana", 80.0)
         val profiles = listOf(
             ana,
             profile(2, "Bia", 80.0),
@@ -58,27 +52,15 @@ class PickerRowsTest {
     @Test
     fun pickerRows_ofState_followsItsLoad() {
         // Given
-        val ana = profile(1, "Ana", 80.0)
+        val loaded = ProfileListState(load = LoadResult.Success(listOf(ana)))
+        val loading = ProfileListState()
 
         // When
-        val state = ProfileListState(load = LoadResult.Success(listOf(ana)))
+        val loadedRows = loaded.pickerRows
+        val loadingRows = loading.pickerRows
 
         // Then
-        assertEquals(
-            LoadResult.Success(listOf(PickerRow(ana, showNotes = false))),
-            state.pickerRows,
-        )
-        assertEquals(LoadResult.Loading, ProfileListState().pickerRows)
+        assertEquals(LoadResult.Success(listOf(PickerRow(ana, showNotes = false))), loadedRows)
+        assertEquals(LoadResult.Loading, loadingRows)
     }
-
-    private fun profile(
-        id: Long,
-        name: String,
-        waist: Double,
-        notes: String = "",
-        date: LocalDate = LocalDate.of(2026, 10, 12),
-    ) = MeasurementProfile(
-        ProfileId(id),
-        ProfileMeasurements(ProfileName(name), Length(waist), date, notes),
-    )
 }
