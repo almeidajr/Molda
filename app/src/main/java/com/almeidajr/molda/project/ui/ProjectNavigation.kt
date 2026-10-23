@@ -90,10 +90,7 @@ private fun SaveProjectEntry(
         it.create(key)
     }
     val state by dialog.state.collectAsStateWithLifecycle()
-    val savedId = state.outcome
-    LaunchedEffect(savedId) {
-        if (savedId == null) return@LaunchedEffect
-        onShowSnackbar(R.string.project_saved)
+    ClosesWhenDone(state, R.string.project_saved, onShowSnackbar) { savedId ->
         navigator.remove(key)
         if (key.showsSaved) navigator.showProject(savedId)
     }
@@ -186,19 +183,22 @@ private fun DeleteProjectEntry(
     }
 }
 
-/** Once the dialog's command in [state] is done, shows [message] and closes it with [onClose]. */
+/**
+ * Once the dialog's command in [state] is done, shows [message] and passes its outcome to
+ * [onDone], which closes the dialog.
+ */
 @Composable
-private fun ClosesWhenDone(
-    state: ProjectCommandState<Unit>,
+private fun <T : Any> ClosesWhenDone(
+    state: ProjectCommandState<T>,
     @StringRes message: Int,
     onShowSnackbar: (Int) -> Unit,
-    onClose: () -> Unit,
+    onDone: (T) -> Unit,
 ) {
-    val isDone = state.outcome != null
-    LaunchedEffect(isDone) {
-        if (!isDone) return@LaunchedEffect
+    val outcome = state.outcome
+    LaunchedEffect(outcome) {
+        if (outcome == null) return@LaunchedEffect
         onShowSnackbar(message)
-        onClose()
+        onDone(outcome)
     }
 }
 
@@ -248,12 +248,15 @@ internal fun OpenedProject(
     val state by opened.state.collectAsStateWithLifecycle()
     when (val current = state) {
         is OpenedProjectState.Shown -> content(current.project)
+
         OpenedProjectState.Gone -> LaunchedEffect(Unit) { onClose() }
+
         OpenedProjectState.Failed -> ProjectLoadFailure(
             R.string.project_load_failed,
             opened::retry,
             Modifier.padding(16.dp),
         )
+
         OpenedProjectState.Loading -> Unit
     }
 }
