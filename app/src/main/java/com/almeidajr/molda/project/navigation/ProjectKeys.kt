@@ -3,6 +3,7 @@ package com.almeidajr.molda.project.navigation
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.SkirtSnapshot
+import com.almeidajr.molda.skirt.domain.SkirtRadii
 import kotlinx.serialization.Serializable
 
 /** The Projetos root. */
@@ -24,9 +25,9 @@ internal data class ProjectEditorKey(val id: ProjectId) : NavKey
 /** The result key this editor listens on for a profile from its picker; unique to its project. */
 internal val ProjectEditorKey.profileResultKey: String get() = "profile/project/${id.value}"
 
-/** The fabric-folding guide on the radii calculated while editing a project. */
+/** The fabric-folding guide on the [radii] calculated while editing a project. */
 @Serializable
-internal data object ProjectEditorGuideKey : NavKey
+internal data class ProjectEditorGuideKey(val radii: SkirtRadii) : NavKey
 
 /**
  * The dialog that names [snapshot] and saves it as a new project, over the stack that opened it;

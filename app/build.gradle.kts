@@ -138,6 +138,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     // Raises the coroutines that androidx pulls in transitively, so device tests can use
     // coroutines-test.
     implementation(platform(libs.kotlinx.coroutines.bom))

@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -65,6 +66,7 @@ class TopLevelBackStacks internal constructor(
                 stack,
                 listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator<NavKey>(),
                     rememberResultEventBusNavEntryDecorator(resultBus),
                 ),
             ) { key ->

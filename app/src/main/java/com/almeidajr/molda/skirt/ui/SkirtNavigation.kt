@@ -44,13 +44,16 @@ internal fun EntryProviderScope<NavKey>.skirtSection(
             title = stringResource(R.string.skirt_title),
             onUp = navigator::back,
             onUseProfile = { navigator.push(ProfilePickerKey(MOLDES_PROFILE_RESULT_KEY)) },
-            onOpenGuide = { navigator.push(FabricFoldingGuideKey) },
+            onOpenGuide = {
+                calculator.state.value.result?.radii?.let {
+                    navigator.push(FabricFoldingGuideKey(it))
+                }
+            },
             onSaveProject = onSaveProject,
         )
     }
-    entry<FabricFoldingGuideKey> {
-        val state by calculator.state.collectAsStateWithLifecycle()
-        CalculatedFoldingGuide(state.result?.radii) { navigator.remove(FabricFoldingGuideKey) }
+    entry<FabricFoldingGuideKey> { key ->
+        FabricFoldingPlayer(key.radii, onClose = { navigator.remove(key) })
     }
     entry<ExampleFabricFoldingGuideKey>(metadata = ListDetailSceneStrategy.detailPane()) {
         FabricFoldingPlayer(

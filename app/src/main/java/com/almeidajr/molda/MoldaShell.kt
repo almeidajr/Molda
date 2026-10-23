@@ -59,7 +59,7 @@ private val NavigationRailMinWidth = 600.dp
 
 /** The guide players, which take the whole window. */
 private val NavKey.isCalculatedGuide: Boolean
-    get() = this == FabricFoldingGuideKey || this == ProjectEditorGuideKey ||
+    get() = this is FabricFoldingGuideKey || this is ProjectEditorGuideKey ||
         this is ProjectGuideKey
 
 /**

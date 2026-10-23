@@ -27,7 +27,6 @@ import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.showProject
-import com.almeidajr.molda.skirt.ui.CalculatedFoldingGuide
 import com.almeidajr.molda.skirt.ui.CalculatorDestination
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
@@ -70,7 +69,11 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
                 title = stringResource(R.string.project_edit_title, project.name.text),
                 onUp = onCloseEditor,
                 onUseProfile = { navigator.push(ProfilePickerKey(key.profileResultKey)) },
-                onOpenGuide = { navigator.push(ProjectEditorGuideKey) },
+                onOpenGuide = {
+                    editor.state.value.result?.radii?.let {
+                        navigator.push(ProjectEditorGuideKey(it))
+                    }
+                },
                 onSaveProject = {
                     editor.state.value.snapshot()?.let {
                         projects.update(key.id, it, onShowSnackbar) {
@@ -86,9 +89,8 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
             )
         }
     }
-    entry<ProjectEditorGuideKey> {
-        val state by editor.state.collectAsStateWithLifecycle()
-        CalculatedFoldingGuide(state.result?.radii) { navigator.remove(ProjectEditorGuideKey) }
+    entry<ProjectEditorGuideKey> { key ->
+        FabricFoldingPlayer(key.radii, onClose = { navigator.remove(key) })
     }
     entry<ProjectGuideKey> { key ->
         val close: () -> Unit = { navigator.remove(key) }

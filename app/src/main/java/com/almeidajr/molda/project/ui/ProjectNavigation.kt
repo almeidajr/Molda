@@ -112,7 +112,7 @@ private fun SaveProjectEntry(
 /** Opens the stored project [id] on Projetos, in place of the editor and any project open. */
 internal fun Navigator.showProject(id: ProjectId) {
     removeAll {
-        it is ProjectEditorKey || it == ProjectEditorGuideKey || it is ProjectKey ||
+        it is ProjectEditorKey || it is ProjectEditorGuideKey || it is ProjectKey ||
             it is ProjectGuideKey
     }
     push(ProjectKey(id), root = ProjectsKey)
