@@ -1,5 +1,6 @@
 package com.almeidajr.molda.profile.domain
 
+import com.almeidajr.molda.measurement.IsoLocalDateSerializer
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import java.time.LocalDate
@@ -16,6 +17,7 @@ value class ProfileId(val value: Long) {
 }
 
 /** A non-blank profile name without surrounding whitespace. */
+@Serializable
 @JvmInline
 value class ProfileName(val text: String) {
     init {
@@ -25,10 +27,11 @@ value class ProfileName(val text: String) {
     }
 }
 
+@Serializable
 data class ProfileMeasurements(
     val name: ProfileName,
     val waist: Length,
-    val measurementDate: LocalDate,
+    @Serializable(with = IsoLocalDateSerializer::class) val measurementDate: LocalDate,
     val notes: String = "",
 ) {
     init {
@@ -39,6 +42,7 @@ data class ProfileMeasurements(
     val source: MeasurementSource get() = MeasurementSource(name.text, measurementDate)
 }
 
+@Serializable
 data class MeasurementProfile(val id: ProfileId, val measurements: ProfileMeasurements)
 
 /** Stored measurement profiles; commands report storage failures as [Result.failure]. */
