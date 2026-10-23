@@ -9,6 +9,7 @@ import com.almeidajr.molda.ui.navigation.navigatorOf
 import com.almeidajr.molda.ui.navigation.stacks
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import org.junit.Test
@@ -64,7 +65,8 @@ class ProfileNavigatorTest {
         // Then
         val perfis = navigator.stacks[1]
         assertEquals(2, perfis.size)
-        assertNotEquals(open, perfis.last())
+        assertEquals(existing, assertIs<ProfileEditorKey>(perfis.last()).profile)
+        assertNotEquals<NavKey>(open, perfis.last())
     }
 
     @Test
@@ -120,7 +122,23 @@ class ProfileNavigatorTest {
         // Then
         val moldes = navigator.stacks[0]
         assertEquals(3, moldes.size)
-        assertNotEquals(pickerEditor, moldes.last())
+        assertEquals("picker", assertIs<PickerProfileEditorKey>(moldes.last()).resultKey)
+        assertNotEquals<NavKey>(pickerEditor, moldes.last())
+    }
+
+    @Test
+    fun openPickerEditor_openedTwice_neverRepeatsAContentKey() {
+        // Given
+        val navigator = app(moldes = listOf(SkirtCalculatorKey, picker))
+        navigator.openPickerEditor("picker")
+        val first = navigator.stacks[0].last()
+
+        // When
+        navigator.openPickerEditor("picker")
+
+        // Then
+        // Navigation 3's default content key is toString(); the opening keeps it unique.
+        assertNotEquals(first.toString(), navigator.stacks[0].last().toString())
     }
 
     @Test
