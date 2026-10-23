@@ -35,6 +35,7 @@ import com.almeidajr.molda.R
 internal fun CuttingCard(
     groups: List<CuttingCardGroup>,
     diagramDescription: String,
+    coincidenceNotes: List<String>,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -68,12 +69,13 @@ internal fun CuttingCard(
                         DiagramSection(
                             groups,
                             diagramDescription,
+                            coincidenceNotes,
                             Modifier.weight(1f).semantics { isTraversalGroup = true },
                         )
                     }
                 } else {
                     groups.forEach { RadiusGroup(it) }
-                    DiagramSection(groups, diagramDescription)
+                    DiagramSection(groups, diagramDescription, coincidenceNotes)
                 }
             }
         }
@@ -100,6 +102,7 @@ private fun RadiusGroup(group: CuttingCardGroup) {
 private fun DiagramSection(
     groups: List<CuttingCardGroup>,
     description: String,
+    coincidenceNotes: List<String>,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -108,7 +111,7 @@ private fun DiagramSection(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
-        DraftingFigure(groups, description)
+        DraftingFigure(groups, description, coincidenceNotes)
     }
 }
 

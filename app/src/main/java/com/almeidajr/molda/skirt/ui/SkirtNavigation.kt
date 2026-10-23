@@ -44,7 +44,7 @@ internal fun EntryProviderScope<NavKey>.skirtSection(
     }
     entry<FabricFoldingGuideKey> {
         val state by calculator.state.collectAsStateWithLifecycle()
-        CalculatedFoldingGuide(state.radii) { navigator.remove(FabricFoldingGuideKey) }
+        CalculatedFoldingGuide(state.result?.radii) { navigator.remove(FabricFoldingGuideKey) }
     }
     entry<ExampleFabricFoldingGuideKey>(metadata = ListDetailSceneStrategy.detailPane()) {
         FabricFoldingPlayer(

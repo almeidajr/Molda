@@ -101,8 +101,8 @@ fun coincidenceNotes(card: List<CuttingCardGroup>, text: (Int) -> String): List<
  */
 fun diagramDescription(
     card: List<CuttingCardGroup>,
-    waistSeamAllowance: String,
-    hemAllowance: String,
+    allowanceDirections: String,
+    coincidenceNotes: List<String>,
     text: (Int) -> String,
 ): String {
     val key = card.flatMap { it.entries }.sortedBy { it.line.number }.map { entry ->
@@ -113,16 +113,14 @@ fun diagramDescription(
             entry.label.lowercase(),
         )
     }
-    val allowances =
-        text(R.string.skirt_allowance_directions).format(PtBr, waistSeamAllowance, hemAllowance)
     return (
         listOf(text(R.string.skirt_diagram_summary), text(R.string.skirt_diagram_line_order)) +
-            key + coincidenceNotes(card, text) + allowances + text(R.string.skirt_diagram_limits)
+            key + coincidenceNotes + allowanceDirections + text(R.string.skirt_diagram_limits)
         ).joinToString(" ")
 }
 
 /** The locale the copy is written in. */
-private val PtBr = Locale.forLanguageTag("pt-BR")
+internal val PtBr = Locale.forLanguageTag("pt-BR")
 
 /**
  * "Label: value" items for the inputs used, whose unit the summary heading states once.

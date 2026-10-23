@@ -48,14 +48,8 @@ enum class SkirtFieldError {
     NotPositive,
     Negative,
 
-    /** Only on [SkirtDraftField.WaistSeamAllowance], from [calculateSkirtRadii]. */
+    /** Only on [SkirtDraftField.WaistSeamAllowance], once every field holds a valid length. */
     SeamAllowanceNotSmallerThanWaistStitching,
-}
-
-sealed interface SkirtDraftReading {
-    data class Valid(val draft: SkirtDraft) : SkirtDraftReading
-
-    data class Invalid(val errors: Map<SkirtDraftField, SkirtFieldError>) : SkirtDraftReading
 }
 
 @Serializable
@@ -66,16 +60,36 @@ data class SkirtRadii(
     val hemCutting: Length,
 )
 
+/** What a skirt draft's calculation gives the sewist: exactly one of its three outcomes. */
 sealed interface SkirtCalculation {
-    data class Success(val radii: SkirtRadii) : SkirtCalculation
+    data class Invalid(val errors: Map<SkirtDraftField, SkirtFieldError>) : SkirtCalculation
 
-    data object SeamAllowanceNotSmallerThanWaistStitching : SkirtCalculation
-
+    /** The inputs are valid, but the radii overflow. */
     data object NonfiniteResult : SkirtCalculation
+
+    data class Success(val draft: SkirtDraft, val radii: SkirtRadii) : SkirtCalculation
 }
 
-/** The error for one field's [text], or null when it is a valid [Length] for that field. */
-fun skirtFieldError(field: SkirtDraftField, text: String): SkirtFieldError? {
+/** Calculates the form's field texts (missing fields count as blank). */
+fun calculateSkirt(inputs: Map<SkirtDraftField, String>): SkirtCalculation {
+    val texts = SkirtDraftField.entries.associateWith { inputs[it].orEmpty() }
+    val errors = texts.mapNotNull { (field, text) ->
+        skirtFieldError(field, text)?.let { field to it }
+    }.toMap()
+    if (errors.isNotEmpty()) return SkirtCalculation.Invalid(errors)
+    val lengths = texts.mapValues { (parseLength(it.value) as ParsedLength.Valid).length }
+    return calculateSkirtRadii(
+        SkirtDraft(
+            waist = lengths.getValue(SkirtDraftField.Waist),
+            ease = lengths.getValue(SkirtDraftField.Ease),
+            finishedLength = lengths.getValue(SkirtDraftField.FinishedLength),
+            waistSeamAllowance = lengths.getValue(SkirtDraftField.WaistSeamAllowance),
+            hemAllowance = lengths.getValue(SkirtDraftField.HemAllowance),
+        ),
+    )
+}
+
+private fun skirtFieldError(field: SkirtDraftField, text: String): SkirtFieldError? {
     val parsed = parseLength(text)
     return when {
         text.isBlank() -> SkirtFieldError.Blank
@@ -92,25 +106,6 @@ fun skirtFieldError(field: SkirtDraftField, text: String): SkirtFieldError? {
     }
 }
 
-/** Reads every field of [inputs] (missing fields count as blank) into a draft or its errors. */
-fun readSkirtDraft(inputs: Map<SkirtDraftField, String>): SkirtDraftReading {
-    val texts = SkirtDraftField.entries.associateWith { inputs[it].orEmpty() }
-    val errors = texts.mapNotNull { (field, text) ->
-        skirtFieldError(field, text)?.let { field to it }
-    }.toMap()
-    if (errors.isNotEmpty()) return SkirtDraftReading.Invalid(errors)
-    val lengths = texts.mapValues { (parseLength(it.value) as ParsedLength.Valid).length }
-    return SkirtDraftReading.Valid(
-        SkirtDraft(
-            waist = lengths.getValue(SkirtDraftField.Waist),
-            ease = lengths.getValue(SkirtDraftField.Ease),
-            finishedLength = lengths.getValue(SkirtDraftField.FinishedLength),
-            waistSeamAllowance = lengths.getValue(SkirtDraftField.WaistSeamAllowance),
-            hemAllowance = lengths.getValue(SkirtDraftField.HemAllowance),
-        ),
-    )
-}
-
 /** Calculates radii in centimetres without rounding intermediate values. */
 fun calculateSkirtRadii(draft: SkirtDraft): SkirtCalculation {
     val waistStitching = (draft.waist.centimetres + draft.ease.centimetres) / (2 * PI)
@@ -121,9 +116,15 @@ fun calculateSkirtRadii(draft: SkirtDraft): SkirtCalculation {
         listOf(waistStitching, finishedHem, waistCutting, hemCutting).any { !it.isFinite() } ->
             SkirtCalculation.NonfiniteResult
 
-        waistCutting <= 0.0 -> SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching
+        waistCutting <= 0.0 -> SkirtCalculation.Invalid(
+            mapOf(
+                SkirtDraftField.WaistSeamAllowance to
+                    SkirtFieldError.SeamAllowanceNotSmallerThanWaistStitching,
+            ),
+        )
 
         else -> SkirtCalculation.Success(
+            draft,
             SkirtRadii(
                 waistStitching = Length(waistStitching),
                 finishedHem = Length(finishedHem),

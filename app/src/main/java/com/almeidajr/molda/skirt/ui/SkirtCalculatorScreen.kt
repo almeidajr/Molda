@@ -3,7 +3,6 @@ package com.almeidajr.molda.skirt.ui
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,7 +36,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -49,7 +46,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
-import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtFieldError
 import com.almeidajr.molda.ui.adaptive.AdaptiveContent
@@ -113,7 +109,7 @@ fun SkirtCalculatorScreen(
             onOpenGuide,
             onSaveProject,
             onSaveAsNewProject,
-            Modifier.bringIntoViewRequester(resultRequester),
+            cardModifier = Modifier.bringIntoViewRequester(resultRequester),
         ) {
             focusRequesters.getValue(SkirtDraftField.Waist).requestFocus()
             scope.launch { bringRequesters.getValue(SkirtDraftField.Waist).bringIntoView() }
@@ -136,7 +132,7 @@ private fun RevealCalculationOutcome(
     LaunchedEffect(state.calculationAttempt) {
         if (state.calculationAttempt == revealedAttempt) return@LaunchedEffect
         revealedAttempt = state.calculationAttempt
-        if (state.radii != null) {
+        if (state.result != null) {
             // Clearing focus alone leaves the keyboard covering the radii after IME Done.
             keyboard?.hide()
             resultRequester.bringIntoView()
@@ -226,39 +222,6 @@ private fun CalculatorIntro() {
 }
 
 @Composable
-private fun CalculationOutcome(
-    state: CalculatorState,
-    onOpenGuide: () -> Unit,
-    onSaveProject: () -> Unit,
-    onSaveAsNewProject: (() -> Unit)?,
-    modifier: Modifier = Modifier,
-    onEditMeasurements: () -> Unit,
-) {
-    if (state.hasNonfiniteResult) {
-        Text(
-            stringResource(R.string.skirt_error_nonfinite_result),
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
-        )
-    }
-    val draft = state.draft
-    val radii = state.radii
-    if (draft != null && radii != null) {
-        val text: (Int) -> String = LocalResources.current::getString
-        val card = cuttingCard(radii, text)
-        val description = diagramDescription(
-            card,
-            enteredValue(state.form.inputs, SkirtDraftField.WaistSeamAllowance),
-            enteredValue(state.form.inputs, SkirtDraftField.HemAllowance),
-            text,
-        )
-        CuttingCard(card, description, modifier)
-        SkirtResults(draft, onOpenGuide, onSaveProject, onSaveAsNewProject, onEditMeasurements)
-        DraftingExplanation(state.form.inputs, radii)
-    }
-}
-
-@Composable
 private fun MeasurementInput(
     field: SkirtDraftField,
     state: CalculatorState,
@@ -332,58 +295,6 @@ private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
 }
 
 @Composable
-private fun SkirtResults(
-    draft: SkirtDraft,
-    onOpenGuide: () -> Unit,
-    onSaveProject: () -> Unit,
-    onSaveAsNewProject: (() -> Unit)?,
-    onEditMeasurements: () -> Unit,
-) {
-    // One action row under the card; at large text the buttons wrap onto further lines.
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        FabricFoldingGuideEntry(onOpenGuide)
-        // Editing a saved project offers updating it or keeping it and saving another.
-        OutlinedButton(onClick = onSaveProject, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(
-                stringResource(
-                    if (onSaveAsNewProject == null) {
-                        R.string.project_save
-                    } else {
-                        R.string.project_save_confirm
-                    },
-                ),
-            )
-        }
-        onSaveAsNewProject?.let {
-            OutlinedButton(onClick = it, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.project_save_as_new))
-            }
-        }
-        TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.skirt_edit_measurements))
-        }
-    }
-    UsedMeasurements(draft)
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                stringResource(R.string.skirt_limits_title),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(stringResource(R.string.skirt_limits_body))
-        }
-    }
-}
-
-@Composable
 private fun AdaptiveCalculator(
     state: CalculatorState,
     modifier: Modifier,
@@ -404,7 +315,7 @@ private fun AdaptiveCalculator(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (state.radii == null) Text(stringResource(R.string.skirt_fill_and_calculate))
+                if (state.result == null) Text(stringResource(R.string.skirt_fill_and_calculate))
                 outcome()
             }
         },

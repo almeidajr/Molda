@@ -78,7 +78,7 @@ class CuttingCardTest {
         val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0), text)
 
         // When
-        val description = diagramDescription(card, "1", "2,5", text)
+        val description = diagramDescription(card, "Margens dadas.", emptyList(), text)
 
         // Then
         listOf(
@@ -90,8 +90,7 @@ class CuttingCardTest {
             "sem escala",
             "para impressão",
             "não garante o caimento",
-            "A margem de cintura de 1 cm avança para dentro; " +
-                "a margem de barra de 2,5 cm avança para fora.",
+            "Margens dadas.",
         ).forEach { assertTrue(it in description, it) }
         card.flatMap { it.entries }.forEach { assertFalse(it.value in description, it.value) }
         assertFalse("coincidem" in description)
@@ -118,7 +117,7 @@ class CuttingCardTest {
         val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 0.0), text)
 
         // When
-        val description = diagramDescription(card, "0", "0", text)
+        val description = diagramDescription(card, "Margens.", coincidenceNotes(card, text), text)
 
         // Then
         coincidenceNotes(card, text).forEach { assertTrue(it in description, it) }

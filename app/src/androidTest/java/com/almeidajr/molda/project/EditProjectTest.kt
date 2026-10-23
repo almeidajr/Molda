@@ -236,7 +236,7 @@ class EditProjectTest {
             SkirtDraftField.Ease to "2",
             SkirtDraftField.FinishedLength to "60",
             SkirtDraftField.WaistSeamAllowance to "1",
-            SkirtDraftField.HemAllowance to "2",
+            SkirtDraftField.HemAllowance to "1,5",
         )
     }
 }

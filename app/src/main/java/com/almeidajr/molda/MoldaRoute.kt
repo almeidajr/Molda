@@ -16,7 +16,6 @@ import com.almeidajr.molda.about.navigation.AboutKey
 import com.almeidajr.molda.about.navigation.LicencesKey
 import com.almeidajr.molda.about.ui.aboutSection
 import com.almeidajr.molda.guide.ui.guideSection
-import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.pattern.ui.patternSection
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -154,7 +153,7 @@ private class MoldaApp(
         }
         if (target != null) {
             val measurements = profile.measurements
-            target.selectProfile(lengthText(measurements.waist), measurements.source)
+            target.selectProfile(measurements.waist, measurements.source)
             navigator.removeAll { it == PickerProfileEditorKey || it == ProfilePickerKey }
         }
     }
