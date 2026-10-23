@@ -39,6 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.rive.Result
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.ui.DrawingLoad
 import com.almeidajr.molda.skirt.ui.FoldingStep
@@ -48,7 +52,15 @@ import com.almeidajr.molda.skirt.ui.GuideFrame
 import com.almeidajr.molda.skirt.ui.GuideProgress
 import com.almeidajr.molda.skirt.ui.IndicatorDelay
 import com.almeidajr.molda.skirt.ui.IndicatorMinDuration
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import org.junit.Rule
@@ -62,15 +74,29 @@ import org.junit.runner.RunWith
  * drawing. Native frames are [FabricFoldingRenderingTest]'s job.
  */
 @RunWith(AndroidJUnit4::class)
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class FabricFoldingGuideTest {
     @get:Rule(order = 0)
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
-    val keyboardMode = KeyboardModeRule(composeRule)
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     @get:Rule(order = 2)
+    val keyboardMode = KeyboardModeRule(composeRule)
+
+    @get:Rule(order = 3)
     val animatorScale = AnimatorDurationScaleRule(composeRule)
+
+    @BindValue @JvmField
+    val profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October13Clock
 
     @Test
     fun opening_showsFirstStepWithPreviousDisabled() {
@@ -117,6 +143,26 @@ class FabricFoldingGuideTest {
         // Then
         composeRule.onNodeWithText("Marcar os raios").assertIsDisplayed()
         composeRule.onNodeWithText("1. Costura da cintura: 13,05 cm")
+            .performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun reopening_afterAnotherCalculation_showsTheNewRadii() {
+        // Given
+        calculate()
+        openGuide()
+        composeRule.pressBack()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
+            .performTextReplacement("90")
+        closeSoftKeyboard()
+        composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
+
+        // When
+        openGuide()
+        next(times = 3)
+
+        // Then
+        composeRule.onNodeWithText("1. Costura da cintura: 14,64 cm")
             .performScrollTo().assertIsDisplayed()
     }
 
@@ -262,7 +308,7 @@ class FabricFoldingGuideTest {
 
         // When
         composeRule.recreate()
-        composeRule.showEmptyApp()
+        composeRule.showRoute()
 
         // Then
         drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo"))
@@ -277,7 +323,7 @@ class FabricFoldingGuideTest {
 
         // When
         composeRule.recreate()
-        composeRule.showEmptyApp()
+        composeRule.showRoute()
 
         // Then
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
@@ -483,7 +529,7 @@ class FabricFoldingGuideTest {
 
     /** Shows results for an 80 cm waist with 2 cm ease, 60 cm length and 1 and 2 cm allowances. */
     private fun calculate() {
-        composeRule.showEmptyApp()
+        composeRule.showRoute()
         composeRule.openSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
             composeRule.onNodeWithText(field.labelText).performScrollTo()

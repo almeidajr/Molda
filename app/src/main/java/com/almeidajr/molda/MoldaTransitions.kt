@@ -17,8 +17,9 @@ internal sealed interface AfterDiscard {
     @Serializable
     data class OpenEditor(val profile: EditedProfile) : AfterDiscard
 
+    /** Opens a new profile's editor for the picker on [resultKey]. */
     @Serializable
-    data object OpenPickerEditor : AfterDiscard
+    data class OpenPickerEditor(val resultKey: String) : AfterDiscard
 
     @Serializable
     data object CalculateOwn : AfterDiscard
@@ -40,8 +41,6 @@ internal data class EditorStatus(
     val isProfileEditorOpen: Boolean = false,
     val isProfileDirty: Boolean = false,
     val isProfileSaving: Boolean = false,
-    /** Profiles are loading or failed to load, so no editor can open. */
-    val isProfileUnavailable: Boolean = false,
     val isProjectEditorDirty: Boolean = false,
     val isProjectUpdating: Boolean = false,
 )
@@ -68,8 +67,9 @@ internal sealed interface Transition {
     data class OpenProfileEditor(val profile: EditedProfile, val discardsDraft: Boolean = false) :
         Transition
 
-    /** Opens a new profile's editor above the picker. */
-    data class OpenPickerEditor(val discardsDraft: Boolean = false) : Transition
+    /** Opens a new profile's editor above the picker on [resultKey]. */
+    data class OpenPickerEditor(val resultKey: String, val discardsDraft: Boolean = false) :
+        Transition
 }
 
 /** Selecting [root] while [selected] shows [stack]. */
@@ -123,7 +123,7 @@ internal fun goBack(stack: List<NavKey>, status: EditorStatus): Transition {
  * and its draft, closing what is open above it; the picker's editor closes the usual way first.
  */
 internal fun calculateOwn(stack: List<NavKey>, status: EditorStatus): Transition {
-    val hasPickerEditor = PickerProfileEditorKey in stack
+    val hasPickerEditor = stack.any { it is PickerProfileEditorKey }
     return when {
         stack.last() is DiscardChangesKey -> Transition.None
 
@@ -142,12 +142,16 @@ internal fun requestProfileEditor(profile: EditedProfile, status: EditorStatus):
         afterDiscard = AfterDiscard.OpenEditor(profile),
     )
 
-/** Opening a new profile's editor from the picker, asking first when the open one has changes. */
-internal fun requestPickerEditor(status: EditorStatus): Transition = requestEditor(
-    status,
-    open = Transition.OpenPickerEditor(),
-    afterDiscard = AfterDiscard.OpenPickerEditor,
-)
+/**
+ * Opening a new profile's editor from the picker on [resultKey], asking first when the open one
+ * has changes.
+ */
+internal fun requestPickerEditor(resultKey: String, status: EditorStatus): Transition =
+    requestEditor(
+        status,
+        open = Transition.OpenPickerEditor(resultKey),
+        afterDiscard = AfterDiscard.OpenPickerEditor(resultKey),
+    )
 
 /** Closing the profile editor, asking first when it has changes. */
 internal fun cancelProfileEditor(status: EditorStatus): Transition = if (status.isProfileDirty) {
@@ -167,7 +171,7 @@ internal fun closeProjectEditor(status: EditorStatus): Transition = when {
 internal fun AfterDiscard.transition(): Transition = when (this) {
     AfterDiscard.CloseEditor -> Transition.FinishProfileEditor
     is AfterDiscard.OpenEditor -> Transition.OpenProfileEditor(profile, discardsDraft = true)
-    AfterDiscard.OpenPickerEditor -> Transition.OpenPickerEditor(discardsDraft = true)
+    is AfterDiscard.OpenPickerEditor -> Transition.OpenPickerEditor(resultKey, discardsDraft = true)
     AfterDiscard.CalculateOwn -> Transition.ShowCalculator(finishesPickerEditor = true)
     AfterDiscard.CloseProjectEditor -> Transition.CloseProjectEditor
     AfterDiscard.ShowProjects -> Transition.Select(ProjectsKey)
@@ -178,7 +182,7 @@ private fun requestEditor(
     open: Transition,
     afterDiscard: AfterDiscard,
 ): Transition = when {
-    status.isProfileSaving || status.isProfileUnavailable -> Transition.None
+    status.isProfileSaving -> Transition.None
     status.isProfileEditorOpen && status.isProfileDirty -> Transition.AskToDiscard(afterDiscard)
     else -> open
 }

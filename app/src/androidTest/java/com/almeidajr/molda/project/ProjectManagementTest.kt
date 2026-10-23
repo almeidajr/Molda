@@ -1,23 +1,29 @@
 package com.almeidajr.molda.project
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import com.almeidajr.molda.MainActivity
+import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.pressBack
+import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
+import com.almeidajr.molda.recreate
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.skirt.domain.SkirtDraft
@@ -25,15 +31,36 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import java.time.Instant
 import kotlin.test.assertEquals
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
 /** Renaming and deleting a project from the Projetos list. */
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class ProjectManagementTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createLaunchLaterComposeRule()
+
+    // Each test binds its own projects, then launches the app on them.
+    @BindValue @JvmField
+    val profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    var projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October18Clock
 
     @Test
     fun rename_withBlankName_showsNameErrorAndKeepsTheName() {
@@ -70,6 +97,146 @@ class ProjectManagementTest {
     }
 
     @Test
+    fun rename_closedByBack_keepsTheName() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.onNodeWithText("Renomear").assertDoesNotExist()
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun rename_whenStorageFails_showsFailureAndKeepsTheName() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga)).apply { failsCommands = true }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+
+        // When
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+        click("Renomear")
+
+        // Then
+        composeRule.onNodeWithText("Não foi possível renomear o projeto", substring = true)
+            .assertIsDisplayed()
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun rename_whenTheProjectFailsToLoad_showsTheFailureInADialogThatCancels() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+        showProjetos(projects)
+        // Projetos composes its list, which starts loading, only after the destination's click.
+        composeRule.runOnIdle { projects.failsLoad = true }
+        click("Ações: Saia antiga")
+
+        // When
+        click("Renomear projeto")
+
+        // Then
+        composeRule.onNode(isDialog()).assertExists()
+        composeRule.onNodeWithText("Não foi possível carregar os projetos", substring = true)
+            .assertIsDisplayed()
+        click("Cancelar")
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+    }
+
+    @Test
+    fun rename_afterRecreation_keepsTheProjectAndTheTypedName() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga, saiaNova))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+
+        // When
+        composeRule.recreate()
+        composeRule.showRoute()
+        click("Renomear")
+
+        // Then
+        composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
+        assertEquals(
+            listOf(ProjectName("Saia da formatura"), ProjectName("Saia nova")),
+            projects.current.map { it.name },
+        )
+    }
+
+    @Test
+    fun cancel_duringTheRename_keepsTheDialog() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val projects = FakeProjectRepository(listOf(saiaAntiga)).apply { commandGate = gate }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+        click("Renomear")
+
+        // When
+        composeRule.onNodeWithText("Cancelar").performClick()
+
+        // Then
+        composeRule.onNode(isDialog()).assertExists()
+        composeRule.onNodeWithText("Cancelar").assertIsNotEnabled()
+        gate.complete(Unit)
+        composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
+    }
+
+    @Test
+    fun recreation_duringTheRename_renamesAndClosesTheDialog() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val projects = FakeProjectRepository(listOf(saiaAntiga)).apply { commandGate = gate }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+        click("Renomear")
+        composeRule.recreate()
+        composeRule.showRoute()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        assertEquals(listOf(ProjectName("Saia da formatura")), projects.current.map { it.name })
+    }
+
+    @Test
+    fun recreation_duringTheDeletion_deletesAndClosesTheDialog() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val projects = FakeProjectRepository(listOf(saiaAntiga)).apply { commandGate = gate }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
+        click("Confirmar exclusão")
+        composeRule.recreate()
+        composeRule.showRoute()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        assertEquals(emptyList(), projects.current)
+    }
+
+    @Test
     fun delete_cancelled_keepsTheProject() {
         // Given
         val projects = FakeProjectRepository(listOf(saiaAntiga))
@@ -83,6 +250,40 @@ class ProjectManagementTest {
         // Then
         composeRule.onNodeWithText("Excluir projeto Saia antiga?").assertDoesNotExist()
         assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun delete_closedByBack_keepsTheProject() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.onNodeWithText("Excluir projeto Saia antiga?").assertDoesNotExist()
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun delete_afterRecreation_keepsTheProjectToDelete() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga, saiaNova))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
+
+        // When
+        composeRule.recreate()
+        composeRule.showRoute()
+        click("Confirmar exclusão")
+
+        // Then
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
+        assertEquals(listOf(saiaNova), projects.current)
     }
 
     @Test
@@ -119,8 +320,11 @@ class ProjectManagementTest {
         composeRule.onNodeWithText("Saia antiga").assertIsDisplayed()
     }
 
+    /** Binds [projects], then launches the app on them and selects Projetos. */
     private fun showProjetos(projects: ProjectRepository) {
-        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        projectRepository = projects
+        composeRule.activityRule.launch()
+        composeRule.showRoute()
         composeRule.selectDestination("Projetos")
     }
 
@@ -143,3 +347,5 @@ private val saiaAntiga = Project(
     createdAt = Instant.parse("2026-10-01T12:00:00Z"),
     updatedAt = Instant.parse("2026-10-01T12:00:00Z"),
 )
+
+private val saiaNova = saiaAntiga.copy(id = ProjectId(2), name = ProjectName("Saia nova"))

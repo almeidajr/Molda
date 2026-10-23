@@ -24,7 +24,8 @@ android {
         versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 1
         versionName = providers.gradleProperty("versionName").orNull ?: "0.0.0-dev"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Starts Hilt's test application, so device tests can replace bindings.
+        testInstrumentationRunner = "com.almeidajr.molda.MoldaTestRunner"
     }
 
     signingConfigs {
@@ -130,6 +131,7 @@ dependencies {
     implementation(libs.androidx.window)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.navigation.suite)
+    implementation(libs.androidx.compose.runtime.retain)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
@@ -137,6 +139,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     // Raises the coroutines that androidx pulls in transitively, so device tests can use
     // coroutines-test.
     implementation(platform(libs.kotlinx.coroutines.bom))
@@ -167,6 +170,8 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.window.testing)
     androidTestImplementation(libs.androidx.room3.testing)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

@@ -33,8 +33,8 @@ testing APIs for UI. Keep pure business logic testable without an emulator.
 |---|---|---|
 | Domain and ViewModel (local) | Shared fakes | `runTest`, `MainDispatcherRule` |
 | Repository and migration (device) | Real Room | `runTest` |
-| Screen (device) | Shared fakes | None needed |
-| Journey, end to end (device) | Real Room on idling-aware threads | None needed |
+| Screen (device) | Shared fakes bound through Hilt | None needed |
+| Journey, end to end (device) | Real Room on idling-aware threads, through Hilt | None needed |
 
 ## Names and structure
 
@@ -95,6 +95,29 @@ current contents synchronously for assertions, and can be told to fail for
 failure-path tests. A mocked database or serializer does not verify that
 integration; Room behavior is covered by the repository and migration tests on
 real Room.
+
+## Hilt device tests
+
+Every device test that launches `MainActivity` is a Hilt Android test:
+`MoldaTestRunner` starts Hilt's test application, and the app builds its
+ViewModels from the test's bindings exactly as in production
+([ADR 0006](../../docs/adr/0006-entry-scoped-viewmodels-results-and-dialogs.md)).
+
+- Annotate the class `@HiltAndroidTest` and make `HiltAndroidRule(this)` the
+  first rule, `@get:Rule(order = 0)`, with every other rule ordered after it:
+  the compose rule launches the activity, which injects in `onCreate`.
+- Screen tests uninstall `@UninstallModules(RepositoryModule::class, ClockModule::class)`
+  and bind one `@BindValue @JvmField` field per binding, typed as the interface
+  (`ProfileRepository`, `ProjectRepository`, `Clock`) and set in its
+  initializer. Keep a second reference typed as the fake when the test sets a
+  gate or reads `current`.
+- When seeds differ per test, make the field a `var` and use
+  `createLaunchLaterComposeRule()`: each test binds its fake first, then
+  launches the app (`activityRule.launch()` or a `launch...` helper).
+- Journey tests uninstall only `ClockModule` and bind the clock, so the real
+  repositories run on `IdlingDatabaseModule`'s idling-aware Room. Inject
+  `IsolatedStorage` (`@Inject lateinit var`, `hiltRule.inject()` in `@Before`)
+  and remove it in `@After` with `storage.remove(composeRule.activityRule.scenario)`.
 
 ## Coroutines and flows
 

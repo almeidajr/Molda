@@ -31,8 +31,20 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -43,17 +55,31 @@ import org.junit.runner.RunWith
 
 /** The navigation suite: Moldes, Projetos, Guias and Perfis, each with its own back stack. */
 @RunWith(AndroidJUnit4::class)
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class NavigationShellTest {
     @get:Rule(order = 0)
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
+    val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 2)
     val keyboardMode = KeyboardModeRule(composeRule)
+
+    @BindValue @JvmField
+    val profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October13Clock
 
     private val destinations = listOf("Moldes", "Projetos", "Guias", "Perfis")
 
     @Before
-    fun showApp() = composeRule.showEmptyApp()
+    fun showApp() = composeRule.showRoute()
 
     @Test
     fun start_showsMoldesSelected_withSkirtEntry() {
@@ -179,7 +205,7 @@ class NavigationShellTest {
 
         // When
         composeRule.recreate()
-        composeRule.showEmptyApp()
+        composeRule.showRoute()
 
         // Then
         composeRule.destination("Perfis").assertIsSelected()
@@ -210,7 +236,7 @@ class NavigationShellTest {
         listOf(DpSize(400.dp, 800.dp) to false, DpSize(1000.dp, 800.dp) to true)
             .forEach { (size, isRail) ->
                 // When
-                composeRule.showEmptyApp(size)
+                composeRule.showRoute(size)
 
                 // Then
                 val items = destinations.map {
@@ -236,7 +262,7 @@ class NavigationShellTest {
     @Test
     fun phoneBar_withDoubleText_labelsFitTheirItems() {
         // When
-        composeRule.showEmptyApp(DpSize(360.dp, 640.dp)) { route ->
+        composeRule.showRoute(DpSize(360.dp, 640.dp)) { route ->
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
                 MoldaTheme(content = route)
             }

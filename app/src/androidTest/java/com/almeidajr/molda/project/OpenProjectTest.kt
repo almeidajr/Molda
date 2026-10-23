@@ -7,7 +7,6 @@ import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -16,8 +15,10 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.AnimatorDurationScaleRule
-import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
+import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
@@ -25,6 +26,8 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
@@ -32,20 +35,39 @@ import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
 /** Opening a saved project: its stored result read-only, its guide and its source profile. */
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class OpenProjectTest {
     @get:Rule(order = 0)
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
+    val composeRule = createLaunchLaterComposeRule()
+
+    @get:Rule(order = 2)
     val animatorScale = AnimatorDurationScaleRule(composeRule)
 
-    private val projects = FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
+    // Each test binds its own profiles, then launches the app on them.
+    @BindValue @JvmField
+    var profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository =
+        FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
+
+    @BindValue @JvmField
+    val clock: Clock = October18Clock
 
     @Test
     fun open_afterItsSourceProfileChanged_showsTheStoredResultWithoutRecalculating() {
@@ -54,7 +76,7 @@ class OpenProjectTest {
             ProfileId(1),
             ProfileMeasurements(ProfileName("Bia"), Length(95.0), LocalDate.of(2026, 10, 17)),
         )
-        showRoute(profiles = FakeProfileRepository(listOf(bia)))
+        launch(profiles = FakeProfileRepository(listOf(bia)))
         composeRule.selectDestination("Projetos")
 
         // When
@@ -76,7 +98,7 @@ class OpenProjectTest {
     @Test
     fun open_afterSaving_showsTheExplanationAndFormulasFromItsStoredValues() {
         // Given
-        showRoute()
+        launch()
         openProject()
 
         mapOf(
@@ -106,7 +128,7 @@ class OpenProjectTest {
     @Test
     fun open_afterSaving_describesTheDraftingFigureWithTheStoredAllowances() {
         // Given: a 1,5 cm hem allowance, which a "1,50" reading of the snapshot would misstate.
-        showRoute()
+        launch()
 
         // When
         openProject()
@@ -119,7 +141,7 @@ class OpenProjectTest {
     @Test
     fun guide_fromProject_showsItsStoredRadii() {
         // Given
-        showRoute()
+        launch()
         openProject()
 
         // When
@@ -134,7 +156,7 @@ class OpenProjectTest {
     @Test
     fun back_fromProjectGuide_returnsToTheProject() {
         // Given
-        showRoute()
+        launch()
         openProject()
         openGuide()
 
@@ -148,7 +170,7 @@ class OpenProjectTest {
     @Test
     fun wideWindow_withNoProjectOpen_showsThePlaceholderBesideTheList() {
         // Given
-        showRoute(DpSize(1600.dp, 1000.dp))
+        launch(DpSize(1600.dp, 1000.dp))
 
         // When
         composeRule.selectDestination("Projetos")
@@ -161,7 +183,7 @@ class OpenProjectTest {
     @Test
     fun wideWindow_openProject_showsItBesideTheListWithoutUpArrow() {
         // Given
-        showRoute(DpSize(1600.dp, 1000.dp))
+        launch(DpSize(1600.dp, 1000.dp))
         composeRule.selectDestination("Projetos")
 
         // When
@@ -182,12 +204,12 @@ class OpenProjectTest {
     @Test
     fun recreation_keepsTheOpenedProject() {
         // Given
-        showRoute()
+        launch()
         openProject()
 
         // When
         composeRule.recreate()
-        showRoute()
+        composeRule.showRoute()
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
@@ -197,7 +219,7 @@ class OpenProjectTest {
     @Test
     fun rename_openedProject_updatesItsTitleAndTheList() {
         // Given
-        showRoute()
+        launch()
         openProject()
 
         // When
@@ -216,7 +238,7 @@ class OpenProjectTest {
     @Test
     fun delete_openedProject_returnsToTheEmptyList() {
         // Given
-        showRoute()
+        launch()
         openProject()
 
         // When
@@ -232,7 +254,7 @@ class OpenProjectTest {
     @Test
     fun wideWindow_deleteOpenedProject_returnsToThePlaceholder() {
         // Given
-        showRoute(DpSize(1600.dp, 1000.dp))
+        launch(DpSize(1600.dp, 1000.dp))
         openProject()
 
         // When: the detail pane's own menu, beside its Editar button, not the list row's.
@@ -257,10 +279,15 @@ class OpenProjectTest {
         composeRule.click("Guia de dobra do tecido")
     }
 
-    private fun showRoute(
+    /** Binds [profiles], then launches the app on them at [size] when given. */
+    private fun launch(
         size: DpSize? = null,
-        profiles: FakeProfileRepository = FakeProfileRepository(),
-    ) = composeRule.showRoute(profiles, projects, October18Clock, size)
+        profiles: ProfileRepository = FakeProfileRepository(),
+    ) {
+        profileRepository = profiles
+        composeRule.activityRule.launch()
+        composeRule.showRoute(size)
+    }
 
     private companion object {
         val STORED_RADII = listOf(

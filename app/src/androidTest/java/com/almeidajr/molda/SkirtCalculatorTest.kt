@@ -41,11 +41,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.Before
@@ -54,9 +63,23 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class SkirtCalculatorTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @BindValue @JvmField
+    val profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October18Clock
 
     @Before
     fun openSkirtCalculator() = showCalculator()
@@ -544,12 +567,7 @@ class SkirtCalculatorTest {
     private fun showCalculator(
         frame: @Composable (route: @Composable () -> Unit) -> Unit = { MoldaTheme(content = it) },
     ) {
-        composeRule.showRoute(
-            FakeProfileRepository(),
-            FakeProjectRepository(),
-            October18Clock,
-            frame = frame,
-        )
+        composeRule.showRoute(frame = frame)
         composeRule.showSkirtCalculator()
     }
 

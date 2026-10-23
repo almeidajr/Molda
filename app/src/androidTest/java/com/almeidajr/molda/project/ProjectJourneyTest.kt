@@ -13,35 +13,56 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.click
+import com.almeidajr.molda.di.ClockModule
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
-import com.almeidajr.molda.profile.data.LocalProfileRepository
-import com.almeidajr.molda.project.data.LocalProjectRepository
 import com.almeidajr.molda.project.domain.Project
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.October18Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
+import javax.inject.Inject
 import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 /**
- * A project's whole life in the app: saved from a result, edited, copied and deleted. It runs on
- * real Room through [IsolatedStorage], so Compose waits for every query without polling.
+ * A project's whole life in the app: saved from a result, edited, copied and deleted. It runs the
+ * real repositories on Room through [IsolatedStorage], so Compose waits for every query without
+ * polling.
  */
+@HiltAndroidTest
+@UninstallModules(ClockModule::class)
 class ProjectJourneyTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
 
-    private val storage = IsolatedStorage("project-journey-test.db")
-    private val database = storage.database
-    private val projects = LocalProjectRepository(database.projects())
+    @BindValue @JvmField
+    val clock: Clock = October18Clock
+
+    @Inject
+    lateinit var storage: IsolatedStorage
+
+    @Inject
+    lateinit var projects: ProjectRepository
+
+    @Before
+    fun injectStorage() = hiltRule.inject()
 
     @After
     fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
@@ -49,7 +70,7 @@ class ProjectJourneyTest {
     @Test
     fun calculateSaveEditCopyAndDelete_keepsProjetosInStep() = runTest {
         // Given
-        showRoute()
+        composeRule.showRoute()
         composeRule.showSkirtCalculator()
         listOf("80", "2", "60", "1", "2").zip(SkirtDraftField.entries).forEach { (text, field) ->
             editField(field, text)
@@ -119,9 +140,6 @@ class ProjectJourneyTest {
         // The name field's keyboard may outlive the dialog and cover the next target.
         closeSoftKeyboard()
     }
-
-    private fun showRoute() =
-        composeRule.showRoute(LocalProfileRepository(database.profiles()), projects, October18Clock)
 }
 
 private fun Project.namesAndEase(): Pair<String, Double> =

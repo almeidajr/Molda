@@ -1,12 +1,10 @@
 package com.almeidajr.molda.profile
 
 import android.view.KeyEvent
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -14,7 +12,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import com.almeidajr.molda.AnimatorDurationScaleRule
@@ -24,34 +21,58 @@ import com.almeidajr.molda.SkirtTitle
 import com.almeidajr.molda.awaitActivityFocus
 import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.awaitKeyboardVisible
+import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.destination
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.pressKey
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class ProfileNavigationTest {
     @get:Rule(order = 0)
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
-    val keyboardMode = KeyboardModeRule(composeRule)
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     @get:Rule(order = 2)
+    val keyboardMode = KeyboardModeRule(composeRule)
+
+    @get:Rule(order = 3)
     val animatorScale = AnimatorDurationScaleRule(composeRule)
 
-    private val storage = FakeProfileRepository()
+    @BindValue @JvmField
+    val profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October13Clock
 
     @Before
     fun openSkirtCalculator() {
-        composeRule.showProfileRoute(storage)
+        composeRule.showProfileRoute()
         composeRule.showSkirtCalculator()
     }
 
@@ -95,13 +116,13 @@ class ProfileNavigationTest {
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         composeRule.recreate()
-        composeRule.showProfileRoute(storage)
+        composeRule.showProfileRoute()
 
         // When A key reaches only the focused window: the recreated activity, then again after the
         // dialog.
         composeRule.awaitActivityFocus()
         composeRule.pressBack()
-        clickInDialog("Descartar")
+        composeRule.clickInDialog("Descartar")
         composeRule.awaitActivityFocus()
         composeRule.pressBack()
 
@@ -150,7 +171,7 @@ class ProfileNavigationTest {
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
 
         // When
-        clickInDialog("Descartar")
+        composeRule.clickInDialog("Descartar")
 
         // Then
         composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
@@ -165,7 +186,7 @@ class ProfileNavigationTest {
 
         // When
         calculateMySkirtFromGuias()
-        clickInDialog("Descartar")
+        composeRule.clickInDialog("Descartar")
 
         // Then
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
@@ -211,7 +232,7 @@ class ProfileNavigationTest {
 
         // When
         composeRule.recreate()
-        composeRule.showProfileRoute(storage)
+        composeRule.showProfileRoute()
 
         // Then
         composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
@@ -229,10 +250,36 @@ class ProfileNavigationTest {
 
         // When
         composeRule.recreate()
-        composeRule.showProfileRoute(storage)
+        composeRule.showProfileRoute()
 
         // Then
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+    }
+
+    @Test
+    fun discard_inDiscardDialogAfterRecreation_closesTheEditor() {
+        // Given
+        openDiscardDialogAfterRecreation()
+
+        // When
+        composeRule.clickInDialog("Descartar")
+
+        // Then
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
+    }
+
+    @Test
+    fun continueEditing_inDiscardDialogAfterRecreation_keepsTheEdits() {
+        // Given
+        openDiscardDialogAfterRecreation()
+
+        // When
+        composeRule.clickInDialog("Continuar editando")
+
+        // Then
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
     }
 
@@ -250,6 +297,17 @@ class ProfileNavigationTest {
         // Then
         composeRule.awaitKeyboardHidden()
         composeRule.onNodeWithText("Nome ou apelido").assertIsDisplayed()
+    }
+
+    private fun openDiscardDialogAfterRecreation() {
+        composeRule.selectDestination("Perfis")
+        composeRule.onNodeWithContentDescription("Novo perfil").performClick()
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
+        // The opening keyboard resizes the editor, so a tap racing it can miss Cancelar.
+        composeRule.closeKeyboard()
+        composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
+        composeRule.recreate()
+        composeRule.showProfileRoute()
     }
 
     private fun openPickerEditor() {
@@ -272,11 +330,5 @@ class ProfileNavigationTest {
         composeRule.screenTitle("Perfis de medidas").assertIsDisplayed()
         composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
         composeRule.onNodeWithText("Rascunho").assertDoesNotExist()
-    }
-
-    private fun clickInDialog(label: String) {
-        // A semantics click needs no window focus, unlike a touch on a dialog still attaching.
-        composeRule.onNode(hasText(label) and hasClickAction())
-            .performSemanticsAction(SemanticsActions.OnClick)
     }
 }

@@ -5,42 +5,69 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.awaitDialogFocus
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.click
 import com.almeidajr.molda.closeKeyboard
+import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class MeasurementProfilesTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createLaunchLaterComposeRule()
+
+    // Each test binds its own profiles, then launches the app on them.
+    @BindValue @JvmField
+    var profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October13Clock
 
     @Test
     fun deleteConfirmation_cancel_keepsProfile() {
         // Given
         val storage = FakeProfileRepository(listOf(profile(1, "Ana")))
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         composeRule.click("Ações: Ana")
         composeRule.click("Excluir perfil")
 
@@ -56,7 +83,8 @@ class MeasurementProfilesTest {
     fun deleteConfirmation_back_keepsProfile() {
         // Given
         val storage = FakeProfileRepository(listOf(profile(1, "Ana")))
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         composeRule.click("Ações: Ana")
         composeRule.click("Excluir perfil")
         composeRule.awaitDialogFocus()
@@ -74,7 +102,8 @@ class MeasurementProfilesTest {
     fun confirmDelete_withDuplicateNames_removesOnlyTheChosenProfile() {
         // Given
         val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Ana")))
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
 
         // When
         composeRule.onAllNodes(hasText("Ações: Ana"))[0].performScrollTo().performClick()
@@ -89,7 +118,8 @@ class MeasurementProfilesTest {
     @Test
     fun deleteSource_afterCalculating_keepsCopiedWaistAndResults() {
         // Given
-        composeRule.showCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchCalculator()
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")
         fillCalculatorExceptWaist()
         composeRule.click("Calcular")
@@ -111,7 +141,7 @@ class MeasurementProfilesTest {
     @Test
     fun saveFeedback_onCalculator_leavesCalculateTouchable() {
         // Given
-        composeRule.showCalculator(FakeProfileRepository())
+        composeRule.launchCalculator()
         composeRule.edit(WAIST_LABEL, "80")
         fillCalculatorExceptWaist()
         composeRule.showProfiles()
@@ -225,7 +255,8 @@ class MeasurementProfilesTest {
     @Test
     fun openSavedProfile_cancelWithoutChanges_closesWithoutAsking() {
         // Given
-        composeRule.showProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchProfiles()
         composeRule.click("Ana")
 
         // When
@@ -270,7 +301,8 @@ class MeasurementProfilesTest {
     fun discardDialog_discard_closesEditorWithoutSaving() {
         // Given
         val storage = FakeProfileRepository()
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Rascunho")
         composeRule.closeKeyboard()
@@ -335,7 +367,8 @@ class MeasurementProfilesTest {
         // Given
         val ana = profile(1, "Ana")
         val storage = FakeProfileRepository(listOf(ana))
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         composeRule.click("Ana")
         composeRule.edit("Nome ou apelido", "")
         composeRule.edit("Cintura do perfil (cm)", "Infinity")
@@ -355,14 +388,13 @@ class MeasurementProfilesTest {
     @Test
     fun newProfileEditor_afterRecreation_keepsEveryField() {
         // Given
-        val storage = FakeProfileRepository()
-        showNewProfileEditor(storage)
+        showNewProfileEditor()
         composeRule.fillProfile("Ana", waist = "80,5")
         composeRule.edit("Observações (opcional)", "Conferir antes de cortar")
 
         // When
         composeRule.recreate()
-        composeRule.showProfileRoute(storage)
+        composeRule.showProfileRoute()
 
         // Then
         composeRule.onNodeWithText("Nome ou apelido").performScrollTo().assertTextContains("Ana")
@@ -378,7 +410,7 @@ class MeasurementProfilesTest {
     @Test
     fun pickerNewProfile_save_selectsItAndLeavesNoEditorInPerfis() {
         // Given
-        composeRule.showCalculator(FakeProfileRepository())
+        composeRule.launchCalculator()
         composeRule.edit(WAIST_LABEL, "95")
         composeRule.click("Usar perfil")
         composeRule.click("Novo perfil")
@@ -397,17 +429,38 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun pickerNewProfile_whilePerfisEditOpen_leavesThatEditIntact() {
+        // Given
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchProfiles()
+        composeRule.click("Ana", useUnmergedTree = true)
+        composeRule.edit("Nome ou apelido", "Ana Maria")
+        composeRule.closeKeyboard()
+        composeRule.showSkirtCalculator()
+        composeRule.click("Usar perfil")
+        composeRule.click("Novo perfil")
+        composeRule.fillProfile("Nova no seletor")
+
+        // When
+        saveProfile()
+
+        // Then
+        composeRule.showProfiles()
+        composeRule.onNodeWithText("Nome ou apelido").performScrollTo()
+            .assertTextContains("Ana Maria")
+    }
+
+    @Test
     fun pickerNewProfile_afterRecreation_keepsDraft() {
         // Given
-        val storage = FakeProfileRepository()
-        composeRule.showCalculator(storage)
+        composeRule.launchCalculator()
         composeRule.click("Usar perfil")
         composeRule.click("Novo perfil")
         composeRule.edit("Nome ou apelido", "Nova no seletor")
 
         // When
         composeRule.recreate()
-        composeRule.showProfileRoute(storage)
+        composeRule.showProfileRoute()
 
         // Then
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Nova no seletor")
@@ -416,9 +469,8 @@ class MeasurementProfilesTest {
     @Test
     fun pickProfile_withManyDecimals_copiesExactWaist() {
         // Given
-        composeRule.showCalculator(
-            FakeProfileRepository(listOf(profile(1, "Ana", waist = 80.123456789))),
-        )
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana", waist = 80.123456789)))
+        composeRule.launchCalculator()
 
         // When
         pick("Usar perfil: Ana — 80,123456789 cm — 12/10/2026")
@@ -431,7 +483,8 @@ class MeasurementProfilesTest {
     @Test
     fun pickProfile_afterCalculating_clearsResults() {
         // Given
-        composeRule.showCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchCalculator()
         composeRule.edit(WAIST_LABEL, "90")
         fillCalculatorExceptWaist()
         composeRule.click("Calcular")
@@ -447,7 +500,8 @@ class MeasurementProfilesTest {
     @Test
     fun pickProfile_keepsOtherCalculatorFields() {
         // Given
-        composeRule.showCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchCalculator()
         val otherFields = mapOf(
             "Folga de cintura (cm)" to "2",
             "Comprimento acabado (cm)" to "60",
@@ -468,7 +522,8 @@ class MeasurementProfilesTest {
     @Test
     fun editSource_afterCopy_keepsCalculatorWaist() {
         // Given
-        composeRule.showCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchCalculator()
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")
 
         // When
@@ -485,13 +540,13 @@ class MeasurementProfilesTest {
     @Test
     fun copiedSource_afterRecreation_staysLabelled() {
         // Given
-        val storage = FakeProfileRepository(listOf(profile(1, "Ana")))
-        composeRule.showCalculator(storage)
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchCalculator()
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")
 
         // When
         composeRule.recreate()
-        composeRule.showProfileRoute(storage)
+        composeRule.showProfileRoute()
 
         // Then
         composeRule.onNodeWithText("Cintura copiada do perfil: Ana")
@@ -501,7 +556,8 @@ class MeasurementProfilesTest {
     @Test
     fun pickerCancel_keepsManualDraft() {
         // Given
-        composeRule.showCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana")))
+        composeRule.launchCalculator()
         composeRule.edit(WAIST_LABEL, "91,5")
         composeRule.click("Usar perfil")
 
@@ -517,7 +573,8 @@ class MeasurementProfilesTest {
     fun largeText_withKeyboardOpen_saveStillWorks() {
         // Given
         val storage = FakeProfileRepository()
-        composeRule.showProfileRoute(storage, fontScale = 2f)
+        profileRepository = storage
+        composeRule.launchProfileRoute(fontScale = 2f)
         composeRule.showProfiles()
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Ana")
@@ -535,7 +592,7 @@ class MeasurementProfilesTest {
     @Test
     fun wideWindow_editor_showsBesideList() {
         // Given
-        composeRule.showProfileRoute(FakeProfileRepository(), width = WIDE_WIDTH)
+        composeRule.launchProfileRoute(width = WIDE_WIDTH)
         composeRule.showProfiles()
 
         // When
@@ -549,7 +606,7 @@ class MeasurementProfilesTest {
     @Test
     fun wideWindow_newProfileOverDirtyDraft_asksBeforeReplacingIt() {
         // Given
-        composeRule.showProfileRoute(FakeProfileRepository(), width = WIDE_WIDTH)
+        composeRule.launchProfileRoute(width = WIDE_WIDTH)
         composeRule.showProfiles()
         composeRule.click("Novo perfil")
         composeRule.edit("Nome ou apelido", "Rascunho")
@@ -567,8 +624,8 @@ class MeasurementProfilesTest {
     @Test
     fun wideWindow_switchRowOverDirtyDraft_asksBeforeOpeningIt() {
         // Given
-        val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Bia")))
-        composeRule.showProfileRoute(storage, width = WIDE_WIDTH)
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Bia")))
+        composeRule.launchProfileRoute(width = WIDE_WIDTH)
         composeRule.showProfiles()
         composeRule.click("Ana")
         composeRule.edit("Nome ou apelido", "Rascunho")
@@ -583,16 +640,35 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun wideWindow_reselectOpenProfile_keepsItsEditorLoaded() {
+        // Given
+        val storage = FakeProfileRepository(listOf(profile(1, "Ana")))
+        profileRepository = storage
+        composeRule.launchProfileRoute(width = WIDE_WIDTH)
+        composeRule.showProfiles()
+        composeRule.click("Ana")
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Ana")
+        // A reopened editor would wait on this load.
+        storage.loadGate = CompletableDeferred()
+
+        // When
+        composeRule.click("Ações: Ana")
+        composeRule.click("Editar perfil")
+
+        // Then
+        composeRule.onNodeWithText("Salvar alterações").performScrollTo().assertIsEnabled()
+    }
+
+    @Test
     fun resizeToNarrow_showsDirtyEditorAlone() {
         // Given
-        val storage = FakeProfileRepository()
-        composeRule.showProfileRoute(storage, width = WIDE_WIDTH)
+        composeRule.launchProfileRoute(width = WIDE_WIDTH)
         composeRule.showProfiles()
         composeRule.click("Novo perfil")
         composeRule.edit("Nome ou apelido", "Rascunho")
 
         // When
-        composeRule.showProfileRoute(storage, fontScale = 2f, width = 1000)
+        composeRule.showProfileRoute(fontScale = 2f, width = 1000)
 
         // Then
         composeRule.screenTitle("Perfis de medidas").assertDoesNotExist()
@@ -602,7 +678,8 @@ class MeasurementProfilesTest {
     }
 
     private fun showNewProfileEditor(storage: FakeProfileRepository = FakeProfileRepository()) {
-        composeRule.showProfiles(storage)
+        profileRepository = storage
+        composeRule.launchProfiles()
         composeRule.click("Novo perfil")
     }
 

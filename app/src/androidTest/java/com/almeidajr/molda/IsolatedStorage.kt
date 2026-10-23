@@ -14,7 +14,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
  * A fresh Molda database in the file [name], for one test's isolated storage. Room runs its
  * queries on an executor registered with Espresso, so Compose waits for database work by itself.
  */
-internal class IsolatedStorage(private val name: String) {
+class IsolatedStorage internal constructor(private val name: String) {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     // Registers itself as an idling resource and unregisters once shut down.

@@ -2,6 +2,7 @@ package com.almeidajr.molda
 
 import com.almeidajr.molda.guide.navigation.ExampleFabricFoldingGuideKey
 import com.almeidajr.molda.guide.navigation.GuideLibraryKey
+import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.navigation.EditedProfile
@@ -10,16 +11,26 @@ import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.project.domain.ProjectId
+import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
+import com.almeidajr.molda.skirt.domain.SkirtDraft
+import com.almeidajr.molda.skirt.domain.SkirtRadii
+import com.almeidajr.molda.skirt.navigation.MOLDES_PROFILE_RESULT_KEY
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import kotlin.test.assertEquals
 import org.junit.Test
 
 class MoldaTransitionsTest {
     private val project = ProjectId(1)
-    private val projectEditor = listOf(ProjectsKey, ProjectKey(project), ProjectEditorKey(project))
+    private val snapshot = SkirtSnapshot(
+        SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
+        SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
+        source = null,
+    )
+    private val projectEditor =
+        listOf(ProjectsKey, ProjectKey(project), ProjectEditorKey(project, snapshot))
     private val profileEditor = listOf(ProfileManagementKey, ProfileEditorKey(EditedProfile.New))
 
     @Test
@@ -181,8 +192,9 @@ class MoldaTransitionsTest {
     @Test
     fun calculateOwn_overCleanPickerEditor_finishesItFirst() {
         // Given
-        val stack =
-            listOf(PatternCatalogKey, SkirtCalculatorKey, ProfilePickerKey, PickerProfileEditorKey)
+        val picker = ProfilePickerKey(MOLDES_PROFILE_RESULT_KEY)
+        val editor = PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY)
+        val stack = listOf(PatternCatalogKey, SkirtCalculatorKey, picker, editor)
 
         // When/Then
         assertEquals(
@@ -194,7 +206,8 @@ class MoldaTransitionsTest {
     @Test
     fun calculateOwn_overDirtyPickerEditor_asksToDiscard() {
         // Given
-        val stack = listOf(PatternCatalogKey, SkirtCalculatorKey, PickerProfileEditorKey)
+        val editor = PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY)
+        val stack = listOf(PatternCatalogKey, SkirtCalculatorKey, editor)
 
         // When/Then
         assertEquals(
@@ -237,12 +250,8 @@ class MoldaTransitionsTest {
     }
 
     @Test
-    fun requestProfileEditor_profilesUnavailableOrSaving_ignoresIt() {
+    fun requestProfileEditor_whileTheOpenEditorSaves_ignoresIt() {
         // When/Then
-        assertEquals(
-            Transition.None,
-            requestProfileEditor(EditedProfile.New, EditorStatus(isProfileUnavailable = true)),
-        )
         assertEquals(
             Transition.None,
             requestProfileEditor(EditedProfile.New, EditorStatus(isProfileSaving = true)),
@@ -253,8 +262,11 @@ class MoldaTransitionsTest {
     fun requestPickerEditor_openEditorHasChanges_asksToDiscard() {
         // When/Then
         assertEquals(
-            Transition.AskToDiscard(AfterDiscard.OpenPickerEditor),
-            requestPickerEditor(EditorStatus(isProfileEditorOpen = true, isProfileDirty = true)),
+            Transition.AskToDiscard(AfterDiscard.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY)),
+            requestPickerEditor(
+                MOLDES_PROFILE_RESULT_KEY,
+                EditorStatus(isProfileEditorOpen = true, isProfileDirty = true),
+            ),
         )
     }
 
@@ -268,7 +280,7 @@ class MoldaTransitionsTest {
             listOf(
                 Transition.FinishProfileEditor,
                 Transition.OpenProfileEditor(profile, discardsDraft = true),
-                Transition.OpenPickerEditor(discardsDraft = true),
+                Transition.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY, discardsDraft = true),
                 Transition.ShowCalculator(finishesPickerEditor = true),
                 Transition.CloseProjectEditor,
                 Transition.Select(ProjectsKey),
@@ -276,7 +288,7 @@ class MoldaTransitionsTest {
             listOf(
                 AfterDiscard.CloseEditor,
                 AfterDiscard.OpenEditor(profile),
-                AfterDiscard.OpenPickerEditor,
+                AfterDiscard.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY),
                 AfterDiscard.CalculateOwn,
                 AfterDiscard.CloseProjectEditor,
                 AfterDiscard.ShowProjects,

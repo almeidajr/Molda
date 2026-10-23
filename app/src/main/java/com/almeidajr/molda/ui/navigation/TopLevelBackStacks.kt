@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -29,18 +30,22 @@ import androidx.navigation3.runtime.metadata
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.runtime.result.ResultEventBus
+import androidx.navigation3.runtime.result.rememberResultEventBusNavEntryDecorator
 import androidx.navigation3.scene.Scene
 
 /**
  * One saveable back stack per top-level destination, each starting at its root key. The first
  * root is the start destination: its stack always sits below the selected one, so Back at another
- * root returns to it and Back at its own root leaves the app. [Navigator] changes it.
+ * root returns to it and Back at its own root leaves the app. [Navigator] changes it. Every
+ * stack's entries share [resultBus], so an entry's result reaches its requester on any stack.
  */
 @Stable
 class TopLevelBackStacks internal constructor(
     val roots: List<NavKey>,
     selectedIndex: MutableIntState,
     internal val stacks: List<NavBackStack<NavKey>>,
+    private val resultBus: ResultEventBus,
 ) {
     internal var selectedIndex by selectedIndex
 
@@ -59,7 +64,11 @@ class TopLevelBackStacks internal constructor(
             val root = roots[index]
             rememberDecoratedNavEntries(
                 stack,
-                listOf(rememberSaveableStateHolderNavEntryDecorator()),
+                listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator<NavKey>(),
+                    rememberResultEventBusNavEntryDecorator(resultBus),
+                ),
             ) { key ->
                 val entry = entryProvider(key)
                 val marked = entry.metadata + metadata { put(TopLevelKey, root) }
@@ -72,12 +81,17 @@ class TopLevelBackStacks internal constructor(
     }
 }
 
-/** Remembers one back stack per root in [roots], the first being the start destination. */
+/**
+ * Remembers one back stack per root in [roots], the first being the start destination, whose
+ * entries all send and receive results on [resultBus].
+ */
 @Composable
-fun rememberTopLevelBackStacks(roots: List<NavKey>): TopLevelBackStacks {
+fun rememberTopLevelBackStacks(roots: List<NavKey>, resultBus: ResultEventBus): TopLevelBackStacks {
     val selectedIndex = rememberSaveable { mutableIntStateOf(0) }
     val stacks = roots.map { rememberNavBackStack(it) }
-    return remember(roots) { TopLevelBackStacks(roots, selectedIndex, stacks) }
+    return remember(roots, resultBus) {
+        TopLevelBackStacks(roots, selectedIndex, stacks, resultBus)
+    }
 }
 
 /** Marks each entry with the root of the destination whose stack holds it. */

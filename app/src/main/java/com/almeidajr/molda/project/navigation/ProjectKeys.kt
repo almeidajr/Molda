@@ -2,6 +2,8 @@ package com.almeidajr.molda.project.navigation
 
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.project.domain.ProjectId
+import com.almeidajr.molda.project.domain.SkirtSnapshot
+import com.almeidajr.molda.skirt.domain.SkirtRadii
 import kotlinx.serialization.Serializable
 
 /** The Projetos root. */
@@ -16,10 +18,29 @@ internal data class ProjectKey(val id: ProjectId) : NavKey
 @Serializable
 internal data class ProjectGuideKey(val id: ProjectId) : NavKey
 
-/** A saved project loaded into the skirt calculator, on the Projetos stack. */
+/** The saved project [id] edited in the skirt calculator from its [snapshot], on Projetos. */
 @Serializable
-internal data class ProjectEditorKey(val id: ProjectId) : NavKey
+internal data class ProjectEditorKey(val id: ProjectId, val snapshot: SkirtSnapshot) : NavKey
 
-/** The fabric-folding guide on the radii calculated while editing a project. */
+/** The result key this editor listens on for a profile from its picker; unique to its project. */
+internal val ProjectEditorKey.profileResultKey: String get() = "profile/project/${id.value}"
+
+/** The fabric-folding guide on the [radii] calculated while editing a project. */
 @Serializable
-internal data object ProjectEditorGuideKey : NavKey
+internal data class ProjectEditorGuideKey(val radii: SkirtRadii) : NavKey
+
+/**
+ * The dialog that names [snapshot] and saves it as a new project, over the stack that opened it;
+ * with [showsSaved], the new project opens once saved, as when saving an edit as a new one.
+ */
+@Serializable
+internal data class SaveProjectKey(val snapshot: SkirtSnapshot, val showsSaved: Boolean = false) :
+    NavKey
+
+/** The dialog that renames the saved project [id], over the stack that opened it. */
+@Serializable
+internal data class RenameProjectKey(val id: ProjectId) : NavKey
+
+/** The dialog that confirms deleting the saved project [id], over the stack that opened it. */
+@Serializable
+internal data class DeleteProjectKey(val id: ProjectId) : NavKey

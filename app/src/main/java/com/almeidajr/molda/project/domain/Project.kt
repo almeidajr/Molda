@@ -79,8 +79,8 @@ interface ProjectRepository {
 val ProjectDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/uuuu")
 
 /** The name a new project is offered, such as "Saia godê · Ana · 18/10/2026". */
-fun defaultProjectName(patternName: String, profileName: String?, savedOn: LocalDate): String =
-    listOfNotNull(patternName, profileName, savedOn.format(ProjectDateFormat)).joinToString(" · ")
+fun defaultProjectName(kindLabel: String, profileName: String?, savedOn: LocalDate): String =
+    listOfNotNull(kindLabel, profileName, savedOn.format(ProjectDateFormat)).joinToString(" · ")
 
 /** The typed [text] as a project name, or null when it is blank. */
 fun readProjectName(text: String): ProjectName? =

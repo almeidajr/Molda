@@ -13,32 +13,30 @@ internal fun ProfilesState.loadedWith(result: Result<List<MeasurementProfile>>) 
     onFailure = { copy(isLoading = false, loadError = R.string.profile_load_failed) },
 )
 
-/** Opens the editor on [form] unless storage is busy or unavailable. */
-internal fun ProfilesState.opened(form: ProfileForm) = if (canMutate) {
-    copy(form = form, errors = emptyMap(), savedMessage = null, saveError = null, deleteId = null)
-} else {
-    this
-}
+/** Fills the editor with stored profile [id] from [result], or fails when it is not there. */
+internal fun ProfilesState.loadedProfile(id: ProfileId, result: Result<List<MeasurementProfile>>) =
+    when (val profile = result.getOrNull()?.find { it.id == id }) {
+        null -> copy(isLoading = false, loadError = R.string.profile_load_failed)
 
-internal fun ProfilesState.editing(id: ProfileId): ProfilesState {
-    val measurements = profiles.find { it.id == id }?.measurements ?: return this
-    val inputs = mapOf(
-        ProfileField.Name to measurements.name.text,
-        ProfileField.Waist to lengthText(measurements.waist),
-        ProfileField.Date to profileDateText(measurements.measurementDate),
-        ProfileField.Notes to measurements.notes,
-    )
-    return opened(ProfileForm(inputs, inputs, isEditorOpen = true, editingId = id))
-}
+        else -> {
+            val measurements = profile.measurements
+            val inputs = mapOf(
+                ProfileField.Name to measurements.name.text,
+                ProfileField.Waist to lengthText(measurements.waist),
+                ProfileField.Date to profileDateText(measurements.measurementDate),
+                ProfileField.Notes to measurements.notes,
+            )
+            copy(form = ProfileForm(inputs, inputs, id), isLoading = false)
+        }
+    }
 
-internal fun ProfilesState.edited(field: ProfileField, text: String) = if (isSaving) {
+internal fun ProfilesState.edited(field: ProfileField, text: String) = if (isSaving || isLoading) {
     this
 } else {
     copy(
         form = form.copy(inputs = form.inputs + (field to text)),
         errors = errors - field,
         saveError = null,
-        deleteId = null,
     )
 }
 
@@ -49,36 +47,18 @@ internal fun ProfilesState.submitted(validation: ProfileValidation) = when (vali
 }
 
 internal fun ProfilesState.mutating(deleteId: ProfileId? = null) =
-    copy(isSaving = true, saveError = null, savedMessage = null, deleteId = deleteId)
+    copy(isSaving = true, saveError = null, deleteId = deleteId)
 
-/** What a successful save did to the stored profiles. */
-internal sealed interface ProfileSave {
-    data class Created(val profile: MeasurementProfile) : ProfileSave
-
-    data object Updated : ProfileSave
-}
-
-/** Closes the editor after a save, keeping the profile the save created. */
+/** Keeps the stored form as the clean one and reports what the save did. */
 internal fun ProfilesState.savedWith(result: Result<ProfileSave>) = result.fold(
-    onSuccess = { save ->
-        closed().copy(
-            isSaving = false,
-            savedMessage = R.string.profile_saved,
-            createdProfile = (save as? ProfileSave.Created)?.profile,
-        )
+    onSuccess = {
+        val stored = form.copy(originalInputs = form.inputs, isStored = true)
+        copy(form = stored, isSaving = false, saved = it)
     },
     onFailure = { copy(isSaving = false, saveError = R.string.profile_save_failed) },
 )
 
 internal fun ProfilesState.deletedWith(id: ProfileId, result: Result<Unit>) = result.fold(
-    onSuccess = {
-        (if (editingId == id) closed() else this)
-            .copy(isSaving = false, savedMessage = R.string.profile_deleted, deleteId = null)
-    },
+    onSuccess = { copy(isSaving = false, deleteId = null, deleted = id) },
     onFailure = { copy(isSaving = false, saveError = R.string.profile_delete_failed) },
 )
-
-internal fun ProfilesState.cancelled() =
-    if (isSaving) this else closed().copy(saveError = null, deleteId = null)
-
-private fun ProfilesState.closed() = copy(form = ProfileForm(), errors = emptyMap())

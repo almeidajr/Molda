@@ -33,8 +33,20 @@ import androidx.window.layout.FoldingFeature
 import androidx.window.testing.layout.FoldingFeature
 import androidx.window.testing.layout.TestWindowLayoutInfo
 import androidx.window.testing.layout.WindowLayoutInfoPublisherRule
+import com.almeidajr.molda.di.ClockModule
+import com.almeidajr.molda.di.RepositoryModule
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
+import com.almeidajr.molda.testing.FakeProfileRepository
+import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import java.time.Clock
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.Rule
@@ -45,14 +57,29 @@ import org.junit.runner.RunWith
 
 /** Large windows, large text and hinges keep the cutting card and guide bar whole. */
 @RunWith(AndroidJUnit4::class)
+@HiltAndroidTest
+@UninstallModules(RepositoryModule::class, ClockModule::class)
 class AdaptiveResultsTest {
+    private val hiltRule = HiltAndroidRule(this)
     private val publisher = WindowLayoutInfoPublisherRule()
     private val composeRule = createAndroidComposeRule<MainActivity>()
     private val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     // The publisher must replace the window tracker before the activity starts.
     @get:Rule
-    val rules: TestRule = RuleChain.outerRule(publisher).around(composeRule).around(animatorScale)
+    val rules: TestRule = RuleChain.outerRule(hiltRule)
+        .around(publisher)
+        .around(composeRule)
+        .around(animatorScale)
+
+    @BindValue @JvmField
+    val profileRepository: ProfileRepository = FakeProfileRepository()
+
+    @BindValue @JvmField
+    val projectRepository: ProjectRepository = FakeProjectRepository()
+
+    @BindValue @JvmField
+    val clock: Clock = October13Clock
 
     // ForcedSize can shrink density to fit, so pixel checks use the density the content sees.
     private var pixelsPerDp = 1f
@@ -265,7 +292,7 @@ class AdaptiveResultsTest {
     private fun showCalculator(size: DpSize?, fontScale: Float) {
         // The guide's drawings hold still, so Compose goes idle.
         animatorScale.set(0f)
-        composeRule.showEmptyApp(size) { route ->
+        composeRule.showRoute(size) { route ->
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                 pixelsPerDp = LocalDensity.current.density
                 Box(

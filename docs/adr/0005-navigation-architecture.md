@@ -17,6 +17,8 @@ We now follow the conventions of the official Navigation 3 recipes (multiple bac
 
 ## Consequences
 
+> The three steps below are superseded by [ADR-0006](0006-entry-scoped-viewmodels-results-and-dialogs.md), which records them in the order it carries them out: results, then dialogs, then entry ViewModels.
+
 Three further steps align the rest with the recipes, each its own change:
 
 1. **ViewModels scoped to their entries** (`rememberViewModelStoreNavEntryDecorator`, assisted injection with the key) instead of activity-scoped ViewModels passed into `MoldaRoute`. This splits the shared profile form and the second calculator the project editor uses, and changes the device-test harness, which passes ViewModels in.

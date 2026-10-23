@@ -8,43 +8,56 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.result.ResultEffect
 import com.almeidajr.molda.R
 import com.almeidajr.molda.guide.navigation.ExampleFabricFoldingGuideKey
+import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.skirt.navigation.FabricFoldingGuideKey
+import com.almeidajr.molda.skirt.navigation.MOLDES_PROFILE_RESULT_KEY
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
 
 /**
- * The skirt calculator on Moldes with its folding guide, and the example guide Guias opens;
- * [onSaveProject] saves the draft as a project named after the pattern, and [onCalculateOwn] leaves
- * the example guide for the calculator.
+ * The skirt calculator on Moldes, which starts empty, with its folding guide, and the example
+ * guide Guias opens; [onSaveProject] saves the calculated state as a project, and
+ * [onCalculateOwn] leaves the example guide for the calculator.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.skirtSection(
     navigator: Navigator,
-    calculator: SkirtCalculatorViewModel,
-    onSaveProject: (patternName: String) -> Unit,
+    onSaveProject: (CalculatorState) -> Unit,
     onCalculateOwn: () -> Unit,
 ) {
     entry<SkirtCalculatorKey> {
+        val calculator =
+            hiltViewModel<SkirtCalculatorViewModel, SkirtCalculatorViewModel.Factory> { factory ->
+                factory.create(startingDraft = null, startingSource = null)
+            }
+        ResultEffect<MeasurementProfile>(MOLDES_PROFILE_RESULT_KEY) { profile ->
+            calculator.useProfile(profile)
+        }
         CalculatorDestination(
             calculator,
             title = stringResource(R.string.skirt_title),
             onUp = navigator::back,
-            onUseProfile = { navigator.push(ProfilePickerKey) },
-            onOpenGuide = { navigator.push(FabricFoldingGuideKey) },
-            onSaveProject = onSaveProject,
+            onUseProfile = { navigator.push(ProfilePickerKey(MOLDES_PROFILE_RESULT_KEY)) },
+            onOpenGuide = {
+                calculator.state.value.result?.radii?.let {
+                    navigator.push(FabricFoldingGuideKey(it))
+                }
+            },
+            onSaveProject = { onSaveProject(calculator.state.value) },
         )
     }
-    entry<FabricFoldingGuideKey> {
-        val state by calculator.state.collectAsStateWithLifecycle()
-        CalculatedFoldingGuide(state.result?.radii) { navigator.remove(FabricFoldingGuideKey) }
+    entry<FabricFoldingGuideKey> { key ->
+        FabricFoldingPlayer(key.radii, onClose = { navigator.remove(key) })
     }
     entry<ExampleFabricFoldingGuideKey>(metadata = ListDetailSceneStrategy.detailPane()) {
         FabricFoldingPlayer(
@@ -57,6 +70,10 @@ internal fun EntryProviderScope<NavKey>.skirtSection(
     }
 }
 
+/** Fills the waist with [profile]'s, copied from it. */
+internal fun SkirtCalculatorViewModel.useProfile(profile: MeasurementProfile) =
+    selectProfile(profile.measurements.waist, profile.measurements.source)
+
 /** The skirt calculator; with [onSaveAsNewProject] it edits a saved project. */
 @Composable
 internal fun CalculatorDestination(
@@ -65,11 +82,10 @@ internal fun CalculatorDestination(
     onUp: () -> Unit,
     onUseProfile: () -> Unit,
     onOpenGuide: () -> Unit,
-    onSaveProject: (patternName: String) -> Unit,
-    onSaveAsNewProject: ((patternName: String) -> Unit)? = null,
+    onSaveProject: () -> Unit,
+    onSaveAsNewProject: (() -> Unit)? = null,
 ) {
     val state by calculator.state.collectAsStateWithLifecycle()
-    val patternName = stringResource(R.string.project_pattern_skirt)
     Column(Modifier.fillMaxSize()) {
         MoldaTopAppBar(title, onUp = onUp)
         SkirtCalculatorScreen(
@@ -80,8 +96,8 @@ internal fun CalculatorDestination(
             onBlur = calculator::blur,
             onUseProfile = onUseProfile,
             onOpenGuide = onOpenGuide,
-            onSaveProject = { onSaveProject(patternName) },
-            onSaveAsNewProject = onSaveAsNewProject?.let { { it(patternName) } },
+            onSaveProject = onSaveProject,
+            onSaveAsNewProject = onSaveAsNewProject,
         )
     }
 }
