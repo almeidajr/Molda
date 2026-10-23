@@ -81,15 +81,15 @@ class OpenProjectTest {
 
         mapOf(
             "Como levar os raios ao papel" to listOf(
-                "A margem de cintura de 1 cm avança para dentro; " +
-                    "a margem de barra de 1,5 cm avança para fora.",
+                "A margem de cintura de 1 cm avança para dentro; " +
+                    "a margem de barra de 1,5 cm avança para fora.",
             ),
             // The stored radii, not the 13,05 cm and the rest a recalculation would give.
             "Fórmulas" to listOf(
-                "r = (80 + 2) / (2π) = 11,11 cm",
-                "r + 60 = 71,11 cm",
-                "r − 1 = 10,11 cm",
-                "r + 60 + 1,5 = 73,11 cm",
+                "r = (80 + 2) / (2π) = 11,11 cm",
+                "r + 60 = 71,11 cm",
+                "r − 1 = 10,11 cm",
+                "r + 60 + 1,5 = 73,11 cm",
             ),
         ).forEach { (label, contents) ->
             // When
@@ -112,7 +112,7 @@ class OpenProjectTest {
         openProject()
 
         // Then
-        composeRule.onNode(hasContentDescription("margem de barra de 1,5 cm", substring = true))
+        composeRule.onNode(hasContentDescription("margem de barra de 1,5 cm", substring = true))
             .performScrollTo().assertIsDisplayed()
     }
 
