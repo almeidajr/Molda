@@ -38,7 +38,6 @@ import com.almeidajr.molda.ui.navigation.EditorKind
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
-import kotlinx.coroutines.flow.map
 
 /*
  * Entries where two features meet. Each feature's own section shows only its own UI, so the app
@@ -68,7 +67,7 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
             it.create(key.snapshot.draft, key.snapshot.source)
         }
         val update = hiltViewModel<ProjectUpdateViewModel, ProjectUpdateViewModel.Factory> {
-            it.create(key, editor.state.map { state -> state.isDirty })
+            it.create(key, editor.isDirty)
         }
         ReportEditorStatus(key, update.report)
         ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)

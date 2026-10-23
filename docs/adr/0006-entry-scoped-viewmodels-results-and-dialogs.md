@@ -41,7 +41,7 @@ Two rules hold across all three steps:
 ## Consequences
 
 - No entry calls another entry's ViewModel. A new hand-off adds a result key to a key, never a route callback or a shared state field.
-- Whatever a ViewModel needs at creation goes into its entry's key, which stays serializable.
+- Whatever a ViewModel needs at creation goes into its entry's key, which stays serializable, or is a sibling ViewModel's state on the same entry: the project editor's update ViewModel reads its calculator's unsaved changes to report the editor's status.
 - The route wires navigation, results and transitions only. Splitting `ProjectsViewModel` also dropped its `TooManyFunctions` suppression.
 - Screen tests keep ADR-0004's fakes and receive them through Hilt bindings; journey tests still run real Room on idling-aware threads.
 - Because a ViewModel blocks only its own actions, two panes can each have work in flight at once.
