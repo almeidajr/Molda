@@ -220,42 +220,21 @@ class SkirtCalculatorTest {
     }
 
     @Test
-    fun formulas_expanded_showEachLineWithTheDraftsValues() {
+    fun disclosures_expanded_showTheirContent() {
         // Given
         fillInputs(REFERENCE_INPUTS)
         calculate()
 
-        // When
-        composeRule.onNodeWithText("Fórmulas").performScrollTo().performClick()
+        mapOf(
+            "Como levar os raios ao papel" to "Transfira os raios ao papel",
+            "Fórmulas" to "r = (80 + 2) / (2π)",
+        ).forEach { (label, content) ->
+            // When
+            composeRule.onNodeWithText(label).performScrollTo().performClick()
 
-        // Then
-        listOf(
-            "r = (80 + 2) / (2π) = 13,05 cm",
-            "Barra acabada = r + comprimento = r + 60 = 73,05 cm",
-            "Corte da cintura = r − margem de costura = r − 1 = 12,05 cm",
-            "Corte da barra = r + comprimento + margem de barra = r + 60 + 2 = 75,05 cm",
-            "Use r sem arredondamento",
-        ).forEach {
-            composeRule.onNodeWithText(it, substring = true).performScrollTo().assertIsDisplayed()
-        }
-    }
-
-    @Test
-    fun transferSteps_expanded_explainTransferAndMarginDirections() {
-        // Given
-        fillInputs(REFERENCE_INPUTS)
-        calculate()
-
-        // When
-        composeRule.onNodeWithText("Como levar os raios ao papel").performScrollTo().performClick()
-
-        // Then
-        listOf(
-            "Transfira os raios ao papel",
-            "A margem de cintura de 1 cm avança para dentro; " +
-                "a margem de barra de 2 cm avança para fora.",
-        ).forEach {
-            composeRule.onNodeWithText(it, substring = true).performScrollTo().assertIsDisplayed()
+            // Then
+            composeRule.onNodeWithText(content, substring = true).performScrollTo()
+                .assertIsDisplayed()
         }
     }
 

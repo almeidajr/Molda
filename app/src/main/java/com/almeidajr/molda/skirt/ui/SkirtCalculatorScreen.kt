@@ -49,7 +49,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
-import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtFieldError
 import com.almeidajr.molda.ui.adaptive.AdaptiveContent
@@ -242,17 +241,16 @@ private fun CalculationOutcome(
         )
     }
     state.result?.let { (draft, radii) ->
-        val text: (Int) -> String = LocalResources.current::getString
-        val card = cuttingCard(radii, text)
-        val description = diagramDescription(
-            card,
-            enteredValue(state.form.inputs, SkirtDraftField.WaistSeamAllowance),
-            enteredValue(state.form.inputs, SkirtDraftField.HemAllowance),
-            text,
+        val result = skirtResult(draft, radii, LocalResources.current::getString)
+        CuttingCard(result.card, result.diagramDescription, result.coincidenceNotes, modifier)
+        SkirtResults(
+            result.measurementSummary,
+            onOpenGuide,
+            onSaveProject,
+            onSaveAsNewProject,
+            onEditMeasurements,
         )
-        CuttingCard(card, description, modifier)
-        SkirtResults(draft, onOpenGuide, onSaveProject, onSaveAsNewProject, onEditMeasurements)
-        DraftingExplanation(state.form.inputs, radii)
+        DraftingExplanation(result)
     }
 }
 
@@ -331,7 +329,7 @@ private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
 
 @Composable
 private fun SkirtResults(
-    draft: SkirtDraft,
+    measurementSummary: List<String>,
     onOpenGuide: () -> Unit,
     onSaveProject: () -> Unit,
     onSaveAsNewProject: (() -> Unit)?,
@@ -364,7 +362,7 @@ private fun SkirtResults(
             Text(stringResource(R.string.skirt_edit_measurements))
         }
     }
-    UsedMeasurements(draft)
+    UsedMeasurements(measurementSummary)
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,

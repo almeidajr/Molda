@@ -122,7 +122,7 @@ fun diagramDescription(
 }
 
 /** The locale the copy is written in. */
-private val PtBr = Locale.forLanguageTag("pt-BR")
+internal val PtBr = Locale.forLanguageTag("pt-BR")
 
 /**
  * "Label: value" items for the inputs used, whose unit the summary heading states once.

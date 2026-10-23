@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -34,41 +33,38 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
-import com.almeidajr.molda.skirt.domain.SkirtDraftField
-import com.almeidajr.molda.skirt.domain.SkirtRadii
 import kotlin.math.cos
 import kotlin.math.sin
 
+/** The [result]'s transfer explanation and formulas, each behind its own disclosure. */
 @Composable
-internal fun DraftingExplanation(inputs: Map<SkirtDraftField, String>, radii: SkirtRadii) {
-    val seam = enteredValue(inputs, SkirtDraftField.WaistSeamAllowance)
-    val hem = enteredValue(inputs, SkirtDraftField.HemAllowance)
+internal fun DraftingExplanation(result: SkirtResult) {
     // The pair reads as one set of toggles: 8dp between 48dp targets, not the page's 16dp.
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Disclosure(stringResource(R.string.skirt_explanation_title)) {
             Text(stringResource(R.string.skirt_explanation_terms))
             Text(stringResource(R.string.skirt_explanation_transfer))
-            Text(stringResource(R.string.skirt_allowance_directions, seam, hem))
+            Text(result.allowanceDirections)
         }
         Disclosure(stringResource(R.string.skirt_formulas_title)) {
-            DraftingFormulas(inputs, radii)
+            result.formulas.forEach { Text(it) }
         }
     }
 }
 
-/** A typed measurement as the user entered it, with a pt-BR decimal comma. */
-internal fun enteredValue(inputs: Map<SkirtDraftField, String>, field: SkirtDraftField): String =
-    inputs.getValue(field).trim().replace('.', ',')
-
 /** The diagram, coincidences and limits as one figure that the text equivalent announces once. */
 @Composable
-internal fun DraftingFigure(card: List<CuttingCardGroup>, description: String) {
+internal fun DraftingFigure(
+    card: List<CuttingCardGroup>,
+    description: String,
+    coincidenceNotes: List<String>,
+) {
     Column(
         Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         SkirtDiagram(card.flatMap { it.entries }.sortedBy { it.line.number })
-        coincidenceNotes(card, LocalResources.current::getString).forEach { Text(it) }
+        coincidenceNotes.forEach { Text(it) }
         Text(
             stringResource(R.string.skirt_diagram_caption),
             style = MaterialTheme.typography.bodyMedium,
@@ -99,48 +95,6 @@ internal fun Disclosure(label: String, content: @Composable () -> Unit) {
         )
     }
     if (isExpanded) content()
-}
-
-@Composable
-private fun DraftingFormulas(inputs: Map<SkirtDraftField, String>, radii: SkirtRadii) {
-    val waist = enteredValue(inputs, SkirtDraftField.Waist)
-    val ease = enteredValue(inputs, SkirtDraftField.Ease)
-    val length = enteredValue(inputs, SkirtDraftField.FinishedLength)
-    val seam = enteredValue(inputs, SkirtDraftField.WaistSeamAllowance)
-    val hem = enteredValue(inputs, SkirtDraftField.HemAllowance)
-    Text(stringResource(R.string.skirt_formulas_unit))
-    Text(stringResource(R.string.skirt_formula_waist_stitching))
-    Text(
-        stringResource(
-            R.string.skirt_formula_waist_stitching_values,
-            waist,
-            ease,
-            formatCentimetres(radii.waistStitching),
-        ),
-    )
-    Text(
-        stringResource(
-            R.string.skirt_formula_finished_hem,
-            length,
-            formatCentimetres(radii.finishedHem),
-        ),
-    )
-    Text(
-        stringResource(
-            R.string.skirt_formula_waist_cutting,
-            seam,
-            formatCentimetres(radii.waistCutting),
-        ),
-    )
-    Text(
-        stringResource(
-            R.string.skirt_formula_hem_cutting,
-            length,
-            hem,
-            formatCentimetres(radii.hemCutting),
-        ),
-    )
-    Text(stringResource(R.string.skirt_formulas_rounding))
 }
 
 @Composable

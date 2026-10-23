@@ -36,22 +36,21 @@ fun SavedSkirtResult(
         text,
     )
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        CuttingCard(card, description)
+        CuttingCard(card, description, coincidenceNotes(card, text))
         FabricFoldingGuideEntry(onOpenGuide)
-        UsedMeasurements(draft)
+        UsedMeasurements(measurementSummary(draft, text))
     }
 }
 
 /** The measurements and choices a result was drafted from, under their heading. */
 @Composable
-internal fun UsedMeasurements(draft: SkirtDraft) {
+internal fun UsedMeasurements(summary: List<String>) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             stringResource(R.string.skirt_used_measurements),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
-        val summary = measurementSummary(draft, LocalResources.current::getString)
         // One wrapping line; TalkBack hears pauses instead of the visual separators.
         Text(
             summary.joinToString(" · "),
