@@ -35,43 +35,42 @@ class EditorStatusHolder {
     // Keyed like Navigation 3's default content key, so a restored report finds its entry.
     private val reports = mutableStateMapOf<String, StateFlow<EditorReport>>()
 
-    /** Reads the status of the editor on [key] from [report] until [key] leaves the stacks. */
+    /** Reads the status of the editor on [key] from [report] until [retainOnly] drops [key]. */
     fun report(key: NavKey, report: StateFlow<EditorReport>) {
         reports[key.toString()] = report
     }
 
-    /**
-     * The editor an action on [stack] concerns, the topmost one there that reports, composed or
-     * not, or null. [keys] are all keys on the back stacks; the reports of others are dropped.
-     */
-    fun editorOn(stack: List<NavKey>, keys: List<NavKey>): ReportedEditor? {
+    /** Drops the reports of editors whose keys are not among [keys], all keys on the stacks. */
+    fun retainOnly(keys: List<NavKey>) {
         reports.keys.retainAll(keys.map(NavKey::toString).toSet())
-        return topmostOn(stack)?.let { ReportedEditor(it, reports.getValue(it.toString()).value) }
     }
+
+    /** The editor an action on [stack] concerns, the topmost one there that reports, or null. */
+    fun editorOn(stack: List<NavKey>): ReportedEditor? =
+        topmostOn(stack)?.let { ReportedEditor(it, reports.getValue(it.toString()).value) }
 
     /**
      * The status of the editor an action on [stack] concerns, as observable state, for controls
      * that follow it; actions read [editorOn] instead.
      */
     @Composable
-    fun collectStatusOn(stack: List<NavKey>): EditorReport? {
-        val report = topmostOn(stack)?.let { reports[it.toString()] } ?: NoEditor
-        return report.collectAsStateWithLifecycle().value
-    }
+    fun collectStatusOn(stack: List<NavKey>): EditorReport? =
+        statusOn(stack).collectAsStateWithLifecycle().value
+
+    /** The live status of the editor an action on [stack] concerns, or of no editor (null). */
+    internal fun statusOn(stack: List<NavKey>): StateFlow<EditorReport?> =
+        topmostOn(stack)?.let { reports[it.toString()] } ?: NoEditor
 
     private fun topmostOn(stack: List<NavKey>): NavKey? =
         stack.lastOrNull { it.toString() in reports }
 
-    internal fun dirtyEditors(): List<String> = reports.filterValues { it.value.isDirty }
-        .flatMap { (id, report) -> listOf(id, report.value.kind.name) }
+    internal fun dirtyEditors(): Map<String, EditorKind> =
+        reports.filterValues { it.value.isDirty }.mapValues { (_, report) -> report.value.kind }
 
-    /**
-     * Marks the [editors], ids each followed by its kind, dirty until they report again; an editor
-     * already reporting wins.
-     */
-    internal fun restoreDirty(editors: List<String>) {
-        editors.chunked(2).filterNot { (id) -> id in reports }.forEach { (id, kind) ->
-            reports[id] = MutableStateFlow(EditorReport(EditorKind.valueOf(kind), isDirty = true))
+    /** Marks the [editors] dirty until they report again; an editor already reporting wins. */
+    internal fun restoreDirty(editors: Map<String, EditorKind>) {
+        (editors - reports.keys).forEach { (id, kind) ->
+            reports[id] = MutableStateFlow(EditorReport(kind, isDirty = true))
         }
     }
 }
@@ -82,12 +81,21 @@ private val NoEditor: StateFlow<EditorReport?> = MutableStateFlow(null)
  * Saves [live]'s unsaved changes and restores them into it. After a configuration change [live] is
  * the retained holder, whose reports win; after process death it is new, and only unsaved changes
  * come back, since a save in flight or a load does not outlive the process.
+ *
+ * It saves each id followed by its kind's name, the list `mapSaver` would save, but restores a
+ * list `mapSaver` rejects: a pair cut short or of an unknown kind, as in the former list of plain
+ * ids, is skipped.
  */
 internal fun editorStatusHolderSaver(live: EditorStatusHolder): Saver<EditorStatusHolder, Any> =
     listSaver(
-        save = { it.dirtyEditors() },
-        restore = { editors -> live.apply { restoreDirty(editors) } },
+        save = { holder -> holder.dirtyEditors().flatMap { (id, kind) -> listOf(id, kind.name) } },
+        restore = { saved ->
+            live.apply { restoreDirty(saved.chunked(2).mapNotNull(::dirtyEditor).toMap()) }
+        },
     )
+
+private fun dirtyEditor(saved: List<String>): Pair<String, EditorKind>? =
+    EditorKind.entries.find { it.name == saved.getOrNull(1) }?.let { saved.first() to it }
 
 /**
  * The app's [EditorStatusHolder]. Retained across configuration changes, so a hidden editor's

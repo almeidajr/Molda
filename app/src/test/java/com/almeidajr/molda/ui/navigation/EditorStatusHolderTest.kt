@@ -2,9 +2,11 @@ package com.almeidajr.molda.ui.navigation
 
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.navigation3.runtime.NavKey
+import app.cash.turbine.test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class EditorStatusHolderTest {
@@ -33,7 +35,7 @@ class EditorStatusHolderTest {
         // Then
         assertEquals(
             ReportedEditor(Editor, EditorReport(EditorKind.Project, isDirty = true)),
-            holder.editorOn(stack, keys = stack),
+            holder.editorOn(stack),
         )
     }
 
@@ -48,7 +50,7 @@ class EditorStatusHolderTest {
         // When/Then
         assertEquals(
             ReportedEditor(PickerEditor, EditorReport(EditorKind.Profile)),
-            holder.editorOn(withPicker, keys = withPicker),
+            holder.editorOn(withPicker),
         )
     }
 
@@ -62,7 +64,7 @@ class EditorStatusHolderTest {
         // When/Then
         assertEquals(
             ReportedEditor(Editor, EditorReport(EditorKind.Project, isDirty = true)),
-            holder.editorOn(withGuide, keys = withGuide),
+            holder.editorOn(withGuide),
         )
     }
 
@@ -73,7 +75,7 @@ class EditorStatusHolderTest {
         holder.report(Editor, reportOf(EditorKind.Profile, isDirty = true))
 
         // When/Then
-        assertNull(holder.editorOn(listOf(OtherRoot), keys = stack + OtherRoot))
+        assertNull(holder.editorOn(listOf(OtherRoot)))
     }
 
     @Test
@@ -85,21 +87,49 @@ class EditorStatusHolderTest {
         // When/Then
         assertEquals(
             ReportedEditor(Editor, EditorReport(EditorKind.Profile, isSaving = true)),
-            holder.editorOn(stack, keys = stack + OtherRoot),
+            holder.editorOn(stack),
         )
     }
 
     @Test
-    fun editorOn_afterTheEditorLeftTheBackStacks_dropsItsReportForGood() {
+    fun retainOnly_afterTheEditorLeftTheBackStacks_dropsItsReportForGood() {
         // Given
         val holder = EditorStatusHolder()
         holder.report(Editor, reportOf(EditorKind.Profile, isDirty = true))
 
         // When
-        holder.editorOn(listOf(Root), keys = listOf(Root))
+        holder.retainOnly(listOf(Root))
 
         // Then
-        assertNull(holder.editorOn(stack, keys = stack))
+        assertNull(holder.editorOn(stack))
+    }
+
+    @Test
+    fun statusOn_afterTheEditorChanges_followsItsStatus() = runTest {
+        // Given
+        val report = MutableStateFlow(EditorReport(EditorKind.Profile))
+        val holder = EditorStatusHolder()
+        holder.report(Editor, report)
+
+        holder.statusOn(stack).test {
+            assertEquals(EditorReport(EditorKind.Profile), awaitItem())
+
+            // When
+            report.value = EditorReport(EditorKind.Profile, isSaving = true)
+
+            // Then
+            assertEquals(EditorReport(EditorKind.Profile, isSaving = true), awaitItem())
+        }
+    }
+
+    @Test
+    fun statusOn_withoutAnEditorOnTheStack_isNoEditor() = runTest {
+        // Given
+        val holder = EditorStatusHolder()
+        holder.report(Editor, reportOf(EditorKind.Profile, isSaving = true))
+
+        // When/Then
+        holder.statusOn(listOf(OtherRoot)).test { assertNull(awaitItem()) }
     }
 
     @Test
@@ -118,7 +148,7 @@ class EditorStatusHolderTest {
         // Then
         assertEquals(
             ReportedEditor(Editor, EditorReport(EditorKind.Project, isDirty = true)),
-            restored?.editorOn(withPicker, keys = withPicker),
+            restored?.editorOn(withPicker),
         )
     }
 
@@ -140,8 +170,34 @@ class EditorStatusHolderTest {
                 Editor,
                 EditorReport(EditorKind.Profile, isDirty = true, isSaving = true),
             ),
-            restored?.editorOn(stack, keys = stack),
+            restored?.editorOn(stack),
         )
+    }
+
+    @Test
+    fun editorStatusHolderSaver_withAnUnknownKindOrACutPair_skipsThem() {
+        // Given
+        val saved = listOf(Editor.toString(), "Pattern", PickerEditor.toString())
+        val withPicker = listOf(Root, Editor, PickerEditor)
+
+        // When
+        val restored = editorStatusHolderSaver(EditorStatusHolder()).restore(saved)
+
+        // Then
+        assertNull(restored?.editorOn(withPicker))
+    }
+
+    @Test
+    fun editorStatusHolderSaver_withTheFormerListOfPlainIds_restoresNothing() {
+        // Given
+        val saved = listOf(Editor.toString(), PickerEditor.toString())
+        val withPicker = listOf(Root, Editor, PickerEditor)
+
+        // When
+        val restored = editorStatusHolderSaver(EditorStatusHolder()).restore(saved)
+
+        // Then
+        assertNull(restored?.editorOn(withPicker))
     }
 
     private fun reportOf(kind: EditorKind, isDirty: Boolean = false, isSaving: Boolean = false) =

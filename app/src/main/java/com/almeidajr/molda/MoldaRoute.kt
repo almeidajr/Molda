@@ -3,8 +3,10 @@ package com.almeidajr.molda
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.navigation3.runtime.EntryProviderScope
@@ -68,6 +70,10 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
             snackbar.currentSnackbarData?.dismiss()
             snackbar.showSnackbar(resources.getString(message))
         }
+    }
+    // The holder forgets an editor's report once its key leaves the back stacks.
+    LaunchedEffect(navigator, editors) {
+        snapshotFlow { navigator.state.allKeys }.collect { editors.retainOnly(it) }
     }
     val app = MoldaApp(navigator, editors)
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
@@ -178,8 +184,7 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
     private fun perfisStatus() = status(stacks.stackOf(ProfileManagementKey))
 
     /** The status of the editor an action on [stack] concerns, read when the sewist acts. */
-    private fun status(stack: List<NavKey>) =
-        editors.editorOn(stack, stacks.allKeys)?.report.editorStatus()
+    private fun status(stack: List<NavKey>) = editors.editorOn(stack)?.report.editorStatus()
 
     /** Carries out [transition] on the back stacks; an editor's ViewModel leaves with its key. */
     private fun perform(transition: Transition) {
@@ -193,7 +198,7 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
             is Transition.AskToDiscard -> navigator.push(DiscardChangesKey(transition.afterDiscard))
 
             // The selected stack's profile editor; the picker's returns to the picker below it.
-            Transition.FinishProfileEditor -> editors.editorOn(stacks.current, stacks.allKeys)
+            Transition.FinishProfileEditor -> editors.editorOn(stacks.current)
                 ?.takeIf { it.report.kind == EditorKind.Profile }
                 ?.let { navigator.remove(it.key) }
 
