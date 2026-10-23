@@ -32,12 +32,16 @@ val ProfileError.message: Int
 
 private val blankInputs = ProfileField.entries.associateWith { "" }
 
-/** The profile editor state that survives process death; [editingId] is null for a new profile. */
+/**
+ * The profile editor state that survives process death; [editingId] is null for a new profile.
+ * [isStored] once the editor's save has stored it, so a restored editor never stores it again.
+ */
 @Serializable
 data class ProfileForm(
     val inputs: Map<ProfileField, String> = blankInputs,
     val originalInputs: Map<ProfileField, String> = blankInputs,
     val editingId: ProfileId? = null,
+    val isStored: Boolean = false,
 )
 
 /** What a successful save did to the stored profiles. */

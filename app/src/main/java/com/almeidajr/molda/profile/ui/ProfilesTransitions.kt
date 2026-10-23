@@ -52,7 +52,8 @@ internal fun ProfilesState.mutating(deleteId: ProfileId? = null) =
 /** Keeps the stored form as the clean one and reports what the save did. */
 internal fun ProfilesState.savedWith(result: Result<ProfileSave>) = result.fold(
     onSuccess = {
-        copy(form = form.copy(originalInputs = form.inputs), isSaving = false, saved = it)
+        val stored = form.copy(originalInputs = form.inputs, isStored = true)
+        copy(form = stored, isSaving = false, saved = it)
     },
     onFailure = { copy(isSaving = false, saveError = R.string.profile_save_failed) },
 )

@@ -234,6 +234,30 @@ class ProfileEditorViewModelTest {
         }
     }
 
+    @Test
+    fun recreate_afterProcessDeathOnceStored_reportsTheSaveAndStoresNothingMore() = runTest {
+        viewModelScenario {
+            ProfileEditorViewModel(
+                storage,
+                createSavedStateHandle(),
+                October13Clock,
+                EditedProfile.New,
+            )
+        }.use { scenario ->
+            // Given
+            scenario.viewModel.fill(name = "Bia", waist = "95", date = "11/10/2026")
+            scenario.viewModel.save()
+
+            // When
+            scenario.recreate()
+            scenario.viewModel.save()
+
+            // Then
+            assertEquals(ProfileSave.Updated, scenario.viewModel.state.value.saved)
+            assertEquals(2, storage.current.size)
+        }
+    }
+
     private fun editor(profile: EditedProfile) =
         ProfileEditorViewModel(storage, SavedStateHandle(), October13Clock, profile)
 
