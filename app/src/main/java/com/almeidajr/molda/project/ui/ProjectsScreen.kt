@@ -68,12 +68,7 @@ fun ProjectsScreen(
             ) {
                 val loadError = state.loadError
                 when {
-                    loadError != null -> {
-                        Text(stringResource(loadError), color = MaterialTheme.colorScheme.error)
-                        TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.action_retry_load))
-                        }
-                    }
+                    loadError != null -> ProjectLoadFailure(loadError, onRetry)
 
                     state.isLoading -> Text(stringResource(R.string.project_loading))
 
@@ -90,6 +85,21 @@ fun ProjectsScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+/** The projects failed to load: shows [error] and offers [onRetry]. */
+@Composable
+internal fun ProjectLoadFailure(
+    @StringRes error: Int,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(error), color = MaterialTheme.colorScheme.error)
+        TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.action_retry_load))
         }
     }
 }

@@ -232,8 +232,9 @@ private fun ProjectList(navigator: Navigator) {
 }
 
 /**
- * Shows the stored project [id] with [content] once it loads, or closes with [onClose] when it is
- * no longer stored. It follows the project in a ViewModel of the entry it is composed in.
+ * Shows the stored project [id] with [content] once it loads, the load failure with its retry, or
+ * closes with [onClose] when it is no longer stored. It follows the project in a ViewModel of the
+ * entry it is composed in.
  */
 @Composable
 internal fun OpenedProject(
@@ -248,6 +249,11 @@ internal fun OpenedProject(
     when (val current = state) {
         is OpenedProjectState.Shown -> content(current.project)
         OpenedProjectState.Gone -> LaunchedEffect(Unit) { onClose() }
+        OpenedProjectState.Failed -> ProjectLoadFailure(
+            R.string.project_load_failed,
+            opened::retry,
+            Modifier.padding(16.dp),
+        )
         OpenedProjectState.Loading -> Unit
     }
 }

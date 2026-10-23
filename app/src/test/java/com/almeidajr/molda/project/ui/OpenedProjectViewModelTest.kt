@@ -54,5 +54,28 @@ class OpenedProjectViewModelTest {
         assertEquals(OpenedProjectState.Gone, opened.state.value)
     }
 
+    @Test
+    fun state_whenTheLoadFails_isFailed() = runTest {
+        // Given
+        storage.failsLoad = true
+
+        // When/Then
+        assertEquals(OpenedProjectState.Failed, openedViewModel().state.value)
+    }
+
+    @Test
+    fun retry_afterTheLoadFailed_showsTheProject() = runTest {
+        // Given
+        storage.failsLoad = true
+        val opened = openedViewModel()
+        storage.failsLoad = false
+
+        // When
+        opened.retry()
+
+        // Then
+        assertEquals(OpenedProjectState.Shown(saved), opened.state.value)
+    }
+
     private fun openedViewModel() = OpenedProjectViewModel(storage, ProjectKey(saved.id))
 }
