@@ -93,19 +93,11 @@ private val TopLevelBackStacks.allKeys: List<NavKey> get() = roots.flatMap(::sta
 
 /** The transitions' view of an editor's [EditorReport], or of no editor when null. */
 private fun EditorReport?.editorStatus(): EditorStatus = when (this) {
-    null -> EditorStatus()
+    null -> EditorStatus.None
 
     else -> when (kind) {
-        EditorKind.Project -> EditorStatus(
-            isProjectEditorDirty = isDirty,
-            isProjectUpdating = isSaving,
-        )
-
-        EditorKind.Profile -> EditorStatus(
-            isProfileEditorOpen = true,
-            isProfileDirty = isDirty,
-            isProfileSaving = isSaving,
-        )
+        EditorKind.Project -> EditorStatus.Project(isDirty, isUpdating = isSaving)
+        EditorKind.Profile -> EditorStatus.Profile(isDirty, isSaving)
     }
 }
 

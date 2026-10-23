@@ -6,6 +6,7 @@ import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
+import com.almeidajr.molda.ui.navigation.EditorKind
 import kotlinx.serialization.Serializable
 
 /** What confirming the discard of a dirty editor does next. */
@@ -36,14 +37,30 @@ internal sealed interface AfterDiscard {
 @Serializable
 internal data class DiscardChangesKey(val afterDiscard: AfterDiscard) : NavKey
 
-/** The editors' unsaved and in-flight work, which decides what a navigation request may do. */
-internal data class EditorStatus(
-    val isProfileEditorOpen: Boolean = false,
-    val isProfileDirty: Boolean = false,
-    val isProfileSaving: Boolean = false,
-    val isProjectEditorDirty: Boolean = false,
-    val isProjectUpdating: Boolean = false,
-)
+/** Which editor [this] discards, which the discard dialog names. */
+internal val AfterDiscard.discards: EditorKind
+    get() = when (this) {
+        AfterDiscard.CloseEditor,
+        is AfterDiscard.OpenEditor,
+        is AfterDiscard.OpenPickerEditor,
+        AfterDiscard.CalculateOwn,
+        -> EditorKind.Profile
+
+        AfterDiscard.CloseProjectEditor, AfterDiscard.ShowProjects -> EditorKind.Project
+    }
+
+/**
+ * The unsaved and in-flight work of the editor an action concerns, which decides what a navigation
+ * request may do.
+ */
+internal sealed interface EditorStatus {
+    data object None : EditorStatus
+
+    data class Profile(val isDirty: Boolean = false, val isSaving: Boolean = false) : EditorStatus
+
+    data class Project(val isDirty: Boolean = false, val isUpdating: Boolean = false) :
+        EditorStatus
+}
 
 /** What a navigation request does to the back stacks and the editors. */
 internal sealed interface Transition {
@@ -87,17 +104,11 @@ internal fun selectDestination(
         top is DiscardChangesKey -> Transition.None
 
         // An open editor closes the usual way when its destination is re-selected.
-        top.isProfileEditor -> if (status.isProfileSaving) {
-            Transition.None
-        } else {
-            cancelProfileEditor(
-                status,
-            )
-        }
+        top.isProfileEditor -> closeOpenProfileEditor(status)
 
         // Returning to the root would drop the project editor's unsaved changes.
-        stack.any { it is ProjectEditorKey } && status.isProjectEditorDirty ->
-            if (status.isProjectUpdating) {
+        status is EditorStatus.Project && status.isDirty ->
+            if (status.isUpdating) {
                 Transition.None
             } else {
                 Transition.AskToDiscard(AfterDiscard.ShowProjects)
@@ -112,9 +123,8 @@ internal fun goBack(stack: List<NavKey>, status: EditorStatus): Transition {
     val top = stack.last()
     return when {
         top is ProjectEditorKey -> closeProjectEditor(status)
-        !top.isProfileEditor -> Transition.Back
-        status.isProfileSaving -> Transition.None
-        else -> cancelProfileEditor(status)
+        top.isProfileEditor -> closeOpenProfileEditor(status)
+        else -> Transition.Back
     }
 }
 
@@ -127,7 +137,7 @@ internal fun calculateOwn(stack: List<NavKey>, status: EditorStatus): Transition
     return when {
         stack.last() is DiscardChangesKey -> Transition.None
 
-        hasPickerEditor && status.isProfileDirty ->
+        status is EditorStatus.Profile && status.isDirty ->
             Transition.AskToDiscard(AfterDiscard.CalculateOwn)
 
         else -> Transition.ShowCalculator(finishesPickerEditor = hasPickerEditor)
@@ -154,17 +164,22 @@ internal fun requestPickerEditor(resultKey: String, status: EditorStatus): Trans
     )
 
 /** Closing the profile editor, asking first when it has changes. */
-internal fun cancelProfileEditor(status: EditorStatus): Transition = if (status.isProfileDirty) {
-    Transition.AskToDiscard(AfterDiscard.CloseEditor)
-} else {
-    Transition.FinishProfileEditor
-}
+internal fun cancelProfileEditor(status: EditorStatus): Transition =
+    if (status is EditorStatus.Profile && status.isDirty) {
+        Transition.AskToDiscard(AfterDiscard.CloseEditor)
+    } else {
+        Transition.FinishProfileEditor
+    }
 
 /** Closing the project editor, asking first when it has changes; not while it saves. */
-internal fun closeProjectEditor(status: EditorStatus): Transition = when {
-    status.isProjectUpdating -> Transition.None
-    status.isProjectEditorDirty -> Transition.AskToDiscard(AfterDiscard.CloseProjectEditor)
-    else -> Transition.CloseProjectEditor
+internal fun closeProjectEditor(status: EditorStatus): Transition = when (status) {
+    is EditorStatus.Project -> when {
+        status.isUpdating -> Transition.None
+        status.isDirty -> Transition.AskToDiscard(AfterDiscard.CloseProjectEditor)
+        else -> Transition.CloseProjectEditor
+    }
+
+    EditorStatus.None, is EditorStatus.Profile -> Transition.CloseProjectEditor
 }
 
 /** What confirming the discard does: the request that asked, now dropping the draft. */
@@ -181,8 +196,20 @@ private fun requestEditor(
     status: EditorStatus,
     open: Transition,
     afterDiscard: AfterDiscard,
-): Transition = when {
-    status.isProfileSaving -> Transition.None
-    status.isProfileEditorOpen && status.isProfileDirty -> Transition.AskToDiscard(afterDiscard)
-    else -> open
+): Transition = when (status) {
+    is EditorStatus.Profile -> when {
+        status.isSaving -> Transition.None
+        status.isDirty -> Transition.AskToDiscard(afterDiscard)
+        else -> open
+    }
+
+    EditorStatus.None, is EditorStatus.Project -> open
 }
+
+/** Closing the profile editor on top, as Back and re-selecting do; not while it saves. */
+private fun closeOpenProfileEditor(status: EditorStatus): Transition =
+    if (status is EditorStatus.Profile && status.isSaving) {
+        Transition.None
+    } else {
+        cancelProfileEditor(status)
+    }

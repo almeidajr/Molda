@@ -19,6 +19,7 @@ import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.navigation.MOLDES_PROFILE_RESULT_KEY
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
+import com.almeidajr.molda.ui.navigation.EditorKind
 import kotlin.test.assertEquals
 import org.junit.Test
 
@@ -42,7 +43,7 @@ class MoldaTransitionsTest {
                 ProjectsKey,
                 GuideLibraryKey,
                 listOf(GuideLibraryKey),
-                EditorStatus(),
+                EditorStatus.None,
             ),
         )
     }
@@ -56,7 +57,7 @@ class MoldaTransitionsTest {
                 GuideLibraryKey,
                 GuideLibraryKey,
                 listOf(GuideLibraryKey, ExampleFabricFoldingGuideKey),
-                EditorStatus(),
+                EditorStatus.None,
             ),
         )
     }
@@ -69,7 +70,7 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.None,
-            selectDestination(ProfileManagementKey, ProfileManagementKey, stack, EditorStatus()),
+            selectDestination(ProfileManagementKey, ProfileManagementKey, stack, EditorStatus.None),
         )
     }
 
@@ -82,7 +83,7 @@ class MoldaTransitionsTest {
                 ProfileManagementKey,
                 ProfileManagementKey,
                 profileEditor,
-                EditorStatus(isProfileEditorOpen = true, isProfileDirty = true),
+                EditorStatus.Profile(isDirty = true),
             ),
         )
     }
@@ -96,7 +97,7 @@ class MoldaTransitionsTest {
                 ProfileManagementKey,
                 ProfileManagementKey,
                 profileEditor,
-                EditorStatus(isProfileDirty = true, isProfileSaving = true),
+                EditorStatus.Profile(isDirty = true, isSaving = true),
             ),
         )
     }
@@ -110,7 +111,7 @@ class MoldaTransitionsTest {
                 ProjectsKey,
                 ProjectsKey,
                 projectEditor,
-                EditorStatus(isProjectEditorDirty = true),
+                EditorStatus.Project(isDirty = true),
             ),
         )
     }
@@ -124,7 +125,7 @@ class MoldaTransitionsTest {
                 ProjectsKey,
                 ProjectsKey,
                 projectEditor,
-                EditorStatus(isProjectEditorDirty = true, isProjectUpdating = true),
+                EditorStatus.Project(isDirty = true, isUpdating = true),
             ),
         )
     }
@@ -134,14 +135,14 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.Back,
-            goBack(listOf(PatternCatalogKey, SkirtCalculatorKey), EditorStatus()),
+            goBack(listOf(PatternCatalogKey, SkirtCalculatorKey), EditorStatus.None),
         )
     }
 
     @Test
     fun goBack_cleanProjectEditor_closesIt() {
         // When/Then
-        assertEquals(Transition.CloseProjectEditor, goBack(projectEditor, EditorStatus()))
+        assertEquals(Transition.CloseProjectEditor, goBack(projectEditor, EditorStatus.Project()))
     }
 
     @Test
@@ -149,7 +150,7 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.AskToDiscard(AfterDiscard.CloseProjectEditor),
-            goBack(projectEditor, EditorStatus(isProjectEditorDirty = true)),
+            goBack(projectEditor, EditorStatus.Project(isDirty = true)),
         )
     }
 
@@ -160,7 +161,7 @@ class MoldaTransitionsTest {
             Transition.None,
             goBack(
                 projectEditor,
-                EditorStatus(isProjectEditorDirty = true, isProjectUpdating = true),
+                EditorStatus.Project(isDirty = true, isUpdating = true),
             ),
         )
     }
@@ -168,7 +169,7 @@ class MoldaTransitionsTest {
     @Test
     fun goBack_cleanProfileEditor_finishesIt() {
         // When/Then
-        assertEquals(Transition.FinishProfileEditor, goBack(profileEditor, EditorStatus()))
+        assertEquals(Transition.FinishProfileEditor, goBack(profileEditor, EditorStatus.Profile()))
     }
 
     @Test
@@ -176,7 +177,7 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.None,
-            goBack(profileEditor, EditorStatus(isProfileSaving = true)),
+            goBack(profileEditor, EditorStatus.Profile(isSaving = true)),
         )
     }
 
@@ -185,7 +186,7 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.ShowCalculator(finishesPickerEditor = false),
-            calculateOwn(listOf(PatternCatalogKey, SkirtCalculatorKey), EditorStatus()),
+            calculateOwn(listOf(PatternCatalogKey, SkirtCalculatorKey), EditorStatus.None),
         )
     }
 
@@ -199,7 +200,7 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.ShowCalculator(finishesPickerEditor = true),
-            calculateOwn(stack, EditorStatus()),
+            calculateOwn(stack, EditorStatus.Profile()),
         )
     }
 
@@ -212,7 +213,7 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.AskToDiscard(AfterDiscard.CalculateOwn),
-            calculateOwn(stack, EditorStatus(isProfileDirty = true)),
+            calculateOwn(stack, EditorStatus.Profile(isDirty = true)),
         )
     }
 
@@ -222,7 +223,7 @@ class MoldaTransitionsTest {
         val stack = listOf(PatternCatalogKey, DiscardChangesKey(AfterDiscard.CalculateOwn))
 
         // When/Then
-        assertEquals(Transition.None, calculateOwn(stack, EditorStatus()))
+        assertEquals(Transition.None, calculateOwn(stack, EditorStatus.None))
     }
 
     @Test
@@ -233,7 +234,7 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.OpenProfileEditor(profile),
-            requestProfileEditor(profile, EditorStatus(isProfileEditorOpen = true)),
+            requestProfileEditor(profile, EditorStatus.Profile()),
         )
     }
 
@@ -244,7 +245,7 @@ class MoldaTransitionsTest {
             Transition.AskToDiscard(AfterDiscard.OpenEditor(EditedProfile.New)),
             requestProfileEditor(
                 EditedProfile.New,
-                EditorStatus(isProfileEditorOpen = true, isProfileDirty = true),
+                EditorStatus.Profile(isDirty = true),
             ),
         )
     }
@@ -254,7 +255,7 @@ class MoldaTransitionsTest {
         // When/Then
         assertEquals(
             Transition.None,
-            requestProfileEditor(EditedProfile.New, EditorStatus(isProfileSaving = true)),
+            requestProfileEditor(EditedProfile.New, EditorStatus.Profile(isSaving = true)),
         )
     }
 
@@ -265,7 +266,7 @@ class MoldaTransitionsTest {
             Transition.AskToDiscard(AfterDiscard.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY)),
             requestPickerEditor(
                 MOLDES_PROFILE_RESULT_KEY,
-                EditorStatus(isProfileEditorOpen = true, isProfileDirty = true),
+                EditorStatus.Profile(isDirty = true),
             ),
         )
     }
@@ -293,6 +294,29 @@ class MoldaTransitionsTest {
                 AfterDiscard.CloseProjectEditor,
                 AfterDiscard.ShowProjects,
             ).map { it.transition() },
+        )
+    }
+
+    @Test
+    fun discards_eachFollowUp_namesTheEditorItDrops() {
+        // When/Then
+        assertEquals(
+            listOf(
+                EditorKind.Profile,
+                EditorKind.Profile,
+                EditorKind.Profile,
+                EditorKind.Profile,
+                EditorKind.Project,
+                EditorKind.Project,
+            ),
+            listOf(
+                AfterDiscard.CloseEditor,
+                AfterDiscard.OpenEditor(EditedProfile.New),
+                AfterDiscard.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY),
+                AfterDiscard.CalculateOwn,
+                AfterDiscard.CloseProjectEditor,
+                AfterDiscard.ShowProjects,
+            ).map { it.discards },
         )
     }
 }

@@ -34,6 +34,7 @@ import com.almeidajr.molda.skirt.ui.CalculatorState
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.skirt.ui.useProfile
+import com.almeidajr.molda.ui.navigation.EditorKind
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
@@ -123,11 +124,9 @@ internal fun EntryProviderScope<NavKey>.overlaySection(
         )
     }
     entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
-        val body = when (key.afterDiscard) {
-            AfterDiscard.CloseProjectEditor, AfterDiscard.ShowProjects ->
-                R.string.project_discard_body
-
-            else -> R.string.profile_discard_body
+        val body = when (key.afterDiscard.discards) {
+            EditorKind.Profile -> R.string.profile_discard_body
+            EditorKind.Project -> R.string.project_discard_body
         }
         val results = LocalResultEventBus.current
         DiscardDialog(body, onDismiss = { navigator.remove(key) }, onDiscard = {
