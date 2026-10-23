@@ -25,14 +25,14 @@ import com.almeidajr.molda.ui.navigation.Navigator
 
 /**
  * The skirt calculator on Moldes with its folding guide, and the example guide Guias opens;
- * [onSaveProject] saves the draft as a project named after the pattern, and [onCalculateOwn] leaves
- * the example guide for the calculator.
+ * [onSaveProject] saves the draft as a project, and [onCalculateOwn] leaves the example guide
+ * for the calculator.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.skirtSection(
     navigator: Navigator,
     calculator: SkirtCalculatorViewModel,
-    onSaveProject: (patternName: String) -> Unit,
+    onSaveProject: () -> Unit,
     onCalculateOwn: () -> Unit,
 ) {
     entry<SkirtCalculatorKey> {
@@ -75,11 +75,10 @@ internal fun CalculatorDestination(
     onUp: () -> Unit,
     onUseProfile: () -> Unit,
     onOpenGuide: () -> Unit,
-    onSaveProject: (patternName: String) -> Unit,
-    onSaveAsNewProject: ((patternName: String) -> Unit)? = null,
+    onSaveProject: () -> Unit,
+    onSaveAsNewProject: (() -> Unit)? = null,
 ) {
     val state by calculator.state.collectAsStateWithLifecycle()
-    val patternName = stringResource(R.string.project_pattern_skirt)
     Column(Modifier.fillMaxSize()) {
         MoldaTopAppBar(title, onUp = onUp)
         SkirtCalculatorScreen(
@@ -90,8 +89,8 @@ internal fun CalculatorDestination(
             onBlur = calculator::blur,
             onUseProfile = onUseProfile,
             onOpenGuide = onOpenGuide,
-            onSaveProject = { onSaveProject(patternName) },
-            onSaveAsNewProject = onSaveAsNewProject?.let { { it(patternName) } },
+            onSaveProject = onSaveProject,
+            onSaveAsNewProject = onSaveAsNewProject,
         )
     }
 }

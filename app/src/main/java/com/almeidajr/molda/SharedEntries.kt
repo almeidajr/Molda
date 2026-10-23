@@ -22,9 +22,11 @@ import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
+import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
 import com.almeidajr.molda.project.ui.ProjectsViewModel
+import com.almeidajr.molda.project.ui.showProject
 import com.almeidajr.molda.skirt.ui.CalculatedFoldingGuide
 import com.almeidajr.molda.skirt.ui.CalculatorDestination
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
@@ -64,14 +66,16 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
                 onUp = onCloseEditor,
                 onUseProfile = { navigator.push(ProfilePickerKey(key.profileResultKey)) },
                 onOpenGuide = { navigator.push(ProjectEditorGuideKey) },
-                onSaveProject = { _ ->
+                onSaveProject = {
                     editor.state.value.snapshot()?.let {
-                        projects.update(key.id, it, onShowSnackbar)
+                        projects.update(key.id, it, onShowSnackbar) {
+                            navigator.showProject(key.id)
+                        }
                     }
                 },
-                onSaveAsNewProject = { patternName ->
+                onSaveAsNewProject = {
                     editor.state.value.snapshot()?.let {
-                        projects.startSaving(it, patternName, showsSaved = true)
+                        navigator.push(SaveProjectKey(it, showsSaved = true))
                     }
                 },
             )

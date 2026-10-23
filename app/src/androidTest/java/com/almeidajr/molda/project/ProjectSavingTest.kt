@@ -1,14 +1,18 @@
 package com.almeidajr.molda.project
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.dialogTextField
@@ -19,6 +23,7 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
+import com.almeidajr.molda.recreate
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.showSkirtCalculator
@@ -66,15 +71,7 @@ class ProjectSavingTest {
     @Test
     fun save_whenStorageFails_showsFailureAndKeepsTheResult() {
         // Given
-        composeRule.showRoute(
-            FakeProfileRepository(),
-            FakeProjectRepository().apply { failsCommands = true },
-            October18Clock,
-        )
-        composeRule.showSkirtCalculator()
-        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
-            .performTextReplacement("70")
-        calculate(listOf("0", "45", "0", "0"))
+        showCalculatedHandTypedSkirt(FakeProjectRepository().apply { failsCommands = true })
 
         // When
         click("Salvar projeto")
@@ -86,6 +83,57 @@ class ProjectSavingTest {
         composeRule.dialogTextField().assertTextContains("Saia godê · 18/10/2026")
         click("Cancelar")
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun save_withBlankName_explainsAndStoresNothing() {
+        // Given
+        val projects = FakeProjectRepository()
+        showCalculatedHandTypedSkirt(projects)
+        click("Salvar projeto")
+        composeRule.dialogTextField().performTextReplacement("   ")
+
+        // When
+        clickInDialog("Salvar")
+
+        // Then
+        composeRule.onNodeWithText("Informe um nome para o projeto.").assertIsDisplayed()
+        assertEquals(emptyList(), projects.current)
+    }
+
+    @Test
+    fun recreation_withSaveDialogOpen_keepsItsSnapshotAndTypedName() {
+        // Given
+        val projects = FakeProjectRepository()
+        showCalculatedHandTypedSkirt(projects)
+        click("Salvar projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia de verão")
+
+        // When
+        composeRule.recreate()
+        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        clickInDialog("Salvar")
+
+        // Then
+        composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
+        val stored = projects.current.single()
+        assertEquals("Saia de verão", stored.name.text)
+        assertEquals(Length(70.0), stored.snapshot.draft.waist)
+    }
+
+    /** Shows the calculator's result for a 70 cm waist typed by hand, stored in [projects]. */
+    private fun showCalculatedHandTypedSkirt(projects: FakeProjectRepository) {
+        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        composeRule.showSkirtCalculator()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
+            .performTextReplacement("70")
+        calculate(listOf("0", "45", "0", "0"))
+    }
+
+    private fun clickInDialog(label: String) {
+        // A semantics click needs no window focus, unlike a touch on a dialog still attaching.
+        composeRule.onNode(hasText(label) and hasAnyAncestor(isDialog()))
+            .performSemanticsAction(SemanticsActions.OnClick)
     }
 
     /** Fills every field after the waist and calculates. */

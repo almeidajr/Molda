@@ -33,11 +33,10 @@ import com.almeidajr.molda.profile.ui.profileSection
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
+import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.project.ui.ProjectsState
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.RenameProjectDialog
-import com.almeidajr.molda.project.ui.SaveProjectDialog
-import com.almeidajr.molda.project.ui.ShowSavedProject
 import com.almeidajr.molda.project.ui.projectSection
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.skirt.ui.CalculatorState
@@ -95,7 +94,6 @@ fun MoldaRoute(
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
     SyncProfileEditor(navigator, profiles)
-    ShowSavedProject(navigator, projects)
     ProjectDialogs(projectState, projects, showSnackbar)
     MoldaShell(
         navigator,
@@ -159,8 +157,8 @@ private class MoldaApp(
         skirtSection(
             navigator,
             calculator,
-            onSaveProject = { patternName ->
-                calculator.state.value.snapshot()?.let { projects.startSaving(it, patternName) }
+            onSaveProject = {
+                calculator.state.value.snapshot()?.let { navigator.push(SaveProjectKey(it)) }
             },
             onCalculateOwn = {
                 navigator.select(PatternCatalogKey)
@@ -254,14 +252,6 @@ private fun ProjectDialogs(
     projects: ProjectsViewModel,
     onShowSnackbar: (Int) -> Unit,
 ) {
-    state.saving?.let { saving ->
-        SaveProjectDialog(
-            saving,
-            projects::editName,
-            { projects.save(onShowSnackbar) },
-            projects::cancel,
-        )
-    }
     state.renaming?.let { renaming ->
         RenameProjectDialog(
             renaming,

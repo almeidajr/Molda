@@ -2,6 +2,7 @@ package com.almeidajr.molda.project.navigation
 
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.project.domain.ProjectId
+import com.almeidajr.molda.project.domain.SkirtSnapshot
 import kotlinx.serialization.Serializable
 
 /** The Projetos root. */
@@ -26,6 +27,14 @@ internal val ProjectEditorKey.profileResultKey: String get() = "profile/project/
 /** The fabric-folding guide on the radii calculated while editing a project. */
 @Serializable
 internal data object ProjectEditorGuideKey : NavKey
+
+/**
+ * The dialog that names [snapshot] and saves it as a new project, over the stack that opened it;
+ * with [showsSaved], the new project opens once saved, as when saving an edit as a new one.
+ */
+@Serializable
+internal data class SaveProjectKey(val snapshot: SkirtSnapshot, val showsSaved: Boolean = false) :
+    NavKey
 
 /** The dialog that confirms deleting the saved project [id], over the stack that opened it. */
 @Serializable

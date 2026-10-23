@@ -24,6 +24,7 @@ import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
+import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.navigation.CatalogSelection
@@ -67,9 +68,50 @@ internal fun EntryProviderScope<NavKey>.projectSection(
         }
     }
     // Project dialogs are window-overlay entries keyed by what they act on; Back leaves the key.
+    entry<SaveProjectKey>(metadata = windowOverlay()) { key ->
+        SaveProjectEntry(key, navigator, projects, onShowSnackbar)
+    }
     entry<DeleteProjectKey>(metadata = windowOverlay()) { key ->
         DeleteProjectEntry(key, navigator, projects, onShowSnackbar)
     }
+}
+
+@Composable
+private fun SaveProjectEntry(
+    key: SaveProjectKey,
+    navigator: Navigator,
+    projects: ProjectsViewModel,
+    onShowSnackbar: (Int) -> Unit,
+) {
+    val state by projects.state.collectAsStateWithLifecycle()
+    val isBusy = state.saving?.isBusy == true
+    SaveProjectDialog(
+        defaultName = projects.defaultName(key.snapshot, stringResource(key.snapshot.kind.label)),
+        isBusy = isBusy,
+        error = state.saving?.error,
+        onSave = { name ->
+            projects.save(name, key.snapshot) { id ->
+                onShowSnackbar(R.string.project_saved)
+                navigator.remove(key)
+                if (key.showsSaved) navigator.showProject(id)
+            }
+        },
+        onCancel = {
+            if (!isBusy) {
+                projects.cancelSaving()
+                navigator.remove(key)
+            }
+        },
+    )
+}
+
+/** Opens the stored project [id] on Projetos, in place of the editor and any project open. */
+internal fun Navigator.showProject(id: ProjectId) {
+    removeAll {
+        it is ProjectEditorKey || it == ProjectEditorGuideKey || it is ProjectKey ||
+            it is ProjectGuideKey
+    }
+    push(ProjectKey(id), root = ProjectsKey)
 }
 
 @Composable
@@ -100,25 +142,6 @@ private fun DeleteProjectEntry(
                 }
             },
         )
-    }
-}
-
-/**
- * Shows the project that a save from the editor stored in place of the editor, once the list
- * holds it: a new project's insert returns before the list emits it.
- */
-@Composable
-internal fun ShowSavedProject(navigator: Navigator, projects: ProjectsViewModel) {
-    val state by projects.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.projectToShow, state.projects) {
-        state.projectToShow?.takeIf { id -> state.projects.any { it.id == id } }?.let { id ->
-            navigator.removeAll {
-                it is ProjectEditorKey || it == ProjectEditorGuideKey || it is ProjectKey ||
-                    it is ProjectGuideKey
-            }
-            navigator.push(ProjectKey(id), root = ProjectsKey)
-            projects.onProjectShown()
-        }
     }
 }
 

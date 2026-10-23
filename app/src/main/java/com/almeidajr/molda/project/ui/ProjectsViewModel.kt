@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.R
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
+import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.domain.defaultProjectName
@@ -21,21 +22,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
-/** A result being saved as a project, under the [name] typed so far. */
-@Serializable
-data class ProjectSaving(
-    val snapshot: SkirtSnapshot,
-    val name: String,
-    /** Whether the stored project opens once saved, as when saving an edit as a new one. */
-    val showsSaved: Boolean = false,
-    val hasBlankName: Boolean = false,
-    val isBusy: Boolean = false,
-    @param:StringRes val error: Int? = null,
-)
+/** The saving of a new project, running or failed with [error]. */
+data class ProjectSaving(val isBusy: Boolean = false, @param:StringRes val error: Int? = null)
 
 /** The stored project [id] being renamed to the [name] typed so far. */
 @Serializable
@@ -63,16 +56,11 @@ data class ProjectsState(
     val deleting: ProjectDeleting? = null,
     /** Whether an edited project's snapshot is being stored. */
     val isUpdating: Boolean = false,
-    /** A project just saved from an edit, to show until [ProjectsViewModel.onProjectShown]. */
-    val projectToShow: ProjectId? = null,
 )
 
 /** The open dialogs, kept through process death; a storage call they started is not. */
 @Serializable
-private data class ProjectDialogs(
-    val saving: ProjectSaving? = null,
-    val renaming: ProjectRenaming? = null,
-)
+private data class ProjectDialogs(val renaming: ProjectRenaming? = null)
 
 // One command per project action the UI offers.
 @Suppress("TooManyFunctions")
@@ -84,10 +72,7 @@ class ProjectsViewModel @Inject constructor(
 ) : ViewModel() {
     private var savedDialogs by savedState.saved { ProjectDialogs() }
     private val mutableState = MutableStateFlow(
-        ProjectsState(
-            saving = savedDialogs.saving?.copy(isBusy = false),
-            renaming = savedDialogs.renaming?.copy(isBusy = false),
-        ),
+        ProjectsState(renaming = savedDialogs.renaming?.copy(isBusy = false)),
     )
     val state: StateFlow<ProjectsState> = mutableState.asStateFlow()
 
@@ -123,58 +108,65 @@ class ProjectsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Opens the save dialog for [snapshot], named after [patternName], its profile and today;
-     * with [showsSaved], the new project is shown once saved.
-     */
-    fun startSaving(snapshot: SkirtSnapshot, patternName: String, showsSaved: Boolean = false) {
-        val today = LocalDate.now(clock)
-        val name = defaultProjectName(patternName, snapshot.source?.profileName, today)
-        transition { it.copy(saving = ProjectSaving(snapshot, name, showsSaved)) }
-    }
+    /** The name offered for a new project from [snapshot], after its kind's [kindLabel]. */
+    fun defaultName(snapshot: SkirtSnapshot, kindLabel: String): String =
+        defaultProjectName(kindLabel, snapshot.source?.profileName, LocalDate.now(clock))
 
-    /** Edits the name typed in the open save or rename dialog. */
+    /** Edits the name typed in the open rename dialog. */
     fun editName(text: String) = transition { state ->
-        state.copy(
-            saving = state.saving?.copy(name = text, hasBlankName = false),
-            renaming = state.renaming?.copy(name = text, hasBlankName = false),
-        )
+        state.copy(renaming = state.renaming?.copy(name = text, hasBlankName = false))
     }
 
-    /** Stores the named snapshot; once stored, [onShowSnackbar] gets the message to show. */
-    fun save(onShowSnackbar: (Int) -> Unit) {
-        val saving = mutableState.value.saving?.takeUnless { it.isBusy } ?: return
-        val name = readProjectName(saving.name)
-            ?: return transition { it.copy(saving = saving.copy(hasBlankName = true)) }
+    /**
+     * Stores [snapshot] as a new project called [name]; once the project list holds it, [onSaved]
+     * gets its identity.
+     */
+    fun save(name: ProjectName, snapshot: SkirtSnapshot, onSaved: (ProjectId) -> Unit) {
+        if (mutableState.value.saving?.isBusy == true) return
         submit(
-            command = { repository.create(name, saving.snapshot, clock.instant()) },
+            command = {
+                repository.create(name, snapshot, clock.instant())
+                    // Room's insert returns before the list emits the project, which may open next.
+                    .onSuccess { created -> awaitListed(created.id) }
+            },
             progress = { state, isBusy, error ->
-                state.copy(saving = state.saving?.copy(isBusy = isBusy, error = error))
+                state.copy(saving = ProjectSaving(isBusy, error))
             },
             failure = R.string.project_save_failed,
-            report = { if (it) onShowSnackbar(R.string.project_saved) },
-        ) { state, created ->
-            state.copy(saving = null, projectToShow = created.id.takeIf { saving.showsSaved })
-        }
+            report = { result -> result.onSuccess { onSaved(it.id) } },
+        ) { state, _ -> state.copy(saving = null) }
+    }
+
+    /** Forgets a failed save, unless its storage call is running. */
+    fun cancelSaving() = transition { state ->
+        if (state.saving?.isBusy == true) state else state.copy(saving = null)
     }
 
     /**
-     * Stores [snapshot] as the project [id]'s, then shows that project; [onShowSnackbar] gets the
+     * Stores [snapshot] as the project [id]'s, then calls [onUpdated]; [onShowSnackbar] gets the
      * message of either outcome, since no dialog is there to show a failure.
      */
-    fun update(id: ProjectId, snapshot: SkirtSnapshot, onShowSnackbar: (Int) -> Unit) {
+    fun update(
+        id: ProjectId,
+        snapshot: SkirtSnapshot,
+        onShowSnackbar: (Int) -> Unit,
+        onUpdated: () -> Unit,
+    ) {
         if (mutableState.value.isUpdating) return
         submit(
             command = { repository.update(id, snapshot, clock.instant()) },
             progress = { state, isBusy, _ -> state.copy(isUpdating = isBusy) },
             failure = R.string.project_update_failed,
-            report = {
-                onShowSnackbar(if (it) R.string.project_updated else R.string.project_update_failed)
+            report = { result ->
+                if (result.isSuccess) {
+                    onShowSnackbar(R.string.project_updated)
+                    onUpdated()
+                } else {
+                    onShowSnackbar(R.string.project_update_failed)
+                }
             },
-        ) { state, _ -> state.copy(isUpdating = false, projectToShow = id) }
+        ) { state, _ -> state.copy(isUpdating = false) }
     }
-
-    fun onProjectShown() = transition { it.copy(projectToShow = null) }
 
     fun startRenaming(project: Project) = transition {
         it.copy(renaming = ProjectRenaming(project.id, project.name.text))
@@ -191,7 +183,7 @@ class ProjectsViewModel @Inject constructor(
                 state.copy(renaming = state.renaming?.copy(isBusy = isBusy, error = error))
             },
             failure = R.string.project_rename_failed,
-            report = { if (it) onShowSnackbar(R.string.project_renamed) },
+            report = { if (it.isSuccess) onShowSnackbar(R.string.project_renamed) },
         ) { state, _ -> state.copy(renaming = null) }
     }
 
@@ -204,7 +196,7 @@ class ProjectsViewModel @Inject constructor(
                 state.copy(deleting = ProjectDeleting(id, isBusy, error))
             },
             failure = R.string.project_delete_failed,
-            report = { if (it) onDeleted(R.string.project_deleted) },
+            report = { if (it.isSuccess) onDeleted(R.string.project_deleted) },
         ) { state, _ -> state.copy(deleting = null) }
     }
 
@@ -213,22 +205,21 @@ class ProjectsViewModel @Inject constructor(
         if (state.deleting?.isBusy == true) state else state.copy(deleting = null)
     }
 
-    /** Closes the open save or rename dialog, unless its storage call is running. */
+    /** Closes the open rename dialog, unless its storage call is running. */
     fun cancel() = transition { state ->
-        val isBusy = state.saving?.isBusy == true || state.renaming?.isBusy == true
-        if (isBusy) state else state.copy(saving = null, renaming = null)
+        if (state.renaming?.isBusy == true) state else state.copy(renaming = null)
     }
 
     /**
      * Runs a storage [command], marking its dialog busy through [progress] meanwhile; a success
      * moves on with [succeeded], a failure shows [failure] through [progress]; either way [report]
-     * then hears whether it succeeded.
+     * then hears the result.
      */
     private fun <T> submit(
         command: suspend () -> Result<T>,
         progress: (ProjectsState, isBusy: Boolean, error: Int?) -> ProjectsState,
         @StringRes failure: Int,
-        report: (isSuccess: Boolean) -> Unit,
+        report: (Result<T>) -> Unit,
         succeeded: (ProjectsState, T) -> ProjectsState,
     ) {
         transition { progress(it, true, null) }
@@ -240,7 +231,14 @@ class ProjectsViewModel @Inject constructor(
                     onFailure = { progress(state, false, failure) },
                 )
             }
-            report(result.isSuccess)
+            report(result)
+        }
+    }
+
+    /** Waits until the project list holds [id], or fails to load. */
+    private suspend fun awaitListed(id: ProjectId) {
+        mutableState.first { state ->
+            state.loadError != null || state.projects.any { it.id == id }
         }
     }
 
@@ -248,6 +246,6 @@ class ProjectsViewModel @Inject constructor(
     private fun transition(next: (ProjectsState) -> ProjectsState) {
         val state = next(mutableState.value)
         mutableState.value = state
-        savedDialogs = ProjectDialogs(state.saving, state.renaming)
+        savedDialogs = ProjectDialogs(state.renaming)
     }
 }
