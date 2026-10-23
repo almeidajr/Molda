@@ -219,12 +219,14 @@ class ProfileNavigatorTest {
 
     @Test
     fun showsProfileCreateAction_overTheList_isShown() {
+        // When/Then
         assertTrue(showsCreateAction(listOf(ProfileManagementKey), isTwoPane = false))
         assertTrue(showsCreateAction(listOf(ProfileManagementKey), isTwoPane = true))
     }
 
     @Test
     fun showsProfileCreateAction_overAboutOrTheLicences_isHidden() {
+        // When/Then
         assertFalse(showsCreateAction(listOf(ProfileManagementKey, AboutKey), isTwoPane = true))
         assertFalse(
             showsCreateAction(
@@ -236,16 +238,20 @@ class ProfileNavigatorTest {
 
     @Test
     fun showsProfileCreateAction_overAnEditor_isShownOnlyBesideTheList() {
+        // Given
         val perfis = listOf(ProfileManagementKey, ProfileEditorKey(existing, "first"))
 
+        // When/Then
         assertFalse(showsCreateAction(perfis, isTwoPane = false))
         assertTrue(showsCreateAction(perfis, isTwoPane = true))
     }
 
     @Test
     fun showsProfileCreateAction_onAnotherDestination_isHidden() {
+        // Given
         val navigator = app()
 
+        // When/Then
         assertFalse(navigator.state.showsProfileCreateAction(isTwoPane = true))
     }
 }
