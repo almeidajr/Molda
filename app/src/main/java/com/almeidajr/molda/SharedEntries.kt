@@ -39,6 +39,9 @@ import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.wi
  * wires these: a saved project's skirt draft, and the overlays shared by features.
  */
 
+/** The result key the discard dialog sends its confirmed [AfterDiscard] to. */
+internal const val DISCARD_RESULT_KEY = "discard"
+
 /**
  * A saved project's skirt draft: its editor on [editor], a draft of its own so editing a project
  * never touches the calculator in Moldes, and its folding guides. [onCloseEditor] asks before the
@@ -85,13 +88,13 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
 
 /**
  * The profile picker, which sends the chosen profile to its requester or [onCreateProfile] leaves
- * for a new profile's editor, and the dialog that confirms [onDiscard] of a dirty editor.
+ * for a new profile's editor, and the dialog that sends what confirming the discard of a dirty
+ * editor does next to the app's wiring, as a result on [DISCARD_RESULT_KEY].
  */
 internal fun EntryProviderScope<NavKey>.overlaySection(
     navigator: Navigator,
     profiles: ProfilesViewModel,
     onCreateProfile: () -> Unit,
-    onDiscard: (AfterDiscard) -> Unit,
 ) {
     entry<ProfilePickerKey>(metadata = windowOverlay()) { key ->
         val results = LocalResultEventBus.current
@@ -109,9 +112,10 @@ internal fun EntryProviderScope<NavKey>.overlaySection(
 
             else -> R.string.profile_discard_body
         }
+        val results = LocalResultEventBus.current
         DiscardDialog(body, onDismiss = { navigator.remove(key) }, onDiscard = {
+            results.sendResult(DISCARD_RESULT_KEY, key.afterDiscard)
             navigator.remove(key)
-            onDiscard(key.afterDiscard)
         })
     }
 }

@@ -12,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.result.ResultEffect
 import androidx.navigation3.runtime.result.rememberResultEventBus
 import com.almeidajr.molda.about.navigation.AboutKey
 import com.almeidajr.molda.about.navigation.LicencesKey
@@ -89,6 +90,8 @@ fun MoldaRoute(
         status = { editorStatus(profileState, projectState, projectCalculatorState) },
     )
     val snackbar = remember { SnackbarHostState() }
+    // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
+    ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
     SyncProfileEditor(navigator, profiles)
     ShowSavedProject(navigator, projects)
     ProfileSaveFeedback(profiles, snackbar, onCreated = app::useCreatedProfile)
@@ -139,6 +142,9 @@ private class MoldaApp(
         perform(selectDestination(destination.root, stacks.selected, stacks.current, status()))
 
     fun back() = perform(goBack(stacks.current, status()))
+
+    /** Carries out what the confirmed discard dialog asked for. */
+    fun discard(afterDiscard: AfterDiscard) = perform(afterDiscard.transition())
 
     fun createProfile() = perform(requestProfileEditor(EditedProfile.New, status()))
 
@@ -194,7 +200,6 @@ private class MoldaApp(
             navigator,
             profiles,
             onCreateProfile = { perform(requestPickerEditor(status())) },
-            onDiscard = { perform(it.transition()) },
         )
     }
 
