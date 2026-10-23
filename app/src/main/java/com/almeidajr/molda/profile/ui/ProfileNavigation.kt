@@ -28,8 +28,10 @@ import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
 import com.almeidajr.molda.profile.navigation.closeEditorOf
 import com.almeidajr.molda.profile.navigation.closePickerEditor
+import com.almeidajr.molda.profile.navigation.showsProfileCreateAction
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
+import com.almeidajr.molda.ui.navigation.LocalEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
@@ -47,7 +49,6 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     onRequestEditor: (EditedProfile) -> Unit,
     onCancelEditor: () -> Unit,
     onShowSnackbar: (Int) -> Unit,
-    isEditorSaving: @Composable () -> Boolean,
 ) {
     entry<ProfileManagementKey>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
@@ -63,7 +64,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
                 stringResource(R.string.profile_manage),
                 onAbout = { navigator.push(AboutKey) },
             )
-            ProfilePane { ProfileList(profiles, onRequestEditor, enabled = !isEditorSaving()) }
+            ProfilePane { ProfileList(profiles, navigator, onRequestEditor) }
         }
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
@@ -151,8 +152,8 @@ private fun OpenEditor(editor: ProfileEditorViewModel, onCancel: () -> Unit, isU
 @Composable
 private fun ProfileList(
     profiles: ProfileListViewModel,
+    navigator: Navigator,
     onRequestEditor: (EditedProfile) -> Unit,
-    enabled: Boolean,
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilesContent(
@@ -161,9 +162,29 @@ private fun ProfileList(
         { onRequestEditor(EditedProfile.Existing(it)) },
         profiles::delete,
         Modifier.padding(16.dp),
-        enabled,
+        canChangeProfiles = state.canChangeProfiles && !isPerfisEditorSaving(navigator),
     )
 }
+
+/**
+ * The shell's floating action over Perfis: new profile, which [onCreate] opens an editor for. It
+ * shows only where [showsProfileCreateAction] says, for whether panes sit side by side
+ * ([isTwoPane]).
+ */
+@Composable
+internal fun ProfileFloatingAction(navigator: Navigator, isTwoPane: Boolean, onCreate: () -> Unit) {
+    if (navigator.state.showsProfileCreateAction(isTwoPane)) {
+        ProfileCreateAction(onCreate, enabled = !isPerfisEditorSaving(navigator))
+    }
+}
+
+/**
+ * Whether the Perfis editor beside the list saves, so no other editor may open; observable, for
+ * the controls that would open one.
+ */
+@Composable
+private fun isPerfisEditorSaving(navigator: Navigator): Boolean = LocalEditorStatusHolder.current
+    .collectStatusOn(navigator.state.stackOf(ProfileManagementKey))?.isSaving == true
 
 @Composable
 private fun ProfilePane(content: @Composable () -> Unit) {

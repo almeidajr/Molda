@@ -54,10 +54,9 @@ fun ProfilesContent(
     onStartEdit: (ProfileId) -> Unit,
     onDelete: (ProfileId) -> Unit,
     modifier: Modifier = Modifier,
-    /** False while the open editor saves, which no row may replace. */
-    enabled: Boolean = true,
+    /** False while a profile operation or the open editor's save is in flight. */
+    canChangeProfiles: Boolean = state.canChangeProfiles,
 ) {
-    val canChangeProfiles = enabled && state.canChangeProfiles
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),

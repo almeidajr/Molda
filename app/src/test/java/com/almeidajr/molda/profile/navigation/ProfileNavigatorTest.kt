@@ -1,12 +1,16 @@
 package com.almeidajr.molda.profile.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.almeidajr.molda.about.navigation.AboutKey
+import com.almeidajr.molda.about.navigation.LicencesKey
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.ui.navigation.navigatorOf
 import com.almeidajr.molda.ui.navigation.stacks
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 import org.junit.Test
 
 class ProfileNavigatorTest {
@@ -189,5 +193,41 @@ class ProfileNavigatorTest {
             listOf(listOf(SkirtCalculatorKey), listOf(ProfileManagementKey)),
             navigator.stacks,
         )
+    }
+
+    private fun showsCreateAction(perfis: List<NavKey>, isTwoPane: Boolean) =
+        navigatorOf(listOf(listOf(SkirtCalculatorKey), perfis), selected = ProfileManagementKey)
+            .state.showsProfileCreateAction(isTwoPane)
+
+    @Test
+    fun showsProfileCreateAction_overTheList_isShown() {
+        assertTrue(showsCreateAction(listOf(ProfileManagementKey), isTwoPane = false))
+        assertTrue(showsCreateAction(listOf(ProfileManagementKey), isTwoPane = true))
+    }
+
+    @Test
+    fun showsProfileCreateAction_overAboutOrTheLicences_isHidden() {
+        assertFalse(showsCreateAction(listOf(ProfileManagementKey, AboutKey), isTwoPane = true))
+        assertFalse(
+            showsCreateAction(
+                listOf(ProfileManagementKey, AboutKey, LicencesKey),
+                isTwoPane = false,
+            ),
+        )
+    }
+
+    @Test
+    fun showsProfileCreateAction_overAnEditor_isShownOnlyBesideTheList() {
+        val perfis = listOf(ProfileManagementKey, ProfileEditorKey(existing, "first"))
+
+        assertFalse(showsCreateAction(perfis, isTwoPane = false))
+        assertTrue(showsCreateAction(perfis, isTwoPane = true))
+    }
+
+    @Test
+    fun showsProfileCreateAction_onAnotherDestination_isHidden() {
+        val navigator = app()
+
+        assertFalse(navigator.state.showsProfileCreateAction(isTwoPane = true))
     }
 }

@@ -14,16 +14,13 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.result.ResultEffect
 import androidx.navigation3.runtime.result.rememberResultEventBus
-import com.almeidajr.molda.about.navigation.AboutKey
-import com.almeidajr.molda.about.navigation.LicencesKey
 import com.almeidajr.molda.about.ui.aboutSection
 import com.almeidajr.molda.guide.ui.guideSection
 import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.pattern.ui.patternSection
 import com.almeidajr.molda.profile.navigation.EditedProfile
-import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
-import com.almeidajr.molda.profile.ui.ProfileCreateAction
+import com.almeidajr.molda.profile.ui.ProfileFloatingAction
 import com.almeidajr.molda.profile.ui.profileSection
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
@@ -85,9 +82,7 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
             entryProvider = entryProvider { with(app) { entries(versionName, showSnackbar) } },
             modifier = modifier,
         ) { isTwoPane ->
-            if (app.isManagingProfiles(isTwoPane)) {
-                ProfileCreateAction(app::createProfile, enabled = !app.isPerfisEditorSaving())
-            }
+            ProfileFloatingAction(navigator, isTwoPane, onCreate = app::createProfile)
         }
     }
 }
@@ -128,19 +123,6 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
 
     fun createProfile() = perform(requestProfileEditor(EditedProfile.New, perfisStatus()))
 
-    /** Whether Perfis shows the new-profile action: not over About nor a single-pane editor. */
-    fun isManagingProfiles(isTwoPane: Boolean): Boolean = stacks.selected == ProfileManagementKey &&
-        stacks.current.last() !in setOf(AboutKey, LicencesKey) &&
-        (stacks.stackOf(ProfileManagementKey).none { it is ProfileEditorKey } || isTwoPane)
-
-    /**
-     * Whether the Perfis editor beside the list saves, so no other editor may open; observable
-     * state, for the controls that would open one.
-     */
-    @Composable
-    fun isPerfisEditorSaving(): Boolean =
-        editors.collectStatusOn(stacks.stackOf(ProfileManagementKey))?.isSaving == true
-
     fun EntryProviderScope<NavKey>.entries(versionName: String, onShowSnackbar: (Int) -> Unit) {
         patternSection(navigator)
         skirtSection(
@@ -169,7 +151,6 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
             onRequestEditor = { perform(requestProfileEditor(it, perfisStatus())) },
             onCancelEditor = { perform(cancelProfileEditor(status(stacks.current))) },
             onShowSnackbar = onShowSnackbar,
-            isEditorSaving = { isPerfisEditorSaving() },
         )
         aboutSection(navigator, versionName)
         overlaySection(

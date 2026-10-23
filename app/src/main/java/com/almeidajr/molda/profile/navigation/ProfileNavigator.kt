@@ -1,7 +1,10 @@
 package com.almeidajr.molda.profile.navigation
 
+import com.almeidajr.molda.about.navigation.AboutKey
+import com.almeidajr.molda.about.navigation.LicencesKey
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.ui.navigation.Navigator
+import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
 
 /**
  * Opens the Perfis editor for [profile], which shows one beside its list, unless it already shows
@@ -31,3 +34,12 @@ internal fun Navigator.closePickerEditor(editor: PickerProfileEditorKey) =
 /** Closes every editor of the deleted profile [id]. */
 internal fun Navigator.closeEditorOf(id: ProfileId) =
     removeAll { it is ProfileEditorKey && it.profile == EditedProfile.Existing(id) }
+
+/**
+ * Whether Perfis shows its new-profile action: over the list, not over About, the licences nor an
+ * editor that fills the window, which is any editor unless the layout is [isTwoPane].
+ */
+internal fun TopLevelBackStacks.showsProfileCreateAction(isTwoPane: Boolean): Boolean =
+    selected == ProfileManagementKey &&
+        current.last() !in setOf(AboutKey, LicencesKey) &&
+        (isTwoPane || stackOf(ProfileManagementKey).none { it is ProfileEditorKey })
