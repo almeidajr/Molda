@@ -162,7 +162,7 @@ class FabricFoldingGuideTest {
         next(times = 3)
 
         // Then
-        composeRule.onNodeWithText("1. Costura da cintura: 14,64 cm")
+        composeRule.onNodeWithText("1. Costura da cintura: 14,64 cm")
             .performScrollTo().assertIsDisplayed()
     }
 
