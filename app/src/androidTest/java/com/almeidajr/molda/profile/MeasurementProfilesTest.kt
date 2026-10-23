@@ -39,6 +39,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
@@ -636,6 +637,26 @@ class MeasurementProfilesTest {
 
         // Then
         composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Bia")
+    }
+
+    @Test
+    fun wideWindow_reselectOpenProfile_keepsItsEditorLoaded() {
+        // Given
+        val storage = FakeProfileRepository(listOf(profile(1, "Ana")))
+        profileRepository = storage
+        composeRule.launchProfileRoute(width = WIDE_WIDTH)
+        composeRule.showProfiles()
+        composeRule.click("Ana")
+        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Ana")
+        // A reopened editor would wait on this load.
+        storage.loadGate = CompletableDeferred()
+
+        // When
+        composeRule.click("Ações: Ana")
+        composeRule.click("Editar perfil")
+
+        // Then
+        composeRule.onNodeWithText("Salvar alterações").performScrollTo().assertIsEnabled()
     }
 
     @Test

@@ -214,15 +214,23 @@ private class MoldaApp(
             // Popping to the calculator also closes the picker's editor above it.
             is Transition.ShowCalculator -> navigator.popTo(SkirtCalculatorKey)
 
-            // Perfis shows one editor beside its list; the pickers' editors stay independent.
-            is Transition.OpenProfileEditor -> {
-                navigator.removeAll { it is ProfileEditorKey }
-                navigator.push(ProfileEditorKey(transition.profile), root = ProfileManagementKey)
-            }
+            is Transition.OpenProfileEditor -> openProfileEditor(transition)
 
             is Transition.OpenPickerEditor ->
                 navigator.push(PickerProfileEditorKey(transition.resultKey))
         }
+    }
+
+    /**
+     * Opens the Perfis editor, which shows one beside its list, unless it already shows that
+     * profile; a confirmed discard always gets a fresh one. The pickers' editors stay independent.
+     */
+    private fun openProfileEditor(transition: Transition.OpenProfileEditor) {
+        val open = stacks.stackOf(ProfileManagementKey).last()
+        val isOpen = open is ProfileEditorKey && open.profile == transition.profile
+        if (isOpen && !transition.discardsDraft) return
+        navigator.removeAll { it is ProfileEditorKey }
+        navigator.push(ProfileEditorKey(transition.profile), root = ProfileManagementKey)
     }
 
     /** Closes the selected stack's profile editor; the picker's returns to the picker below it. */
