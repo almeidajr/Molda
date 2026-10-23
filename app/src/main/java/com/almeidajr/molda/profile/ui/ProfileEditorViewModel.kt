@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
+import com.almeidajr.molda.data.LoadResult
+import com.almeidajr.molda.data.asLoadResult
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.domain.ProfileValidation
@@ -18,7 +20,6 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -49,7 +50,8 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
     private val mutableState = MutableStateFlow(
         savedForm?.let { form ->
             val saved = ProfileSave.Updated.takeIf { form.isStored }
-            ProfilesState(form = form, isLoading = false, saved = saved)
+            // Nothing to load: the form is what the editor shows.
+            ProfilesState(form = form, load = LoadResult.Success(emptyList()), saved = saved)
         }
             ?: ProfilesState(form = ProfileForm(editingId = editingId)),
     )
@@ -63,16 +65,18 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
 
     /** Loads the existing profile; after a load failure, calling it again is the retry. */
     fun load() {
-        val current = mutableState.value
-        val isLoaded = !current.isLoading && current.loadError == null
-        if (editingId == null || isLoaded) return
-        transition { it.loading() }
+        if (editingId == null || mutableState.value.load is LoadResult.Success) return
+        transition { it.copy(load = LoadResult.Loading) }
         viewModelScope.launch {
             val result = repository.profiles()
-                .map { Result.success(it) }
-                .catch { failure -> emit(Result.failure(failure)) }
-                .first()
-            transition { it.loadedProfile(editingId, result) }
+                .map { profiles ->
+                    checkNotNull(profiles.find { it.id == editingId }) {
+                        "Profile no longer exists"
+                    }
+                }
+                .asLoadResult()
+                .first { it !is LoadResult.Loading }
+            transition { it.loadedProfile(result) }
         }
     }
 
@@ -108,7 +112,7 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
     private fun transition(next: (ProfilesState) -> ProfilesState) {
         mutableState.value = next(mutableState.value)
         val state = mutableState.value
-        if (!state.isLoading && state.loadError == null) savedForm = state.form
+        if (state.load is LoadResult.Success) savedForm = state.form
     }
 
     @AssistedFactory

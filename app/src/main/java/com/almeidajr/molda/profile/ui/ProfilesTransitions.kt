@@ -1,44 +1,44 @@
 package com.almeidajr.molda.profile.ui
 
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileValidation
 
-internal fun ProfilesState.loading() = copy(isLoading = true, loadError = null)
-
-internal fun ProfilesState.loadedWith(result: Result<List<MeasurementProfile>>) = result.fold(
-    onSuccess = { copy(profiles = it, isLoading = false) },
-    onFailure = { copy(isLoading = false, loadError = R.string.profile_load_failed) },
-)
-
-/** Fills the editor with stored profile [id] from [result], or fails when it is not there. */
-internal fun ProfilesState.loadedProfile(id: ProfileId, result: Result<List<MeasurementProfile>>) =
-    when (val profile = result.getOrNull()?.find { it.id == id }) {
-        null -> copy(isLoading = false, loadError = R.string.profile_load_failed)
-
-        else -> {
-            val measurements = profile.measurements
-            val inputs = mapOf(
-                ProfileField.Name to measurements.name.text,
-                ProfileField.Waist to lengthText(measurements.waist),
-                ProfileField.Date to profileDateText(measurements.measurementDate),
-                ProfileField.Notes to measurements.notes,
-            )
-            copy(form = ProfileForm(inputs, inputs, id), isLoading = false)
-        }
+/** Fills the editor with the stored profile once [result] has it. */
+internal fun ProfilesState.loadedProfile(result: LoadResult<MeasurementProfile>) = when (result) {
+    is LoadResult.Success -> {
+        val profile = result.value
+        val measurements = profile.measurements
+        val inputs = mapOf(
+            ProfileField.Name to measurements.name.text,
+            ProfileField.Waist to lengthText(measurements.waist),
+            ProfileField.Date to profileDateText(measurements.measurementDate),
+            ProfileField.Notes to measurements.notes,
+        )
+        copy(
+            form = ProfileForm(inputs, inputs, profile.id),
+            load = LoadResult.Success(listOf(profile)),
+        )
     }
 
-internal fun ProfilesState.edited(field: ProfileField, text: String) = if (isSaving || isLoading) {
-    this
-} else {
-    copy(
-        form = form.copy(inputs = form.inputs + (field to text)),
-        errors = errors - field,
-        saveError = null,
-    )
+    is LoadResult.Error -> copy(load = result)
+
+    LoadResult.Loading -> copy(load = LoadResult.Loading)
 }
+
+internal fun ProfilesState.edited(field: ProfileField, text: String) =
+    if (isSaving || load is LoadResult.Loading) {
+        this
+    } else {
+        copy(
+            form = form.copy(inputs = form.inputs + (field to text)),
+            errors = errors - field,
+            saveError = null,
+        )
+    }
 
 /** Shows the field errors of an invalid form, or starts storing a valid one. */
 internal fun ProfilesState.submitted(validation: ProfileValidation) = when (validation) {

@@ -41,6 +41,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.profile.domain.parseProfileDate
 import java.time.Instant
 import java.time.LocalDate
@@ -70,8 +71,8 @@ fun ProfileEditor(
             showCalendar = true
         }
         ProfileMutationError(state.saveError.takeIf { state.deleteId == null })
-        state.loadError?.let {
-            ProfileMutationError(it)
+        if (state.load is LoadResult.Error) {
+            ProfileMutationError(R.string.profile_load_failed)
             TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.action_retry_load))
             }
@@ -81,7 +82,7 @@ fun ProfileEditor(
                 focus.clearFocus()
                 onSave()
             },
-            enabled = !state.isSaving && !state.isLoading && state.loadError == null,
+            enabled = state.canMutate,
             modifier = Modifier.heightIn(min = 48.dp),
         ) {
             Text(

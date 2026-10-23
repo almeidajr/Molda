@@ -1,11 +1,13 @@
 package com.almeidajr.molda.profile.ui
 
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +32,7 @@ class ProfileListViewModelTest {
         val added = storage.create(bia.measurements).getOrThrow()
 
         // Then
-        assertEquals(listOf(ana, added), profiles.state.value.profiles)
+        assertEquals(LoadResult.Success(listOf(ana, added)), profiles.state.value.load)
     }
 
     @Test
@@ -42,7 +44,7 @@ class ProfileListViewModelTest {
         val profiles = ProfileListViewModel(storage)
 
         // Then
-        assertEquals(R.string.profile_load_failed, profiles.state.value.loadError)
+        assertIs<LoadResult.Error>(profiles.state.value.load)
     }
 
     @Test
@@ -56,9 +58,7 @@ class ProfileListViewModelTest {
         profiles.load()
 
         // Then
-        val retried = profiles.state.value
-        assertNull(retried.loadError)
-        assertEquals(listOf(ana), retried.profiles)
+        assertEquals(LoadResult.Success(listOf(ana)), profiles.state.value.load)
     }
 
     @Test
@@ -75,7 +75,7 @@ class ProfileListViewModelTest {
 
         // Then
         assertEquals(1, counted.activeCollectors)
-        assertEquals(listOf(ana), profiles.state.value.profiles)
+        assertEquals(LoadResult.Success(listOf(ana)), profiles.state.value.load)
     }
 
     @Test
@@ -88,7 +88,7 @@ class ProfileListViewModelTest {
 
         // Then
         val deleted = profiles.state.value
-        assertEquals(emptyList(), deleted.profiles)
+        assertEquals(LoadResult.Success(emptyList()), deleted.load)
         assertEquals(ana.id, deleted.deleted)
     }
 
@@ -119,7 +119,7 @@ class ProfileListViewModelTest {
         assertEquals(R.string.profile_delete_failed, failed.saveError)
         assertNull(failed.deleted)
         assertEquals(ana.id, failed.deleteId)
-        assertEquals(listOf(ana), failed.profiles)
+        assertEquals(LoadResult.Success(listOf(ana)), failed.load)
     }
 
     @Test

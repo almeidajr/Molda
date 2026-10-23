@@ -2,6 +2,7 @@ package com.almeidajr.molda.profile.ui
 
 import androidx.annotation.StringRes
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileError
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -52,16 +53,18 @@ sealed interface ProfileSave {
 }
 
 /**
- * A profile list's or a profile editor's state: the list uses [profiles] and deletion, the editor
+ * A profile list's or a profile editor's state: the list uses [load] and deletion, the editor
  * its [form] and its save.
  */
 data class ProfilesState(
     val form: ProfileForm = ProfileForm(),
-    val profiles: List<MeasurementProfile> = emptyList(),
+    /**
+     * The stored profiles: the list's rows, or for an editor the profile its form was filled from,
+     * none when the form did not come from storage.
+     */
+    val load: LoadResult<List<MeasurementProfile>> = LoadResult.Loading,
     val errors: Map<ProfileField, ProfileError> = emptyMap(),
-    val isLoading: Boolean = true,
     val isSaving: Boolean = false,
-    @param:StringRes val loadError: Int? = null,
     @param:StringRes val saveError: Int? = null,
     /** What the editor's save stored, until its entry has shown it and closed the editor. */
     val saved: ProfileSave? = null,
@@ -72,5 +75,5 @@ data class ProfilesState(
     val inputs: Map<ProfileField, String> get() = form.inputs
     val isDirty: Boolean get() = form.inputs != form.originalInputs
     val editingId: ProfileId? get() = form.editingId
-    val canMutate: Boolean get() = !isLoading && !isSaving && loadError == null
+    val canMutate: Boolean get() = load is LoadResult.Success && !isSaving
 }

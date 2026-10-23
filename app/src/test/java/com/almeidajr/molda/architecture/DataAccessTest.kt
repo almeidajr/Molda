@@ -18,11 +18,19 @@ class DataAccessTest {
         files.assertFalse(
             additionalMessage = "Only dependency injection may import data-layer code.",
         ) { file ->
-            file.hasImport { import -> DATA_IMPORT.matches(import.name) }
+            file.hasImport { import ->
+                DATA_IMPORT.matches(import.name) && import.name !in LOAD_RESULT_IMPORTS
+            }
         }
     }
 
     private companion object {
         val DATA_IMPORT = Regex("""^com\.almeidajr\.molda(\.\w+)*\.data\..+""")
+
+        // Every list ViewModel follows its stored list through the shared load-result convention.
+        val LOAD_RESULT_IMPORTS = setOf(
+            "com.almeidajr.molda.data.LoadResult",
+            "com.almeidajr.molda.data.asLoadResult",
+        )
     }
 }

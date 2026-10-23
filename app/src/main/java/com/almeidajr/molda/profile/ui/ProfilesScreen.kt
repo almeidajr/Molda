@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileDateFormat
@@ -56,38 +57,41 @@ fun ProfilesContent(
     /** False while the open editor saves, which no row may replace. */
     enabled: Boolean = true,
 ) {
-    val canMutate = enabled && !state.isLoading && state.loadError == null && !state.isSaving
+    val canMutate = enabled && state.canMutate
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.profile_management_local_only))
-        if (state.isLoading) {
-            CircularProgressIndicator()
-            Text(stringResource(R.string.profile_loading))
-        }
-        state.loadError?.let {
-            Text(stringResource(it), color = MaterialTheme.colorScheme.error)
-            Button(
-                onClick = onRetry,
-                enabled = !state.isLoading,
-                modifier = Modifier.heightIn(min = 48.dp),
-            ) {
-                Text(stringResource(R.string.action_retry_load))
+        when (val load = state.load) {
+            LoadResult.Loading -> {
+                CircularProgressIndicator()
+                Text(stringResource(R.string.profile_loading))
             }
-        }
-        if (!state.isLoading && state.loadError == null && state.profiles.isEmpty()) {
-            Text(stringResource(R.string.profile_empty_management))
-        }
-        state.profiles.forEach { profile ->
-            ProfileManagementRow(
-                profile,
-                canMutate,
-                onStartEdit,
-                onDelete,
-                isDeleting = state.isSaving && state.deleteId == profile.id,
-                deleteError = state.saveError.takeIf { state.deleteId == profile.id },
-            )
+
+            is LoadResult.Error -> {
+                Text(
+                    stringResource(R.string.profile_load_failed),
+                    color = MaterialTheme.colorScheme.error,
+                )
+                Button(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.action_retry_load))
+                }
+            }
+
+            is LoadResult.Success if load.value.isEmpty() ->
+                Text(stringResource(R.string.profile_empty_management))
+
+            is LoadResult.Success -> load.value.forEach { profile ->
+                ProfileManagementRow(
+                    profile,
+                    canMutate,
+                    onStartEdit,
+                    onDelete,
+                    isDeleting = state.isSaving && state.deleteId == profile.id,
+                    deleteError = state.saveError.takeIf { state.deleteId == profile.id },
+                )
+            }
         }
     }
 }
@@ -255,23 +259,27 @@ fun ProfilePicker(
             TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.profile_picker_cancel))
             }
-            when {
-                state.isLoading -> {
+            when (val load = state.load) {
+                LoadResult.Loading -> {
                     CircularProgressIndicator()
                     Text(stringResource(R.string.profile_loading))
                 }
 
-                state.loadError != null -> {
-                    Text(stringResource(state.loadError), color = MaterialTheme.colorScheme.error)
+                is LoadResult.Error -> {
+                    Text(
+                        stringResource(R.string.profile_load_failed),
+                        color = MaterialTheme.colorScheme.error,
+                    )
                     TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(stringResource(R.string.action_retry_load))
                     }
                 }
 
-                state.profiles.isEmpty() -> Text(stringResource(R.string.profile_empty_picker))
+                is LoadResult.Success if load.value.isEmpty() ->
+                    Text(stringResource(R.string.profile_empty_picker))
 
-                else -> state.profiles.forEach { profile ->
-                    val hasDuplicate = state.profiles.count {
+                is LoadResult.Success -> load.value.forEach { profile ->
+                    val hasDuplicate = load.value.count {
                         it.measurements.name == profile.measurements.name &&
                             it.measurements.waist == profile.measurements.waist &&
                             it.measurements.measurementDate == profile.measurements.measurementDate
@@ -281,7 +289,7 @@ fun ProfilePicker(
             }
             Button(
                 onClick = onCreate,
-                enabled = !state.isLoading && state.loadError == null && !state.isSaving,
+                enabled = state.canMutate,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) { Text(stringResource(R.string.profile_new)) }
         }

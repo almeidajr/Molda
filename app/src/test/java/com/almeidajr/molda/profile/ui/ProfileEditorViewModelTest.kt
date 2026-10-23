@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileError
@@ -17,6 +18,7 @@ import com.almeidajr.molda.testing.October13Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
@@ -64,7 +66,7 @@ class ProfileEditorViewModelTest {
         val editor = editor(EditedProfile.Existing(bia.id))
 
         // Then
-        assertEquals(R.string.profile_load_failed, editor.state.value.loadError)
+        assertIs<LoadResult.Error>(editor.state.value.load)
     }
 
     @Test
@@ -79,7 +81,7 @@ class ProfileEditorViewModelTest {
 
         // Then
         val retried = editor.state.value
-        assertNull(retried.loadError)
+        assertEquals(LoadResult.Success(listOf(ana)), retried.load)
         assertEquals("Ana", retried.inputs[ProfileField.Name])
     }
 
