@@ -2,6 +2,7 @@ package com.almeidajr.molda.project
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithText
@@ -36,6 +37,7 @@ import dagger.hilt.android.testing.UninstallModules
 import java.time.Clock
 import java.time.Instant
 import kotlin.test.assertEquals
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
@@ -147,6 +149,49 @@ class ProjectManagementTest {
             listOf(ProjectName("Saia da formatura"), ProjectName("Saia nova")),
             projects.current.map { it.name },
         )
+    }
+
+    @Test
+    fun recreation_duringTheRename_renamesAndClosesTheDialog() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val projects = FakeProjectRepository(listOf(saiaAntiga)).apply { commandGate = gate }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+        click("Renomear")
+        composeRule.recreate()
+        composeRule.showRoute()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        assertEquals(listOf(ProjectName("Saia da formatura")), projects.current.map { it.name })
+    }
+
+    @Test
+    fun recreation_duringTheDeletion_deletesAndClosesTheDialog() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val projects = FakeProjectRepository(listOf(saiaAntiga)).apply { commandGate = gate }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
+        click("Confirmar exclusão")
+        composeRule.recreate()
+        composeRule.showRoute()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        assertEquals(emptyList(), projects.current)
     }
 
     @Test

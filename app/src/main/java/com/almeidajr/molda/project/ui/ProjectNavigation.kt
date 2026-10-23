@@ -1,5 +1,6 @@
 package com.almeidajr.molda.project.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -10,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -39,7 +41,6 @@ import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.wi
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.projectSection(
     navigator: Navigator,
-    projects: ProjectsViewModel,
     onShowSnackbar: (Int) -> Unit,
     savedResult: @Composable (Project) -> Unit,
 ) {
@@ -50,10 +51,10 @@ internal fun EntryProviderScope<NavKey>.projectSection(
             }
         }),
     ) {
-        ProjectList(navigator, projects)
+        ProjectList(navigator)
     }
     entry<ProjectKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-        OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
+        OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
             ProjectScreen(
                 project,
                 // Beside the list the project is a pane, closed by choosing from the list or Back.
@@ -69,13 +70,13 @@ internal fun EntryProviderScope<NavKey>.projectSection(
     }
     // Project dialogs are window-overlay entries keyed by what they act on; Back leaves the key.
     entry<SaveProjectKey>(metadata = windowOverlay()) { key ->
-        SaveProjectEntry(key, navigator, projects, onShowSnackbar)
+        SaveProjectEntry(key, navigator, onShowSnackbar)
     }
     entry<RenameProjectKey>(metadata = windowOverlay()) { key ->
-        RenameProjectEntry(key, navigator, projects, onShowSnackbar)
+        RenameProjectEntry(key, navigator, onShowSnackbar)
     }
     entry<DeleteProjectKey>(metadata = windowOverlay()) { key ->
-        DeleteProjectEntry(key, navigator, projects, onShowSnackbar)
+        DeleteProjectEntry(key, navigator, onShowSnackbar)
     }
 }
 
@@ -83,28 +84,25 @@ internal fun EntryProviderScope<NavKey>.projectSection(
 private fun SaveProjectEntry(
     key: SaveProjectKey,
     navigator: Navigator,
-    projects: ProjectsViewModel,
     onShowSnackbar: (Int) -> Unit,
 ) {
-    val state by projects.state.collectAsStateWithLifecycle()
-    val isBusy = state.saving?.isBusy == true
+    val dialog = hiltViewModel<SaveProjectViewModel, SaveProjectViewModel.Factory> {
+        it.create(key)
+    }
+    val state by dialog.state.collectAsStateWithLifecycle()
+    val savedId = state.outcome
+    LaunchedEffect(savedId) {
+        if (savedId == null) return@LaunchedEffect
+        onShowSnackbar(R.string.project_saved)
+        navigator.remove(key)
+        if (key.showsSaved) navigator.showProject(savedId)
+    }
     SaveProjectDialog(
-        defaultName = projects.defaultName(key.snapshot, stringResource(key.snapshot.kind.label)),
-        isBusy = isBusy,
-        error = state.saving?.error,
-        onSave = { name ->
-            projects.save(name, key.snapshot) { id ->
-                onShowSnackbar(R.string.project_saved)
-                navigator.remove(key)
-                if (key.showsSaved) navigator.showProject(id)
-            }
-        },
-        onCancel = {
-            if (!isBusy) {
-                projects.cancelSaving()
-                navigator.remove(key)
-            }
-        },
+        defaultName = dialog.defaultName(stringResource(key.snapshot.kind.label)),
+        isBusy = state.isBusy,
+        error = state.error,
+        onSave = dialog::save,
+        onCancel = { if (!state.isBusy) navigator.remove(key) },
     )
 }
 
@@ -148,29 +146,20 @@ internal fun ProjectUpdateEffect(
 private fun RenameProjectEntry(
     key: RenameProjectKey,
     navigator: Navigator,
-    projects: ProjectsViewModel,
     onShowSnackbar: (Int) -> Unit,
 ) {
-    val state by projects.state.collectAsStateWithLifecycle()
-    val renaming = state.renaming?.takeIf { it.id == key.id }
-    val isBusy = renaming?.isBusy == true
-    OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
+    val dialog = hiltViewModel<RenameProjectViewModel, RenameProjectViewModel.Factory> {
+        it.create(key)
+    }
+    val state by dialog.state.collectAsStateWithLifecycle()
+    ClosesWhenDone(state, R.string.project_renamed, onShowSnackbar) { navigator.remove(key) }
+    OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
         RenameProjectDialog(
             currentName = project.name.text,
-            isBusy = isBusy,
-            error = renaming?.error,
-            onRename = { name ->
-                projects.rename(key.id, name) {
-                    onShowSnackbar(it)
-                    navigator.remove(key)
-                }
-            },
-            onCancel = {
-                if (!isBusy) {
-                    projects.cancelRenaming()
-                    navigator.remove(key)
-                }
-            },
+            isBusy = state.isBusy,
+            error = state.error,
+            onRename = dialog::rename,
+            onCancel = { if (!state.isBusy) navigator.remove(key) },
         )
     }
 }
@@ -179,41 +168,49 @@ private fun RenameProjectEntry(
 private fun DeleteProjectEntry(
     key: DeleteProjectKey,
     navigator: Navigator,
-    projects: ProjectsViewModel,
     onShowSnackbar: (Int) -> Unit,
 ) {
-    val state by projects.state.collectAsStateWithLifecycle()
-    val deleting = state.deleting?.takeIf { it.id == key.id }
-    val isBusy = deleting?.isBusy == true
-    OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
+    val dialog = hiltViewModel<DeleteProjectViewModel, DeleteProjectViewModel.Factory> {
+        it.create(key)
+    }
+    val state by dialog.state.collectAsStateWithLifecycle()
+    ClosesWhenDone(state, R.string.project_deleted, onShowSnackbar) { navigator.remove(key) }
+    OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
         DeleteProjectDialog(
             name = project.name.text,
-            isBusy = isBusy,
-            error = deleting?.error,
-            onDelete = {
-                projects.delete(key.id) {
-                    onShowSnackbar(it)
-                    navigator.remove(key)
-                }
-            },
-            onCancel = {
-                if (!isBusy) {
-                    projects.cancelDeleting()
-                    navigator.remove(key)
-                }
-            },
+            isBusy = state.isBusy,
+            error = state.error,
+            onDelete = dialog::delete,
+            onCancel = { if (!state.isBusy) navigator.remove(key) },
         )
     }
 }
 
+/** Once the dialog's command in [state] is done, shows [message] and closes it with [onClose]. */
 @Composable
-private fun ProjectList(navigator: Navigator, projects: ProjectsViewModel) {
-    val state by projects.state.collectAsStateWithLifecycle()
+private fun ClosesWhenDone(
+    state: ProjectCommandState<Unit>,
+    @StringRes message: Int,
+    onShowSnackbar: (Int) -> Unit,
+    onClose: () -> Unit,
+) {
+    val isDone = state.outcome != null
+    LaunchedEffect(isDone) {
+        if (!isDone) return@LaunchedEffect
+        onShowSnackbar(message)
+        onClose()
+    }
+}
+
+@Composable
+private fun ProjectList(navigator: Navigator) {
+    val list = hiltViewModel<ProjectListViewModel>()
+    val state by list.state.collectAsStateWithLifecycle()
     val projetos = navigator.state.stackOf(ProjectsKey)
     val isTwoPane = LocalIsTwoPane.current
     ProjectsScreen(
         state,
-        projects::load,
+        list::load,
         onSeePatterns = { navigator.select(PatternCatalogKey) },
         onAbout = { navigator.push(AboutKey) },
         onOpen = { id ->
@@ -235,20 +232,22 @@ private fun ProjectList(navigator: Navigator, projects: ProjectsViewModel) {
 }
 
 /**
- * Shows the stored project [id] with [content] once projects load, or closes with [onClose] when
- * it is no longer stored.
+ * Shows the stored project [id] with [content] once it loads, or closes with [onClose] when it is
+ * no longer stored. It follows the project in a ViewModel of the entry it is composed in.
  */
 @Composable
 internal fun OpenedProject(
     id: ProjectId,
-    projects: ProjectsViewModel,
     onClose: () -> Unit,
     content: @Composable (Project) -> Unit,
 ) {
-    val state by projects.state.collectAsStateWithLifecycle()
-    val project = state.projects.find { it.id == id }
-    when {
-        project != null -> content(project)
-        !state.isLoading && state.loadError == null -> LaunchedEffect(Unit) { onClose() }
+    val opened = hiltViewModel<OpenedProjectViewModel, OpenedProjectViewModel.Factory> {
+        it.create(ProjectKey(id))
+    }
+    val state by opened.state.collectAsStateWithLifecycle()
+    when (val current = state) {
+        is OpenedProjectState.Shown -> content(current.project)
+        OpenedProjectState.Gone -> LaunchedEffect(Unit) { onClose() }
+        OpenedProjectState.Loading -> Unit
     }
 }

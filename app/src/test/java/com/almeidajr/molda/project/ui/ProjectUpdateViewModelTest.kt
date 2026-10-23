@@ -1,20 +1,9 @@
 package com.almeidajr.molda.project.ui
 
-import com.almeidajr.molda.measurement.Length
-import com.almeidajr.molda.measurement.MeasurementSource
-import com.almeidajr.molda.project.domain.PatternDraftKind
-import com.almeidajr.molda.project.domain.Project
-import com.almeidajr.molda.project.domain.ProjectId
-import com.almeidajr.molda.project.domain.ProjectName
-import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
-import com.almeidajr.molda.skirt.domain.SkirtDraft
-import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import com.almeidajr.molda.testing.October18Clock
-import java.time.Instant
-import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
@@ -86,18 +75,3 @@ class ProjectUpdateViewModelTest {
     private fun updateViewModel() =
         ProjectUpdateViewModel(storage, October18Clock, ProjectEditorKey(saved.id, saved.snapshot))
 }
-
-private val fromProfile = SkirtSnapshot(
-    SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
-    SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
-    MeasurementSource("Ana", LocalDate.of(2026, 10, 12)),
-)
-
-private val saved = Project(
-    ProjectId(1),
-    ProjectName("Saia antiga"),
-    PatternDraftKind.FullCircleSkirt,
-    fromProfile.copy(source = null),
-    createdAt = Instant.parse("2026-09-01T10:00:00Z"),
-    updatedAt = Instant.parse("2026-09-01T10:00:00Z"),
-)

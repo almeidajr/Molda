@@ -7,7 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -29,7 +28,6 @@ import com.almeidajr.molda.profile.ui.profileSection
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
-import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.projectSection
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.skirt.ui.SavedSkirtResult
@@ -50,11 +48,7 @@ import kotlinx.coroutines.launch
  * MoldaTransitions.kt decide from an [EditorStatus].
  */
 @Composable
-fun MoldaRoute(
-    modifier: Modifier = Modifier,
-    versionName: String = "",
-    projects: ProjectsViewModel = hiltViewModel(),
-) {
+fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
     val titleFocus = remember { TitleFocus() }
     // One bus for every stack, so a result reaches its requester whichever stack holds it.
     val resultBus = rememberResultEventBus()
@@ -76,7 +70,6 @@ fun MoldaRoute(
     }
     val app = MoldaApp(
         navigator,
-        projects,
         // Read when the user acts: entries are remembered, so a captured status would go stale.
         status = { stack -> editorStatus(stack, editors.reports(navigator.state.allKeys)) },
     )
@@ -124,12 +117,11 @@ private fun editorStatus(stack: List<NavKey>, reports: Map<NavKey, EditorReport>
 }
 
 /**
- * The app's ViewModels and [navigator], which wire the features' entries together and carry out
- * the transitions decided from the [status] of the editor an action on a stack concerns.
+ * The app's [navigator], which wires the features' entries together and carries out the
+ * transitions decided from the [status] of the editor an action on a stack concerns.
  */
 private class MoldaApp(
     private val navigator: Navigator,
-    private val projects: ProjectsViewModel,
     private val status: (stack: List<NavKey>) -> EditorStatus,
 ) {
     private val stacks get() = navigator.state
@@ -167,14 +159,13 @@ private class MoldaApp(
                 perform(calculateOwn(stacks.current, status(stacks.current)))
             },
         )
-        projectSection(navigator, projects, onShowSnackbar) { project ->
+        projectSection(navigator, onShowSnackbar) { project ->
             SavedSkirtResult(project.snapshot.draft, project.snapshot.radii, onOpenGuide = {
                 navigator.push(ProjectGuideKey(project.id))
             })
         }
         projectDraftSection(
             navigator,
-            projects,
             onShowSnackbar,
             onCloseEditor = { perform(closeProjectEditor(status(stacks.current))) },
         )

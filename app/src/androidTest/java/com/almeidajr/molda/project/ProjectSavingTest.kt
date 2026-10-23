@@ -3,6 +3,7 @@ package com.almeidajr.molda.project
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithText
@@ -38,6 +39,7 @@ import dagger.hilt.android.testing.UninstallModules
 import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
@@ -142,6 +144,26 @@ class ProjectSavingTest {
         val stored = projects.current.single()
         assertEquals("Saia de verão", stored.name.text)
         assertEquals(Length(70.0), stored.snapshot.draft.waist)
+    }
+
+    @Test
+    fun recreation_duringTheSave_storesOneProjectAndClosesTheDialog() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val projects = FakeProjectRepository().apply { commandGate = gate }
+        showCalculatedHandTypedSkirt(projects)
+        click("Salvar projeto")
+        composeRule.clickInDialog("Salvar")
+        composeRule.recreate()
+        composeRule.showRoute()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        assertEquals(1, projects.current.size)
     }
 
     /** Shows the calculator's result for a 70 cm waist typed by hand, stored in [projects]. */

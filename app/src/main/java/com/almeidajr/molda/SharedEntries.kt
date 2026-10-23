@@ -29,7 +29,6 @@ import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
 import com.almeidajr.molda.project.ui.ProjectUpdateEffect
 import com.almeidajr.molda.project.ui.ProjectUpdateViewModel
-import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.skirt.ui.CalculatorDestination
 import com.almeidajr.molda.skirt.ui.CalculatorState
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
@@ -60,7 +59,6 @@ internal const val DISCARD_RESULT_KEY = "discard"
  */
 internal fun EntryProviderScope<NavKey>.projectDraftSection(
     navigator: Navigator,
-    projects: ProjectsViewModel,
     onShowSnackbar: (Int) -> Unit,
     onCloseEditor: () -> Unit,
 ) {
@@ -76,7 +74,7 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         }
         ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
-        OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
+        OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
             CalculatorDestination(
                 editor,
                 title = stringResource(R.string.project_edit_title, project.name.text),
@@ -101,7 +99,7 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
     }
     entry<ProjectGuideKey> { key ->
         val close: () -> Unit = { navigator.remove(key) }
-        OpenedProject(key.id, projects, onClose = close) { project ->
+        OpenedProject(key.id, onClose = close) { project ->
             FabricFoldingPlayer(project.snapshot.radii, close)
         }
     }
