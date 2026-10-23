@@ -41,8 +41,6 @@ internal data class EditorStatus(
     val isProfileEditorOpen: Boolean = false,
     val isProfileDirty: Boolean = false,
     val isProfileSaving: Boolean = false,
-    /** Profiles are loading or failed to load, so no editor can open. */
-    val isProfileUnavailable: Boolean = false,
     val isProjectEditorDirty: Boolean = false,
     val isProjectUpdating: Boolean = false,
 )
@@ -184,7 +182,7 @@ private fun requestEditor(
     open: Transition,
     afterDiscard: AfterDiscard,
 ): Transition = when {
-    status.isProfileSaving || status.isProfileUnavailable -> Transition.None
+    status.isProfileSaving -> Transition.None
     status.isProfileEditorOpen && status.isProfileDirty -> Transition.AskToDiscard(afterDiscard)
     else -> open
 }

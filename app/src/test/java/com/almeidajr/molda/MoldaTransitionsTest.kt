@@ -250,12 +250,8 @@ class MoldaTransitionsTest {
     }
 
     @Test
-    fun requestProfileEditor_profilesUnavailableOrSaving_ignoresIt() {
+    fun requestProfileEditor_whileTheOpenEditorSaves_ignoresIt() {
         // When/Then
-        assertEquals(
-            Transition.None,
-            requestProfileEditor(EditedProfile.New, EditorStatus(isProfileUnavailable = true)),
-        )
         assertEquals(
             Transition.None,
             requestProfileEditor(EditedProfile.New, EditorStatus(isProfileSaving = true)),

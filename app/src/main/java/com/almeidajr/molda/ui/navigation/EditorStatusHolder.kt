@@ -10,12 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation3.runtime.NavKey
 
 /** One editor's unsaved and in-flight work. */
-data class EditorReport(
-    val isDirty: Boolean = false,
-    val isSaving: Boolean = false,
-    /** What the editor works on is loading or failed to load. */
-    val isUnavailable: Boolean = false,
-)
+data class EditorReport(val isDirty: Boolean = false, val isSaving: Boolean = false)
 
 /**
  * The status of each editor entry on the back stacks, which the app reads when the sewist acts.

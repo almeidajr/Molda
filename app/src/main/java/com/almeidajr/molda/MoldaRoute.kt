@@ -111,7 +111,6 @@ private fun editorStatus(stack: List<NavKey>, reports: Map<NavKey, EditorReport>
             isProfileEditorOpen = true,
             isProfileDirty = report.isDirty,
             isProfileSaving = report.isSaving,
-            isProfileUnavailable = report.isUnavailable,
         )
     }
 }

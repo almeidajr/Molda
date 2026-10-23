@@ -47,7 +47,7 @@ class EditorStatusHolderTest {
         val scope = SaverScope { true }
         val holder = EditorStatusHolder()
         holder.report(Editor) { EditorReport(isDirty = true, isSaving = true) }
-        holder.report(OtherEditor) { EditorReport(isUnavailable = true) }
+        holder.report(OtherEditor) { EditorReport(isSaving = true) }
         val saved = with(editorStatusHolderSaver(holder)) { scope.save(holder) }
 
         // When

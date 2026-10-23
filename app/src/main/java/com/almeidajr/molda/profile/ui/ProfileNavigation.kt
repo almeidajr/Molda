@@ -35,7 +35,7 @@ import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 
 private val ProfilesState.editorReport: EditorReport
-    get() = EditorReport(isDirty, isSaving, isUnavailable = isLoading || loadError != null)
+    get() = EditorReport(isDirty, isSaving)
 
 /**
  * Perfis: the profiles beside the open editor, and the picker's editor, which returns the profile
