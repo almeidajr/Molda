@@ -23,13 +23,15 @@ fun skirtResult(draft: SkirtDraft, radii: SkirtRadii, text: (Int) -> String): Sk
     val card = cuttingCard(radii, text)
     val seam = lengthText(draft.waistSeamAllowance)
     val hem = lengthText(draft.hemAllowance)
+    val allowanceDirections = text(R.string.skirt_allowance_directions).format(PtBr, seam, hem)
+    val coincidenceNotes = coincidenceNotes(card, text)
     return SkirtResult(
         card = card,
-        diagramDescription = diagramDescription(card, seam, hem, text),
+        diagramDescription = diagramDescription(card, allowanceDirections, coincidenceNotes, text),
         measurementSummary = measurementSummary(draft, text),
-        allowanceDirections = text(R.string.skirt_allowance_directions).format(PtBr, seam, hem),
+        allowanceDirections = allowanceDirections,
         formulas = formulas(draft, radii, text),
-        coincidenceNotes = coincidenceNotes(card, text),
+        coincidenceNotes = coincidenceNotes,
     )
 }
 

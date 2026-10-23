@@ -36,7 +36,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -110,7 +109,7 @@ fun SkirtCalculatorScreen(
             onOpenGuide,
             onSaveProject,
             onSaveAsNewProject,
-            Modifier.bringIntoViewRequester(resultRequester),
+            cardModifier = Modifier.bringIntoViewRequester(resultRequester),
         ) {
             focusRequesters.getValue(SkirtDraftField.Waist).requestFocus()
             scope.launch { bringRequesters.getValue(SkirtDraftField.Waist).bringIntoView() }
@@ -220,39 +219,6 @@ private fun measurementGuidance(field: SkirtDraftField): Int = when (field) {
 @Composable
 private fun CalculatorIntro() {
     Text(stringResource(R.string.skirt_intro))
-}
-
-@Composable
-private fun CalculationOutcome(
-    state: CalculatorState,
-    onOpenGuide: () -> Unit,
-    onSaveProject: () -> Unit,
-    onSaveAsNewProject: (() -> Unit)?,
-    modifier: Modifier = Modifier,
-    onEditMeasurements: () -> Unit,
-) {
-    if (state.hasNonfiniteResult) {
-        Text(
-            stringResource(R.string.skirt_error_nonfinite_result),
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
-        )
-    }
-    state.result?.let { (draft, radii) ->
-        SkirtResultContent(
-            skirtResult(draft, radii, LocalResources.current::getString),
-            onOpenGuide,
-            cardModifier = modifier,
-            actions = {
-                SaveActions(onSaveProject, onSaveAsNewProject)
-                TextButton(
-                    onClick = onEditMeasurements,
-                    modifier = Modifier.heightIn(min = 48.dp),
-                ) { Text(stringResource(R.string.skirt_edit_measurements)) }
-            },
-            afterMeasurements = { HonestLimitsNote() },
-        )
-    }
 }
 
 @Composable

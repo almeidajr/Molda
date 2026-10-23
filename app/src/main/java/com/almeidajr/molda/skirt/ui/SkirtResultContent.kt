@@ -20,7 +20,7 @@ import com.almeidajr.molda.R
  * card, the guide entry, the measurements used, then the explanation and formulas.
  *
  * A screen adds its own buttons after the guide entry in [actions], a note under the measurements
- * in [afterMeasurements], and a [cardModifier] on the card.
+ * in [measurementsNote], and a [cardModifier] on the card.
  */
 @Composable
 internal fun SkirtResultContent(
@@ -29,7 +29,7 @@ internal fun SkirtResultContent(
     modifier: Modifier = Modifier,
     cardModifier: Modifier = Modifier,
     actions: @Composable FlowRowScope.() -> Unit = {},
-    afterMeasurements: @Composable () -> Unit = {},
+    measurementsNote: @Composable () -> Unit = {},
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         CuttingCard(result.card, result.diagramDescription, result.coincidenceNotes, cardModifier)
@@ -42,7 +42,7 @@ internal fun SkirtResultContent(
             actions()
         }
         UsedMeasurements(result.measurementSummary)
-        afterMeasurements()
+        measurementsNote()
         DraftingExplanation(result)
     }
 }
