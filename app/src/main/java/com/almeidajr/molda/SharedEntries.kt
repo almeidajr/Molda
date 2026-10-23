@@ -34,10 +34,10 @@ import com.almeidajr.molda.skirt.ui.CalculatorState
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.skirt.ui.useProfile
-import com.almeidajr.molda.ui.navigation.EditorReport
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
+import kotlinx.coroutines.flow.map
 
 /*
  * Entries where two features meet. Each feature's own section shows only its own UI, so the app
@@ -67,15 +67,9 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
             it.create(key.snapshot.draft, key.snapshot.source)
         }
         val update = hiltViewModel<ProjectUpdateViewModel, ProjectUpdateViewModel.Factory> {
-            it.create(key)
+            it.create(key, editor.state.map { state -> state.isDirty })
         }
-        val report = EditorReport(
-            editor.state.collectAsStateWithLifecycle().value.isDirty,
-            update.state.collectAsStateWithLifecycle().value.isUpdating,
-        )
-        ReportEditorStatus(key, report) {
-            EditorReport(editor.state.value.isDirty, update.state.value.isUpdating)
-        }
+        ReportEditorStatus(key, update.report)
         ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
         OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->

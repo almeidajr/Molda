@@ -1,7 +1,6 @@
 package com.almeidajr.molda.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.retain.retain
@@ -9,57 +8,75 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
-/** One editor's unsaved and in-flight work. */
-data class EditorReport(val isDirty: Boolean = false, val isSaving: Boolean = false)
+/** Which editor an editor entry is, which decides what discarding its changes means. */
+enum class EditorKind { Profile, Project }
+
+/** One editor's kind and its unsaved and in-flight (saving or updating) work. */
+data class EditorReport(
+    val kind: EditorKind,
+    val isDirty: Boolean = false,
+    val isSaving: Boolean = false,
+)
+
+/** The editor entry on [key] and its [report] when an action asked. */
+data class ReportedEditor(val key: NavKey, val report: EditorReport)
 
 /**
  * The status of each editor entry on the back stacks, which the app reads when the sewist acts.
- * An editor reports while composed; its last source stays until its key leaves the back stacks,
- * since a hidden tab or a screen above it takes it out of composition. Only [composedReport] is
- * observable state.
+ * An editor reports from its first composition; its report stays until its key leaves the back
+ * stacks, since a hidden tab or a screen above it takes it out of composition.
  */
 class EditorStatusHolder {
     // Keyed like Navigation 3's default content key, so a restored report finds its entry.
-    private val sources = mutableMapOf<String, () -> EditorReport>()
-    private val composed = mutableStateMapOf<String, EditorReport>()
+    private val reports = mutableStateMapOf<String, StateFlow<EditorReport>>()
 
-    /** Reads the status of the editor on [key] from [source] until [key] leaves the stacks. */
-    fun report(key: NavKey, source: () -> EditorReport) {
-        sources[key.toString()] = source
-    }
-
-    /** The status of each editor among [keys], all keys on the back stacks; others are dropped. */
-    fun reports(keys: List<NavKey>): Map<NavKey, EditorReport> {
-        val byId = keys.associateBy(NavKey::toString)
-        sources.keys.retainAll(byId.keys)
-        return sources.mapNotNull { (id, source) -> byId[id]?.let { it to source() } }.toMap()
+    /** Reads the status of the editor on [key] from [report] until [key] leaves the stacks. */
+    fun report(key: NavKey, report: StateFlow<EditorReport>) {
+        reports[key.toString()] = report
     }
 
     /**
-     * The status of the editor on [key] while it is composed, or null; observable, so controls
-     * shown beside the editor can follow it.
+     * The editor an action on [stack] concerns, the topmost one there that reports, composed or
+     * not, or null. [keys] are all keys on the back stacks; the reports of others are dropped.
      */
-    fun composedReport(key: NavKey): EditorReport? = composed[key.toString()]
-
-    internal fun showComposed(key: NavKey, report: EditorReport) {
-        composed[key.toString()] = report
+    fun editorOn(stack: List<NavKey>, keys: List<NavKey>): ReportedEditor? {
+        reports.keys.retainAll(keys.map(NavKey::toString).toSet())
+        return topmostOn(stack)?.let { ReportedEditor(it, reports.getValue(it.toString()).value) }
     }
 
-    internal fun hideComposed(key: NavKey) {
-        composed -= key.toString()
+    /**
+     * The status of the editor an action on [stack] concerns, as observable state, for controls
+     * that follow it; actions read [editorOn] instead.
+     */
+    @Composable
+    fun collectStatusOn(stack: List<NavKey>): EditorReport? {
+        val report = topmostOn(stack)?.let { reports[it.toString()] } ?: NoEditor
+        return report.collectAsStateWithLifecycle().value
     }
 
-    internal fun dirtyIds(): List<String> = sources.filterValues { it().isDirty }.keys.toList()
+    private fun topmostOn(stack: List<NavKey>): NavKey? =
+        stack.lastOrNull { it.toString() in reports }
 
-    /** Marks the editors [ids] dirty until they report again; an editor already reporting wins. */
-    internal fun restoreDirty(ids: List<String>) {
-        ids.filterNot(sources::containsKey).forEach {
-            sources[it] = { EditorReport(isDirty = true) }
+    internal fun dirtyEditors(): List<String> = reports.filterValues { it.value.isDirty }
+        .flatMap { (id, report) -> listOf(id, report.value.kind.name) }
+
+    /**
+     * Marks the [editors], ids each followed by its kind, dirty until they report again; an editor
+     * already reporting wins.
+     */
+    internal fun restoreDirty(editors: List<String>) {
+        editors.chunked(2).filterNot { (id) -> id in reports }.forEach { (id, kind) ->
+            reports[id] = MutableStateFlow(EditorReport(EditorKind.valueOf(kind), isDirty = true))
         }
     }
 }
+
+private val NoEditor: StateFlow<EditorReport?> = MutableStateFlow(null)
 
 /**
  * Saves [live]'s unsaved changes and restores them into it. After a configuration change [live] is
@@ -67,7 +84,10 @@ class EditorStatusHolder {
  * come back, since a save in flight or a load does not outlive the process.
  */
 internal fun editorStatusHolderSaver(live: EditorStatusHolder): Saver<EditorStatusHolder, Any> =
-    listSaver(save = { it.dirtyIds() }, restore = { ids -> live.apply { restoreDirty(ids) } })
+    listSaver(
+        save = { it.dirtyEditors() },
+        restore = { editors -> live.apply { restoreDirty(editors) } },
+    )
 
 /**
  * The app's [EditorStatusHolder]. Retained across configuration changes, so a hidden editor's
@@ -85,17 +105,11 @@ val LocalEditorStatusHolder = staticCompositionLocalOf<EditorStatusHolder> {
 }
 
 /**
- * Reports the status of the editor entry on [key] while it is composed, with [report], its
- * collected status, for [EditorStatusHolder.composedReport]. [source] is read whenever the sewist
- * acts, also once the entry is out of composition, so it must read state that outlives the
- * composition, such as a ViewModel's.
+ * Reports the status of the editor entry on [key] as [report], which must outlive the composition
+ * (a ViewModel's), since it is read whenever the sewist acts, also once the entry is hidden.
  */
 @Composable
-fun ReportEditorStatus(key: NavKey, report: EditorReport, source: () -> EditorReport) {
+fun ReportEditorStatus(key: NavKey, report: StateFlow<EditorReport>) {
     val holder = LocalEditorStatusHolder.current
-    SideEffect { holder.report(key, source) }
-    DisposableEffect(holder, key, report) {
-        holder.showComposed(key, report)
-        onDispose { holder.hideComposed(key) }
-    }
+    SideEffect { holder.report(key, report) }
 }

@@ -4,8 +4,12 @@ import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import com.almeidajr.molda.testing.October18Clock
+import com.almeidajr.molda.ui.navigation.EditorKind
+import com.almeidajr.molda.ui.navigation.EditorReport
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -72,6 +76,29 @@ class ProjectUpdateViewModelTest {
         assertEquals(ProjectUpdateState(), update.state.value)
     }
 
-    private fun updateViewModel() =
-        ProjectUpdateViewModel(storage, October18Clock, ProjectEditorKey(saved.id, saved.snapshot))
+    @Test
+    fun report_whileADirtyDraftUpdates_isTheDirtyUpdatingProjectEditor() = runTest {
+        // Given
+        storage.commandGate = CompletableDeferred()
+        val isEditorDirty = MutableStateFlow(false)
+        val update = updateViewModel(isEditorDirty)
+
+        // When
+        isEditorDirty.value = true
+        update.update(fromProfile)
+
+        // Then
+        assertEquals(
+            EditorReport(EditorKind.Project, isDirty = true, isSaving = true),
+            update.report.value,
+        )
+    }
+
+    private fun updateViewModel(isEditorDirty: Flow<Boolean> = MutableStateFlow(false)) =
+        ProjectUpdateViewModel(
+            storage,
+            October18Clock,
+            ProjectEditorKey(saved.id, saved.snapshot),
+            isEditorDirty,
+        )
 }

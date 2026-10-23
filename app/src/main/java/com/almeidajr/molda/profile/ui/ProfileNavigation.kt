@@ -29,13 +29,9 @@ import com.almeidajr.molda.profile.navigation.ProfileManagementKey
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
-import com.almeidajr.molda.ui.navigation.EditorReport
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
-
-private val ProfileEditorState.editorReport: EditorReport
-    get() = EditorReport(isDirty, isSaving)
 
 /**
  * Perfis: the profiles beside the open editor, and the picker's editor, which returns the profile
@@ -50,7 +46,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     onRequestEditor: (EditedProfile) -> Unit,
     onCancelEditor: () -> Unit,
     onShowSnackbar: (Int) -> Unit,
-    isEditorSaving: () -> Boolean,
+    isEditorSaving: @Composable () -> Boolean,
 ) {
     entry<ProfileManagementKey>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
@@ -71,7 +67,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
         val editor = editorViewModel(key.profile)
-        ReportEditorStatus(key, editor.collectedReport()) { editor.state.value.editorReport }
+        ReportEditorStatus(key, editor.report)
         ProfileSavedEffect(editor) {
             onShowSnackbar(R.string.profile_saved)
             navigator.remove(key)
@@ -81,7 +77,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     }
     entry<PickerProfileEditorKey> { key ->
         val editor = editorViewModel(EditedProfile.New)
-        ReportEditorStatus(key, editor.collectedReport()) { editor.state.value.editorReport }
+        ReportEditorStatus(key, editor.report)
         val results = LocalResultEventBus.current
         ProfileSavedEffect(editor) { save ->
             onShowSnackbar(R.string.profile_saved)
@@ -91,10 +87,6 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         OpenEditor(editor, onCancelEditor, isUpShown = true)
     }
 }
-
-@Composable
-private fun ProfileEditorViewModel.collectedReport() =
-    state.collectAsStateWithLifecycle().value.editorReport
 
 @Composable
 private fun editorViewModel(profile: EditedProfile) =
