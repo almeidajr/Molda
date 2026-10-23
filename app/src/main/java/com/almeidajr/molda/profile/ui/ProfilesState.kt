@@ -6,6 +6,7 @@ import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileError
 import com.almeidajr.molda.profile.domain.ProfileId
+import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import kotlinx.serialization.Serializable
 
 enum class ProfileField(@param:StringRes val label: Int) {
@@ -76,4 +77,28 @@ data class ProfilesState(
     val isDirty: Boolean get() = form.inputs != form.originalInputs
     val editingId: ProfileId? get() = form.editingId
     val canMutate: Boolean get() = load is LoadResult.Success && !isSaving
+
+    /** The picker's rows: the stored profiles, each with whether its notes are shown. */
+    val pickerRows: LoadResult<List<PickerRow>>
+        get() = when (load) {
+            is LoadResult.Success -> LoadResult.Success(pickerRows(load.value))
+            LoadResult.Loading -> LoadResult.Loading
+            is LoadResult.Error -> load
+        }
 }
+
+/** A profile in the picker; [showNotes] when its notes tell it apart from lookalikes. */
+data class PickerRow(val profile: MeasurementProfile, val showNotes: Boolean)
+
+/**
+ * Each of [profiles] as a picker row, shown with notes when another profile has the same name,
+ * waist and measurement date; the notes themselves do not count towards being alike.
+ */
+fun pickerRows(profiles: List<MeasurementProfile>): List<PickerRow> {
+    val sizes = profiles.groupingBy { it.measurements.lookalikeKey() }.eachCount()
+    return profiles.map {
+        PickerRow(it, showNotes = sizes.getValue(it.measurements.lookalikeKey()) > 1)
+    }
+}
+
+private fun ProfileMeasurements.lookalikeKey() = Triple(name, waist, measurementDate)

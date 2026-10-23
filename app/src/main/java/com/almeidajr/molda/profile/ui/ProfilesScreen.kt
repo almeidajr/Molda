@@ -259,7 +259,7 @@ fun ProfilePicker(
             TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.profile_picker_cancel))
             }
-            when (val load = state.load) {
+            when (val rows = state.pickerRows) {
                 LoadResult.Loading -> {
                     CircularProgressIndicator()
                     Text(stringResource(R.string.profile_loading))
@@ -275,16 +275,11 @@ fun ProfilePicker(
                     }
                 }
 
-                is LoadResult.Success if load.value.isEmpty() ->
+                is LoadResult.Success if rows.value.isEmpty() ->
                     Text(stringResource(R.string.profile_empty_picker))
 
-                is LoadResult.Success -> load.value.forEach { profile ->
-                    val hasDuplicate = load.value.count {
-                        it.measurements.name == profile.measurements.name &&
-                            it.measurements.waist == profile.measurements.waist &&
-                            it.measurements.measurementDate == profile.measurements.measurementDate
-                    } > 1
-                    PickerRow(profile, showNotes = hasDuplicate, onSelect)
+                is LoadResult.Success -> rows.value.forEach { (profile, showNotes) ->
+                    PickerRow(profile, showNotes, onSelect)
                 }
             }
             Button(
