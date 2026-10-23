@@ -268,6 +268,24 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun openSavedProfile_cancelAfterRetypingWaistTheSameWay_closesWithoutAsking() {
+        // Given
+        profileRepository = FakeProfileRepository(listOf(profile(1, "Ana", waist = 80.0)))
+        composeRule.launchProfiles()
+        composeRule.click("Ana")
+        composeRule.edit("Cintura do perfil (cm)", "80,0")
+        // An open keyboard would resize the editor between scrolling to Cancelar and the tap.
+        composeRule.closeKeyboard()
+
+        // When
+        composeRule.click("Cancelar")
+
+        // Then
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
+    }
+
+    @Test
     fun editorCancel_whenDirty_asksToDiscard() {
         // Given
         showNewProfileEditor()
