@@ -235,16 +235,15 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
-    fun edit_dateOrNotes_makesTheFormDirty() = runTest {
+    fun edit_nameRetypedAsTheSameNumber_makesTheFormDirty() = runTest {
         // Given
+        storage.update(profile(ana.id.value, "80", 80.0))
         val editor = editor(EditedProfile.Existing(ana.id))
 
-        // When/Then
-        editor.edit(ProfileField.Notes, "Left side")
-        assertTrue(editor.state.value.isDirty)
-        editor.edit(ProfileField.Notes, "")
-        assertFalse(editor.state.value.isDirty)
-        editor.edit(ProfileField.Date, "2025-01-01")
+        // When
+        editor.edit(ProfileField.Name, "80,0")
+
+        // Then
         assertTrue(editor.state.value.isDirty)
     }
 
@@ -312,7 +311,13 @@ class ProfileEditorViewModelTest {
 internal val ana = profile(1, "Ana", 80.0)
 internal val bia = profile(2, "Bia", 95.0)
 
-private fun profile(id: Long, name: String, waist: Double) = MeasurementProfile(
+internal fun profile(
+    id: Long,
+    name: String,
+    waist: Double,
+    notes: String = "",
+    date: LocalDate = LocalDate.of(2026, 10, 12),
+) = MeasurementProfile(
     ProfileId(id),
-    ProfileMeasurements(ProfileName(name), Length(waist), LocalDate.of(2026, 10, 12)),
+    ProfileMeasurements(ProfileName(name), Length(waist), date, notes),
 )
