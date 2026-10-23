@@ -11,12 +11,8 @@ import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
-import com.almeidajr.molda.skirt.domain.SkirtDraftReading
 import com.almeidajr.molda.skirt.domain.SkirtFieldError
-import com.almeidajr.molda.skirt.domain.SkirtRadii
-import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
-import com.almeidajr.molda.skirt.domain.readSkirtDraft
-import com.almeidajr.molda.skirt.domain.skirtFieldError
+import com.almeidajr.molda.skirt.domain.calculateSkirt
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,15 +40,23 @@ data class DraftValues(val inputs: Map<SkirtDraftField, String>, val source: Mea
 private val CalculatorForm.values: DraftValues
     get() = DraftValues(inputs, source)
 
-/** [draft] and [radii] are both set after a successful calculation, and only then. */
 data class CalculatorState(
     val form: CalculatorForm = CalculatorForm(),
-    val errors: Map<SkirtDraftField, SkirtFieldError> = emptyMap(),
-    val hasNonfiniteResult: Boolean = false,
-    val draft: SkirtDraft? = null,
-    val radii: SkirtRadii? = null,
+    /**
+     * The shown outcome, absent before the first calculation. An edit withdraws a result but keeps
+     * the errors shown until each field is left, which updates that field's error.
+     */
+    val calculation: SkirtCalculation? = null,
     val calculationAttempt: Int = 0,
 ) {
+    val errors: Map<SkirtDraftField, SkirtFieldError>
+        get() = (calculation as? SkirtCalculation.Invalid)?.errors.orEmpty()
+
+    val hasNonfiniteResult: Boolean get() = calculation == SkirtCalculation.NonfiniteResult
+
+    /** The calculated draft and its radii, or null when no result is shown. */
+    val result: SkirtCalculation.Success? get() = calculation as? SkirtCalculation.Success
+
     /** Whether the inputs' values or their source differ from the loaded saved draft. */
     val isDirty: Boolean get() = form.loaded?.let { !it.hasSameValues(form.values) } == true
 }
@@ -69,12 +73,8 @@ private fun DraftValues.hasSameValues(other: DraftValues): Boolean = source == o
     }
 
 /** The calculated result as a project snapshot, or null before a successful calculation. */
-fun CalculatorState.snapshot(): SkirtSnapshot? {
-    val draft = draft
-    val radii = radii
-    if (draft == null || radii == null) return null
-    return SkirtSnapshot(draft, radii, form.source)
-}
+fun CalculatorState.snapshot(): SkirtSnapshot? =
+    result?.let { SkirtSnapshot(it.draft, it.radii, form.source) }
 
 @HiltViewModel
 class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle) : ViewModel() {
@@ -124,63 +124,36 @@ private fun CalculatorState.edited(field: SkirtDraftField, text: String): Calcul
         isCalculated = false,
         source = form.source.takeIf { field != SkirtDraftField.Waist },
     ),
-    hasNonfiniteResult = false,
-    draft = null,
-    radii = null,
+    calculation = calculation as? SkirtCalculation.Invalid,
 )
 
 /** The state restored from a saved [CalculatorState.form], with its result recalculated. */
 private fun CalculatorState.restored(): CalculatorState =
     if (form.isCalculated) calculated().copy(calculationAttempt = calculationAttempt) else this
 
-/** After the first calculation attempt, revalidates [field] as the user leaves it. */
+/** After the first calculation attempt, shows [field]'s error in the current text's outcome. */
 private fun CalculatorState.blurred(field: SkirtDraftField): CalculatorState {
     if (!form.hasAttemptedCalculation) return this
-    val error = skirtFieldError(field, form.inputs.getValue(field))
-        ?: seamAllowanceError(field, form.inputs)
-    return copy(errors = if (error == null) errors - field else errors + (field to error))
+    val error = (calculateSkirt(form.inputs) as? SkirtCalculation.Invalid)?.errors?.get(field)
+    val shown = if (error == null) errors - field else errors + (field to error)
+    return when {
+        // Keeps a shown result or non-finite message.
+        shown == errors -> this
+
+        shown.isEmpty() -> copy(calculation = null)
+
+        else -> copy(calculation = SkirtCalculation.Invalid(shown))
+    }
 }
 
 private fun CalculatorState.calculated(): CalculatorState {
-    val attempt = copy(
-        form = form.copy(hasAttemptedCalculation = true, isCalculated = false),
+    val calculation = calculateSkirt(form.inputs)
+    return copy(
+        form = form.copy(
+            hasAttemptedCalculation = true,
+            isCalculated = calculation is SkirtCalculation.Success,
+        ),
+        calculation = calculation,
         calculationAttempt = calculationAttempt + 1,
-        errors = emptyMap(),
-        hasNonfiniteResult = false,
-        draft = null,
-        radii = null,
     )
-    return when (val reading = readSkirtDraft(form.inputs)) {
-        is SkirtDraftReading.Invalid -> attempt.copy(errors = reading.errors)
-
-        is SkirtDraftReading.Valid -> when (val result = calculateSkirtRadii(reading.draft)) {
-            is SkirtCalculation.Success -> attempt.copy(
-                form = attempt.form.copy(isCalculated = true),
-                draft = reading.draft,
-                radii = result.radii,
-            )
-
-            SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching -> attempt.copy(
-                errors = mapOf(
-                    SkirtDraftField.WaistSeamAllowance to
-                        SkirtFieldError.SeamAllowanceNotSmallerThanWaistStitching,
-                ),
-            )
-
-            SkirtCalculation.NonfiniteResult -> attempt.copy(hasNonfiniteResult = true)
-        }
-    }
-}
-
-private fun seamAllowanceError(
-    field: SkirtDraftField,
-    inputs: Map<SkirtDraftField, String>,
-): SkirtFieldError? {
-    val reading = readSkirtDraft(inputs)
-    return SkirtFieldError.SeamAllowanceNotSmallerThanWaistStitching.takeIf {
-        field == SkirtDraftField.WaistSeamAllowance &&
-            reading is SkirtDraftReading.Valid &&
-            calculateSkirtRadii(reading.draft) ==
-            SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching
-    }
 }

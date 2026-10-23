@@ -41,35 +41,6 @@ class CalculateSkirtRadiiTest {
         assertEquals(76.2609165977624, radii.hemCutting.centimetres, absoluteTolerance = 1e-12)
     }
 
-    @Test
-    fun calculate_seamAllowanceAtOrAboveWaistStitching_rejectsDraft() {
-        // Given
-        val valid = draft(80.0, 2.0, 60.0, 1.0, 2.0)
-        val radius = successRadii(valid).waistStitching.centimetres
-
-        listOf(radius, radius + 1.0).forEach { allowance ->
-            // When/Then
-            assertEquals(
-                SkirtCalculation.SeamAllowanceNotSmallerThanWaistStitching,
-                calculateSkirtRadii(valid.copy(waistSeamAllowance = Length(allowance))),
-                "allowance $allowance",
-            )
-        }
-    }
-
-    @Test
-    fun calculate_overflowingLengths_rejectsNonfiniteResults() {
-        // When/Then
-        assertEquals(
-            SkirtCalculation.NonfiniteResult,
-            calculateSkirtRadii(draft(Double.MAX_VALUE, Double.MAX_VALUE, 60.0, 0.0, 0.0)),
-        )
-        assertEquals(
-            SkirtCalculation.NonfiniteResult,
-            calculateSkirtRadii(draft(80.0, 0.0, Double.MAX_VALUE, 0.0, Double.MAX_VALUE)),
-        )
-    }
-
     private fun successRadii(draft: SkirtDraft): SkirtRadii =
         (calculateSkirtRadii(draft) as SkirtCalculation.Success).radii
 

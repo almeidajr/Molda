@@ -136,7 +136,7 @@ private fun RevealCalculationOutcome(
     LaunchedEffect(state.calculationAttempt) {
         if (state.calculationAttempt == revealedAttempt) return@LaunchedEffect
         revealedAttempt = state.calculationAttempt
-        if (state.radii != null) {
+        if (state.result != null) {
             // Clearing focus alone leaves the keyboard covering the radii after IME Done.
             keyboard?.hide()
             resultRequester.bringIntoView()
@@ -241,9 +241,7 @@ private fun CalculationOutcome(
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
         )
     }
-    val draft = state.draft
-    val radii = state.radii
-    if (draft != null && radii != null) {
+    state.result?.let { (draft, radii) ->
         val text: (Int) -> String = LocalResources.current::getString
         val card = cuttingCard(radii, text)
         val description = diagramDescription(
@@ -404,7 +402,7 @@ private fun AdaptiveCalculator(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (state.radii == null) Text(stringResource(R.string.skirt_fill_and_calculate))
+                if (state.result == null) Text(stringResource(R.string.skirt_fill_and_calculate))
                 outcome()
             }
         },

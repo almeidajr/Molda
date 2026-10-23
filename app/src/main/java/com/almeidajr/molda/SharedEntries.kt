@@ -67,7 +67,7 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
     }
     entry<ProjectEditorGuideKey> {
         val state by editor.state.collectAsStateWithLifecycle()
-        CalculatedFoldingGuide(state.radii) { navigator.remove(ProjectEditorGuideKey) }
+        CalculatedFoldingGuide(state.result?.radii) { navigator.remove(ProjectEditorGuideKey) }
     }
     entry<ProjectGuideKey> { key ->
         val close: () -> Unit = { navigator.remove(key) }
