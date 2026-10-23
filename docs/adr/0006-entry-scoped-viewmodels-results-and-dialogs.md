@@ -2,7 +2,7 @@
 
 > Supersedes the three planned steps in the consequences of [ADR-0005](0005-navigation-architecture.md) and the way [ADR-0004](0004-fakes-for-screen-tests-and-idling-aware-room-for-journeys.md) gives screen tests their fakes.
 
-**Status:** accepted, partly built. Built: steps 1 and 2 (#139, #140), the editor-status holder (#155), Hilt test bindings for device tests (#154), and the ViewModel-store entry decorator with guide keys that carry their radii (#156), the calculators owned by their entries (#157), and the profile ViewModels owned by their entries (#159). Still to land: the project ViewModels (#158) moving into their entries; until then the route creates them and passes them into the sections.
+**Status:** accepted and built: steps 1 and 2 (#139, #140), the editor-status holder (#155), Hilt test bindings for device tests (#154), the ViewModel-store entry decorator with guide keys that carry their radii (#156), and the calculators (#157), the project ViewModels (#158) and the profile ViewModels (#159) owned by their entries.
 
 ADR-0005 left the entries tied together through shared ViewModels: every ViewModel was created once for the activity in `MoldaRoute` and passed into the sections, a second calculator served the project editor under a fixed key, and the route called one entry's ViewModel on behalf of another (a picked profile, a created profile, a discard follow-up, a project to show). Two sources said whether a profile editor was open, and device tests had to build the ViewModels by hand to pass them in. We follow Navigation 3's recipes and Now in Android instead: a back stack entry owns its state, and entries talk through navigation, never through each other's ViewModels.
 
@@ -26,7 +26,7 @@ Three changes make that true, in this order, because each removes cross-entry ca
 Two rules hold across all three steps:
 
 - **Commands take no UI callbacks.** A command returns nothing to its caller. Its outcome (saved with the new id, renamed, deleted, updated, profile saved) is state in the entry's own ViewModel, and the entry reacts in an effect that shows the snackbar, removes its key or navigates, as Android's UI events guidance says. A callback can fire after the composition that made it is gone: a save that finished after recreation reported to a dead composition, and the restored save dialog then stored a duplicate project.
-- **Device tests are Hilt Android tests.** A custom test runner starts Hilt's test application. Each test class replaces the production storage and clock bindings with its shared fakes (seeded in their constructors, as ADR-0004 requires) and a fixed clock; once step 3 is complete the route takes no ViewModel parameters. A test class whose seeds differ per test binds each test's fakes in the test, then launches the app through `createLaunchLaterComposeRule`. Journey tests replace the database binding with ADR-0004's idling-aware Room, so the real repositories run on it. The app module is split as needed so tests can replace storage and the clock separately.
+- **Device tests are Hilt Android tests.** A custom test runner starts Hilt's test application. Each test class replaces the production storage and clock bindings with its shared fakes (seeded in their constructors, as ADR-0004 requires) and a fixed clock; the route takes no ViewModel parameters. A test class whose seeds differ per test binds each test's fakes in the test, then launches the app through `createLaunchLaterComposeRule`. Journey tests replace the database binding with ADR-0004's idling-aware Room, so the real repositories run on it. The app module is split as needed so tests can replace storage and the clock separately.
 
 ## Considered options
 
@@ -42,6 +42,6 @@ Two rules hold across all three steps:
 
 - No entry calls another entry's ViewModel. A new hand-off adds a result key to a key, never a route callback or a shared state field.
 - Whatever a ViewModel needs at creation goes into its entry's key, which stays serializable.
-- Once step 3 is complete, the route wires navigation, results and transitions only. `ProjectsViewModel`'s split also lets it drop its `TooManyFunctions` suppression.
+- The route wires navigation, results and transitions only. Splitting `ProjectsViewModel` also dropped its `TooManyFunctions` suppression.
 - Screen tests keep ADR-0004's fakes and receive them through Hilt bindings; journey tests still run real Room on idling-aware threads.
 - Because a ViewModel blocks only its own actions, two panes can each have work in flight at once.

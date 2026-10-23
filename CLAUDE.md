@@ -27,7 +27,7 @@ Single-activity Compose app organized by feature, each split into `domain` / `da
 
 - `skirt/` — full-circle skirt calculator. `domain/CalculateSkirtRadii.kt` holds the pure math; `ui/` has the screen, `SkirtCalculatorViewModel`, and the Rive-driven `FabricFoldingGuide`.
 - `profile/` — measurement profiles. `domain/ProfileRepository` is the boundary; `data/LocalProfileRepository` implements it (a `Flow` query plus commands returning `Result`); `ui/` has a `ProfileListViewModel` per list entry (Perfis, each picker) and a `ProfileEditorViewModel` per editor entry.
-- `project/` — saved projetos: a named snapshot of a pattern draft's measurements, assumptions and stored radii, never recalculated on open. `domain/ProjectRepository` is the boundary, `data/LocalProjectRepository` implements it, and `ui/ProjectsViewModel` owns the list and the save, rename and delete dialogs.
+- `project/` — saved projetos: a named snapshot of a pattern draft's measurements, assumptions and stored radii, never recalculated on open. `domain/ProjectRepository` is the boundary, `data/LocalProjectRepository` implements it; `ui/` has a `ProjectListViewModel` for the list entry, an `OpenedProjectViewModel` per entry showing or acting on one project, one ViewModel per dialog entry (save, rename, delete) and the project editor's `ProjectUpdateViewModel`.
 
 Both repositories share one Room 3 database, `data/room/MoldaDatabase.kt` (`molda.db`), opened in `di/DatabaseModule`. The schema is exported to `app/schemas/`; every schema change needs a real `Migration`, never destructive fallback (`docs/adr/0002`).
 
