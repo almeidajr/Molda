@@ -163,6 +163,7 @@ class ProfileFailuresTest {
 
         // Then
         composeRule.onNodeWithText("Excluindo Existente…").assertIsDisplayed()
+        composeRule.onNodeWithText("Ações: Existente").assertIsNotEnabled()
         composeRule.onNodeWithText("Ações: Outra pessoa").assertIsNotEnabled()
     }
 
