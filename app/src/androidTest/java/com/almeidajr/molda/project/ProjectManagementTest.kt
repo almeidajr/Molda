@@ -1,6 +1,7 @@
 package com.almeidajr.molda.project
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
@@ -149,6 +150,27 @@ class ProjectManagementTest {
             listOf(ProjectName("Saia da formatura"), ProjectName("Saia nova")),
             projects.current.map { it.name },
         )
+    }
+
+    @Test
+    fun cancel_duringTheRename_keepsTheDialog() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val projects = FakeProjectRepository(listOf(saiaAntiga)).apply { commandGate = gate }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+        click("Renomear")
+
+        // When
+        composeRule.onNodeWithText("Cancelar").performClick()
+
+        // Then
+        composeRule.onNode(isDialog()).assertExists()
+        composeRule.onNodeWithText("Cancelar").assertIsNotEnabled()
+        gate.complete(Unit)
+        composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
     }
 
     @Test

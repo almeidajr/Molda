@@ -126,6 +126,41 @@ class ProjectDialogViewModelsTest {
     }
 
     @Test
+    fun rename_duringTheStorageCall_isBusyAndIgnoresAnotherRename() = runTest {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        storage.commandGate = gate
+        val dialog = RenameProjectViewModel(storage, October18Clock, RenameProjectKey(saved.id))
+        dialog.rename(ProjectName("Saia da formatura"))
+
+        // When
+        dialog.rename(ProjectName("Saia do casamento"))
+
+        // Then
+        assertEquals(ProjectCommandState(isBusy = true), dialog.state.value)
+        gate.complete(Unit)
+        assertEquals(ProjectName("Saia da formatura"), storage.current.single().name)
+    }
+
+    @Test
+    fun delete_duringTheStorageCall_isBusyAndIgnoresAnotherDelete() = runTest {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        storage.commandGate = gate
+        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+        dialog.delete()
+
+        // When
+        dialog.delete()
+
+        // Then
+        assertEquals(ProjectCommandState(isBusy = true), dialog.state.value)
+        gate.complete(Unit)
+        // A second delete would fail on the project the first removed.
+        assertEquals(ProjectCommandState(outcome = Unit), dialog.state.value)
+    }
+
+    @Test
     fun delete_removesTheProjectAndIsDone() = runTest {
         // Given
         val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
