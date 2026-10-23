@@ -129,6 +129,19 @@ class ProfilesViewModelTest {
     }
 
     @Test
+    fun startCreating_whileProfilesLoad_leavesTheEditorClosed() = runTest {
+        // Given
+        storage.loadGate = CompletableDeferred()
+        val profiles = profilesViewModel()
+
+        // When
+        profiles.startCreating()
+
+        // Then
+        assertFalse(profiles.state.value.isEditorOpen)
+    }
+
+    @Test
     fun save_editedProfile_replacesItInTheList() = runTest {
         // Given
         val profiles = profilesViewModel()

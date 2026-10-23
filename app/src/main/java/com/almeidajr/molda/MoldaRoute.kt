@@ -229,12 +229,17 @@ private class MoldaApp(
 
             is Transition.OpenPickerEditor -> {
                 if (transition.discardsDraft) profiles.cancel()
-                // Moldes and Projetos each have a picker; the one profile form backs the latest.
-                navigator.removeAll { it is ProfileEditorKey || it is PickerProfileEditorKey }
-                profiles.startCreating()
-                navigator.push(PickerProfileEditorKey(transition.resultKey))
+                openPickerEditor(transition.resultKey)
             }
         }
+    }
+
+    private fun openPickerEditor(resultKey: String) {
+        // Moldes and Projetos each have a picker; the one profile form backs the latest.
+        navigator.removeAll { it is ProfileEditorKey || it is PickerProfileEditorKey }
+        profiles.startCreating()
+        // A busy store ignores the request; an entry pushed anyway would send a stale profile.
+        if (profiles.state.value.isEditorOpen) navigator.push(PickerProfileEditorKey(resultKey))
     }
 
     /** Drops the profile draft; closing the picker's editor returns to the picker below it. */
