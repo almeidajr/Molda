@@ -12,13 +12,13 @@ import androidx.compose.ui.test.performTextReplacement
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
-import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showRoute
