@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -122,7 +123,7 @@ internal fun FabricFoldingPlayer(
     var progress by rememberSaveable(stateSaver = GuideProgressSaver) {
         mutableStateOf(GuideProgress())
     }
-    val motionEnabled = rememberSystemMotionEnabled()
+    val motionEnabled = rememberSystemMotionEnabled { progress = progress.motionChanged() }
     val file = rememberGuideFile()
     Surface(modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -134,7 +135,9 @@ internal fun FabricFoldingPlayer(
                 if (onCalculateOwn != null) ExampleLabel(onCalculateOwn)
                 key(progress.step) {
                     val animation: @Composable () -> Unit = {
-                        GuideAnimation(file, radii, progress.step, motionEnabled, drawingSize)
+                        GuideAnimation(file, radii, progress, motionEnabled, drawingSize) {
+                            progress = progress.togglePause()
+                        }
                     }
                     if (isDrawingPinned) animation()
                     Column(
@@ -260,16 +263,24 @@ private fun StepBar(progress: GuideProgress, onPrevious: () -> Unit, onForward: 
     }
 }
 
-/** Follows the system animator scale, including changes made while the player is open. */
+/**
+ * Follows the system animator scale, including changes made while the player is open, calling
+ * [onChange] each time motion is switched on or off.
+ */
 @Composable
-private fun rememberSystemMotionEnabled(): Boolean {
+private fun rememberSystemMotionEnabled(onChange: () -> Unit): Boolean {
     var motionEnabled by remember { mutableStateOf(ValueAnimator.areAnimatorsEnabled()) }
+    val currentOnChange by rememberUpdatedState(onChange)
     DisposableEffect(Unit) {
-        val listener = ValueAnimator.DurationScaleChangeListener { scale ->
-            motionEnabled = scale > 0f
+        fun follow(isEnabled: Boolean) {
+            if (isEnabled != motionEnabled) {
+                motionEnabled = isEnabled
+                currentOnChange()
+            }
         }
+        val listener = ValueAnimator.DurationScaleChangeListener { follow(it > 0f) }
         ValueAnimator.registerDurationScaleChangeListener(listener)
-        motionEnabled = ValueAnimator.areAnimatorsEnabled()
+        follow(ValueAnimator.areAnimatorsEnabled())
         onDispose { ValueAnimator.unregisterDurationScaleChangeListener(listener) }
     }
     return motionEnabled

@@ -34,6 +34,7 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.skirt.ui.FoldingStep
 import com.almeidajr.molda.skirt.ui.GuideAnimation
+import com.almeidajr.molda.skirt.ui.GuideProgress
 import com.almeidajr.molda.skirt.ui.guidePalette
 import com.almeidajr.molda.skirt.ui.rememberGuideFile
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -251,9 +252,10 @@ class FabricFoldingRenderingTest {
                     GuideAnimation(
                         rememberGuideFile(),
                         radii,
-                        step,
+                        GuideProgress(step),
                         motionEnabled = false,
                         drawingSize = 288.dp,
+                        onTogglePause = {},
                     )
                 }
             }
