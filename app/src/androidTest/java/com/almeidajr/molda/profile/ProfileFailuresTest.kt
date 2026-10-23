@@ -286,7 +286,8 @@ class ProfileFailuresTest {
         val storage = existingProfiles().apply { failsLoad = true }
         profileRepository = storage
         composeRule.launchProfiles()
-        storage.failsLoad = false
+        // Perfis composes its list, which starts loading, only after the destination's click.
+        composeRule.runOnIdle { storage.failsLoad = false }
 
         // When
         composeRule.click("Tentar carregar novamente")
@@ -337,7 +338,7 @@ class ProfileFailuresTest {
         composeRule.closeKeyboard()
 
         // When
-        composeRule.click("Salvar perfil")
+        composeRule.click("Salvar alterações")
 
         // Then
         composeRule.onNodeWithContentDescription("Novo perfil").assertIsNotEnabled()
