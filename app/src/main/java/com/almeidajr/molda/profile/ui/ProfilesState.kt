@@ -37,16 +37,15 @@ private val blankInputs = ProfileField.entries.associateWith { "" }
 
 /**
  * The profile editor state that survives process death; [editingId] is null for a new profile.
- * [isStored] once the editor's save has stored it, so a restored editor never stores it again;
- * [created] is the profile that save created, if it did, so a restored editor reports it again.
+ * [saved] is what the editor's save did, once it has stored the form, so a restored editor
+ * reports that save again and never stores the form again.
  */
 @Serializable
 data class ProfileForm(
     val inputs: Map<ProfileField, String> = blankInputs,
     val originalInputs: Map<ProfileField, String> = blankInputs,
     val editingId: ProfileId? = null,
-    val isStored: Boolean = false,
-    val created: MeasurementProfile? = null,
+    val saved: ProfileSave? = null,
 )
 
 /** Whether an input differs from the stored one; a waist retyped as the same length does not. */
@@ -58,9 +57,12 @@ private val ProfileForm.isDirty: Boolean
     }
 
 /** What a successful save did to the stored profiles. */
+@Serializable
 sealed interface ProfileSave {
+    @Serializable
     data class Created(val profile: MeasurementProfile) : ProfileSave
 
+    @Serializable
     data object Updated : ProfileSave
 }
 

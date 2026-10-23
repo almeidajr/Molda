@@ -49,11 +49,7 @@ internal fun ProfileEditorState.submitted(validation: ProfileValidation) = when 
 /** Keeps the stored form as the clean one and reports what the save did. */
 internal fun ProfileEditorState.savedWith(result: Result<ProfileSave>) = result.fold(
     onSuccess = {
-        val stored = form.copy(
-            originalInputs = form.inputs,
-            isStored = true,
-            created = (it as? ProfileSave.Created)?.profile,
-        )
+        val stored = form.copy(originalInputs = form.inputs, saved = it)
         copy(form = stored, saving = null, saved = it)
     },
     onFailure = { copy(saving = ProfileSaving.Failed) },

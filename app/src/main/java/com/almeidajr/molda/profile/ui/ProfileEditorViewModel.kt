@@ -49,10 +49,8 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
     }
     private val mutableState = MutableStateFlow(
         savedForm?.let { form ->
-            val saved = form.created?.let(ProfileSave::Created)
-                ?: ProfileSave.Updated.takeIf { form.isStored }
             // Nothing to load: the form is what the editor shows.
-            ProfileEditorState(form = form, load = LoadResult.Success(Unit), saved = saved)
+            ProfileEditorState(form = form, load = LoadResult.Success(Unit), saved = form.saved)
         }
             ?: ProfileEditorState(form = ProfileForm(editingId = editingId)),
     )
