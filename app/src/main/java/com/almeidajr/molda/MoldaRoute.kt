@@ -24,6 +24,7 @@ import com.almeidajr.molda.profile.navigation.EditedProfile
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
+import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
 import com.almeidajr.molda.profile.ui.profileSection
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
@@ -106,6 +107,14 @@ private fun EditorReport?.editorStatus(): EditorStatus = when (this) {
         EditorKind.Profile -> EditorStatus.Profile(isDirty, isSaving)
     }
 }
+
+/**
+ * The profile editor that finishing closes on [stack]: the one the holder answers, or the topmost
+ * profile editor there in the frame before a just-pushed one first reports.
+ */
+private fun EditorStatusHolder.profileEditorOn(stack: List<NavKey>): NavKey? = editorOn(stack)
+    ?.takeIf { it.report.kind == EditorKind.Profile }?.key
+    ?: stack.lastOrNull { it.isProfileEditor }
 
 /**
  * The app's [navigator], which wires the features' entries together and carries out the
@@ -198,9 +207,8 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
             is Transition.AskToDiscard -> navigator.push(DiscardChangesKey(transition.afterDiscard))
 
             // The selected stack's profile editor; the picker's returns to the picker below it.
-            Transition.FinishProfileEditor -> editors.editorOn(stacks.current)
-                ?.takeIf { it.report.kind == EditorKind.Profile }
-                ?.let { navigator.remove(it.key) }
+            Transition.FinishProfileEditor ->
+                editors.profileEditorOn(stacks.current)?.let(navigator::remove)
 
             Transition.CloseProjectEditor -> navigator.removeAll { it is ProjectEditorKey }
 
