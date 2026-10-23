@@ -31,10 +31,11 @@ Single-activity Compose app organized by feature, each split into `domain` / `da
 
 Both repositories share one Room 3 database, `data/room/MoldaDatabase.kt` (`molda.db`), opened in `di/AppModule`. The schema is exported to `app/schemas/`; every schema change needs a real `Migration`, never destructive fallback (`docs/adr/0002`).
 
-Entry flow: `MainActivity` (calls `Rive.init`) → `MoldaRoute.kt`, following Navigation 3's recipes (`docs/adr/0005`):
+Entry flow: `MainActivity` (calls `Rive.init`) → `MoldaRoute.kt`, following Navigation 3's recipes (`docs/adr/0005`; `docs/adr/0006` for results, dialogs and ViewModels):
 
 - `ui/navigation/TopLevelBackStacks.kt` holds one back stack per destination (Moldes, Projetos, Guias, Perfis), and `ui/navigation/Navigator.kt` changes them.
 - Each feature's `navigation` package holds its `internal` `NavKey`s (its API: any feature may navigate to them); its `ui/<Feature>Navigation.kt` adds an `EntryProviderScope<NavKey>.<feature>Section(...)` showing only that feature's UI. Entries where two features' UI meet live in the root `SharedEntries.kt`.
+- Entries return results to the entry that asked through Navigation 3's result API, addressed by the result-key string their key carries; project dialogs are window-overlay entries; entries own their ViewModels; commands take no UI callbacks, the entry reacts to its ViewModel's state (`docs/adr/0006`).
 - `MoldaTransitions.kt` decides cross-feature transitions (discard prompts, re-selecting a destination, Back over an editor) as pure functions, tested locally.
 - `MoldaRoute` wires the feature ViewModels (a second calculator for the project editor), the sections and the shared overlays (profile picker, discard dialog); `MoldaShell.kt` hosts the navigation suite and one `NavDisplay`, which shows list-detail panes on wide windows and avoids hinges (`ui/adaptive/AdaptiveContent.kt`).
 
