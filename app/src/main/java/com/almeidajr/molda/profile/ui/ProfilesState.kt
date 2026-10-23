@@ -3,6 +3,7 @@ package com.almeidajr.molda.profile.ui
 import androidx.annotation.StringRes
 import com.almeidajr.molda.R
 import com.almeidajr.molda.data.LoadResult
+import com.almeidajr.molda.measurement.isSameLength
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileError
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -46,6 +47,14 @@ data class ProfileForm(
     val isStored: Boolean = false,
 )
 
+/** Whether an input differs from the stored one; a waist retyped as the same length does not. */
+private val ProfileForm.isDirty: Boolean
+    get() = ProfileField.entries.any { field ->
+        val text = inputs.getValue(field)
+        val original = originalInputs.getValue(field)
+        if (field == ProfileField.Waist) !isSameLength(text, original) else text != original
+    }
+
 /** What a successful save did to the stored profiles. */
 sealed interface ProfileSave {
     data class Created(val profile: MeasurementProfile) : ProfileSave
@@ -74,7 +83,7 @@ data class ProfilesState(
     val deleteId: ProfileId? = null,
 ) {
     val inputs: Map<ProfileField, String> get() = form.inputs
-    val isDirty: Boolean get() = form.inputs != form.originalInputs
+    val isDirty: Boolean get() = form.isDirty
     val editingId: ProfileId? get() = form.editingId
     val canMutate: Boolean get() = load is LoadResult.Success && !isSaving
 

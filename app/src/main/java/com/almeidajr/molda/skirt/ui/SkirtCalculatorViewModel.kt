@@ -5,9 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.serialization.saved
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
-import com.almeidajr.molda.measurement.ParsedLength
+import com.almeidajr.molda.measurement.isSameLength
 import com.almeidajr.molda.measurement.lengthText
-import com.almeidajr.molda.measurement.parseLength
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
@@ -63,15 +62,9 @@ data class CalculatorState(
     val isDirty: Boolean get() = form.loaded?.let { !it.hasSameValues(form.values) } == true
 }
 
-// "80" and "80,0" are the same length; text that is not a length compares as typed.
 private fun DraftValues.hasSameValues(other: DraftValues): Boolean = source == other.source &&
     SkirtDraftField.entries.all { field ->
-        val text = inputs[field].orEmpty()
-        val otherText = other.inputs[field].orEmpty()
-        when (val length = parseLength(text)) {
-            is ParsedLength.Valid -> length == parseLength(otherText)
-            else -> text == otherText
-        }
+        isSameLength(inputs[field].orEmpty(), other.inputs[field].orEmpty())
     }
 
 /**

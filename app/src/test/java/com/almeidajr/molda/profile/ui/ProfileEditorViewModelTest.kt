@@ -210,6 +210,44 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
+    fun edit_waistRetypedAsTheSameLength_keepsTheFormClean() = runTest {
+        // Given
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Waist, "80,0")
+
+        // Then
+        assertFalse(editor.state.value.isDirty)
+    }
+
+    @Test
+    fun edit_waistToAnotherLength_makesTheFormDirty() = runTest {
+        // Given
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Waist, "81")
+
+        // Then
+        assertTrue(editor.state.value.isDirty)
+    }
+
+    @Test
+    fun edit_dateOrNotes_makesTheFormDirty() = runTest {
+        // Given
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When/Then
+        editor.edit(ProfileField.Notes, "Left side")
+        assertTrue(editor.state.value.isDirty)
+        editor.edit(ProfileField.Notes, "")
+        assertFalse(editor.state.value.isDirty)
+        editor.edit(ProfileField.Date, "2025-01-01")
+        assertTrue(editor.state.value.isDirty)
+    }
+
+    @Test
     fun recreate_afterProcessDeath_restoresTheForm() = runTest {
         viewModelScenario {
             ProfileEditorViewModel(

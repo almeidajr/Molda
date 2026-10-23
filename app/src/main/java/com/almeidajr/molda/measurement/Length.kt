@@ -39,6 +39,12 @@ fun parseLength(text: String): ParsedLength {
     }
 }
 
+/** Whether [text] and [other] are the same length ("80", "80,0"); other text compares as typed. */
+fun isSameLength(text: String, other: String): Boolean = when (val length = parseLength(text)) {
+    is ParsedLength.Valid -> length == parseLength(other)
+    else -> text == other
+}
+
 private val DecimalNumber = Regex("[+-]?[0-9]+([,.][0-9]+)?")
 
 /** [length] as a user would type it: a decimal comma and no trailing zeros, e.g. "80,5". */
