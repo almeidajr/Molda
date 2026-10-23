@@ -25,12 +25,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +53,8 @@ import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import com.almeidajr.molda.ui.navigation.rememberTitleFocusRequester
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 
 // Leaves most of a short window to the instructions while the drawing stays pinned.
 private const val DRAWING_HEIGHT_FRACTION = 0.4f
@@ -122,7 +124,7 @@ internal fun FabricFoldingPlayer(
     var progress by rememberSaveable(stateSaver = GuideProgressSaver) {
         mutableStateOf(GuideProgress())
     }
-    val motionEnabled = rememberSystemMotionEnabled()
+    val motionEnabled = rememberSystemMotionEnabled { progress = progress.motionChanged() }
     val file = rememberGuideFile()
     Surface(modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -134,7 +136,9 @@ internal fun FabricFoldingPlayer(
                 if (onCalculateOwn != null) ExampleLabel(onCalculateOwn)
                 key(progress.step) {
                     val animation: @Composable () -> Unit = {
-                        GuideAnimation(file, radii, progress.step, motionEnabled, drawingSize)
+                        GuideAnimation(file, radii, progress, motionEnabled, drawingSize) {
+                            progress = progress.togglePause()
+                        }
                     }
                     if (isDrawingPinned) animation()
                     Column(
@@ -260,17 +264,29 @@ private fun StepBar(progress: GuideProgress, onPrevious: () -> Unit, onForward: 
     }
 }
 
-/** Follows the system animator scale, including changes made while the player is open. */
+/**
+ * Follows the system animator scale, including changes made while the player is open, calling
+ * [onChange] on the main thread each time motion is switched on or off. Every switch counts, even
+ * an off and on quicker than a frame, which a recomposition would only see as unchanged.
+ */
 @Composable
-private fun rememberSystemMotionEnabled(): Boolean {
+private fun rememberSystemMotionEnabled(onChange: () -> Unit): Boolean {
     var motionEnabled by remember { mutableStateOf(ValueAnimator.areAnimatorsEnabled()) }
-    DisposableEffect(Unit) {
-        val listener = ValueAnimator.DurationScaleChangeListener { scale ->
-            motionEnabled = scale > 0f
+    val currentOnChange by rememberUpdatedState(onChange)
+    LaunchedEffect(Unit) {
+        // The listener runs on a binder thread; collecting moves each change to the main thread.
+        callbackFlow {
+            val listener = ValueAnimator.DurationScaleChangeListener { trySend(it > 0f) }
+            ValueAnimator.registerDurationScaleChangeListener(listener)
+            // Catches a change made before the listener was registered.
+            trySend(ValueAnimator.areAnimatorsEnabled())
+            awaitClose { ValueAnimator.unregisterDurationScaleChangeListener(listener) }
+        }.collect { enabled ->
+            if (enabled != motionEnabled) {
+                motionEnabled = enabled
+                currentOnChange()
+            }
         }
-        ValueAnimator.registerDurationScaleChangeListener(listener)
-        motionEnabled = ValueAnimator.areAnimatorsEnabled()
-        onDispose { ValueAnimator.unregisterDurationScaleChangeListener(listener) }
     }
     return motionEnabled
 }

@@ -5,7 +5,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -42,6 +45,7 @@ import com.almeidajr.molda.skirt.ui.FoldingStep
 import com.almeidajr.molda.skirt.ui.GUIDE_BADGE_PAUSE_TAG
 import com.almeidajr.molda.skirt.ui.GUIDE_BADGE_PLAY_TAG
 import com.almeidajr.molda.skirt.ui.GuideFrame
+import com.almeidajr.molda.skirt.ui.GuideProgress
 import com.almeidajr.molda.skirt.ui.IndicatorDelay
 import com.almeidajr.molda.skirt.ui.IndicatorMinDuration
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -215,7 +219,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun nextAndPrevious_afterPausing_playTheStepShown() {
+    fun next_afterPausing_playsTheStepShown() {
         // Given
         calculate()
         openPlayingGuide()
@@ -228,10 +232,20 @@ class FabricFoldingGuideTest {
 
         // Then
         drawing(SECOND_FOLD).assert(hasStateDescription("Reproduzindo"))
+    }
 
-        // When: this step is paused too, then left.
-        drawing(SECOND_FOLD).performClick()
-        composeRule.onNodeWithText("Anterior").performClick()
+    @Test
+    fun motionChange_afterPausing_playsTheStep() {
+        // Given
+        calculate()
+        openPlayingGuide()
+        next(times = 1)
+        drawing(FIRST_FOLD).performClick()
+        drawing(FIRST_FOLD).assert(hasStateDescription("Pausado"))
+
+        // When
+        animatorScale.set(0f)
+        animatorScale.set(1f)
 
         // Then
         drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo"))
@@ -276,7 +290,7 @@ class FabricFoldingGuideTest {
         showFrame(FoldingStep.FirstFold)
 
         // Then
-        composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
+        composeRule.onNodeWithText("playing=true", useUnmergedTree = true)
             .assertExists()
         pauseButton()
             .assertContentDescriptionEquals("Dobra do tecido em Rive: etapa 2")
@@ -298,7 +312,7 @@ class FabricFoldingGuideTest {
         pauseButton().performClick()
 
         // Then
-        composeRule.onNodeWithText("play=true paused=true", useUnmergedTree = true)
+        composeRule.onNodeWithText("playing=false", useUnmergedTree = true)
             .assertExists()
         pauseButton()
             .assert(hasStateDescription("Pausado"))
@@ -310,7 +324,7 @@ class FabricFoldingGuideTest {
         pauseButton().performClick()
 
         // Then
-        composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
+        composeRule.onNodeWithText("playing=true", useUnmergedTree = true)
             .assertExists()
         pauseButton().assert(hasStateDescription("Reproduzindo"))
         badge(GUIDE_BADGE_PAUSE_TAG).assertIsDisplayed()
@@ -334,19 +348,6 @@ class FabricFoldingGuideTest {
 
         // Then
         pauseButton().assert(hasStateDescription("Reproduzindo"))
-    }
-
-    @Test
-    fun frame_withMotionDisabled_keepsDrawingStill_andIsNoControl() {
-        // When
-        showFrame(FoldingStep.FirstFold, motionEnabled = false)
-
-        // Then
-        composeRule.onNodeWithText("play=false paused=false", useUnmergedTree = true)
-            .assertExists()
-        composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
-        badge(GUIDE_BADGE_PAUSE_TAG).assertDoesNotExist()
-        badge(GUIDE_BADGE_PLAY_TAG).assertDoesNotExist()
     }
 
     @Test
@@ -389,7 +390,7 @@ class FabricFoldingGuideTest {
         composeRule.mainClock.advanceTimeBy(after(IndicatorDelay + IndicatorMinDuration))
 
         // Then
-        composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
+        composeRule.onNodeWithText("playing=true", useUnmergedTree = true)
             .assertIsDisplayed()
         composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
         composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
@@ -411,7 +412,7 @@ class FabricFoldingGuideTest {
 
         // Then
         composeRule.onNode(isLoadingIndicator).assertDoesNotExist()
-        composeRule.onNodeWithText("play=true paused=false", useUnmergedTree = true)
+        composeRule.onNodeWithText("playing=true", useUnmergedTree = true)
             .assertIsDisplayed()
     }
 
@@ -437,26 +438,27 @@ class FabricFoldingGuideTest {
     }
 
     /**
-     * Shows the drawing frame with a stand-in drawing that prints the playback it receives and
-     * reports [load] once shown.
+     * Shows the drawing frame on [step] with motion on, as the player does, with a stand-in drawing
+     * that prints whether it plays and reports [load] once shown.
      */
     private fun showFrame(
         step: FoldingStep,
-        motionEnabled: Boolean = true,
         file: State<Result<Unit>> = mutableStateOf(Result.Success(Unit)),
         load: DrawingLoad = DrawingLoad.Drawn,
     ) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
+                var progress by remember { mutableStateOf(GuideProgress(step)) }
                 MoldaTheme {
-                    GuideFrame(file.value, step, motionEnabled, drawingSize = 288.dp) {
-                            _,
-                            play,
-                            paused,
-                            onLoaded,
-                        ->
+                    GuideFrame(
+                        file.value,
+                        progress,
+                        motionEnabled = true,
+                        drawingSize = 288.dp,
+                        onTogglePause = { progress = progress.togglePause() },
+                    ) { _, isPlaying, onLoaded ->
                         LaunchedEffect(Unit) { onLoaded(load) }
-                        Text("play=$play paused=$paused")
+                        Text("playing=$isPlaying")
                     }
                 }
             }

@@ -54,7 +54,6 @@ import app.rive.rememberRiveFile
 import app.rive.rememberRiveWorkerOrNull
 import app.rive.rememberViewModelInstanceResult
 import com.almeidajr.molda.R
-import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
 /**
@@ -74,45 +73,43 @@ internal fun rememberGuideFile(): Result<RiveFile>? {
 internal fun GuideAnimation(
     file: Result<RiveFile>?,
     radii: SkirtRadii,
-    step: FoldingStep,
+    progress: GuideProgress,
     motionEnabled: Boolean,
     drawingSize: Dp,
+    onTogglePause: () -> Unit,
 ) {
-    GuideFrame(file, step, motionEnabled, drawingSize) { loaded, play, paused, onLoaded ->
-        GuideDrawing(loaded, radii, step, play, paused, onLoaded)
+    GuideFrame(file, progress, motionEnabled, drawingSize, onTogglePause) {
+            loaded,
+            isPlaying,
+            onLoaded,
+        ->
+        GuideDrawing(loaded, radii, progress.step, motionEnabled, isPlaying, onLoaded)
     }
 }
-
-/** How a step's drawing finished loading: drawn, or failed with its error sentence shown. */
-internal enum class DrawingLoad { Drawn, Failed }
 
 /** Test tags of the badge's two glyphs: nothing else tells its decorative states apart. */
 internal const val GUIDE_BADGE_PAUSE_TAG = "guide_badge_pause"
 internal const val GUIDE_BADGE_PLAY_TAG = "guide_badge_play"
 
 /**
- * The drawing's frame, which owns pausing. Once [file] has loaded, [drawing] draws it, told
- * whether to play and whether it is paused, and reports how it loaded. Until then the frame stays
- * empty at its final size, described for TalkBack; a long load shows a loading indicator. With
- * motion enabled, a drawn step plays at once and the whole frame is a pause button, with a badge
- * showing what a tap does; a failed one keeps only its error sentence.
+ * The drawing's frame, showing the player's [progress]. Once [file] has loaded, [drawing] draws
+ * it, told whether it plays, and reports how it loaded. Until then the frame stays empty at its
+ * final size, described for TalkBack; a long load shows a loading indicator. Once the drawing is
+ * a pause control ([isPausable]), the whole frame is a button calling [onTogglePause], with a
+ * badge showing what a tap does; a failed drawing keeps only its error sentence.
  */
 @Composable
 internal fun <T> GuideFrame(
     file: Result<T>?,
-    step: FoldingStep,
+    progress: GuideProgress,
     motionEnabled: Boolean,
     drawingSize: Dp,
-    drawing: @Composable (
-        file: T,
-        play: Boolean,
-        paused: Boolean,
-        onLoaded: (DrawingLoad) -> Unit,
-    ) -> Unit,
+    onTogglePause: () -> Unit,
+    drawing: @Composable (file: T, isPlaying: Boolean, onLoaded: (DrawingLoad) -> Unit) -> Unit,
 ) {
-    var paused by remember(motionEnabled) { mutableStateOf(false) }
     var load by remember { mutableStateOf<DrawingLoad?>(null) }
-    val isPausable = motionEnabled && load == DrawingLoad.Drawn && file is Result.Success
+    val isPausable = isPausable(motionEnabled, load, isFileLoaded = file is Result.Success)
+    val paused = progress.isPaused
     val shape = MaterialTheme.shapes.large
     val playingState = stringResource(R.string.guide_playing)
     val pausedState = stringResource(R.string.guide_paused)
@@ -121,7 +118,7 @@ internal fun <T> GuideFrame(
     val pauseButton = if (isPausable) {
         Modifier.clip(shape)
             .semantics { stateDescription = if (paused) pausedState else playingState }
-            .clickable(onClickLabel = pauseLabel, role = Role.Button) { paused = !paused }
+            .clickable(onClickLabel = pauseLabel, role = Role.Button, onClick = onTogglePause)
     } else {
         Modifier
     }
@@ -143,7 +140,8 @@ internal fun <T> GuideFrame(
                         is Result.Error -> Text(stringResource(R.string.guide_animation_error))
 
                         else -> {
-                            val description = drawingDescription(step)
+                            val description = drawingDescription(progress.step)
+                            val isPlaying = progress.isPlaying(motionEnabled)
                             Box(
                                 Modifier.fillMaxWidth().aspectRatio(1f).semantics {
                                     contentDescription = description
@@ -151,14 +149,14 @@ internal fun <T> GuideFrame(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 if (file is Result.Success) {
-                                    drawing(file.value, motionEnabled, paused) { load = it }
+                                    drawing(file.value, isPlaying) { load = it }
                                 }
                                 GuideLoadingIndicator(load == null, Modifier.matchParentSize())
                             }
                         }
                     }
                 }
-                if (isPausable) PlaybackBadge(paused, Modifier.align(Alignment.BottomEnd))
+                if (isPausable) PlaybackBadge(progress, Modifier.align(Alignment.BottomEnd))
             }
         }
     }
@@ -166,18 +164,22 @@ internal fun <T> GuideFrame(
 
 /** Shows what a tap on the frame does: pause, or play when paused. Decorative for TalkBack. */
 @Composable
-private fun PlaybackBadge(paused: Boolean, modifier: Modifier = Modifier) {
+private fun PlaybackBadge(progress: GuideProgress, modifier: Modifier = Modifier) {
     Box(
         modifier.padding(8.dp).size(40.dp).clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painterResource(if (paused) R.drawable.ic_play_arrow else R.drawable.ic_pause),
+            painterResource(progress.badgeIcon),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.testTag(
-                if (paused) GUIDE_BADGE_PLAY_TAG else GUIDE_BADGE_PAUSE_TAG,
+                if (progress.badgeIcon == R.drawable.ic_play_arrow) {
+                    GUIDE_BADGE_PLAY_TAG
+                } else {
+                    GUIDE_BADGE_PAUSE_TAG
+                },
             ),
         )
     }
@@ -188,8 +190,8 @@ private fun GuideDrawing(
     file: RiveFile,
     radii: SkirtRadii,
     step: FoldingStep,
-    play: Boolean,
-    paused: Boolean,
+    motionEnabled: Boolean,
+    isPlaying: Boolean,
     onLoaded: (DrawingLoad) -> Unit,
 ) {
     // While the artboard or view-model instance loads, the frame stays empty.
@@ -212,25 +214,19 @@ private fun GuideDrawing(
             val palette = guidePalette(MaterialTheme.colorScheme)
             LaunchedEffect(viewModel, radii, palette) {
                 palette.forEach { (name, color) -> viewModel.setColor(name, color.toArgb()) }
-                val markingDiameter = 800f
-
-                // Normalize before converting to Float; large valid centimetre values stay finite.
-                fun diameter(radius: Length) =
-                    (markingDiameter * (radius.centimetres / radii.hemCutting.centimetres))
-                        .toFloat()
-                viewModel.setNumber("waistStitching", diameter(radii.waistStitching))
-                viewModel.setNumber("waistCutting", diameter(radii.waistCutting))
-                viewModel.setNumber("finishedHem", diameter(radii.finishedHem))
-                viewModel.setNumber("hemCutting", markingDiameter)
+                markingDiameters(radii).forEach { (name, diameter) ->
+                    viewModel.setNumber(name, diameter)
+                }
                 ready = true
             }
-            LaunchedEffect(viewModel, play) { viewModel.setBoolean("play", play) }
+            // With motion off the drawing shows the step's completed frame.
+            LaunchedEffect(viewModel, motionEnabled) { viewModel.setBoolean("play", motionEnabled) }
             if (ready) {
                 Rive(
                     file = file,
                     artboard = artboard.value,
                     viewModelInstance = viewModel,
-                    playing = play && !paused,
+                    playing = isPlaying,
                     fit = Fit.Contain(),
                     // The frame around the drawing takes the tap that pauses it.
                     pointerInputMode = RivePointerInputMode.Observe,
