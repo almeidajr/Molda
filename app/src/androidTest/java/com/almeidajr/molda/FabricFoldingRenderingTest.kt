@@ -97,8 +97,11 @@ class FabricFoldingRenderingTest {
                 },
                 "$description must remain still while paused",
             )
-            // A tap reaches the frame through the drawn drawing and continues it.
-            frame.performClick().assert(hasStateDescription("Reproduzindo"))
+            // A tap reaches the frame through the drawn drawing and continues it, shown on the
+            // next frame: the clock is manual while the drawing plays.
+            frame.performClick()
+            composeRule.mainClock.advanceTimeByFrame()
+            frame.assert(hasStateDescription("Reproduzindo"))
             advanceOrAssertConcluir(index)
         }
     }
