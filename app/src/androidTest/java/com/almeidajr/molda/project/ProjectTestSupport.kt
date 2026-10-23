@@ -16,15 +16,15 @@ import java.time.LocalDate
 
 /**
  * "Saia da formatura", saved at [savedAt]: an 80 cm waist from Ana's profile measured on
- * 12/10/2026, with radii that differ from a recalculation so a test can tell stored from
- * recalculated.
+ * 12/10/2026, a 1,5 cm hem allowance and radii that differ from a recalculation so a test can
+ * tell stored from recalculated.
  */
 internal fun formaturaProject(savedAt: Instant) = Project(
     ProjectId(1),
     ProjectName("Saia da formatura"),
     PatternDraftKind.FullCircleSkirt,
     SkirtSnapshot(
-        SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
+        SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(1.5)),
         SkirtRadii(Length(11.11), Length(71.11), Length(10.11), Length(73.11)),
         MeasurementSource("Ana", LocalDate.of(2026, 10, 12)),
     ),
