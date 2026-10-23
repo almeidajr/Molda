@@ -149,7 +149,7 @@ class ProjectNavigatorTest {
     }
 
     @Test
-    fun closeProjectEditor_withItsGuideAbove_closesOnlyTheEditor() {
+    fun closeProjectEditor_withItsGuideAbove_closesItsGuideToo() {
         // Given
         val guide = ProjectEditorGuideKey(snapshot.radii)
         val navigator = projetos(ProjectKey(first), ProjectEditorKey(first, snapshot), guide)
@@ -158,7 +158,7 @@ class ProjectNavigatorTest {
         navigator.closeProjectEditor()
 
         // Then
-        assertEquals(listOf(listOf(ProjectsKey, ProjectKey(first), guide)), navigator.stacks)
+        assertEquals(listOf(listOf(ProjectsKey, ProjectKey(first))), navigator.stacks)
     }
 
     private data object OtherKey : NavKey
