@@ -191,17 +191,20 @@ internal fun AfterDiscard.transition(): Transition = when (this) {
 }
 
 /**
- * A request to open an editor, from a control that is disabled while the open profile editor
- * saves, so no request arrives then; unlike Back and re-selecting, which the system can send
- * anyway and [closeOpenProfileEditor] ignores while it saves.
+ * A request to open an editor; ignored while the open profile editor saves. The controls that
+ * open one are disabled then, and this guard covers the frame between the save starting and
+ * them disabling, when a tap would replace the saving editor and drop its outcome.
  */
 private fun requestEditor(
     status: EditorStatus,
     open: Transition,
     afterDiscard: AfterDiscard,
 ): Transition = when (status) {
-    is EditorStatus.Profile ->
-        if (status.isDirty) Transition.AskToDiscard(afterDiscard) else open
+    is EditorStatus.Profile -> when {
+        status.isSaving -> Transition.None
+        status.isDirty -> Transition.AskToDiscard(afterDiscard)
+        else -> open
+    }
 
     EditorStatus.None, is EditorStatus.Project -> open
 }

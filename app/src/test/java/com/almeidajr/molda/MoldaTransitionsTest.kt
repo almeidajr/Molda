@@ -284,6 +284,15 @@ class MoldaTransitionsTest {
     }
 
     @Test
+    fun requestProfileEditor_whileTheOpenEditorSaves_ignoresIt() {
+        // When/Then
+        assertEquals(
+            Transition.None,
+            requestProfileEditor(EditedProfile.New, EditorStatus.Profile(isSaving = true)),
+        )
+    }
+
+    @Test
     fun requestPickerEditor_openEditorHasChanges_asksToDiscard() {
         // When/Then
         assertEquals(
