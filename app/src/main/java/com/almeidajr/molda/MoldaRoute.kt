@@ -31,7 +31,6 @@ import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.SyncProfileEditor
 import com.almeidajr.molda.profile.ui.openEditor
 import com.almeidajr.molda.profile.ui.profileSection
-import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
@@ -39,9 +38,7 @@ import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.projectSection
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.skirt.ui.SavedSkirtResult
-import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.skirt.ui.skirtSection
-import com.almeidajr.molda.skirt.ui.snapshot
 import com.almeidajr.molda.ui.navigation.EditorReport
 import com.almeidajr.molda.ui.navigation.LocalEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.Navigator
@@ -61,11 +58,8 @@ import kotlinx.coroutines.launch
 fun MoldaRoute(
     modifier: Modifier = Modifier,
     versionName: String = "",
-    calculator: SkirtCalculatorViewModel = hiltViewModel(),
     profiles: ProfilesViewModel = hiltViewModel(),
     projects: ProjectsViewModel = hiltViewModel(),
-    // Its own draft, so editing a project never touches the calculator in Moldes.
-    projectCalculator: SkirtCalculatorViewModel = hiltViewModel(key = "projectEditor"),
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
     val titleFocus = remember { TitleFocus() }
@@ -89,10 +83,8 @@ fun MoldaRoute(
     }
     val app = MoldaApp(
         navigator,
-        calculator,
         profiles,
         projects,
-        projectCalculator,
         // Read when the user acts: entries are remembered, so a captured status would go stale.
         status = { navigator.state.allKeys.let { editorStatus(it, editors.reports(it)) } },
     )
@@ -138,10 +130,8 @@ private fun editorStatus(keys: List<NavKey>, reports: Map<NavKey, EditorReport>)
  */
 private class MoldaApp(
     private val navigator: Navigator,
-    private val calculator: SkirtCalculatorViewModel,
     private val profiles: ProfilesViewModel,
     private val projects: ProjectsViewModel,
-    private val projectCalculator: SkirtCalculatorViewModel,
     private val status: () -> EditorStatus,
 ) {
     private val stacks get() = navigator.state
@@ -165,16 +155,15 @@ private class MoldaApp(
         patternSection(navigator)
         skirtSection(
             navigator,
-            calculator,
-            onSaveProject = {
-                calculator.state.value.snapshot()?.let { navigator.push(SaveProjectKey(it)) }
+            onSaveProject = { state ->
+                state.snapshot()?.let { navigator.push(SaveProjectKey(it)) }
             },
             onCalculateOwn = {
                 navigator.select(PatternCatalogKey)
                 perform(calculateOwn(stacks.current, status()))
             },
         )
-        projectSection(navigator, projects, onShowSnackbar, onEdit = ::editProject) { project ->
+        projectSection(navigator, projects, onShowSnackbar) { project ->
             SavedSkirtResult(project.snapshot.draft, project.snapshot.radii, onOpenGuide = {
                 navigator.push(ProjectGuideKey(project.id))
             })
@@ -182,7 +171,6 @@ private class MoldaApp(
         projectDraftSection(
             navigator,
             projects,
-            projectCalculator,
             onShowSnackbar,
             onCloseEditor = { perform(closeProjectEditor(status())) },
         )
@@ -200,11 +188,6 @@ private class MoldaApp(
             profiles,
             onCreateProfile = { perform(requestPickerEditor(it, status())) },
         )
-    }
-
-    private fun editProject(project: Project) {
-        projectCalculator.load(project.snapshot.draft, project.snapshot.source)
-        navigator.push(ProjectEditorKey(project.id))
     }
 
     /** Carries out [transition] on the back stacks and the profile editor. */

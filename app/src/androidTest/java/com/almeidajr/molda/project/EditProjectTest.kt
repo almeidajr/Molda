@@ -27,6 +27,8 @@ import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.fillProfile
+import com.almeidajr.molda.project.domain.ProjectId
+import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
@@ -64,7 +66,7 @@ class EditProjectTest {
     var profileRepository: ProfileRepository = FakeProfileRepository()
 
     @BindValue @JvmField
-    val projectRepository: ProjectRepository = projects
+    var projectRepository: ProjectRepository = projects
 
     @BindValue @JvmField
     val clock: Clock = October18Clock
@@ -227,6 +229,32 @@ class EditProjectTest {
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+    }
+
+    @Test
+    fun edit_anotherProjectAfterClosingAnEditor_loadsThatProjectsDraft() {
+        // Given
+        val formatura = formaturaProject(October18Clock.instant())
+        val verao = formatura.copy(
+            id = ProjectId(2),
+            name = ProjectName("Saia de verão"),
+            snapshot = formatura.snapshot.copy(
+                draft = formatura.snapshot.draft.copy(waist = Length(90.0)),
+            ),
+        )
+        projectRepository = FakeProjectRepository(listOf(formatura, verao))
+        launch()
+        openEditor()
+        composeRule.pressBack()
+        composeRule.pressBack()
+
+        // When
+        composeRule.clickProject("Saia de verão")
+        composeRule.click("Editar")
+
+        // Then
+        composeRule.screenTitle("Editar Saia de verão").assertIsDisplayed()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("90"))
     }
 
     @Test

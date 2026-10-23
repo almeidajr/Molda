@@ -41,7 +41,6 @@ internal fun EntryProviderScope<NavKey>.projectSection(
     navigator: Navigator,
     projects: ProjectsViewModel,
     onShowSnackbar: (Int) -> Unit,
-    onEdit: (Project) -> Unit,
     savedResult: @Composable (Project) -> Unit,
 ) {
     entry<ProjectsKey>(
@@ -59,7 +58,7 @@ internal fun EntryProviderScope<NavKey>.projectSection(
                 project,
                 // Beside the list the project is a pane, closed by choosing from the list or Back.
                 onUp = if (LocalIsTwoPane.current) null else navigator::back,
-                onEdit = { onEdit(project) },
+                onEdit = { navigator.push(ProjectEditorKey(project.id, project.snapshot)) },
                 // Deleting the open project closes it: OpenedProject no longer finds it.
                 onRename = { navigator.push(RenameProjectKey(project.id)) },
                 onDelete = { navigator.push(DeleteProjectKey(project.id)) },
@@ -116,6 +115,33 @@ internal fun Navigator.showProject(id: ProjectId) {
             it is ProjectGuideKey
     }
     push(ProjectKey(id), root = ProjectsKey)
+}
+
+/**
+ * Shows the outcome of the project editor's [update] of the project [id] once: a stored update
+ * opens the project in place of the editor.
+ */
+@Composable
+internal fun ProjectUpdateEffect(
+    update: ProjectUpdateViewModel,
+    id: ProjectId,
+    navigator: Navigator,
+    onShowSnackbar: (Int) -> Unit,
+) {
+    val state by update.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.outcome) {
+        when (state.outcome) {
+            ProjectUpdateOutcome.Updated -> {
+                onShowSnackbar(R.string.project_updated)
+                navigator.showProject(id)
+            }
+
+            ProjectUpdateOutcome.Failed -> onShowSnackbar(R.string.project_update_failed)
+
+            null -> return@LaunchedEffect
+        }
+        update.outcomeShown()
+    }
 }
 
 @Composable

@@ -8,14 +8,15 @@ import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.measurement.ParsedLength
 import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.measurement.parseLength
-import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.SkirtFieldError
 import com.almeidajr.molda.skirt.domain.calculateSkirt
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +31,7 @@ data class CalculatorForm(
     val hasAttemptedCalculation: Boolean = false,
     /** Whether a result for these inputs is shown, so a restored form recalculates it. */
     val isCalculated: Boolean = false,
-    /** The values a saved draft was loaded with, or null when none was loaded. */
+    /** The values of the saved draft the calculator started from, or null when it started empty. */
     val loaded: DraftValues? = null,
 )
 
@@ -58,7 +59,7 @@ data class CalculatorState(
     /** The calculated draft and its radii, or null when no result is shown. */
     val result: SkirtCalculation.Success? get() = calculation as? SkirtCalculation.Success
 
-    /** Whether the inputs' values or their source differ from the loaded saved draft. */
+    /** Whether the inputs' values or their source differ from the saved draft it started from. */
     val isDirty: Boolean get() = form.loaded?.let { !it.hasSameValues(form.values) } == true
 }
 
@@ -73,30 +74,25 @@ private fun DraftValues.hasSameValues(other: DraftValues): Boolean = source == o
         }
     }
 
-/** The calculated result as a project snapshot, or null before a successful calculation. */
-fun CalculatorState.snapshot(): SkirtSnapshot? =
-    result?.let { SkirtSnapshot(it.draft, it.radii, form.source) }
-
-@HiltViewModel
-class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle) : ViewModel() {
-    private var savedForm by savedState.saved { CalculatorForm() }
+/**
+ * The skirt calculator, empty or started from a saved [startingDraft] and its [startingSource],
+ * which it calculates. A form restored after process death wins over the starting draft.
+ */
+@HiltViewModel(assistedFactory = SkirtCalculatorViewModel.Factory::class)
+class SkirtCalculatorViewModel @AssistedInject constructor(
+    savedState: SavedStateHandle,
+    @Assisted startingDraft: SkirtDraft?,
+    @Assisted startingSource: MeasurementSource?,
+) : ViewModel() {
+    private var savedForm by savedState.saved {
+        startingDraft?.let { startingForm(it, startingSource) } ?: CalculatorForm()
+    }
     private val mutableState = MutableStateFlow(CalculatorState(form = savedForm).restored())
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
 
     /** Uses the [waist] taken from the profile [source]. */
     fun selectProfile(waist: Length, source: MeasurementSource) =
         transition { it.withProfileWaist(waist, source) }
-
-    /** Replaces the form with a saved [draft] and its [source], then calculates it. */
-    fun load(draft: SkirtDraft, source: MeasurementSource?) = transition {
-        val form = CalculatorForm(
-            inputs = SkirtDraftField.entries.associateWith { field ->
-                lengthText(draft.lengthOf(field))
-            },
-            source = source,
-        )
-        CalculatorState(form.copy(loaded = form.values)).calculated()
-    }
 
     fun edit(field: SkirtDraftField, text: String) = transition { it.edited(field, text) }
 
@@ -109,6 +105,24 @@ class SkirtCalculatorViewModel @Inject constructor(savedState: SavedStateHandle)
         mutableState.value = next(mutableState.value)
         savedForm = mutableState.value.form
     }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            startingDraft: SkirtDraft?,
+            startingSource: MeasurementSource?,
+        ): SkirtCalculatorViewModel
+    }
+}
+
+/** The form of a saved [draft] from [source], marked calculated so it is calculated on creation. */
+private fun startingForm(draft: SkirtDraft, source: MeasurementSource?): CalculatorForm {
+    val form = CalculatorForm(
+        inputs = SkirtDraftField.entries.associateWith { lengthText(draft.lengthOf(it)) },
+        source = source,
+        isCalculated = true,
+    )
+    return form.copy(loaded = form.values)
 }
 
 private fun CalculatorState.withProfileWaist(

@@ -16,7 +16,6 @@ import com.almeidajr.molda.testing.October18Clock
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
@@ -27,7 +26,6 @@ import org.junit.Test
 class ProjectsViewModelTest {
     private val storage = FakeProjectRepository(listOf(saved))
     private val shown = mutableListOf<Int>()
-    private var updates = 0
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -135,40 +133,6 @@ class ProjectsViewModelTest {
 
         // Then
         assertEquals(ProjectSaving(isBusy = true), projects.state.value.saving)
-    }
-
-    @Test
-    fun update_existingProject_replacesItsSnapshotAndShowsIt() = runTest {
-        // Given
-        val projects = projectsViewModel()
-
-        // When
-        projects.update(saved.id, fromProfile, shown::add) { updates++ }
-
-        // Then
-        assertEquals(
-            listOf(saved.copy(snapshot = fromProfile, updatedAt = October18Clock.instant())),
-            storage.current,
-        )
-        assertEquals(listOf(R.string.project_updated), shown)
-        assertEquals(1, updates)
-        assertFalse(projects.state.value.isUpdating)
-    }
-
-    @Test
-    fun update_whenStorageFails_keepsTheProjectAndShowsTheFailure() = runTest {
-        // Given
-        storage.failsCommands = true
-        val projects = projectsViewModel()
-
-        // When
-        projects.update(saved.id, fromProfile, shown::add) { updates++ }
-
-        // Then
-        assertEquals(listOf(saved), storage.current)
-        assertEquals(listOf(R.string.project_update_failed), shown)
-        assertEquals(0, updates)
-        assertFalse(projects.state.value.isUpdating)
     }
 
     @Test

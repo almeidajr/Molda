@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -24,18 +25,21 @@ import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
 
 /**
- * The skirt calculator on Moldes with its folding guide, and the example guide Guias opens;
- * [onSaveProject] saves the draft as a project, and [onCalculateOwn] leaves the example guide
- * for the calculator.
+ * The skirt calculator on Moldes, which starts empty, with its folding guide, and the example
+ * guide Guias opens; [onSaveProject] saves the calculated state as a project, and
+ * [onCalculateOwn] leaves the example guide for the calculator.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.skirtSection(
     navigator: Navigator,
-    calculator: SkirtCalculatorViewModel,
-    onSaveProject: () -> Unit,
+    onSaveProject: (CalculatorState) -> Unit,
     onCalculateOwn: () -> Unit,
 ) {
     entry<SkirtCalculatorKey> {
+        val calculator =
+            hiltViewModel<SkirtCalculatorViewModel, SkirtCalculatorViewModel.Factory> { factory ->
+                factory.create(startingDraft = null, startingSource = null)
+            }
         ResultEffect<MeasurementProfile>(MOLDES_PROFILE_RESULT_KEY) { profile ->
             calculator.useProfile(profile)
         }
@@ -49,7 +53,7 @@ internal fun EntryProviderScope<NavKey>.skirtSection(
                     navigator.push(FabricFoldingGuideKey(it))
                 }
             },
-            onSaveProject = onSaveProject,
+            onSaveProject = { onSaveProject(calculator.state.value) },
         )
     }
     entry<FabricFoldingGuideKey> { key ->

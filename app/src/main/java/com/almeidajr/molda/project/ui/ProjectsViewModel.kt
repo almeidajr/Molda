@@ -47,8 +47,6 @@ data class ProjectsState(
     val saving: ProjectSaving? = null,
     val renaming: ProjectRenaming? = null,
     val deleting: ProjectDeleting? = null,
-    /** Whether an edited project's snapshot is being stored. */
-    val isUpdating: Boolean = false,
 )
 
 // One command per project action the UI offers.
@@ -120,32 +118,6 @@ class ProjectsViewModel @Inject constructor(
     /** Forgets a failed save, unless its storage call is running. */
     fun cancelSaving() = transition { state ->
         if (state.saving?.isBusy == true) state else state.copy(saving = null)
-    }
-
-    /**
-     * Stores [snapshot] as the project [id]'s, then calls [onUpdated]; [onShowSnackbar] gets the
-     * message of either outcome, since no dialog is there to show a failure.
-     */
-    fun update(
-        id: ProjectId,
-        snapshot: SkirtSnapshot,
-        onShowSnackbar: (Int) -> Unit,
-        onUpdated: () -> Unit,
-    ) {
-        if (mutableState.value.isUpdating) return
-        submit(
-            command = { repository.update(id, snapshot, clock.instant()) },
-            progress = { state, isBusy, _ -> state.copy(isUpdating = isBusy) },
-            failure = R.string.project_update_failed,
-            report = { result ->
-                if (result.isSuccess) {
-                    onShowSnackbar(R.string.project_updated)
-                    onUpdated()
-                } else {
-                    onShowSnackbar(R.string.project_update_failed)
-                }
-            },
-        ) { state, _ -> state.copy(isUpdating = false) }
     }
 
     /** Renames the project [id] to [name]; once stored, [onRenamed] gets the message to show. */

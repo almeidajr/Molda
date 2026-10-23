@@ -18,9 +18,9 @@ internal data class ProjectKey(val id: ProjectId) : NavKey
 @Serializable
 internal data class ProjectGuideKey(val id: ProjectId) : NavKey
 
-/** A saved project loaded into the skirt calculator, on the Projetos stack. */
+/** The saved project [id] edited in the skirt calculator from its [snapshot], on Projetos. */
 @Serializable
-internal data class ProjectEditorKey(val id: ProjectId) : NavKey
+internal data class ProjectEditorKey(val id: ProjectId, val snapshot: SkirtSnapshot) : NavKey
 
 /** The result key this editor listens on for a profile from its picker; unique to its project. */
 internal val ProjectEditorKey.profileResultKey: String get() = "profile/project/${id.value}"

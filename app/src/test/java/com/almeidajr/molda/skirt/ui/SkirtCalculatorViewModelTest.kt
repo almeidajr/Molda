@@ -52,7 +52,6 @@ class SkirtCalculatorViewModelTest {
 
         // Then
         assertNull(calculator.state.value.result)
-        assertNull(calculator.state.value.snapshot())
     }
 
     @Test
@@ -156,7 +155,7 @@ class SkirtCalculatorViewModelTest {
     @Test
     fun selectProfile_withItsWaist_fillsWaistAndSource() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
+        val calculator = calculator()
 
         // When
         calculator.selectProfile(Length(68.5), ana)
@@ -170,7 +169,7 @@ class SkirtCalculatorViewModelTest {
     @Test
     fun selectProfile_withManyDecimals_fillsWaistExactly() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
+        val calculator = calculator()
 
         // When
         calculator.selectProfile(Length(80.123456789), ana)
@@ -182,7 +181,7 @@ class SkirtCalculatorViewModelTest {
     @Test
     fun selectProfile_withAWholeWaist_hasNoTrailingZeros() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
+        val calculator = calculator()
 
         // When
         calculator.selectProfile(Length(80.0), ana)
@@ -207,7 +206,7 @@ class SkirtCalculatorViewModelTest {
     @Test
     fun edit_waistAfterSelectingProfile_dropsTheSource() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
+        val calculator = calculator()
         calculator.selectProfile(Length(68.5), ana)
 
         // When
@@ -219,7 +218,7 @@ class SkirtCalculatorViewModelTest {
 
     @Test
     fun recreate_afterProcessDeath_restoresTheForm() {
-        viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
+        viewModelScenario { calculator(savedState = createSavedStateHandle()) }.use { scenario ->
             // Given
             scenario.viewModel.selectProfile(Length(70.0), ana)
             scenario.viewModel.edit(SkirtDraftField.Ease, "2")
@@ -242,15 +241,13 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
-    fun load_savedDraft_fillsEveryInputAndItsSourceAndCalculates() {
+    fun create_withAStartingDraft_fillsEveryInputAndItsSourceAndCalculates() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
-
         // When
-        calculator.load(savedDraft, ana)
+        val calculator = calculator(savedDraft, ana)
 
         // Then
-        val loaded = calculator.state.value
+        val started = calculator.state.value
         assertEquals(
             mapOf(
                 SkirtDraftField.Waist to "70,125",
@@ -259,18 +256,17 @@ class SkirtCalculatorViewModelTest {
                 SkirtDraftField.WaistSeamAllowance to "1,5",
                 SkirtDraftField.HemAllowance to "0",
             ),
-            loaded.form.inputs,
+            started.form.inputs,
         )
-        assertEquals(ana, loaded.form.source)
-        assertEquals(savedDraft, loaded.result?.draft)
-        assertFalse(loaded.isDirty)
+        assertEquals(ana, started.form.source)
+        assertEquals(savedDraft, started.result?.draft)
+        assertFalse(started.isDirty)
     }
 
     @Test
-    fun isDirty_loadedDraftWithChangedValue_isTrue() {
+    fun isDirty_startingDraftWithChangedValue_isTrue() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
-        calculator.load(savedDraft, source = null)
+        val calculator = calculator(savedDraft)
 
         // When
         calculator.edit(SkirtDraftField.Ease, "3")
@@ -280,10 +276,9 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
-    fun isDirty_loadedDraftWithValueChangedBack_isFalse() {
+    fun isDirty_startingDraftWithValueChangedBack_isFalse() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
-        calculator.load(savedDraft, source = null)
+        val calculator = calculator(savedDraft)
         calculator.edit(SkirtDraftField.Ease, "3")
 
         // When
@@ -294,10 +289,9 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
-    fun isDirty_loadedDraftWithNewSourceForTheSameWaist_isTrue() {
+    fun isDirty_startingDraftWithNewSourceForTheSameWaist_isTrue() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
-        calculator.load(savedDraft, source = null)
+        val calculator = calculator(savedDraft)
 
         // When
         calculator.selectProfile(Length(70.125), ana)
@@ -309,8 +303,7 @@ class SkirtCalculatorViewModelTest {
     @Test
     fun isDirty_sameValuesWrittenDifferently_isFalse() {
         // Given
-        val calculator = SkirtCalculatorViewModel(SavedStateHandle())
-        calculator.load(savedDraft, source = null)
+        val calculator = calculator(savedDraft)
 
         // When
         calculator.edit(SkirtDraftField.FinishedLength, "50,0")
@@ -321,7 +314,7 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
-    fun isDirty_withoutALoadedDraft_isFalse() {
+    fun isDirty_withoutAStartingDraft_isFalse() {
         // When
         val calculator = calculatorWith(validDraft)
 
@@ -330,10 +323,11 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
-    fun recreate_afterProcessDeath_keepsTheLoadedDraftsChanges() {
-        viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
+    fun recreate_afterProcessDeath_keepsTheStartingDraftsChanges() {
+        viewModelScenario {
+            calculator(savedDraft, ana, createSavedStateHandle())
+        }.use { scenario ->
             // Given
-            scenario.viewModel.load(savedDraft, ana)
             scenario.viewModel.edit(SkirtDraftField.Ease, "3")
 
             // When
@@ -346,9 +340,10 @@ class SkirtCalculatorViewModelTest {
 
     @Test
     fun recreate_afterProcessDeath_recalculatesTheShownResult() {
-        viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
+        viewModelScenario {
+            calculator(savedDraft, ana, createSavedStateHandle())
+        }.use { scenario ->
             // Given
-            scenario.viewModel.load(savedDraft, ana)
             scenario.viewModel.edit(SkirtDraftField.Ease, "3")
             scenario.viewModel.calculate()
 
@@ -356,22 +351,23 @@ class SkirtCalculatorViewModelTest {
             scenario.recreate()
 
             // Then
-            val snapshot = scenario.viewModel.state.value.snapshot()
-            assertEquals(savedDraft.copy(ease = Length(3.0)), snapshot?.draft)
+            val state = scenario.viewModel.state.value
+            assertEquals(savedDraft.copy(ease = Length(3.0)), state.result?.draft)
             assertEquals(
                 11.6382052,
-                snapshot?.radii?.waistStitching?.centimetres ?: 0.0,
+                state.result?.radii?.waistStitching?.centimetres ?: 0.0,
                 absoluteTolerance = 1e-6,
             )
-            assertEquals(ana, snapshot?.source)
+            assertEquals(ana, state.form.source)
         }
     }
 
     @Test
     fun recreate_afterProcessDeath_showsNoResultForUncalculatedChanges() {
-        viewModelScenario { SkirtCalculatorViewModel(createSavedStateHandle()) }.use { scenario ->
+        viewModelScenario {
+            calculator(savedDraft, ana, createSavedStateHandle())
+        }.use { scenario ->
             // Given
-            scenario.viewModel.load(savedDraft, ana)
             scenario.viewModel.edit(SkirtDraftField.Ease, "3")
 
             // When
@@ -400,8 +396,13 @@ class SkirtCalculatorViewModelTest {
         SkirtDraftField.HemAllowance to "2",
     )
 
-    private fun calculatorWith(inputs: Map<SkirtDraftField, String>) =
-        SkirtCalculatorViewModel(SavedStateHandle()).apply {
-            inputs.forEach { (field, text) -> edit(field, text) }
-        }
+    private fun calculator(
+        startingDraft: SkirtDraft? = null,
+        startingSource: MeasurementSource? = null,
+        savedState: SavedStateHandle = SavedStateHandle(),
+    ) = SkirtCalculatorViewModel(savedState, startingDraft, startingSource)
+
+    private fun calculatorWith(inputs: Map<SkirtDraftField, String>) = calculator().apply {
+        inputs.forEach { (field, text) -> edit(field, text) }
+    }
 }

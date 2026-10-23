@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -19,18 +20,20 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.profile.ui.ProfilePicker
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
+import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
+import com.almeidajr.molda.project.ui.ProjectUpdateEffect
+import com.almeidajr.molda.project.ui.ProjectUpdateViewModel
 import com.almeidajr.molda.project.ui.ProjectsViewModel
-import com.almeidajr.molda.project.ui.showProject
 import com.almeidajr.molda.skirt.ui.CalculatorDestination
+import com.almeidajr.molda.skirt.ui.CalculatorState
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
-import com.almeidajr.molda.skirt.ui.snapshot
 import com.almeidajr.molda.skirt.ui.useProfile
 import com.almeidajr.molda.ui.navigation.EditorReport
 import com.almeidajr.molda.ui.navigation.Navigator
@@ -42,26 +45,36 @@ import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.wi
  * wires these: a saved project's skirt draft, and the overlays shared by features.
  */
 
+/** The calculated result as a project snapshot, or null before a successful calculation. */
+internal fun CalculatorState.snapshot(): SkirtSnapshot? =
+    result?.let { SkirtSnapshot(it.draft, it.radii, form.source) }
+
 /** The result key the discard dialog sends its confirmed [AfterDiscard] to. */
 internal const val DISCARD_RESULT_KEY = "discard"
 
 /**
- * A saved project's skirt draft: its editor on [editor], a draft of its own so editing a project
- * never touches the calculator in Moldes, and its folding guides. [onShowSnackbar] shows the
- * outcome of updating the project; [onCloseEditor] asks before the
+ * A saved project's skirt draft: its editor, with a calculator of its own started from the key's
+ * snapshot so editing a project never touches the calculator in Moldes, and its folding guides.
+ * [onShowSnackbar] shows the outcome of updating the project; [onCloseEditor] asks before the
  * editor's changes are dropped.
  */
 internal fun EntryProviderScope<NavKey>.projectDraftSection(
     navigator: Navigator,
     projects: ProjectsViewModel,
-    editor: SkirtCalculatorViewModel,
     onShowSnackbar: (Int) -> Unit,
     onCloseEditor: () -> Unit,
 ) {
     entry<ProjectEditorKey> { key ->
-        ReportEditorStatus(key) {
-            EditorReport(editor.state.value.isDirty, projects.state.value.isUpdating)
+        val editor = hiltViewModel<SkirtCalculatorViewModel, SkirtCalculatorViewModel.Factory> {
+            it.create(key.snapshot.draft, key.snapshot.source)
         }
+        val update = hiltViewModel<ProjectUpdateViewModel, ProjectUpdateViewModel.Factory> {
+            it.create(key)
+        }
+        ReportEditorStatus(key) {
+            EditorReport(editor.state.value.isDirty, update.state.value.isUpdating)
+        }
+        ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
         OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
             CalculatorDestination(
@@ -74,13 +87,7 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
                         navigator.push(ProjectEditorGuideKey(it))
                     }
                 },
-                onSaveProject = {
-                    editor.state.value.snapshot()?.let {
-                        projects.update(key.id, it, onShowSnackbar) {
-                            navigator.showProject(key.id)
-                        }
-                    }
-                },
+                onSaveProject = { editor.state.value.snapshot()?.let(update::update) },
                 onSaveAsNewProject = {
                     editor.state.value.snapshot()?.let {
                         navigator.push(SaveProjectKey(it, showsSaved = true))
