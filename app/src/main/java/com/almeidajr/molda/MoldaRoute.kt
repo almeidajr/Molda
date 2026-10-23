@@ -83,7 +83,11 @@ fun MoldaRoute(
     val scope = rememberCoroutineScope()
     // One callback for every section; launched here, so it outlives the entry that asked.
     val showSnackbar: (Int) -> Unit = { message ->
-        scope.launch { snackbar.showSnackbar(resources.getString(message)) }
+        scope.launch {
+            // The latest outcome replaces the shown one instead of queuing behind it.
+            snackbar.currentSnackbarData?.dismiss()
+            snackbar.showSnackbar(resources.getString(message))
+        }
     }
     val app = MoldaApp(
         navigator,
