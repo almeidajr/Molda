@@ -29,6 +29,7 @@ import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.navigatorOf
 import com.almeidajr.molda.ui.navigation.stacks
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Test
@@ -51,9 +52,6 @@ class TransitionExecutorTest {
     )
 
     private fun Navigator.stackOf(root: NavKey) = stacks[TopLevelRoots.indexOf(root)]
-
-    private fun reportProfile(key: NavKey, isDirty: Boolean = false) =
-        editors.report(key, MutableStateFlow(EditorReport(EditorKind.Profile, isDirty)))
 
     @Test
     fun carryOut_none_leavesTheStacks() {
@@ -204,11 +202,10 @@ class TransitionExecutorTest {
     }
 
     @Test
-    fun carryOut_finishProfileEditor_closesTheReportedEditor() {
+    fun carryOut_finishProfileEditor_closesTheEditorOnTheSelectedStack() {
         // Given
         val editor = ProfileEditorKey(existing)
         val navigator = app(ProfileManagementKey, listOf(ProfileManagementKey, editor))
-        reportProfile(editor)
 
         // When
         navigator.carryOut(Transition.FinishProfileEditor, editors)
@@ -282,7 +279,7 @@ class TransitionExecutorTest {
         // Then
         val perfis = navigator.state.current.toList()
         assertEquals(2, perfis.size)
-        assertEquals(existing, (perfis.last() as ProfileEditorKey).profile)
+        assertEquals(existing, assertIs<ProfileEditorKey>(perfis.last()).profile)
         assertNotEquals<NavKey>(open, perfis.last())
     }
 
@@ -337,7 +334,6 @@ class TransitionExecutorTest {
             PatternCatalogKey,
             listOf(PatternCatalogKey, SkirtCalculatorKey, moldesPicker, open),
         )
-        reportProfile(open, isDirty = true)
 
         // When
         navigator.carryOut(
@@ -349,8 +345,35 @@ class TransitionExecutorTest {
         val moldes = navigator.state.current.toList()
         assertEquals(1, moldes.count { it is PickerProfileEditorKey })
         assertNotEquals<NavKey>(open, moldes.last())
-        // Navigation 3's default content key, which must be unique on a back stack.
-        assertEquals(moldes.size, moldes.map(NavKey::toString).toSet().size)
+    }
+
+    @Test
+    fun pickerEditorKey_openedTwice_hasUniqueContentKeys() {
+        // When/Then
+        // Navigation 3's default content key is toString(); the opening keeps it unique on a stack.
+        assertNotEquals(
+            PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY).toString(),
+            PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY).toString(),
+        )
+    }
+
+    @Test
+    fun carryOut_calculateOwnFromTheExampleGuide_landsOnTheCalculatorAndKeepsGuias() {
+        // Given
+        val guias = listOf(GuideLibraryKey, ExampleFabricFoldingGuideKey)
+        val navigator = app(GuideLibraryKey, guias)
+
+        // When
+        navigator.carryOut(Transition.Select(PatternCatalogKey), editors)
+        navigator.carryOut(calculateOwn(navigator.state.current, EditorStatus.None), editors)
+
+        // Then
+        assertEquals(PatternCatalogKey, navigator.state.selected)
+        assertEquals(
+            listOf(PatternCatalogKey, SkirtCalculatorKey),
+            navigator.stackOf(PatternCatalogKey),
+        )
+        assertEquals(guias, navigator.stackOf(GuideLibraryKey))
     }
 
     /** The opening of the editor on top of [stack], fresh to each opening. */
