@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 /**
  * One profile editor's form, its validation and its save. It starts blank for a new [profile] or
  * loads an existing one; a form restored after process death wins over both, and one already
- * stored comes back saved, as [ProfileSave.Updated], so its entry closes.
+ * stored comes back saved, as what its save did, so its entry closes.
  */
 @HiltViewModel(assistedFactory = ProfileEditorViewModel.Factory::class)
 internal class ProfileEditorViewModel @AssistedInject constructor(
@@ -49,9 +49,8 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
     }
     private val mutableState = MutableStateFlow(
         savedForm?.let { form ->
-            val saved = ProfileSave.Updated.takeIf { form.isStored }
             // Nothing to load: the form is what the editor shows.
-            ProfileEditorState(form = form, load = LoadResult.Success(Unit), saved = saved)
+            ProfileEditorState(form = form, load = LoadResult.Success(Unit), saved = form.saved)
         }
             ?: ProfileEditorState(form = ProfileForm(editingId = editingId)),
     )

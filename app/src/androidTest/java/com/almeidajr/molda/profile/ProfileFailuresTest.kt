@@ -150,6 +150,40 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
     }
 
+    /**
+     * A configuration change keeps the entry's editor, so this checks the held result's delivery,
+     * not a restore after process death (ProfileEditorViewModelTest covers that).
+     */
+    @Test
+    fun pickerNewProfile_savedWhileHiddenAcrossConfigurationChange_reachesTheCalculatorOnce() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val storage = existingProfiles().apply { commandGate = gate }
+        profileRepository = storage
+        // The app's own content, so the recreated activity composes the same route.
+        composeRule.activityRule.launch()
+        composeRule.showSkirtCalculator()
+        composeRule.click("Usar perfil")
+        composeRule.click("Novo perfil")
+        composeRule.fillProfile("Nova", waist = "90")
+        composeRule.closeKeyboard()
+        composeRule.click("Salvar perfil")
+        composeRule.showProfiles()
+        composeRule.recreate()
+        gate.complete(Unit)
+
+        // When
+        composeRule.showSkirtCalculator()
+
+        // Then
+        composeRule.onNodeWithText("Cintura copiada do perfil: Nova").assertIsDisplayed()
+        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
+        assertEquals(3, storage.current.size)
+        // A new activity has a new snackbar host: the message shows again only if sent again.
+        composeRule.recreate()
+        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
+    }
+
     @Test
     fun delete_whilePending_disablesEveryRowsActions() {
         // Given

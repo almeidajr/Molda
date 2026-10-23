@@ -275,7 +275,32 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
-    fun recreate_afterProcessDeathOnceStored_reportsTheSaveAndStoresNothingMore() = runTest {
+    fun recreate_afterProcessDeathOnceUpdated_reportsTheUpdateAndStoresNothingMore() = runTest {
+        viewModelScenario {
+            ProfileEditorViewModel(
+                storage,
+                createSavedStateHandle(),
+                October13Clock,
+                EditedProfile.Existing(ana.id),
+            )
+        }.use { scenario ->
+            // Given
+            scenario.viewModel.edit(ProfileField.Waist, "82")
+            scenario.viewModel.save()
+            val stored = storage.current
+
+            // When
+            scenario.recreate()
+            scenario.viewModel.save()
+
+            // Then
+            assertEquals(ProfileSave.Updated, scenario.viewModel.state.value.saved)
+            assertEquals(stored, storage.current)
+        }
+    }
+
+    @Test
+    fun recreate_afterProcessDeathOnceCreated_reportsTheCreatedProfile() = runTest {
         viewModelScenario {
             ProfileEditorViewModel(
                 storage,
@@ -287,13 +312,14 @@ class ProfileEditorViewModelTest {
             // Given
             scenario.viewModel.fill(name = "Bia", waist = "95", date = "11/10/2026")
             scenario.viewModel.save()
+            val created = assertIs<ProfileSave.Created>(scenario.viewModel.state.value.saved)
 
             // When
             scenario.recreate()
             scenario.viewModel.save()
 
             // Then
-            assertEquals(ProfileSave.Updated, scenario.viewModel.state.value.saved)
+            assertEquals(created, scenario.viewModel.state.value.saved)
             assertEquals(2, storage.current.size)
         }
     }
