@@ -36,7 +36,6 @@ import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.project.ui.ProjectsState
 import com.almeidajr.molda.project.ui.ProjectsViewModel
-import com.almeidajr.molda.project.ui.RenameProjectDialog
 import com.almeidajr.molda.project.ui.projectSection
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.skirt.ui.CalculatorState
@@ -94,7 +93,6 @@ fun MoldaRoute(
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
     SyncProfileEditor(navigator, profiles)
-    ProjectDialogs(projectState, projects, showSnackbar)
     MoldaShell(
         navigator,
         titleFocus,
@@ -243,21 +241,5 @@ private class MoldaApp(
     private fun finishProfileEditor() {
         profiles.cancel()
         navigator.removeAll { it is PickerProfileEditorKey }
-    }
-}
-
-@Composable
-private fun ProjectDialogs(
-    state: ProjectsState,
-    projects: ProjectsViewModel,
-    onShowSnackbar: (Int) -> Unit,
-) {
-    state.renaming?.let { renaming ->
-        RenameProjectDialog(
-            renaming,
-            projects::editName,
-            { projects.rename(onShowSnackbar) },
-            projects::cancel,
-        )
     }
 }

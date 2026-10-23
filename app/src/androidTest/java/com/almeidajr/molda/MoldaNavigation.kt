@@ -65,7 +65,7 @@ internal fun AndroidComposeTestRule<*, MainActivity>.showRoute(
         val projectsViewModel: ProjectsViewModel = viewModel(
             key = "isolatedProjects",
             factory = viewModelFactory {
-                initializer { ProjectsViewModel(projects, clock, createSavedStateHandle()) }
+                initializer { ProjectsViewModel(projects, clock) }
             },
         )
         val calculator: SkirtCalculatorViewModel = viewModel()

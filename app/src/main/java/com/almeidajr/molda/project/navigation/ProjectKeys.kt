@@ -36,6 +36,10 @@ internal data object ProjectEditorGuideKey : NavKey
 internal data class SaveProjectKey(val snapshot: SkirtSnapshot, val showsSaved: Boolean = false) :
     NavKey
 
+/** The dialog that renames the saved project [id], over the stack that opened it. */
+@Serializable
+internal data class RenameProjectKey(val id: ProjectId) : NavKey
+
 /** The dialog that confirms deleting the saved project [id], over the stack that opened it. */
 @Serializable
 internal data class DeleteProjectKey(val id: ProjectId) : NavKey

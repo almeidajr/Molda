@@ -1,8 +1,5 @@
 package com.almeidajr.molda.project.ui
 
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.testing.viewModelScenario
 import com.almeidajr.molda.R
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
@@ -26,11 +23,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-// Robolectric supplies the real Bundle that saved state is parcelled through.
-@RunWith(RobolectricTestRunner::class)
 class ProjectsViewModelTest {
     private val storage = FakeProjectRepository(listOf(saved))
     private val shown = mutableListOf<Int>()
@@ -179,26 +172,12 @@ class ProjectsViewModelTest {
     }
 
     @Test
-    fun startRenaming_ofProject_offersItsCurrentName() = runTest {
+    fun rename_storesTheNameAndReportsIt() = runTest {
         // Given
         val projects = projectsViewModel()
 
         // When
-        projects.startRenaming(saved)
-
-        // Then
-        assertEquals("Saia antiga", projects.state.value.renaming?.name)
-    }
-
-    @Test
-    fun rename_withEditedName_storesTheNameAndCloses() = runTest {
-        // Given
-        val projects = projectsViewModel()
-        projects.startRenaming(saved)
-        projects.editName("Saia da formatura")
-
-        // When
-        projects.rename(shown::add)
+        projects.rename(saved.id, ProjectName("Saia da formatura"), shown::add)
 
         // Then
         assertEquals(
@@ -215,52 +194,50 @@ class ProjectsViewModelTest {
     }
 
     @Test
-    fun rename_withBlankName_flagsTheNameAndStoresNothing() = runTest {
-        // Given
-        val projects = projectsViewModel()
-        projects.startRenaming(saved)
-        projects.editName("   ")
-
-        // When
-        projects.rename(shown::add)
-
-        // Then
-        assertTrue(projects.state.value.renaming?.hasBlankName == true)
-        assertEquals(listOf(saved), storage.current)
-    }
-
-    @Test
-    fun editName_afterBlankRenameWasRefused_clearsTheFlag() = runTest {
-        // Given
-        val projects = projectsViewModel()
-        projects.startRenaming(saved)
-        projects.editName("   ")
-        projects.rename(shown::add)
-
-        // When
-        projects.editName("Saia")
-
-        // Then
-        assertFalse(projects.state.value.renaming?.hasBlankName ?: true)
-    }
-
-    @Test
-    fun rename_whenStorageFails_keepsTheDialogAndShowsTheFailure() = runTest {
+    fun rename_whenStorageFails_keepsTheProjectAndShowsTheFailure() = runTest {
         // Given
         storage.failsCommands = true
         val projects = projectsViewModel()
-        projects.startRenaming(saved)
-        projects.editName("Saia da formatura")
 
         // When
-        projects.rename(shown::add)
+        projects.rename(saved.id, ProjectName("Saia da formatura"), shown::add)
 
         // Then
         assertEquals(
-            ProjectRenaming(saved.id, "Saia da formatura", error = R.string.project_rename_failed),
+            ProjectRenaming(saved.id, error = R.string.project_rename_failed),
             projects.state.value.renaming,
         )
         assertEquals(listOf(saved), storage.current)
+        assertEquals(emptyList(), shown)
+    }
+
+    @Test
+    fun cancelRenaming_afterAFailure_forgetsTheFailure() = runTest {
+        // Given
+        storage.failsCommands = true
+        val projects = projectsViewModel()
+        projects.rename(saved.id, ProjectName("Saia da formatura"), shown::add)
+
+        // When
+        projects.cancelRenaming()
+
+        // Then
+        assertNull(projects.state.value.renaming)
+        assertEquals(listOf(saved), storage.current)
+    }
+
+    @Test
+    fun cancelRenaming_duringTheStorageCall_keepsRenaming() = runTest {
+        // Given
+        storage.commandGate = CompletableDeferred()
+        val projects = projectsViewModel()
+        projects.rename(saved.id, ProjectName("Saia da formatura"), shown::add)
+
+        // When
+        projects.cancelRenaming()
+
+        // Then
+        assertEquals(ProjectRenaming(saved.id, isBusy = true), projects.state.value.renaming)
     }
 
     @Test
@@ -324,32 +301,8 @@ class ProjectsViewModelTest {
         assertEquals(ProjectDeleting(saved.id, isBusy = true), projects.state.value.deleting)
     }
 
-    @Test
-    fun recreate_withRenameDialogOpen_renamesToTheTypedName() = runTest {
-        // Given
-        recreatedAfter { projects ->
-            projects.startRenaming(saved)
-            projects.editName("Saia da formatura")
-        }.use { scenario ->
-            // When
-            scenario.viewModel.rename(shown::add)
-
-            // Then
-            assertEquals(ProjectName("Saia da formatura"), storage.current.single().name)
-        }
-    }
-
-    /** A view model that went through [actions], then was recreated after process death. */
-    private fun recreatedAfter(actions: (ProjectsViewModel) -> Unit) = viewModelScenario {
-        ProjectsViewModel(storage, October18Clock, createSavedStateHandle())
-    }.also {
-        actions(it.viewModel)
-        it.recreate()
-    }
-
-    private fun projectsViewModel() = ProjectsViewModel(storage, October18Clock, SavedStateHandle())
+    private fun projectsViewModel() = ProjectsViewModel(storage, October18Clock)
 }
-
 private val fromProfile = SkirtSnapshot(
     SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
     SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),

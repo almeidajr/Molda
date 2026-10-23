@@ -72,6 +72,62 @@ class ProjectManagementTest {
     }
 
     @Test
+    fun rename_closedByBack_keepsTheName() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.onNodeWithText("Renomear").assertDoesNotExist()
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun rename_whenStorageFails_showsFailureAndKeepsTheName() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga)).apply { failsCommands = true }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+
+        // When
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+        click("Renomear")
+
+        // Then
+        composeRule.onNodeWithText("Não foi possível renomear o projeto", substring = true)
+            .assertIsDisplayed()
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun rename_afterRecreation_keepsTheProjectAndTheTypedName() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga, saiaNova))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+
+        // When
+        composeRule.recreate()
+        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        click("Renomear")
+
+        // Then
+        composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
+        assertEquals(
+            listOf(ProjectName("Saia da formatura"), ProjectName("Saia nova")),
+            projects.current.map { it.name },
+        )
+    }
+
+    @Test
     fun delete_cancelled_keepsTheProject() {
         // Given
         val projects = FakeProjectRepository(listOf(saiaAntiga))

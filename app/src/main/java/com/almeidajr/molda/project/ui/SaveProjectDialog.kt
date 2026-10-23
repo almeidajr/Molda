@@ -91,23 +91,22 @@ private fun TypedNameDialog(
     )
 }
 
-/** Renames a stored project; a storage failure keeps the dialog and the typed name. */
+/** Renames a stored project, starting from [currentName]; a storage failure keeps the dialog. */
 @Composable
 fun RenameProjectDialog(
-    renaming: ProjectRenaming,
-    onEditName: (String) -> Unit,
-    onRename: () -> Unit,
+    currentName: String,
+    isBusy: Boolean,
+    @StringRes error: Int?,
+    onRename: (ProjectName) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ProjectNameDialog(
+    TypedNameDialog(
         title = stringResource(R.string.project_rename),
         confirmLabel = stringResource(R.string.project_rename_confirm),
-        name = renaming.name,
-        hasBlankName = renaming.hasBlankName,
-        isBusy = renaming.isBusy,
-        error = renaming.error,
-        onEditName = onEditName,
+        initialName = currentName,
+        isBusy = isBusy,
+        error = error,
         onConfirm = onRename,
         onCancel = onCancel,
         modifier = modifier,

@@ -1,9 +1,7 @@
 package com.almeidajr.molda.project.ui
 
 import androidx.annotation.StringRes
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.R
 import com.almeidajr.molda.project.domain.Project
@@ -12,7 +10,6 @@ import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.domain.defaultProjectName
-import com.almeidajr.molda.project.domain.readProjectName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -25,17 +22,13 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 
 /** The saving of a new project, running or failed with [error]. */
 data class ProjectSaving(val isBusy: Boolean = false, @param:StringRes val error: Int? = null)
 
-/** The stored project [id] being renamed to the [name] typed so far. */
-@Serializable
+/** The renaming of the stored project [id], running or failed with [error]. */
 data class ProjectRenaming(
     val id: ProjectId,
-    val name: String,
-    val hasBlankName: Boolean = false,
     val isBusy: Boolean = false,
     @param:StringRes val error: Int? = null,
 )
@@ -58,22 +51,14 @@ data class ProjectsState(
     val isUpdating: Boolean = false,
 )
 
-/** The open dialogs, kept through process death; a storage call they started is not. */
-@Serializable
-private data class ProjectDialogs(val renaming: ProjectRenaming? = null)
-
 // One command per project action the UI offers.
 @Suppress("TooManyFunctions")
 @HiltViewModel
 class ProjectsViewModel @Inject constructor(
     private val repository: ProjectRepository,
     private val clock: Clock,
-    savedState: SavedStateHandle,
 ) : ViewModel() {
-    private var savedDialogs by savedState.saved { ProjectDialogs() }
-    private val mutableState = MutableStateFlow(
-        ProjectsState(renaming = savedDialogs.renaming?.copy(isBusy = false)),
-    )
+    private val mutableState = MutableStateFlow(ProjectsState())
     val state: StateFlow<ProjectsState> = mutableState.asStateFlow()
 
     private var loadJob: Job? = null
@@ -111,11 +96,6 @@ class ProjectsViewModel @Inject constructor(
     /** The name offered for a new project from [snapshot], after its kind's [kindLabel]. */
     fun defaultName(snapshot: SkirtSnapshot, kindLabel: String): String =
         defaultProjectName(kindLabel, snapshot.source?.profileName, LocalDate.now(clock))
-
-    /** Edits the name typed in the open rename dialog. */
-    fun editName(text: String) = transition { state ->
-        state.copy(renaming = state.renaming?.copy(name = text, hasBlankName = false))
-    }
 
     /**
      * Stores [snapshot] as a new project called [name]; once the project list holds it, [onSaved]
@@ -168,22 +148,16 @@ class ProjectsViewModel @Inject constructor(
         ) { state, _ -> state.copy(isUpdating = false) }
     }
 
-    fun startRenaming(project: Project) = transition {
-        it.copy(renaming = ProjectRenaming(project.id, project.name.text))
-    }
-
-    /** Stores the typed name; once stored, [onShowSnackbar] gets the message to show. */
-    fun rename(onShowSnackbar: (Int) -> Unit) {
-        val renaming = mutableState.value.renaming?.takeUnless { it.isBusy } ?: return
-        val name = readProjectName(renaming.name)
-            ?: return transition { it.copy(renaming = renaming.copy(hasBlankName = true)) }
+    /** Renames the project [id] to [name]; once stored, [onRenamed] gets the message to show. */
+    fun rename(id: ProjectId, name: ProjectName, onRenamed: (Int) -> Unit) {
+        if (mutableState.value.renaming?.isBusy == true) return
         submit(
-            command = { repository.rename(renaming.id, name, clock.instant()) },
+            command = { repository.rename(id, name, clock.instant()) },
             progress = { state, isBusy, error ->
-                state.copy(renaming = state.renaming?.copy(isBusy = isBusy, error = error))
+                state.copy(renaming = ProjectRenaming(id, isBusy, error))
             },
             failure = R.string.project_rename_failed,
-            report = { if (it.isSuccess) onShowSnackbar(R.string.project_renamed) },
+            report = { if (it.isSuccess) onRenamed(R.string.project_renamed) },
         ) { state, _ -> state.copy(renaming = null) }
     }
 
@@ -205,8 +179,8 @@ class ProjectsViewModel @Inject constructor(
         if (state.deleting?.isBusy == true) state else state.copy(deleting = null)
     }
 
-    /** Closes the open rename dialog, unless its storage call is running. */
-    fun cancel() = transition { state ->
+    /** Forgets a failed renaming, unless its storage call is running. */
+    fun cancelRenaming() = transition { state ->
         if (state.renaming?.isBusy == true) state else state.copy(renaming = null)
     }
 
@@ -246,6 +220,5 @@ class ProjectsViewModel @Inject constructor(
     private fun transition(next: (ProjectsState) -> ProjectsState) {
         val state = next(mutableState.value)
         mutableState.value = state
-        savedDialogs = ProjectDialogs(state.renaming)
     }
 }

@@ -24,6 +24,7 @@ import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
+import com.almeidajr.molda.project.navigation.RenameProjectKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
@@ -60,7 +61,7 @@ internal fun EntryProviderScope<NavKey>.projectSection(
                 onUp = if (LocalIsTwoPane.current) null else navigator::back,
                 onEdit = { onEdit(project) },
                 // Deleting the open project closes it: OpenedProject no longer finds it.
-                onRename = { projects.startRenaming(project) },
+                onRename = { navigator.push(RenameProjectKey(project.id)) },
                 onDelete = { navigator.push(DeleteProjectKey(project.id)) },
             ) {
                 savedResult(project)
@@ -70,6 +71,9 @@ internal fun EntryProviderScope<NavKey>.projectSection(
     // Project dialogs are window-overlay entries keyed by what they act on; Back leaves the key.
     entry<SaveProjectKey>(metadata = windowOverlay()) { key ->
         SaveProjectEntry(key, navigator, projects, onShowSnackbar)
+    }
+    entry<RenameProjectKey>(metadata = windowOverlay()) { key ->
+        RenameProjectEntry(key, navigator, projects, onShowSnackbar)
     }
     entry<DeleteProjectKey>(metadata = windowOverlay()) { key ->
         DeleteProjectEntry(key, navigator, projects, onShowSnackbar)
@@ -112,6 +116,37 @@ internal fun Navigator.showProject(id: ProjectId) {
             it is ProjectGuideKey
     }
     push(ProjectKey(id), root = ProjectsKey)
+}
+
+@Composable
+private fun RenameProjectEntry(
+    key: RenameProjectKey,
+    navigator: Navigator,
+    projects: ProjectsViewModel,
+    onShowSnackbar: (Int) -> Unit,
+) {
+    val state by projects.state.collectAsStateWithLifecycle()
+    val renaming = state.renaming?.takeIf { it.id == key.id }
+    val isBusy = renaming?.isBusy == true
+    OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
+        RenameProjectDialog(
+            currentName = project.name.text,
+            isBusy = isBusy,
+            error = renaming?.error,
+            onRename = { name ->
+                projects.rename(key.id, name) {
+                    onShowSnackbar(it)
+                    navigator.remove(key)
+                }
+            },
+            onCancel = {
+                if (!isBusy) {
+                    projects.cancelRenaming()
+                    navigator.remove(key)
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -168,7 +203,7 @@ private fun ProjectList(navigator: Navigator, projects: ProjectsViewModel) {
                 else -> CatalogSelection.Unselected
             }
         },
-        onRename = projects::startRenaming,
+        onRename = { navigator.push(RenameProjectKey(it.id)) },
         onDelete = { navigator.push(DeleteProjectKey(it.id)) },
     )
 }
