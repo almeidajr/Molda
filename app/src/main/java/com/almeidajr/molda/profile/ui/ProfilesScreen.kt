@@ -53,9 +53,9 @@ fun ProfilesContent(
     onRetry: () -> Unit,
     onStartEdit: (ProfileId) -> Unit,
     onDelete: (ProfileId) -> Unit,
-    modifier: Modifier = Modifier,
     /** False while a profile operation or the open editor's save is in flight. */
-    canChangeProfiles: Boolean = state.canChangeProfiles,
+    canChangeProfiles: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 88.dp),

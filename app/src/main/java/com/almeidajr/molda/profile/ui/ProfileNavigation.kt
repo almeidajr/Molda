@@ -161,8 +161,8 @@ private fun ProfileList(
         profiles::load,
         { onRequestEditor(EditedProfile.Existing(it)) },
         profiles::delete,
-        Modifier.padding(16.dp),
         canChangeProfiles = state.canChangeProfiles && !isPerfisEditorSaving(navigator),
+        Modifier.padding(16.dp),
     )
 }
 
