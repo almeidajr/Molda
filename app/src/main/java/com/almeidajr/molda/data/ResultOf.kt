@@ -22,3 +22,14 @@ internal suspend fun <T> resultOf(block: suspend () -> T): Result<T> = try {
 } catch (failure: IllegalStateException) {
     Result.failure(failure)
 }
+
+/** Whether [resultOf] turns [this] failure into a [Result.failure] rather than propagating it. */
+internal val Throwable.isExpectedStorageFailure: Boolean
+    get() = when (this) {
+        // A subclass of IllegalStateException, so it must be excluded before that is matched.
+        is CancellationException -> false
+
+        is SQLiteException, is IllegalArgumentException, is IllegalStateException -> true
+
+        else -> false
+    }
