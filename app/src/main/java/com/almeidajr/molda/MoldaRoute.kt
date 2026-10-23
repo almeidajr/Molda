@@ -2,9 +2,11 @@ package com.almeidajr.molda
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -24,8 +26,8 @@ import com.almeidajr.molda.profile.navigation.EditedProfile
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
+import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
-import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.profile.ui.SyncProfileEditor
 import com.almeidajr.molda.profile.ui.openEditor
@@ -34,17 +36,20 @@ import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
-import com.almeidajr.molda.project.ui.ProjectsState
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.projectSection
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
-import com.almeidajr.molda.skirt.ui.CalculatorState
 import com.almeidajr.molda.skirt.ui.SavedSkirtResult
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.skirt.ui.skirtSection
 import com.almeidajr.molda.skirt.ui.snapshot
+import com.almeidajr.molda.ui.navigation.EditorReport
+import com.almeidajr.molda.ui.navigation.EditorStatusHolder
+import com.almeidajr.molda.ui.navigation.EditorStatusHolderSaver
+import com.almeidajr.molda.ui.navigation.LocalEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.TitleFocus
+import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
 import kotlinx.coroutines.launch
@@ -65,8 +70,6 @@ fun MoldaRoute(
     projectCalculator: SkirtCalculatorViewModel = hiltViewModel(key = "projectEditor"),
 ) {
     val profileState by profiles.state.collectAsStateWithLifecycle()
-    val projectState by projects.state.collectAsStateWithLifecycle()
-    val projectCalculatorState by projectCalculator.state.collectAsStateWithLifecycle()
     val titleFocus = remember { TitleFocus() }
     // One bus for every stack, so a result reaches its requester whichever stack holds it.
     val resultBus = rememberResultEventBus()
@@ -74,6 +77,7 @@ fun MoldaRoute(
         rememberTopLevelBackStacks(TopLevelRoots, resultBus),
         onSwitch = titleFocus::request,
     )
+    val editors = rememberSaveable(saver = EditorStatusHolderSaver) { EditorStatusHolder() }
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
@@ -88,38 +92,43 @@ fun MoldaRoute(
         projects,
         projectCalculator,
         // Read when the user acts: entries are remembered, so a captured status would go stale.
-        status = { editorStatus(profileState, projectState, projectCalculatorState) },
+        status = { editorStatus(editors.reports(navigator.state.allKeys)) },
     )
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
     SyncProfileEditor(navigator, profiles)
-    MoldaShell(
-        navigator,
-        titleFocus,
-        snackbar,
-        onSelect = app::select,
-        onBack = app::back,
-        entryProvider = entryProvider { with(app) { entries(versionName, showSnackbar) } },
-        modifier = modifier,
-    ) { isTwoPane ->
-        if (app.isManagingProfiles(isTwoPane)) {
-            ProfileCreateAction(profileState, app::createProfile)
+    CompositionLocalProvider(LocalEditorStatusHolder provides editors) {
+        MoldaShell(
+            navigator,
+            titleFocus,
+            snackbar,
+            onSelect = app::select,
+            onBack = app::back,
+            entryProvider = entryProvider { with(app) { entries(versionName, showSnackbar) } },
+            modifier = modifier,
+        ) { isTwoPane ->
+            if (app.isManagingProfiles(isTwoPane)) {
+                ProfileCreateAction(profileState, app::createProfile)
+            }
         }
     }
 }
 
-private fun editorStatus(
-    profiles: ProfilesState,
-    projects: ProjectsState,
-    projectEditor: CalculatorState,
-) = EditorStatus(
-    isProfileEditorOpen = profiles.isEditorOpen,
-    isProfileDirty = profiles.isDirty,
-    isProfileSaving = profiles.isSaving,
-    isProfileUnavailable = profiles.isLoading || profiles.loadError != null,
-    isProjectEditorDirty = projectEditor.isDirty,
-    isProjectUpdating = projects.isUpdating,
-)
+private val TopLevelBackStacks.allKeys: List<NavKey> get() = roots.flatMap(::stackOf)
+
+/** The editors' status from what each editor entry on the back stacks [reports]. */
+private fun editorStatus(reports: Map<NavKey, EditorReport>): EditorStatus {
+    val profileEditors = reports.filterKeys { it.isProfileEditor }.values
+    val projectEditors = reports.filterKeys { it is ProjectEditorKey }.values
+    return EditorStatus(
+        isProfileEditorOpen = profileEditors.isNotEmpty(),
+        isProfileDirty = profileEditors.any { it.isDirty },
+        isProfileSaving = profileEditors.any { it.isSaving },
+        isProfileUnavailable = profileEditors.any { it.isUnavailable },
+        isProjectEditorDirty = projectEditors.any { it.isDirty },
+        isProjectUpdating = projectEditors.any { it.isSaving },
+    )
+}
 
 /**
  * The app's ViewModels and [navigator], which wire the features' entries together and carry out

@@ -33,7 +33,9 @@ import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.skirt.ui.snapshot
 import com.almeidajr.molda.skirt.ui.useProfile
+import com.almeidajr.molda.ui.navigation.EditorReport
 import com.almeidajr.molda.ui.navigation.Navigator
+import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
 
 /*
@@ -58,6 +60,9 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
     onCloseEditor: () -> Unit,
 ) {
     entry<ProjectEditorKey> { key ->
+        ReportEditorStatus(key) {
+            EditorReport(editor.state.value.isDirty, projects.state.value.isUpdating)
+        }
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
         OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
             CalculatorDestination(

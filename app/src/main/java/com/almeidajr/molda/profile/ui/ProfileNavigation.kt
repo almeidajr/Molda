@@ -27,13 +27,18 @@ import com.almeidajr.molda.profile.navigation.ProfileManagementKey
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
+import com.almeidajr.molda.ui.navigation.EditorReport
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
+import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 
 internal fun ProfilesViewModel.openEditor(profile: EditedProfile) = when (profile) {
     EditedProfile.New -> startCreating()
     is EditedProfile.Existing -> startEditing(profile.id)
 }
+
+private val ProfilesState.editorReport: EditorReport
+    get() = EditorReport(isDirty, isSaving, isUnavailable = isLoading || loadError != null)
 
 /**
  * Perfis: the profiles beside the open editor, and the picker's editor, which returns the profile
@@ -64,11 +69,13 @@ internal fun EntryProviderScope<NavKey>.profileSection(
             ProfilePane { ProfileList(profiles, onRequestEditor, onShowSnackbar) }
         }
     }
-    entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) {
+    entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
+        ReportEditorStatus(key) { profiles.state.value.editorReport }
         // Beside the list the editor is a pane, closed by Cancel, choosing from the list or Back.
         OpenEditor(profiles, onCancelEditor, onShowSnackbar, isUpShown = !LocalIsTwoPane.current)
     }
     entry<PickerProfileEditorKey> { key ->
+        ReportEditorStatus(key) { profiles.state.value.editorReport }
         SendCreatedProfile(navigator, profiles, key)
         OpenEditor(profiles, onCancelEditor, onShowSnackbar, isUpShown = true)
     }
