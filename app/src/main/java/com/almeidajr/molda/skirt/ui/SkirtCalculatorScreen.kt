@@ -3,7 +3,6 @@ package com.almeidajr.molda.skirt.ui
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -241,16 +239,19 @@ private fun CalculationOutcome(
         )
     }
     state.result?.let { (draft, radii) ->
-        val result = skirtResult(draft, radii, LocalResources.current::getString)
-        CuttingCard(result.card, result.diagramDescription, result.coincidenceNotes, modifier)
-        SkirtResults(
-            result.measurementSummary,
+        SkirtResultContent(
+            skirtResult(draft, radii, LocalResources.current::getString),
             onOpenGuide,
-            onSaveProject,
-            onSaveAsNewProject,
-            onEditMeasurements,
+            cardModifier = modifier,
+            actions = {
+                SaveActions(onSaveProject, onSaveAsNewProject)
+                TextButton(
+                    onClick = onEditMeasurements,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) { Text(stringResource(R.string.skirt_edit_measurements)) }
+            },
+            afterMeasurements = { HonestLimitsNote() },
         )
-        DraftingExplanation(result)
     }
 }
 
@@ -323,58 +324,6 @@ private fun WaistSource(sourceProfileName: String?, onUseProfile: () -> Unit) {
         )
         TextButton(onClick = onUseProfile, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.profile_picker_title))
-        }
-    }
-}
-
-@Composable
-private fun SkirtResults(
-    measurementSummary: List<String>,
-    onOpenGuide: () -> Unit,
-    onSaveProject: () -> Unit,
-    onSaveAsNewProject: (() -> Unit)?,
-    onEditMeasurements: () -> Unit,
-) {
-    // One action row under the card; at large text the buttons wrap onto further lines.
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        FabricFoldingGuideEntry(onOpenGuide)
-        // Editing a saved project offers updating it or keeping it and saving another.
-        OutlinedButton(onClick = onSaveProject, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(
-                stringResource(
-                    if (onSaveAsNewProject == null) {
-                        R.string.project_save
-                    } else {
-                        R.string.project_save_confirm
-                    },
-                ),
-            )
-        }
-        onSaveAsNewProject?.let {
-            OutlinedButton(onClick = it, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.project_save_as_new))
-            }
-        }
-        TextButton(onClick = onEditMeasurements, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.skirt_edit_measurements))
-        }
-    }
-    UsedMeasurements(measurementSummary)
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                stringResource(R.string.skirt_limits_title),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(stringResource(R.string.skirt_limits_body))
         }
     }
 }

@@ -74,6 +74,28 @@ class OpenProjectTest {
     }
 
     @Test
+    fun open_afterSaving_showsTheExplanationAndFormulasFromItsStoredValues() {
+        // Given
+        showRoute()
+        openProject()
+
+        mapOf(
+            "Como levar os raios ao papel" to
+                "A margem de cintura de 1 cm avança para dentro; " +
+                "a margem de barra de 2 cm avança para fora.",
+            // The stored radius, not the 13,05 cm a recalculation would give.
+            "Fórmulas" to "r = (80 + 2) / (2π) = 11,11 cm",
+        ).forEach { (label, content) ->
+            // When
+            composeRule.onNodeWithText(label).performScrollTo().performClick()
+
+            // Then
+            composeRule.onNodeWithText(content, substring = true).performScrollTo()
+                .assertIsDisplayed()
+        }
+    }
+
+    @Test
     fun guide_fromProject_showsItsStoredRadii() {
         // Given
         showRoute()

@@ -1,25 +1,12 @@
 package com.almeidajr.molda.skirt.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
-import com.almeidajr.molda.R
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 
-/**
- * A saved skirt result, read-only: the cutting card on the stored [radii] (never recalculated),
- * the guide entry and the measurements it was drafted from.
- */
+/** A saved skirt result, read-only: the stored [draft] and [radii], never recalculated. */
 @Composable
 fun SavedSkirtResult(
     draft: SkirtDraft,
@@ -27,35 +14,9 @@ fun SavedSkirtResult(
     onOpenGuide: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val text: (Int) -> String = LocalResources.current::getString
-    val card = cuttingCard(radii, text)
-    val description = diagramDescription(
-        card,
-        formatDecimal(draft.waistSeamAllowance.centimetres),
-        formatDecimal(draft.hemAllowance.centimetres),
-        text,
+    SkirtResultContent(
+        skirtResult(draft, radii, LocalResources.current::getString),
+        onOpenGuide,
+        modifier,
     )
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        CuttingCard(card, description, coincidenceNotes(card, text))
-        FabricFoldingGuideEntry(onOpenGuide)
-        UsedMeasurements(measurementSummary(draft, text))
-    }
-}
-
-/** The measurements and choices a result was drafted from, under their heading. */
-@Composable
-internal fun UsedMeasurements(summary: List<String>) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            stringResource(R.string.skirt_used_measurements),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        // One wrapping line; TalkBack hears pauses instead of the visual separators.
-        Text(
-            summary.joinToString(" · "),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.semantics { contentDescription = summary.joinToString("; ") },
-        )
-    }
 }

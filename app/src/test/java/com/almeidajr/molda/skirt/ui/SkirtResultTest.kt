@@ -1,5 +1,6 @@
 package com.almeidajr.molda.skirt.ui
 
+import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.calculateSkirt
@@ -106,6 +107,23 @@ class SkirtResultTest {
         assertEquals(
             "Folga de cintura: 1,50",
             resultFor("80", "1.5", "60", "01", "+1").measurementSummary[1],
+        )
+    }
+
+    @Test
+    fun skirtResult_storedDraftAndRadii_readsTheSameAsTheLiveCalculation() {
+        // Given: the live screen's calculation, and the project saved from it.
+        val live = assertIs<SkirtCalculation.Success>(
+            calculateSkirt(
+                SkirtDraftField.entries.zip(listOf("80", "2", "60", "01", "+1")).toMap(),
+            ),
+        )
+        val saved = SkirtSnapshot(live.draft, live.radii, source = null)
+
+        // When/Then
+        assertEquals(
+            skirtResult(live.draft, live.radii, text),
+            skirtResult(saved.draft, saved.radii, text),
         )
     }
 
