@@ -3,13 +3,16 @@ package com.almeidajr.molda.project
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import com.almeidajr.molda.awaitDialogFocus
 import com.almeidajr.molda.clickInDialog
+import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.di.ClockModule
 import com.almeidajr.molda.di.RepositoryModule
@@ -17,6 +20,7 @@ import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
+import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
@@ -106,6 +110,24 @@ class ProjectSavingTest {
         composeRule.dialogTextField().assertTextContains("Saia godê · 18/10/2026")
         click("Cancelar")
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun save_closedByBack_storesNothing() {
+        // Given
+        val projects = FakeProjectRepository()
+        showCalculatedHandTypedSkirt(projects)
+        // Back must reach the dialog, not close the keyboard.
+        composeRule.closeKeyboard()
+        click("Salvar projeto")
+        composeRule.awaitDialogFocus()
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        assertEquals(emptyList(), projects.current)
     }
 
     @Test
