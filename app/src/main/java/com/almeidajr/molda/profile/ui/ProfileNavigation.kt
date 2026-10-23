@@ -26,7 +26,8 @@ import com.almeidajr.molda.profile.navigation.EditedProfile
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
-import com.almeidajr.molda.profile.navigation.ProfilePickerKey
+import com.almeidajr.molda.profile.navigation.closeEditorOf
+import com.almeidajr.molda.profile.navigation.closePickerEditor
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
@@ -82,7 +83,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         ProfileSavedEffect(editor) { save ->
             onShowSnackbar(R.string.profile_saved)
             if (save is ProfileSave.Created) results.sendResult(key.resultKey, save.profile)
-            navigator.removeAll { it == key || it == ProfilePickerKey(key.resultKey) }
+            navigator.closePickerEditor(key)
         }
         OpenEditor(editor, onCancelEditor, isUpShown = true)
     }
@@ -112,8 +113,7 @@ private fun ProfileDeletedEffect(
     LaunchedEffect(deleted) {
         if (deleted == null) return@LaunchedEffect
         currentOnShowSnackbar(R.string.profile_deleted)
-        val editor = EditedProfile.Existing(deleted)
-        navigator.removeAll { it is ProfileEditorKey && it.profile == editor }
+        navigator.closeEditorOf(deleted)
         profiles.deletionShown()
     }
 }

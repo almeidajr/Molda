@@ -1,0 +1,33 @@
+package com.almeidajr.molda.profile.navigation
+
+import com.almeidajr.molda.profile.domain.ProfileId
+import com.almeidajr.molda.ui.navigation.Navigator
+
+/**
+ * Opens the Perfis editor for [profile], which shows one beside its list, unless it already shows
+ * that profile; with [discardsDraft], a confirmed discard, it always gets a fresh one. The
+ * pickers' editors stay independent.
+ */
+internal fun Navigator.openProfileEditor(profile: EditedProfile, discardsDraft: Boolean = false) {
+    val open = state.stackOf(ProfileManagementKey).last()
+    if (open is ProfileEditorKey && open.profile == profile && !discardsDraft) return
+    removeAll { it is ProfileEditorKey }
+    push(ProfileEditorKey(profile), root = ProfileManagementKey)
+}
+
+/**
+ * Opens a new profile's editor over the picker on [resultKey], replacing one already open for that
+ * picker, whose draft a confirmed discard drops: the picker never has two editors.
+ */
+internal fun Navigator.openPickerEditor(resultKey: String) {
+    removeAll { it is PickerProfileEditorKey && it.resultKey == resultKey }
+    push(PickerProfileEditorKey(resultKey))
+}
+
+/** Closes the picker's [editor] together with the picker it was opened from. */
+internal fun Navigator.closePickerEditor(editor: PickerProfileEditorKey) =
+    removeAll { it == editor || it == ProfilePickerKey(editor.resultKey) }
+
+/** Closes every editor of the deleted profile [id]. */
+internal fun Navigator.closeEditorOf(id: ProfileId) =
+    removeAll { it is ProfileEditorKey && it.profile == EditedProfile.Existing(id) }
