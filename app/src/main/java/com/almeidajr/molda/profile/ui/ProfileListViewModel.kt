@@ -19,8 +19,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ProfileListViewModel @Inject constructor(private val repository: ProfileRepository) :
     ViewModel() {
-    private val mutableState = MutableStateFlow(ProfilesState())
-    val state: StateFlow<ProfilesState> = mutableState.asStateFlow()
+    private val mutableState = MutableStateFlow(ProfileListState())
+    val state: StateFlow<ProfileListState> = mutableState.asStateFlow()
 
     private var loadJob: Job? = null
 
@@ -40,12 +40,12 @@ class ProfileListViewModel @Inject constructor(private val repository: ProfileRe
         }
     }
 
-    /** Deletes profile [id] unless this list is busy; then it is [ProfilesState.deleted]. */
+    /** Deletes profile [id] unless this list is busy; then it is [ProfileListState.deleted]. */
     fun delete(id: ProfileId) {
         val current = mutableState.value
         val profiles = (current.load as? LoadResult.Success)?.value.orEmpty()
-        if (!current.canMutate || profiles.none { it.id == id }) return
-        mutableState.update { it.mutating(deleteId = id) }
+        if (!current.canChangeProfiles || profiles.none { it.id == id }) return
+        mutableState.update { it.copy(deletion = ProfileDeletion.Running(id)) }
         viewModelScope.launch {
             val result = repository.delete(id)
             mutableState.update { it.deletedWith(id, result) }

@@ -7,8 +7,10 @@ import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
@@ -106,9 +108,9 @@ class ProfileListViewModelTest {
     }
 
     @Test
-    fun delete_whenStorageFails_keepsTheProfileAndShowsTheFailure() = runTest {
+    fun delete_whenStorageFails_keepsTheProfileAndShowsTheFailureOnItsRowOnly() = runTest {
         // Given
-        storage.failsCommands = true
+        val storage = FakeProfileRepository(listOf(ana, bia)).apply { failsCommands = true }
         val profiles = ProfileListViewModel(storage)
 
         // When
@@ -116,27 +118,28 @@ class ProfileListViewModelTest {
 
         // Then
         val failed = profiles.state.value
-        assertEquals(R.string.profile_delete_failed, failed.saveError)
+        assertEquals(R.string.profile_delete_failed, failed.deleteError(ana.id))
+        assertNull(failed.deleteError(bia.id))
+        assertFalse(failed.isDeleting(ana.id))
+        assertTrue(failed.canChangeProfiles)
         assertNull(failed.deleted)
-        assertEquals(ana.id, failed.deleteId)
-        assertEquals(LoadResult.Success(listOf(ana)), failed.load)
+        assertEquals(LoadResult.Success(listOf(ana, bia)), failed.load)
     }
 
     @Test
-    fun delete_whileItsOwnDeleteRuns_isIgnored() = runTest {
+    fun delete_afterAFailedOne_clearsThatRowsError() = runTest {
         // Given
-        val storage = FakeProfileRepository(listOf(ana, bia)).apply {
-            commandGate = CompletableDeferred()
-        }
+        val storage = FakeProfileRepository(listOf(ana, bia)).apply { failsCommands = true }
         val profiles = ProfileListViewModel(storage)
         profiles.delete(ana.id)
+        storage.failsCommands = false
 
         // When
         profiles.delete(bia.id)
-        storage.commandGate?.complete(Unit)
 
         // Then
-        assertEquals(listOf(bia), storage.current)
+        assertNull(profiles.state.value.deleteError(ana.id))
+        assertEquals(listOf(ana), storage.current)
     }
 }
 

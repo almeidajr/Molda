@@ -51,11 +51,11 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
         savedForm?.let { form ->
             val saved = ProfileSave.Updated.takeIf { form.isStored }
             // Nothing to load: the form is what the editor shows.
-            ProfilesState(form = form, load = LoadResult.Success(emptyList()), saved = saved)
+            ProfileEditorState(form = form, load = LoadResult.Success(Unit), saved = saved)
         }
-            ?: ProfilesState(form = ProfileForm(editingId = editingId)),
+            ?: ProfileEditorState(form = ProfileForm(editingId = editingId)),
     )
-    val state: StateFlow<ProfilesState> = mutableState.asStateFlow()
+    val state: StateFlow<ProfileEditorState> = mutableState.asStateFlow()
 
     val today: LocalDate get() = LocalDate.now(clock)
 
@@ -82,10 +82,10 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
 
     fun edit(field: ProfileField, text: String) = transition { it.edited(field, text) }
 
-    /** Stores the form unless it is busy or already stored; then it is [ProfilesState.saved]. */
+    /** Stores the form unless Save is unavailable; then it is [ProfileEditorState.saved]. */
     fun save() {
         val current = mutableState.value
-        if (!current.canMutate || current.saved != null) return
+        if (!current.canSave) return
         val validation = validateProfile(
             name = current.inputs.getValue(ProfileField.Name),
             waist = current.inputs.getValue(ProfileField.Waist),
@@ -109,7 +109,7 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
     }
 
     // Main-thread only, so reading back the new value cannot race another transition.
-    private fun transition(next: (ProfilesState) -> ProfilesState) {
+    private fun transition(next: (ProfileEditorState) -> ProfileEditorState) {
         mutableState.value = next(mutableState.value)
         val state = mutableState.value
         if (state.load is LoadResult.Success) savedForm = state.form

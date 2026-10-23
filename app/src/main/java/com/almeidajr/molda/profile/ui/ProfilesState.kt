@@ -62,30 +62,32 @@ sealed interface ProfileSave {
     data object Updated : ProfileSave
 }
 
-/**
- * A profile list's or a profile editor's state: the list uses [load] and deletion, the editor
- * its [form] and its save.
- */
-data class ProfilesState(
-    val form: ProfileForm = ProfileForm(),
-    /**
-     * The stored profiles: the list's rows, or for an editor the profile its form was filled from,
-     * none when the form did not come from storage.
-     */
+/** The list's delete of [id], in flight or failed; a failure stays until the next delete. */
+sealed interface ProfileDeletion {
+    val id: ProfileId
+
+    data class Running(override val id: ProfileId) : ProfileDeletion
+
+    data class Failed(override val id: ProfileId) : ProfileDeletion
+}
+
+/** A list of the stored profiles, Perfis' or a picker's, and the deletions made from it. */
+data class ProfileListState(
     val load: LoadResult<List<MeasurementProfile>> = LoadResult.Loading,
-    val errors: Map<ProfileField, ProfileError> = emptyMap(),
-    val isSaving: Boolean = false,
-    @param:StringRes val saveError: Int? = null,
-    /** What the editor's save stored, until its entry has shown it and closed the editor. */
-    val saved: ProfileSave? = null,
+    val deletion: ProfileDeletion? = null,
     /** The profile the list deleted, until its entry has shown it. */
     val deleted: ProfileId? = null,
-    val deleteId: ProfileId? = null,
 ) {
-    val inputs: Map<ProfileField, String> get() = form.inputs
-    val isDirty: Boolean get() = form.isDirty
-    val editingId: ProfileId? get() = form.editingId
-    val canMutate: Boolean get() = load is LoadResult.Success && !isSaving
+    /** Whether the rows can be edited, deleted or added to now: loaded, no delete in flight. */
+    val canChangeProfiles: Boolean
+        get() = load is LoadResult.Success && deletion !is ProfileDeletion.Running
+
+    fun isDeleting(id: ProfileId): Boolean = deletion == ProfileDeletion.Running(id)
+
+    /** The failure of deleting profile [id], shown on its row only. */
+    @StringRes
+    fun deleteError(id: ProfileId): Int? =
+        R.string.profile_delete_failed.takeIf { deletion == ProfileDeletion.Failed(id) }
 
     /** The picker's rows: the stored profiles, each with whether its notes are shown. */
     val pickerRows: LoadResult<List<PickerRow>>
@@ -94,6 +96,32 @@ data class ProfilesState(
             LoadResult.Loading -> LoadResult.Loading
             is LoadResult.Error -> load
         }
+}
+
+/** The editor's save, in flight or failed; a failure stays until the form changes or saves. */
+enum class ProfileSaving { Running, Failed }
+
+/** One profile editor's form and its save. */
+data class ProfileEditorState(
+    val form: ProfileForm = ProfileForm(),
+    /** Whether the form is ready: a new or restored one is, an existing profile once loaded. */
+    val load: LoadResult<Unit> = LoadResult.Loading,
+    val errors: Map<ProfileField, ProfileError> = emptyMap(),
+    val saving: ProfileSaving? = null,
+    /** What the editor's save stored, until its entry has shown it and closed the editor. */
+    val saved: ProfileSave? = null,
+) {
+    val inputs: Map<ProfileField, String> get() = form.inputs
+    val isDirty: Boolean get() = form.isDirty
+    val editingId: ProfileId? get() = form.editingId
+    val isSaving: Boolean get() = saving == ProfileSaving.Running
+
+    /** Whether Save is available: the form is ready, not saving and not stored yet. */
+    val canSave: Boolean get() = load is LoadResult.Success && !isSaving && saved == null
+
+    /** The editor's failure to store its form. */
+    @get:StringRes
+    val error: Int? get() = R.string.profile_save_failed.takeIf { saving == ProfileSaving.Failed }
 }
 
 /** A profile in the picker; [showNotes] when its notes tell it apart from lookalikes. */

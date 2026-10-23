@@ -44,7 +44,7 @@ class ProfileEditorViewModelTest {
         val state = editor.state.value
         assertNull(state.editingId)
         assertEquals("", state.inputs[ProfileField.Name])
-        assertTrue(state.canMutate)
+        assertTrue(state.canSave)
     }
 
     @Test
@@ -81,7 +81,7 @@ class ProfileEditorViewModelTest {
 
         // Then
         val retried = editor.state.value
-        assertEquals(LoadResult.Success(listOf(ana)), retried.load)
+        assertTrue(retried.canSave)
         assertEquals("Ana", retried.inputs[ProfileField.Name])
     }
 
@@ -141,7 +141,7 @@ class ProfileEditorViewModelTest {
 
         // Then
         val failed = editor.state.value
-        assertEquals(R.string.profile_save_failed, failed.saveError)
+        assertEquals(R.string.profile_save_failed, failed.error)
         assertNull(failed.saved)
         assertEquals("82", failed.inputs[ProfileField.Waist])
     }
@@ -178,7 +178,8 @@ class ProfileEditorViewModelTest {
 
         // Then
         val failed = editor.state.value
-        assertEquals(R.string.profile_save_failed, failed.saveError)
+        assertEquals(R.string.profile_save_failed, failed.error)
+        assertTrue(failed.canSave)
         assertNull(failed.saved)
         assertEquals("Bia", failed.inputs[ProfileField.Name])
         assertEquals(listOf(ana), storage.current)

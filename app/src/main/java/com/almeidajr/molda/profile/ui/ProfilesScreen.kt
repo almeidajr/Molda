@@ -49,7 +49,7 @@ import java.time.LocalDate
 
 @Composable
 fun ProfilesContent(
-    state: ProfilesState,
+    state: ProfileListState,
     onRetry: () -> Unit,
     onStartEdit: (ProfileId) -> Unit,
     onDelete: (ProfileId) -> Unit,
@@ -57,7 +57,7 @@ fun ProfilesContent(
     /** False while the open editor saves, which no row may replace. */
     enabled: Boolean = true,
 ) {
-    val canMutate = enabled && state.canMutate
+    val canChangeProfiles = enabled && state.canChangeProfiles
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -85,11 +85,11 @@ fun ProfilesContent(
             is LoadResult.Success -> load.value.forEach { profile ->
                 ProfileManagementRow(
                     profile,
-                    canMutate,
+                    canChangeProfiles,
                     onStartEdit,
                     onDelete,
-                    isDeleting = state.isSaving && state.deleteId == profile.id,
-                    deleteError = state.saveError.takeIf { state.deleteId == profile.id },
+                    isDeleting = state.isDeleting(profile.id),
+                    deleteError = state.deleteError(profile.id),
                 )
             }
         }
@@ -239,7 +239,7 @@ private fun ConfirmProfileDeletion(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfilePicker(
-    state: ProfilesState,
+    state: ProfileListState,
     onDismiss: () -> Unit,
     onRetry: () -> Unit,
     onSelect: (MeasurementProfile) -> Unit,
@@ -284,7 +284,7 @@ fun ProfilePicker(
             }
             Button(
                 onClick = onCreate,
-                enabled = state.canMutate,
+                enabled = state.canChangeProfiles,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) { Text(stringResource(R.string.profile_new)) }
         }

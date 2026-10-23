@@ -49,7 +49,7 @@ import java.time.ZoneOffset
 
 @Composable
 fun ProfileEditor(
-    state: ProfilesState,
+    state: ProfileEditorState,
     onEdit: (ProfileField, String) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
@@ -70,7 +70,7 @@ fun ProfileEditor(
             focus.clearFocus()
             showCalendar = true
         }
-        ProfileMutationError(state.saveError.takeIf { state.deleteId == null })
+        ProfileMutationError(state.error)
         if (state.load is LoadResult.Error) {
             ProfileMutationError(R.string.profile_load_failed)
             TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -82,7 +82,7 @@ fun ProfileEditor(
                 focus.clearFocus()
                 onSave()
             },
-            enabled = state.canMutate,
+            enabled = state.canSave,
             modifier = Modifier.heightIn(min = 48.dp),
         ) {
             Text(
@@ -119,7 +119,7 @@ fun ProfileEditor(
 
 @Composable
 private fun ProfileMeasurementFields(
-    state: ProfilesState,
+    state: ProfileEditorState,
     onEdit: (ProfileField, String) -> Unit,
     onCalendar: () -> Unit,
 ) {
@@ -196,7 +196,7 @@ private fun ProfileDatePicker(
 
 @Composable
 private fun ProfileDateField(
-    state: ProfilesState,
+    state: ProfileEditorState,
     onEdit: (ProfileField, String) -> Unit,
     onClick: () -> Unit,
 ) {
@@ -233,7 +233,7 @@ private fun ProfileDateField(
 
 @Composable
 private fun ProfileInput(
-    state: ProfilesState,
+    state: ProfileEditorState,
     field: ProfileField,
     onEdit: (ProfileField, String) -> Unit,
 ) {

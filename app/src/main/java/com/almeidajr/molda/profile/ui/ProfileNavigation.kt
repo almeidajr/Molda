@@ -34,7 +34,7 @@ import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 
-private val ProfilesState.editorReport: EditorReport
+private val ProfileEditorState.editorReport: EditorReport
     get() = EditorReport(isDirty, isSaving)
 
 /**

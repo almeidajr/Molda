@@ -61,14 +61,14 @@ class PickerRowsTest {
         val ana = profile(1, "Ana", 80.0)
 
         // When
-        val state = ProfilesState(load = LoadResult.Success(listOf(ana)))
+        val state = ProfileListState(load = LoadResult.Success(listOf(ana)))
 
         // Then
         assertEquals(
             LoadResult.Success(listOf(PickerRow(ana, showNotes = false))),
             state.pickerRows,
         )
-        assertEquals(LoadResult.Loading, ProfilesState().pickerRows)
+        assertEquals(LoadResult.Loading, ProfileListState().pickerRows)
     }
 
     private fun profile(
