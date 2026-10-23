@@ -339,13 +339,12 @@ class ProjectsViewModelTest {
     }
 
     @Test
-    fun delete_afterConfirmation_removesTheProject() = runTest {
+    fun delete_removesTheProjectAndReportsIt() = runTest {
         // Given
         val projects = projectsViewModel()
-        projects.startDeleting(saved)
 
         // When
-        projects.delete(shown::add)
+        projects.delete(saved.id, shown::add)
 
         // Then
         assertEquals(emptyList(), storage.current)
@@ -358,31 +357,46 @@ class ProjectsViewModelTest {
         // Given
         storage.failsCommands = true
         val projects = projectsViewModel()
-        projects.startDeleting(saved)
 
         // When
-        projects.delete(shown::add)
+        projects.delete(saved.id, shown::add)
 
         // Then
         assertEquals(
-            ProjectDeleting(saved.id, "Saia antiga", error = R.string.project_delete_failed),
+            ProjectDeleting(saved.id, error = R.string.project_delete_failed),
             projects.state.value.deleting,
         )
         assertEquals(listOf(saved), storage.current)
+        assertEquals(emptyList(), shown)
     }
 
     @Test
-    fun cancel_withDeleteConfirmationOpen_keepsTheProject() = runTest {
+    fun cancelDeleting_afterAFailure_forgetsTheFailure() = runTest {
         // Given
+        storage.failsCommands = true
         val projects = projectsViewModel()
-        projects.startDeleting(saved)
+        projects.delete(saved.id, shown::add)
 
         // When
-        projects.cancel()
+        projects.cancelDeleting()
 
         // Then
         assertNull(projects.state.value.deleting)
         assertEquals(listOf(saved), storage.current)
+    }
+
+    @Test
+    fun cancelDeleting_duringTheStorageCall_keepsDeleting() = runTest {
+        // Given
+        storage.commandGate = CompletableDeferred()
+        val projects = projectsViewModel()
+        projects.delete(saved.id, shown::add)
+
+        // When
+        projects.cancelDeleting()
+
+        // Then
+        assertEquals(ProjectDeleting(saved.id, isBusy = true), projects.state.value.deleting)
     }
 
     @Test
@@ -412,35 +426,6 @@ class ProjectsViewModelTest {
 
             // Then
             assertEquals(ProjectName("Saia da formatura"), storage.current.single().name)
-        }
-    }
-
-    @Test
-    fun recreate_withDeleteConfirmationOpen_deletesOnConfirmation() = runTest {
-        // Given
-        recreatedAfter { projects -> projects.startDeleting(saved) }.use { scenario ->
-            // When
-            scenario.viewModel.delete(shown::add)
-
-            // Then
-            assertEquals(emptyList(), storage.current)
-        }
-    }
-
-    @Test
-    fun recreate_duringAStorageCall_offersTheDialogAgain() = runTest {
-        // Given
-        // A command that never finishes, as when the process dies during one.
-        storage.commandGate = CompletableDeferred()
-
-        // When
-        recreatedAfter { projects ->
-            projects.startDeleting(saved)
-            projects.delete(shown::add)
-        }.use { scenario ->
-            // Then
-            val deleting = assertNotNull(scenario.viewModel.state.value.deleting)
-            assertFalse(deleting.isBusy)
         }
     }
 

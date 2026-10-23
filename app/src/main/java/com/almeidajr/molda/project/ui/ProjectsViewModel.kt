@@ -47,14 +47,9 @@ data class ProjectRenaming(
     @param:StringRes val error: Int? = null,
 )
 
-/**
- * The stored project [id], called [name], whose deletion is being confirmed; a failure keeps it
- * with [error].
- */
-@Serializable
+/** The deletion of the stored project [id], running or failed with [error]. */
 data class ProjectDeleting(
     val id: ProjectId,
-    val name: String,
     val isBusy: Boolean = false,
     @param:StringRes val error: Int? = null,
 )
@@ -77,7 +72,6 @@ data class ProjectsState(
 private data class ProjectDialogs(
     val saving: ProjectSaving? = null,
     val renaming: ProjectRenaming? = null,
-    val deleting: ProjectDeleting? = null,
 )
 
 // One command per project action the UI offers.
@@ -93,7 +87,6 @@ class ProjectsViewModel @Inject constructor(
         ProjectsState(
             saving = savedDialogs.saving?.copy(isBusy = false),
             renaming = savedDialogs.renaming?.copy(isBusy = false),
-            deleting = savedDialogs.deleting?.copy(isBusy = false),
         ),
     )
     val state: StateFlow<ProjectsState> = mutableState.asStateFlow()
@@ -202,29 +195,28 @@ class ProjectsViewModel @Inject constructor(
         ) { state, _ -> state.copy(renaming = null) }
     }
 
-    /** Asks to confirm deleting [project]; nothing is deleted until [delete]. */
-    fun startDeleting(project: Project) = transition {
-        it.copy(deleting = ProjectDeleting(project.id, project.name.text))
-    }
-
-    /** Deletes the project being confirmed; once deleted, [onShowSnackbar] gets the message. */
-    fun delete(onShowSnackbar: (Int) -> Unit) {
-        val deleting = mutableState.value.deleting?.takeUnless { it.isBusy } ?: return
+    /** Deletes the project [id]; once deleted, [onDeleted] gets the message to show. */
+    fun delete(id: ProjectId, onDeleted: (Int) -> Unit) {
+        if (mutableState.value.deleting?.isBusy == true) return
         submit(
-            command = { repository.delete(deleting.id) },
+            command = { repository.delete(id) },
             progress = { state, isBusy, error ->
-                state.copy(deleting = state.deleting?.copy(isBusy = isBusy, error = error))
+                state.copy(deleting = ProjectDeleting(id, isBusy, error))
             },
             failure = R.string.project_delete_failed,
-            report = { if (it) onShowSnackbar(R.string.project_deleted) },
+            report = { if (it) onDeleted(R.string.project_deleted) },
         ) { state, _ -> state.copy(deleting = null) }
     }
 
-    /** Closes the open save, rename or delete dialog, unless its storage call is running. */
+    /** Forgets a failed deletion, unless its storage call is running. */
+    fun cancelDeleting() = transition { state ->
+        if (state.deleting?.isBusy == true) state else state.copy(deleting = null)
+    }
+
+    /** Closes the open save or rename dialog, unless its storage call is running. */
     fun cancel() = transition { state ->
-        val isBusy = state.saving?.isBusy == true || state.renaming?.isBusy == true ||
-            state.deleting?.isBusy == true
-        if (isBusy) state else state.copy(saving = null, renaming = null, deleting = null)
+        val isBusy = state.saving?.isBusy == true || state.renaming?.isBusy == true
+        if (isBusy) state else state.copy(saving = null, renaming = null)
     }
 
     /**
@@ -256,6 +248,6 @@ class ProjectsViewModel @Inject constructor(
     private fun transition(next: (ProjectsState) -> ProjectsState) {
         val state = next(mutableState.value)
         mutableState.value = state
-        savedDialogs = ProjectDialogs(state.saving, state.renaming, state.deleting)
+        savedDialogs = ProjectDialogs(state.saving, state.renaming)
     }
 }

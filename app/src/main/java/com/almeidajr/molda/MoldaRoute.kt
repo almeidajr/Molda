@@ -33,7 +33,6 @@ import com.almeidajr.molda.profile.ui.profileSection
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
-import com.almeidajr.molda.project.ui.DeleteProjectDialog
 import com.almeidajr.molda.project.ui.ProjectsState
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.project.ui.RenameProjectDialog
@@ -168,7 +167,7 @@ private class MoldaApp(
                 perform(calculateOwn(stacks.current, status()))
             },
         )
-        projectSection(navigator, projects, onEdit = ::editProject) { project ->
+        projectSection(navigator, projects, onShowSnackbar, onEdit = ::editProject) { project ->
             SavedSkirtResult(project.snapshot.draft, project.snapshot.radii, onOpenGuide = {
                 navigator.push(ProjectGuideKey(project.id))
             })
@@ -270,8 +269,5 @@ private fun ProjectDialogs(
             { projects.rename(onShowSnackbar) },
             projects::cancel,
         )
-    }
-    state.deleting?.let { deleting ->
-        DeleteProjectDialog(deleting, { projects.delete(onShowSnackbar) }, projects::cancel)
     }
 }

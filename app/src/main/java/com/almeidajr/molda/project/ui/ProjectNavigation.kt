@@ -18,6 +18,7 @@ import com.almeidajr.molda.about.navigation.AboutKey
 import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
+import com.almeidajr.molda.project.navigation.DeleteProjectKey
 import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
@@ -27,6 +28,7 @@ import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.navigation.CatalogSelection
 import com.almeidajr.molda.ui.navigation.Navigator
+import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
 
 /**
  * Projetos: the saved projects beside the open one, whose pattern draft [savedResult] shows. The
@@ -36,6 +38,7 @@ import com.almeidajr.molda.ui.navigation.Navigator
 internal fun EntryProviderScope<NavKey>.projectSection(
     navigator: Navigator,
     projects: ProjectsViewModel,
+    onShowSnackbar: (Int) -> Unit,
     onEdit: (Project) -> Unit,
     savedResult: @Composable (Project) -> Unit,
 ) {
@@ -57,11 +60,46 @@ internal fun EntryProviderScope<NavKey>.projectSection(
                 onEdit = { onEdit(project) },
                 // Deleting the open project closes it: OpenedProject no longer finds it.
                 onRename = { projects.startRenaming(project) },
-                onDelete = { projects.startDeleting(project) },
+                onDelete = { navigator.push(DeleteProjectKey(project.id)) },
             ) {
                 savedResult(project)
             }
         }
+    }
+    // Project dialogs are window-overlay entries keyed by what they act on; Back leaves the key.
+    entry<DeleteProjectKey>(metadata = windowOverlay()) { key ->
+        DeleteProjectEntry(key, navigator, projects, onShowSnackbar)
+    }
+}
+
+@Composable
+private fun DeleteProjectEntry(
+    key: DeleteProjectKey,
+    navigator: Navigator,
+    projects: ProjectsViewModel,
+    onShowSnackbar: (Int) -> Unit,
+) {
+    val state by projects.state.collectAsStateWithLifecycle()
+    val deleting = state.deleting?.takeIf { it.id == key.id }
+    val isBusy = deleting?.isBusy == true
+    OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
+        DeleteProjectDialog(
+            name = project.name.text,
+            isBusy = isBusy,
+            error = deleting?.error,
+            onDelete = {
+                projects.delete(key.id) {
+                    onShowSnackbar(it)
+                    navigator.remove(key)
+                }
+            },
+            onCancel = {
+                if (!isBusy) {
+                    projects.cancelDeleting()
+                    navigator.remove(key)
+                }
+            },
+        )
     }
 }
 
@@ -108,7 +146,7 @@ private fun ProjectList(navigator: Navigator, projects: ProjectsViewModel) {
             }
         },
         onRename = projects::startRenaming,
-        onDelete = projects::startDeleting,
+        onDelete = { navigator.push(DeleteProjectKey(it.id)) },
     )
 }
 

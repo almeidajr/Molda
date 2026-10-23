@@ -26,3 +26,7 @@ internal val ProjectEditorKey.profileResultKey: String get() = "profile/project/
 /** The fabric-folding guide on the radii calculated while editing a project. */
 @Serializable
 internal data object ProjectEditorGuideKey : NavKey
+
+/** The dialog that confirms deleting the saved project [id], over the stack that opened it. */
+@Serializable
+internal data class DeleteProjectKey(val id: ProjectId) : NavKey

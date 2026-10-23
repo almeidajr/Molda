@@ -69,10 +69,12 @@ fun RenameProjectDialog(
     )
 }
 
-/** Asks before deleting a stored project; a storage failure keeps it and says so. */
+/** Asks before deleting the stored project [name]; a storage failure keeps it and says so. */
 @Composable
 fun DeleteProjectDialog(
-    deleting: ProjectDeleting,
+    name: String,
+    isBusy: Boolean,
+    @StringRes error: Int?,
     onDelete: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -81,21 +83,21 @@ fun DeleteProjectDialog(
         onDismissRequest = onCancel,
         modifier = modifier,
         title = {
-            Text(stringResource(R.string.project_delete_title, deleting.name))
+            Text(stringResource(R.string.project_delete_title, name))
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.project_delete_body))
-                deleting.error?.let { ErrorText(it) }
+                error?.let { ErrorText(it) }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = onDelete,
-                enabled = !deleting.isBusy,
+                enabled = !isBusy,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                val label = if (deleting.isBusy) {
+                val label = if (isBusy) {
                     R.string.project_deleting
                 } else {
                     R.string.action_confirm_delete
@@ -106,7 +108,7 @@ fun DeleteProjectDialog(
         dismissButton = {
             TextButton(
                 onClick = onCancel,
-                enabled = !deleting.isBusy,
+                enabled = !isBusy,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) { Text(stringResource(R.string.action_cancel)) }
         },

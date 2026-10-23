@@ -18,6 +18,8 @@ import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.domain.SkirtSnapshot
+import com.almeidajr.molda.pressBack
+import com.almeidajr.molda.recreate
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.skirt.domain.SkirtDraft
@@ -86,6 +88,40 @@ class ProjectManagementTest {
     }
 
     @Test
+    fun delete_closedByBack_keepsTheProject() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.onNodeWithText("Excluir projeto Saia antiga?").assertDoesNotExist()
+        assertEquals(listOf(saiaAntiga), projects.current)
+    }
+
+    @Test
+    fun delete_afterRecreation_keepsTheProjectToDelete() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga, saiaNova))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
+
+        // When
+        composeRule.recreate()
+        composeRule.showRoute(FakeProfileRepository(), projects, October18Clock)
+        click("Confirmar exclusão")
+
+        // Then
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
+        assertEquals(listOf(saiaNova), projects.current)
+    }
+
+    @Test
     fun delete_confirmed_removesTheProject() {
         // Given
         val projects = FakeProjectRepository(listOf(saiaAntiga))
@@ -143,3 +179,5 @@ private val saiaAntiga = Project(
     createdAt = Instant.parse("2026-10-01T12:00:00Z"),
     updatedAt = Instant.parse("2026-10-01T12:00:00Z"),
 )
+
+private val saiaNova = saiaAntiga.copy(id = ProjectId(2), name = ProjectName("Saia nova"))
