@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import com.almeidajr.molda.awaitDialogFocus
 import com.almeidajr.molda.click
 import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.closeKeyboard
@@ -121,6 +122,23 @@ class EditProjectTest {
         val stored = projects.current
         assertEquals(listOf("Saia de verão", "Saia da formatura"), stored.map { it.name.text })
         assertEquals(listOf(Length(4.0), Length(2.0)), stored.map { it.snapshot.draft.ease })
+    }
+
+    @Test
+    fun saveAsNew_closedByBack_storesNothing() {
+        // Given: reached by taps only, so no keyboard's Back callback can take the Back press
+        launch()
+        openEditor()
+        composeRule.click("Calcular")
+        composeRule.click("Salvar como novo")
+        composeRule.awaitDialogFocus()
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        assertEquals(listOf("Saia da formatura"), projects.current.map { it.name.text })
     }
 
     @Test
