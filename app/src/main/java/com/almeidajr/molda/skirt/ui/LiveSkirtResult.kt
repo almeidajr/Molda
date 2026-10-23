@@ -37,6 +37,8 @@ internal fun CalculationOutcome(
     cardModifier: Modifier = Modifier,
     onEditMeasurements: () -> Unit,
 ) {
+    // An empty Column would still add a spacedBy gap in the calculator's scroll column.
+    if (!state.hasNonfiniteResult && state.result == null) return
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (state.hasNonfiniteResult) {
             Text(
