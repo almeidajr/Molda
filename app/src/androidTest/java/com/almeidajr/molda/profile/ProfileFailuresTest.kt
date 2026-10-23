@@ -150,8 +150,12 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
     }
 
+    /**
+     * A configuration change keeps the entry's editor, so this checks the held result's delivery,
+     * not a restore after process death (ProfileEditorViewModelTest covers that).
+     */
     @Test
-    fun pickerNewProfile_savedWhileHiddenAcrossRecreation_reachesTheCalculatorOnce() {
+    fun pickerNewProfile_savedWhileHiddenAcrossConfigurationChange_reachesTheCalculatorOnce() {
         // Given
         val gate = CompletableDeferred<Unit>()
         val storage = existingProfiles().apply { commandGate = gate }
