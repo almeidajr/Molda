@@ -399,6 +399,8 @@ class SkirtCalculatorTest {
         // Given
         val ease = composeRule.onNodeWithText(SkirtDraftField.Ease.labelText)
             .performScrollTo().performClick()
+        // A keyboard arriving after Tab hides the next field for a frame Compose cannot see coming.
+        composeRule.awaitKeyboardVisible()
 
         // When
         ease.performKeyInput { pressKey(Key.Tab) }
