@@ -235,6 +235,23 @@ class FabricFoldingGuideTest {
     }
 
     @Test
+    fun motionChange_afterPausing_playsTheStep() {
+        // Given
+        calculate()
+        openPlayingGuide()
+        next(times = 1)
+        drawing(FIRST_FOLD).performClick()
+        drawing(FIRST_FOLD).assert(hasStateDescription("Pausado"))
+
+        // When
+        animatorScale.set(0f)
+        animatorScale.set(1f)
+
+        // Then
+        drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo"))
+    }
+
+    @Test
     fun recreation_afterPausing_playsTheStep() {
         // Given
         calculate()
