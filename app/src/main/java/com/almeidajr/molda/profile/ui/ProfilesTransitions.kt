@@ -15,7 +15,14 @@ internal fun ProfilesState.loadedWith(result: Result<List<MeasurementProfile>>) 
 
 /** Opens the editor on [form] unless storage is busy or unavailable. */
 internal fun ProfilesState.opened(form: ProfileForm) = if (canMutate) {
-    copy(form = form, errors = emptyMap(), savedMessage = null, saveError = null, deleteId = null)
+    copy(
+        form = form,
+        errors = emptyMap(),
+        savedMessage = null,
+        createdProfile = null,
+        saveError = null,
+        deleteId = null,
+    )
 } else {
     this
 }

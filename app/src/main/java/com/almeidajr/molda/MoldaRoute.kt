@@ -20,12 +20,10 @@ import com.almeidajr.molda.about.ui.aboutSection
 import com.almeidajr.molda.guide.ui.guideSection
 import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.pattern.ui.patternSection
-import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.navigation.EditedProfile
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
-import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
 import com.almeidajr.molda.profile.ui.ProfilesState
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
@@ -35,7 +33,6 @@ import com.almeidajr.molda.profile.ui.profileSection
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
-import com.almeidajr.molda.project.navigation.ProjectsKey
 import com.almeidajr.molda.project.ui.DeleteProjectDialog
 import com.almeidajr.molda.project.ui.ProjectFeedback
 import com.almeidajr.molda.project.ui.ProjectsState
@@ -94,7 +91,7 @@ fun MoldaRoute(
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
     SyncProfileEditor(navigator, profiles)
     ShowSavedProject(navigator, projects)
-    ProfileSaveFeedback(profiles, snackbar, onCreated = app::useCreatedProfile)
+    ProfileSaveFeedback(profiles, snackbar)
     ProjectDialogs(projectState, projects, snackbar)
     MoldaShell(
         navigator,
@@ -153,20 +150,6 @@ private class MoldaApp(
         stacks.current.last() !in setOf(AboutKey, LicencesKey) &&
         (stacks.stackOf(ProfileManagementKey).none { it is ProfileEditorKey } || isTwoPane)
 
-    /** A profile created from a picker is the one to use: back to its calculator with it. */
-    fun useCreatedProfile(profile: MeasurementProfile) {
-        val target = when (PickerProfileEditorKey) {
-            in stacks.stackOf(PatternCatalogKey) -> calculator
-            in stacks.stackOf(ProjectsKey) -> projectCalculator
-            else -> null
-        }
-        if (target != null) {
-            val measurements = profile.measurements
-            target.selectProfile(measurements.waist, measurements.source)
-            navigator.removeAll { it == PickerProfileEditorKey || it is ProfilePickerKey }
-        }
-    }
-
     fun EntryProviderScope<NavKey>.entries(versionName: String) {
         patternSection(navigator)
         skirtSection(
@@ -199,7 +182,7 @@ private class MoldaApp(
         overlaySection(
             navigator,
             profiles,
-            onCreateProfile = { perform(requestPickerEditor(status())) },
+            onCreateProfile = { perform(requestPickerEditor(it, status())) },
         )
     }
 
@@ -230,16 +213,16 @@ private class MoldaApp(
 
             is Transition.OpenProfileEditor -> {
                 if (transition.discardsDraft) profiles.cancel()
-                navigator.remove(PickerProfileEditorKey)
+                navigator.removeAll { it is PickerProfileEditorKey }
                 profiles.openEditor(transition.profile)
             }
 
             is Transition.OpenPickerEditor -> {
                 if (transition.discardsDraft) profiles.cancel()
                 // Moldes and Projetos each have a picker; the one profile form backs the latest.
-                navigator.removeAll { it is ProfileEditorKey || it == PickerProfileEditorKey }
+                navigator.removeAll { it is ProfileEditorKey || it is PickerProfileEditorKey }
                 profiles.startCreating()
-                navigator.push(PickerProfileEditorKey)
+                navigator.push(PickerProfileEditorKey(transition.resultKey))
             }
         }
     }
@@ -247,7 +230,7 @@ private class MoldaApp(
     /** Drops the profile draft; closing the picker's editor returns to the picker below it. */
     private fun finishProfileEditor() {
         profiles.cancel()
-        navigator.remove(PickerProfileEditorKey)
+        navigator.removeAll { it is PickerProfileEditorKey }
     }
 }
 
@@ -270,16 +253,11 @@ private fun ProjectDialogs(
 }
 
 @Composable
-private fun ProfileSaveFeedback(
-    profiles: ProfilesViewModel,
-    snackbar: SnackbarHostState,
-    onCreated: (MeasurementProfile) -> Unit,
-) {
+private fun ProfileSaveFeedback(profiles: ProfilesViewModel, snackbar: SnackbarHostState) {
     val state by profiles.state.collectAsStateWithLifecycle()
     val message = state.savedMessage?.let { stringResource(it) }
     LaunchedEffect(message) {
         message?.let {
-            state.createdProfile?.let(onCreated)
             snackbar.showSnackbar(it)
             profiles.dismissMessage()
         }

@@ -113,6 +113,21 @@ class ProfilesViewModelTest {
     }
 
     @Test
+    fun startCreating_afterCreatingAProfile_forgetsTheCreatedOne() = runTest {
+        // Given
+        val profiles = profilesViewModel()
+        profiles.startCreating()
+        profiles.fill(name = "Bia", waist = "95", date = "11/10/2026")
+        profiles.save()
+
+        // When
+        profiles.startCreating()
+
+        // Then
+        assertNull(profiles.state.value.createdProfile)
+    }
+
+    @Test
     fun save_editedProfile_replacesItInTheList() = runTest {
         // Given
         val profiles = profilesViewModel()

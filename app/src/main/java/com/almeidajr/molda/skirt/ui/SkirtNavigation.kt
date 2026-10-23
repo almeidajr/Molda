@@ -16,8 +16,8 @@ import com.almeidajr.molda.R
 import com.almeidajr.molda.guide.navigation.ExampleFabricFoldingGuideKey
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
-import com.almeidajr.molda.profile.navigation.ProfileRequester
 import com.almeidajr.molda.skirt.navigation.FabricFoldingGuideKey
+import com.almeidajr.molda.skirt.navigation.MOLDES_PROFILE_RESULT_KEY
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
@@ -36,15 +36,14 @@ internal fun EntryProviderScope<NavKey>.skirtSection(
     onCalculateOwn: () -> Unit,
 ) {
     entry<SkirtCalculatorKey> {
-        val requester = ProfileRequester.MoldesCalculator
-        ResultEffect<MeasurementProfile>(requester.resultKey) { profile ->
+        ResultEffect<MeasurementProfile>(MOLDES_PROFILE_RESULT_KEY) { profile ->
             calculator.useProfile(profile)
         }
         CalculatorDestination(
             calculator,
             title = stringResource(R.string.skirt_title),
             onUp = navigator::back,
-            onUseProfile = { navigator.push(ProfilePickerKey(requester)) },
+            onUseProfile = { navigator.push(ProfilePickerKey(MOLDES_PROFILE_RESULT_KEY)) },
             onOpenGuide = { navigator.push(FabricFoldingGuideKey) },
             onSaveProject = onSaveProject,
         )

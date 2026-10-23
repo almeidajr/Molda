@@ -17,12 +17,12 @@ import androidx.navigation3.runtime.result.LocalResultEventBus
 import androidx.navigation3.runtime.result.ResultEffect
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
-import com.almeidajr.molda.profile.navigation.ProfileRequester
 import com.almeidajr.molda.profile.ui.ProfilePicker
 import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
+import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
 import com.almeidajr.molda.project.ui.ProjectsViewModel
 import com.almeidajr.molda.skirt.ui.CalculatedFoldingGuide
@@ -54,14 +54,13 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
     onCloseEditor: () -> Unit,
 ) {
     entry<ProjectEditorKey> { key ->
-        val requester = ProfileRequester.ProjectEditor(key.id)
-        ResultEffect<MeasurementProfile>(requester.resultKey) { editor.useProfile(it) }
+        ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
         OpenedProject(key.id, projects, onClose = { navigator.remove(key) }) { project ->
             CalculatorDestination(
                 editor,
                 title = stringResource(R.string.project_edit_title, project.name.text),
                 onUp = onCloseEditor,
-                onUseProfile = { navigator.push(ProfilePickerKey(requester)) },
+                onUseProfile = { navigator.push(ProfilePickerKey(key.profileResultKey)) },
                 onOpenGuide = { navigator.push(ProjectEditorGuideKey) },
                 onSaveProject = { _ ->
                     editor.state.value.snapshot()?.let { projects.update(key.id, it) }
@@ -87,22 +86,23 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
 }
 
 /**
- * The profile picker, which sends the chosen profile to its requester or [onCreateProfile] leaves
- * for a new profile's editor, and the dialog that sends what confirming the discard of a dirty
- * editor does next to the app's wiring, as a result on [DISCARD_RESULT_KEY].
+ * The profile picker, which sends the chosen profile to its result key or [onCreateProfile] leaves
+ * for a new profile's editor that sends the created one there, and the dialog that sends what
+ * confirming the discard of a dirty editor does next to the app's wiring, as a result on
+ * [DISCARD_RESULT_KEY].
  */
 internal fun EntryProviderScope<NavKey>.overlaySection(
     navigator: Navigator,
     profiles: ProfilesViewModel,
-    onCreateProfile: () -> Unit,
+    onCreateProfile: (resultKey: String) -> Unit,
 ) {
     entry<ProfilePickerKey>(metadata = windowOverlay()) { key ->
         val results = LocalResultEventBus.current
         AppProfilePicker(
             profiles,
-            onSelect = { results.sendResult(key.requester.resultKey, it) },
+            onSelect = { results.sendResult(key.resultKey, it) },
             onDismiss = { navigator.remove(key) },
-            onCreate = onCreateProfile,
+            onCreate = { onCreateProfile(key.resultKey) },
         )
     }
     entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->

@@ -68,7 +68,10 @@ data class ProfilesState(
     @param:StringRes val loadError: Int? = null,
     @param:StringRes val saveError: Int? = null,
     @param:StringRes val savedMessage: Int? = null,
-    /** The profile the last save created, until its message is dismissed. */
+    /**
+     * The profile the last save created, until an editor opens again: kept past its message, since
+     * the picker's editor that sends it on may be on a stack another tab hides when the save ends.
+     */
     val createdProfile: MeasurementProfile? = null,
     val deleteId: ProfileId? = null,
 ) {
@@ -155,7 +158,7 @@ class ProfilesViewModel @Inject constructor(
 
     fun cancel() = transition { it.cancelled() }
 
-    fun dismissMessage() = transition { it.copy(savedMessage = null, createdProfile = null) }
+    fun dismissMessage() = transition { it.copy(savedMessage = null) }
 
     // Main-thread only, so reading back the new value cannot race another transition.
     private fun transition(next: (ProfilesState) -> ProfilesState) {

@@ -17,12 +17,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.result.LocalResultEventBus
 import com.almeidajr.molda.R
 import com.almeidajr.molda.about.navigation.AboutKey
 import com.almeidajr.molda.profile.navigation.EditedProfile
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
+import com.almeidajr.molda.profile.navigation.ProfilePickerKey
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
@@ -34,8 +36,9 @@ internal fun ProfilesViewModel.openEditor(profile: EditedProfile) = when (profil
 }
 
 /**
- * Perfis: the profiles beside the open editor, and the picker's editor. [onRequestEditor] opens an
- * editor, asking first when the open one has changes; [onCancelEditor] closes it the same way.
+ * Perfis: the profiles beside the open editor, and the picker's editor, which returns the profile
+ * it creates to the calculator that opened the picker. [onRequestEditor] opens an editor, asking
+ * first when the open one has changes; [onCancelEditor] closes it the same way.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.profileSection(
@@ -63,7 +66,30 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         // Beside the list the editor is a pane, closed by Cancel, choosing from the list or Back.
         OpenEditor(profiles, onCancelEditor, isUpShown = !LocalIsTwoPane.current)
     }
-    entry<PickerProfileEditorKey> { OpenEditor(profiles, onCancelEditor, isUpShown = true) }
+    entry<PickerProfileEditorKey> { key ->
+        SendCreatedProfile(navigator, profiles, key)
+        OpenEditor(profiles, onCancelEditor, isUpShown = true)
+    }
+}
+
+/**
+ * Sends the profile the picker's editor [key] creates to its picker's result key, then closes the
+ * editor and that picker.
+ */
+@Composable
+private fun SendCreatedProfile(
+    navigator: Navigator,
+    profiles: ProfilesViewModel,
+    key: PickerProfileEditorKey,
+) {
+    val created = profiles.state.collectAsStateWithLifecycle().value.createdProfile
+    val results = LocalResultEventBus.current
+    LaunchedEffect(created) {
+        if (created != null) {
+            results.sendResult(key.resultKey, created)
+            navigator.removeAll { it == key || it == ProfilePickerKey(key.resultKey) }
+        }
+    }
 }
 
 /**
@@ -90,7 +116,7 @@ private fun syncProfileEditor(navigator: Navigator, form: ProfileForm) {
     val editor = ProfileEditorKey(profile).takeIf { form.isEditorOpen }
     navigator.removeAll { it is ProfileEditorKey && it != editor }
     if (editor != null && stacks.stackOf(ProfileManagementKey).last() == ProfileManagementKey &&
-        stacks.roots.none { PickerProfileEditorKey in stacks.stackOf(it) }
+        stacks.roots.none { root -> stacks.stackOf(root).any { it is PickerProfileEditorKey } }
     ) {
         navigator.push(editor, root = ProfileManagementKey)
     }

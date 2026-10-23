@@ -20,6 +20,9 @@ internal data class ProjectGuideKey(val id: ProjectId) : NavKey
 @Serializable
 internal data class ProjectEditorKey(val id: ProjectId) : NavKey
 
+/** The result key this editor listens on for a profile from its picker; unique to its project. */
+internal val ProjectEditorKey.profileResultKey: String get() = "profile/project/${id.value}"
+
 /** The fabric-folding guide on the radii calculated while editing a project. */
 @Serializable
 internal data object ProjectEditorGuideKey : NavKey

@@ -22,6 +22,7 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
+import com.almeidajr.molda.profile.fillProfile
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
@@ -195,6 +196,46 @@ class EditProjectTest {
     }
 
     @Test
+    fun createProfile_fromTheEditorsPicker_fillsTheEditedDraft() {
+        // Given
+        showRoute()
+        openEditor()
+        composeRule.click("Usar perfil")
+        composeRule.click("Novo perfil")
+        composeRule.fillProfile("Clara", waist = "95")
+
+        // When
+        saveProfile()
+
+        // Then
+        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("95"))
+        composeRule.showSkirtCalculator()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText(""))
+    }
+
+    @Test
+    fun createProfile_afterSwitchingTabAndBack_fillsTheEditedDraft() {
+        // Given
+        showRoute()
+        openEditor()
+        composeRule.click("Usar perfil")
+        composeRule.click("Novo perfil")
+        composeRule.showSkirtCalculator()
+        composeRule.selectDestination("Projetos")
+        composeRule.fillProfile("Clara", waist = "95")
+
+        // When
+        saveProfile()
+
+        // Then
+        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText("95"))
+        composeRule.showSkirtCalculator()
+        composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).assert(hasText(""))
+    }
+
+    @Test
     fun useProfile_inMoldes_leavesTheEditedDraftUntouched() {
         // Given
         showRoute(FakeProfileRepository(listOf(BIA)))
@@ -258,6 +299,11 @@ class EditProjectTest {
             .performTextReplacement(text)
         // The keyboard resizes the screen as it opens; let it settle before the next tap.
         composeRule.closeKeyboard()
+    }
+
+    private fun saveProfile() {
+        composeRule.closeKeyboard()
+        composeRule.click("Salvar perfil")
     }
 
     private fun pickBia() =
