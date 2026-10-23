@@ -159,6 +159,25 @@ fun DeleteProjectDialog(
     )
 }
 
+/** The project a dialog acts on failed to load: says so and offers [onRetry] or [onDismiss]. */
+@Composable
+internal fun ProjectLoadFailureDialog(onRetry: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = { ErrorText(R.string.project_load_failed) },
+        confirmButton = {
+            TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.action_retry_load))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
+}
+
 @Composable
 private fun ProjectNameDialog(
     title: String,

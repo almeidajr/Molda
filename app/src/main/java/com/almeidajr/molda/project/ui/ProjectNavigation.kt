@@ -150,7 +150,11 @@ private fun RenameProjectEntry(
     }
     val state by dialog.state.collectAsStateWithLifecycle()
     ClosesWhenDone(state, R.string.project_renamed, onShowSnackbar) { navigator.remove(key) }
-    OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
+    OpenedProject(
+        key.id,
+        onClose = { navigator.remove(key) },
+        failed = { ProjectLoadFailureDialog(it, onDismiss = { navigator.remove(key) }) },
+    ) { project ->
         RenameProjectDialog(
             currentName = project.name.text,
             isBusy = state.isBusy,
@@ -172,7 +176,11 @@ private fun DeleteProjectEntry(
     }
     val state by dialog.state.collectAsStateWithLifecycle()
     ClosesWhenDone(state, R.string.project_deleted, onShowSnackbar) { navigator.remove(key) }
-    OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
+    OpenedProject(
+        key.id,
+        onClose = { navigator.remove(key) },
+        failed = { ProjectLoadFailureDialog(it, onDismiss = { navigator.remove(key) }) },
+    ) { project ->
         DeleteProjectDialog(
             name = project.name.text,
             isBusy = state.isBusy,
@@ -232,14 +240,17 @@ private fun ProjectList(navigator: Navigator) {
 }
 
 /**
- * Shows the stored project [id] with [content] once it loads, the load failure with its retry, or
- * closes with [onClose] when it is no longer stored. It follows the project in a ViewModel of the
- * entry it is composed in.
+ * Shows the stored project [id] with [content] once it loads, the load failure with its retry
+ * through [failed], or closes with [onClose] when it is no longer stored. It follows the project in
+ * a ViewModel of the entry it is composed in.
  */
 @Composable
 internal fun OpenedProject(
     id: ProjectId,
     onClose: () -> Unit,
+    failed: @Composable (onRetry: () -> Unit) -> Unit = {
+        ProjectLoadFailure(R.string.project_load_failed, it, Modifier.padding(16.dp))
+    },
     content: @Composable (Project) -> Unit,
 ) {
     val opened = hiltViewModel<OpenedProjectViewModel, OpenedProjectViewModel.Factory> {
@@ -248,15 +259,8 @@ internal fun OpenedProject(
     val state by opened.state.collectAsStateWithLifecycle()
     when (val current = state) {
         is OpenedProjectState.Shown -> content(current.project)
-
         OpenedProjectState.Gone -> LaunchedEffect(Unit) { onClose() }
-
-        OpenedProjectState.Failed -> ProjectLoadFailure(
-            R.string.project_load_failed,
-            opened::retry,
-            Modifier.padding(16.dp),
-        )
-
+        OpenedProjectState.Failed -> failed(opened::retry)
         OpenedProjectState.Loading -> Unit
     }
 }

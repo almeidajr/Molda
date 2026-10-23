@@ -131,6 +131,26 @@ class ProjectManagementTest {
     }
 
     @Test
+    fun rename_whenTheProjectFailsToLoad_showsTheFailureInADialogThatCancels() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+        showProjetos(projects)
+        // Projetos composes its list, which starts loading, only after the destination's click.
+        composeRule.runOnIdle { projects.failsLoad = true }
+        click("Ações: Saia antiga")
+
+        // When
+        click("Renomear projeto")
+
+        // Then
+        composeRule.onNode(isDialog()).assertExists()
+        composeRule.onNodeWithText("Não foi possível carregar os projetos", substring = true)
+            .assertIsDisplayed()
+        click("Cancelar")
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+    }
+
+    @Test
     fun rename_afterRecreation_keepsTheProjectAndTheTypedName() {
         // Given
         val projects = FakeProjectRepository(listOf(saiaAntiga, saiaNova))
