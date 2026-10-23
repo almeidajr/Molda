@@ -2,6 +2,7 @@ package com.almeidajr.molda.profile.navigation
 
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.profile.domain.ProfileId
+import java.util.UUID
 import kotlinx.serialization.Serializable
 
 /** The Perfis root: profile management. */
@@ -18,16 +19,25 @@ internal sealed interface EditedProfile {
     data class Existing(val id: ProfileId) : EditedProfile
 }
 
-/** The open profile editor. */
+/**
+ * The open profile editor. Each opening has its own [opening], so its entry gets a new ViewModel:
+ * reopening right after a discard never brings the discarded draft back.
+ */
 @Serializable
-internal data class ProfileEditorKey(val profile: EditedProfile) : NavKey
+internal data class ProfileEditorKey(val profile: EditedProfile, val opening: String) : NavKey {
+    constructor(profile: EditedProfile) : this(profile, newOpening())
+}
 
 /**
  * A new profile's editor, opened from the picker on [resultKey]: it sends the profile it creates
- * there.
+ * there. Each opening has its own [opening], as [ProfileEditorKey] has.
  */
 @Serializable
-internal data class PickerProfileEditorKey(val resultKey: String) : NavKey
+internal data class PickerProfileEditorKey(val resultKey: String, val opening: String) : NavKey {
+    constructor(resultKey: String) : this(resultKey, newOpening())
+}
+
+private fun newOpening() = UUID.randomUUID().toString()
 
 /**
  * The profile picker sheet over a calculator, which sends the chosen profile to [resultKey]: the

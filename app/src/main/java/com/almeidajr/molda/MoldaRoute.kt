@@ -3,13 +3,11 @@ package com.almeidajr.molda
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -27,9 +25,6 @@ import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
 import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
-import com.almeidajr.molda.profile.ui.SyncProfileEditor
-import com.almeidajr.molda.profile.ui.openEditor
 import com.almeidajr.molda.profile.ui.profileSection
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
@@ -58,10 +53,8 @@ import kotlinx.coroutines.launch
 fun MoldaRoute(
     modifier: Modifier = Modifier,
     versionName: String = "",
-    profiles: ProfilesViewModel = hiltViewModel(),
     projects: ProjectsViewModel = hiltViewModel(),
 ) {
-    val profileState by profiles.state.collectAsStateWithLifecycle()
     val titleFocus = remember { TitleFocus() }
     // One bus for every stack, so a result reaches its requester whichever stack holds it.
     val resultBus = rememberResultEventBus()
@@ -83,14 +76,12 @@ fun MoldaRoute(
     }
     val app = MoldaApp(
         navigator,
-        profiles,
         projects,
         // Read when the user acts: entries are remembered, so a captured status would go stale.
-        status = { navigator.state.allKeys.let { editorStatus(it, editors.reports(it)) } },
+        status = { stack -> editorStatus(stack, editors.reports(navigator.state.allKeys)) },
     )
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
-    SyncProfileEditor(navigator, profiles)
     CompositionLocalProvider(LocalEditorStatusHolder provides editors) {
         MoldaShell(
             navigator,
@@ -102,7 +93,7 @@ fun MoldaRoute(
             modifier = modifier,
         ) { isTwoPane ->
             if (app.isManagingProfiles(isTwoPane)) {
-                ProfileCreateAction(profileState, app::createProfile)
+                ProfileCreateAction(app::createProfile)
             }
         }
     }
@@ -110,41 +101,54 @@ fun MoldaRoute(
 
 private val TopLevelBackStacks.allKeys: List<NavKey> get() = roots.flatMap(::stackOf)
 
-/** The editors' status from the back stacks' [keys] and what their editor entries [reports]. */
-private fun editorStatus(keys: List<NavKey>, reports: Map<NavKey, EditorReport>): EditorStatus {
-    val profileEditors = reports.filterKeys { it.isProfileEditor }.values
-    val projectEditors = reports.filterKeys { it is ProjectEditorKey }.values
-    return EditorStatus(
-        isProfileEditorOpen = keys.any { it.isProfileEditor },
-        isProfileDirty = profileEditors.any { it.isDirty },
-        isProfileSaving = profileEditors.any { it.isSaving },
-        isProfileUnavailable = profileEditors.any { it.isUnavailable },
-        isProjectEditorDirty = projectEditors.any { it.isDirty },
-        isProjectUpdating = projectEditors.any { it.isSaving },
-    )
+/**
+ * The status of the editor an action on [stack] concerns, the topmost one there, from what the
+ * editor entries [reports]: one editor's save or changes never block another's actions.
+ */
+private fun editorStatus(stack: List<NavKey>, reports: Map<NavKey, EditorReport>): EditorStatus {
+    val editor = stack.lastOrNull { it.isProfileEditor || it is ProjectEditorKey }
+    val report = editor?.let(reports::get) ?: EditorReport()
+    return when (editor) {
+        null -> EditorStatus()
+
+        is ProjectEditorKey ->
+            EditorStatus(isProjectEditorDirty = report.isDirty, isProjectUpdating = report.isSaving)
+
+        else -> EditorStatus(
+            isProfileEditorOpen = true,
+            isProfileDirty = report.isDirty,
+            isProfileSaving = report.isSaving,
+            isProfileUnavailable = report.isUnavailable,
+        )
+    }
 }
 
 /**
  * The app's ViewModels and [navigator], which wire the features' entries together and carry out
- * the transitions decided from [status].
+ * the transitions decided from the [status] of the editor an action on a stack concerns.
  */
 private class MoldaApp(
     private val navigator: Navigator,
-    private val profiles: ProfilesViewModel,
     private val projects: ProjectsViewModel,
-    private val status: () -> EditorStatus,
+    private val status: (stack: List<NavKey>) -> EditorStatus,
 ) {
     private val stacks get() = navigator.state
 
-    fun select(destination: Destination) =
-        perform(selectDestination(destination.root, stacks.selected, stacks.current, status()))
+    fun select(destination: Destination) = perform(
+        selectDestination(
+            destination.root,
+            stacks.selected,
+            stacks.current,
+            status(stacks.stackOf(destination.root)),
+        ),
+    )
 
-    fun back() = perform(goBack(stacks.current, status()))
+    fun back() = perform(goBack(stacks.current, status(stacks.current)))
 
     /** Carries out what the confirmed discard dialog asked for. */
     fun discard(afterDiscard: AfterDiscard) = perform(afterDiscard.transition())
 
-    fun createProfile() = perform(requestProfileEditor(EditedProfile.New, status()))
+    fun createProfile() = perform(requestProfileEditor(EditedProfile.New, perfisStatus()))
 
     /** Whether Perfis shows the new-profile action: not over About nor a single-pane editor. */
     fun isManagingProfiles(isTwoPane: Boolean): Boolean = stacks.selected == ProfileManagementKey &&
@@ -160,7 +164,7 @@ private class MoldaApp(
             },
             onCalculateOwn = {
                 navigator.select(PatternCatalogKey)
-                perform(calculateOwn(stacks.current, status()))
+                perform(calculateOwn(stacks.current, status(stacks.current)))
             },
         )
         projectSection(navigator, projects, onShowSnackbar) { project ->
@@ -172,25 +176,25 @@ private class MoldaApp(
             navigator,
             projects,
             onShowSnackbar,
-            onCloseEditor = { perform(closeProjectEditor(status())) },
+            onCloseEditor = { perform(closeProjectEditor(status(stacks.current))) },
         )
         guideSection(navigator)
         profileSection(
             navigator,
-            profiles,
-            onRequestEditor = { perform(requestProfileEditor(it, status())) },
-            onCancelEditor = { perform(cancelProfileEditor(status())) },
+            onRequestEditor = { perform(requestProfileEditor(it, perfisStatus())) },
+            onCancelEditor = { perform(cancelProfileEditor(status(stacks.current))) },
             onShowSnackbar = onShowSnackbar,
         )
         aboutSection(navigator, versionName)
         overlaySection(
             navigator,
-            profiles,
-            onCreateProfile = { perform(requestPickerEditor(it, status())) },
+            onCreateProfile = { perform(requestPickerEditor(it, status(stacks.current))) },
         )
     }
 
-    /** Carries out [transition] on the back stacks and the profile editor. */
+    private fun perfisStatus() = status(stacks.stackOf(ProfileManagementKey))
+
+    /** Carries out [transition] on the back stacks; an editor's ViewModel leaves with its key. */
     private fun perform(transition: Transition) {
         when (transition) {
             Transition.None -> Unit
@@ -205,35 +209,22 @@ private class MoldaApp(
 
             Transition.CloseProjectEditor -> navigator.removeAll { it is ProjectEditorKey }
 
-            is Transition.ShowCalculator -> {
-                if (transition.finishesPickerEditor) finishProfileEditor()
-                navigator.popTo(SkirtCalculatorKey)
-            }
+            // Popping to the calculator also closes the picker's editor above it.
+            is Transition.ShowCalculator -> navigator.popTo(SkirtCalculatorKey)
 
+            // Perfis shows one editor beside its list; the pickers' editors stay independent.
             is Transition.OpenProfileEditor -> {
-                if (transition.discardsDraft) profiles.cancel()
-                navigator.removeAll { it is PickerProfileEditorKey }
-                profiles.openEditor(transition.profile)
+                navigator.removeAll { it is ProfileEditorKey }
+                navigator.push(ProfileEditorKey(transition.profile), root = ProfileManagementKey)
             }
 
-            is Transition.OpenPickerEditor -> {
-                if (transition.discardsDraft) profiles.cancel()
-                openPickerEditor(transition.resultKey)
-            }
+            is Transition.OpenPickerEditor ->
+                navigator.push(PickerProfileEditorKey(transition.resultKey))
         }
     }
 
-    private fun openPickerEditor(resultKey: String) {
-        // Moldes and Projetos each have a picker; the one profile form backs the latest.
-        navigator.removeAll { it is ProfileEditorKey || it is PickerProfileEditorKey }
-        profiles.startCreating()
-        // A busy store ignores the request; an entry pushed anyway would send a stale profile.
-        if (profiles.state.value.isEditorOpen) navigator.push(PickerProfileEditorKey(resultKey))
-    }
-
-    /** Drops the profile draft; closing the picker's editor returns to the picker below it. */
+    /** Closes the selected stack's profile editor; the picker's returns to the picker below it. */
     private fun finishProfileEditor() {
-        profiles.cancel()
-        navigator.removeAll { it is PickerProfileEditorKey }
+        stacks.current.lastOrNull { it.isProfileEditor }?.let(navigator::remove)
     }
 }

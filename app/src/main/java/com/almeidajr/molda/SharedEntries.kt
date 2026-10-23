@@ -18,8 +18,8 @@ import androidx.navigation3.runtime.result.LocalResultEventBus
 import androidx.navigation3.runtime.result.ResultEffect
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
+import com.almeidajr.molda.profile.ui.ProfileListViewModel
 import com.almeidajr.molda.profile.ui.ProfilePicker
-import com.almeidajr.molda.profile.ui.ProfilesViewModel
 import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
@@ -108,20 +108,19 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
 }
 
 /**
- * The profile picker, which sends the chosen profile to its result key or [onCreateProfile] leaves
- * for a new profile's editor that sends the created one there, and the dialog that sends what
- * confirming the discard of a dirty editor does next to the app's wiring, as a result on
- * [DISCARD_RESULT_KEY].
+ * The profile picker, with a profile list of its own, which sends the chosen profile to its
+ * result key or [onCreateProfile] leaves for a new profile's editor that sends the created one
+ * there, and the dialog that sends what confirming the discard of a dirty editor does next to the
+ * app's wiring, as a result on [DISCARD_RESULT_KEY].
  */
 internal fun EntryProviderScope<NavKey>.overlaySection(
     navigator: Navigator,
-    profiles: ProfilesViewModel,
     onCreateProfile: (resultKey: String) -> Unit,
 ) {
     entry<ProfilePickerKey>(metadata = windowOverlay()) { key ->
         val results = LocalResultEventBus.current
         AppProfilePicker(
-            profiles,
+            hiltViewModel(),
             onSelect = { results.sendResult(key.resultKey, it) },
             onDismiss = { navigator.remove(key) },
             onCreate = { onCreateProfile(key.resultKey) },
@@ -167,7 +166,7 @@ private fun DiscardDialog(@StringRes body: Int, onDismiss: () -> Unit, onDiscard
 
 @Composable
 private fun AppProfilePicker(
-    profiles: ProfilesViewModel,
+    profiles: ProfileListViewModel,
     onSelect: (MeasurementProfile) -> Unit,
     onDismiss: () -> Unit,
     onCreate: () -> Unit,
