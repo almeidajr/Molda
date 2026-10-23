@@ -35,6 +35,7 @@ import com.almeidajr.molda.ui.navigation.LocalEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
+import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
 
 /**
  * Perfis: the profiles beside the open editor, and the picker's editor, which returns the profile
@@ -64,7 +65,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
                 stringResource(R.string.profile_manage),
                 onAbout = { navigator.push(AboutKey) },
             )
-            ProfilePane { ProfileList(profiles, navigator, onRequestEditor) }
+            ProfilePane { ProfileList(profiles, navigator.state, onRequestEditor) }
         }
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
@@ -152,7 +153,7 @@ private fun OpenEditor(editor: ProfileEditorViewModel, onCancel: () -> Unit, isU
 @Composable
 private fun ProfileList(
     profiles: ProfileListViewModel,
-    navigator: Navigator,
+    stacks: TopLevelBackStacks,
     onRequestEditor: (EditedProfile) -> Unit,
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
@@ -161,7 +162,7 @@ private fun ProfileList(
         profiles::load,
         { onRequestEditor(EditedProfile.Existing(it)) },
         profiles::delete,
-        canChangeProfiles = state.canChangeProfiles && !isPerfisEditorSaving(navigator),
+        canChangeProfiles = state.canChangeProfiles && !isPerfisEditorSaving(stacks),
         Modifier.padding(16.dp),
     )
 }
@@ -172,9 +173,13 @@ private fun ProfileList(
  * ([isTwoPane]).
  */
 @Composable
-internal fun ProfileFloatingAction(navigator: Navigator, isTwoPane: Boolean, onCreate: () -> Unit) {
-    if (navigator.state.showsProfileCreateAction(isTwoPane)) {
-        ProfileCreateAction(onCreate, enabled = !isPerfisEditorSaving(navigator))
+internal fun ProfileFloatingAction(
+    stacks: TopLevelBackStacks,
+    isTwoPane: Boolean,
+    onCreate: () -> Unit,
+) {
+    if (stacks.showsProfileCreateAction(isTwoPane)) {
+        ProfileCreateAction(onCreate, enabled = !isPerfisEditorSaving(stacks))
     }
 }
 
@@ -183,8 +188,9 @@ internal fun ProfileFloatingAction(navigator: Navigator, isTwoPane: Boolean, onC
  * the controls that would open one.
  */
 @Composable
-private fun isPerfisEditorSaving(navigator: Navigator): Boolean = LocalEditorStatusHolder.current
-    .collectStatusOn(navigator.state.stackOf(ProfileManagementKey))?.isSaving == true
+private fun isPerfisEditorSaving(stacks: TopLevelBackStacks): Boolean =
+    LocalEditorStatusHolder.current.collectStatusOn(stacks.stackOf(ProfileManagementKey))
+        ?.isSaving == true
 
 @Composable
 private fun ProfilePane(content: @Composable () -> Unit) {

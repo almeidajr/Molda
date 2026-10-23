@@ -82,7 +82,7 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
             entryProvider = entryProvider { with(app) { entries(versionName, showSnackbar) } },
             modifier = modifier,
         ) { isTwoPane ->
-            ProfileFloatingAction(navigator, isTwoPane, onCreate = app::createProfile)
+            ProfileFloatingAction(navigator.state, isTwoPane, onCreate = app::createProfile)
         }
     }
 }
