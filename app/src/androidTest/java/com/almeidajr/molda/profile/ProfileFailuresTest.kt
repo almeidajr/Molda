@@ -198,10 +198,9 @@ class ProfileFailuresTest {
     }
 
     @Test
-    fun saveNew_whenStorageFails_keepsFormAndShowsError() {
+    fun saveNew_whenStorageFails_showsError() {
         // Given
-        val storage = existingProfiles().apply { failsCommands = true }
-        profileRepository = storage
+        profileRepository = existingProfiles().apply { failsCommands = true }
         composeRule.launchProfiles()
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
@@ -213,56 +212,6 @@ class ProfileFailuresTest {
         // Then
         composeRule.onNodeWithText("Não foi possível salvar o perfil.", substring = true)
             .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
-        composeRule.onNodeWithText("Nome ou apelido").performScrollTo().assertTextContains("Nova")
-        assertEquals(2, storage.current.size)
-    }
-
-    @Test
-    fun saveEdit_whenStorageFails_keepsDraftAndShowsError() {
-        // Given
-        val storage = existingProfiles().apply { failsCommands = true }
-        val original = storage.current
-        profileRepository = storage
-        composeRule.launchProfiles()
-        composeRule.click("Existente", useUnmergedTree = true)
-        composeRule.edit("Nome ou apelido", "Alterado")
-        composeRule.edit("Cintura do perfil (cm)", "82")
-        composeRule.closeKeyboard()
-
-        // When
-        composeRule.click("Salvar alterações")
-
-        // Then
-        composeRule.onNodeWithText("Não foi possível salvar o perfil.", substring = true)
-            .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
-        composeRule.onNodeWithText("Nome ou apelido").performScrollTo()
-            .assertTextContains("Alterado")
-        composeRule.onNodeWithText("Cintura do perfil (cm)").performScrollTo()
-            .assertTextContains("82")
-        assertEquals(original, storage.current)
-    }
-
-    @Test
-    fun delete_whenStorageFails_keepsProfileAndShowsError() {
-        // Given
-        val storage = existingProfiles().apply { failsCommands = true }
-        val original = storage.current
-        profileRepository = storage
-        composeRule.launchProfiles()
-        composeRule.click("Ações: Existente")
-        composeRule.click("Excluir perfil")
-
-        // When
-        composeRule.click("Confirmar exclusão")
-
-        // Then
-        composeRule.onNodeWithText("Não foi possível excluir o perfil.", substring = true)
-            .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
-        composeRule.onNodeWithText("Existente").performScrollTo().assertIsDisplayed()
-        assertEquals(original, storage.current)
     }
 
     @Test

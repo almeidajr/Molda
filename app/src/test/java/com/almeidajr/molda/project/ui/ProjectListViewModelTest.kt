@@ -1,9 +1,10 @@
 package com.almeidajr.molda.project.ui
 
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import kotlin.test.assertIs
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -23,7 +24,16 @@ class ProjectListViewModelTest {
         storage.delete(saved.id).getOrThrow()
 
         // Then
-        assertEquals(emptyList(), list.state.value.projects)
+        assertEquals(LoadResult.Success(emptyList()), list.state.value)
+    }
+
+    @Test
+    fun load_whenStorageFails_isError() = runTest {
+        // Given
+        storage.failsLoad = true
+
+        // When/Then
+        assertIs<LoadResult.Error>(ProjectListViewModel(storage).state.value)
     }
 
     @Test
@@ -37,7 +47,6 @@ class ProjectListViewModelTest {
         list.load()
 
         // Then
-        assertNull(list.state.value.loadError)
-        assertEquals(listOf(saved), list.state.value.projects)
+        assertEquals(LoadResult.Success(listOf(saved)), list.state.value)
     }
 }

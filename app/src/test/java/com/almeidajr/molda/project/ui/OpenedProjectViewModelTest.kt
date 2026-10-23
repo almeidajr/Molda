@@ -1,11 +1,13 @@
 package com.almeidajr.molda.project.ui
 
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import com.almeidajr.molda.testing.October18Clock
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -23,7 +25,7 @@ class OpenedProjectViewModelTest {
         storage.loadGate = CompletableDeferred()
 
         // When/Then
-        assertEquals(OpenedProjectState.Loading, openedViewModel().state.value)
+        assertEquals(LoadResult.Loading, openedViewModel().state.value)
     }
 
     @Test
@@ -36,14 +38,14 @@ class OpenedProjectViewModelTest {
 
         // Then
         assertEquals(
-            OpenedProjectState.Shown(storage.current.single()),
+            LoadResult.Success(storage.current.single()),
             opened.state.value,
         )
         assertEquals(ProjectName("Saia nova"), storage.current.single().name)
     }
 
     @Test
-    fun state_afterTheProjectIsDeleted_isGone() = runTest {
+    fun state_afterTheProjectIsDeleted_isNoProject() = runTest {
         // Given
         val opened = openedViewModel()
 
@@ -51,16 +53,16 @@ class OpenedProjectViewModelTest {
         storage.delete(saved.id).getOrThrow()
 
         // Then
-        assertEquals(OpenedProjectState.Gone, opened.state.value)
+        assertEquals(LoadResult.Success(null), opened.state.value)
     }
 
     @Test
-    fun state_whenTheLoadFails_isFailed() = runTest {
+    fun state_whenTheLoadFails_isError() = runTest {
         // Given
         storage.failsLoad = true
 
         // When/Then
-        assertEquals(OpenedProjectState.Failed, openedViewModel().state.value)
+        assertIs<LoadResult.Error>(openedViewModel().state.value)
     }
 
     @Test
@@ -74,7 +76,7 @@ class OpenedProjectViewModelTest {
         opened.retry()
 
         // Then
-        assertEquals(OpenedProjectState.Shown(saved), opened.state.value)
+        assertEquals(LoadResult.Success(saved), opened.state.value)
     }
 
     private fun openedViewModel() = OpenedProjectViewModel(storage, ProjectKey(saved.id))

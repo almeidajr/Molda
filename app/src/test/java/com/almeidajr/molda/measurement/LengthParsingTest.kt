@@ -2,6 +2,8 @@ package com.almeidajr.molda.measurement
 
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import org.junit.Test
 
 class LengthParsingTest {
@@ -43,5 +45,27 @@ class LengthParsingTest {
         cases.forEach { centimetres ->
             assertFailsWith<IllegalArgumentException>("$centimetres") { Length(centimetres) }
         }
+    }
+
+    @Test
+    fun isSameLength_withTheSameLengthWrittenDifferently_isTrue() {
+        // When/Then
+        assertTrue(isSameLength("80", "80,0"))
+        assertTrue(isSameLength("80.0", "80,0"))
+    }
+
+    @Test
+    fun isSameLength_withDifferentLengths_isFalse() {
+        // When/Then
+        assertFalse(isSameLength("80", "81"))
+    }
+
+    @Test
+    fun isSameLength_withTextThatIsNotALength_comparesAsTyped() {
+        // When/Then
+        assertTrue(isSameLength("80cm", "80cm"))
+        assertFalse(isSameLength("80cm", "80,0cm"))
+        assertFalse(isSameLength("abc", "80"))
+        assertFalse(isSameLength("80", "abc"))
     }
 }

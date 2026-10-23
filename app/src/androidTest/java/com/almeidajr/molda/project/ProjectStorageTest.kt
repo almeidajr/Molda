@@ -2,8 +2,14 @@ package com.almeidajr.molda.project
 
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.data.LoadResult
+import com.almeidajr.molda.data.asLoadResult
+import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
+import com.almeidajr.molda.project.data.LocalProjectRepository
+import com.almeidajr.molda.project.data.ProjectEntity
+import com.almeidajr.molda.project.data.SkirtColumns
 import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.SkirtSnapshot
@@ -13,8 +19,10 @@ import com.almeidajr.molda.withProjects
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -46,7 +54,7 @@ class ProjectStorageTest {
 
         // Then
         assertEquals(saved.reversed(), listed)
-        assertEquals(PatternDraftKind.FullCircleSkirt, listed.last().kind)
+        assertEquals(PatternDraftKind.FullCircleSkirt, listed.last().snapshot.kind)
         assertEquals(fromProfile, listed.last().snapshot)
         assertEquals(typedByHand, listed.first().snapshot)
         assertEquals(january, listed.last().createdAt)
@@ -151,6 +159,47 @@ class ProjectStorageTest {
             assertTrue(storage.update(gone.id, fromProfile, march).isFailure)
             assertTrue(storage.delete(gone.id).isFailure)
         }
+    }
+
+    @Test
+    fun projects_withAnUnknownPatternKind_failAsStorageExpects() = runTest {
+        // Given
+        val database = openMoldaDatabase(context, databaseName)
+        val loads = try {
+            database.projects().insert(
+                ProjectEntity(
+                    name = "Saia de uma versão nova",
+                    patternKind = "origami_crane",
+                    skirt = SkirtColumns(
+                        waist = 80.5,
+                        ease = 2.0,
+                        finishedLength = 60.0,
+                        waistSeamAllowance = 1.0,
+                        hemAllowance = 2.5,
+                        waistStitchingRadius = 13.13,
+                        finishedHemRadius = 73.13,
+                        waistCuttingRadius = 12.13,
+                        hemCuttingRadius = 75.63,
+                        profileName = null,
+                        measurementDate = null,
+                    ),
+                    createdAt = january.toEpochMilli(),
+                    updatedAt = january.toEpochMilli(),
+                ),
+            )
+
+            // When
+            LocalProjectRepository(database.projects()).projects().asLoadResult().toList()
+        } finally {
+            database.close()
+        }
+
+        // Then
+        assertEquals(LoadResult.Loading, loads.first())
+        val failure = assertIs<LoadResult.Error>(loads.last()).failure
+        assertIs<IllegalStateException>(failure)
+        assertTrue("origami_crane" in failure.message.orEmpty())
+        assertEquals(2, loads.size)
     }
 
     private companion object {

@@ -1,5 +1,6 @@
 package com.almeidajr.molda.testing
 
+import com.almeidajr.molda.data.resultOf
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
@@ -43,7 +44,7 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
     override suspend fun create(name: ProjectName, snapshot: SkirtSnapshot, savedAt: Instant) =
         command {
             val id = ProjectId((current.maxOfOrNull { it.id.value } ?: 0) + 1)
-            Project(id, name, snapshot.kind, snapshot, savedAt, savedAt)
+            Project(id, name, snapshot, savedAt, savedAt)
                 .also { created -> stored.update { (it + created).newestFirst() } }
         }
 
@@ -70,7 +71,7 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
         return if (failsCommands) {
             Result.failure(IllegalStateException("Controlled storage failure"))
         } else {
-            runCatching(block)
+            resultOf { block() }
         }
     }
 }

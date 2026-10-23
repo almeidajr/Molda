@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.project.domain.PatternDraftKind
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectDateFormat
@@ -48,7 +49,7 @@ import java.time.ZoneId
  */
 @Composable
 fun ProjectsScreen(
-    state: ProjectsState,
+    load: LoadResult<List<Project>>,
     onRetry: () -> Unit,
     onSeePatterns: () -> Unit,
     onAbout: () -> Unit,
@@ -66,15 +67,14 @@ fun ProjectsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                val loadError = state.loadError
-                when {
-                    loadError != null -> ProjectLoadFailure(loadError, onRetry)
+                when (load) {
+                    is LoadResult.Error -> ProjectLoadFailure(onRetry)
 
-                    state.isLoading -> Text(stringResource(R.string.project_loading))
+                    LoadResult.Loading -> Text(stringResource(R.string.project_loading))
 
-                    state.projects.isEmpty() -> EmptyProjects(onSeePatterns)
+                    is LoadResult.Success if load.value.isEmpty() -> EmptyProjects(onSeePatterns)
 
-                    else -> state.projects.forEach { project ->
+                    is LoadResult.Success -> load.value.forEach { project ->
                         ProjectRow(
                             project,
                             selection(project.id),
@@ -89,15 +89,11 @@ fun ProjectsScreen(
     }
 }
 
-/** The projects failed to load: shows [error] and offers [onRetry]. */
+/** The projects failed to load: says so and offers [onRetry]. */
 @Composable
-internal fun ProjectLoadFailure(
-    @StringRes error: Int,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+internal fun ProjectLoadFailure(onRetry: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(error), color = MaterialTheme.colorScheme.error)
+        Text(stringResource(R.string.project_load_failed), color = MaterialTheme.colorScheme.error)
         TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.action_retry_load))
         }
@@ -158,7 +154,7 @@ private fun ProjectRow(
             Text(
                 stringResource(
                     R.string.project_summary,
-                    stringResource(project.kind.label),
+                    stringResource(project.snapshot.kind.label),
                     project.updatedAt.atZone(ZoneId.systemDefault()).format(ProjectDateFormat),
                 ),
                 style = MaterialTheme.typography.bodyMedium,

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
 import com.almeidajr.molda.R
+import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileError
@@ -17,6 +18,7 @@ import com.almeidajr.molda.testing.October13Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
@@ -42,7 +44,7 @@ class ProfileEditorViewModelTest {
         val state = editor.state.value
         assertNull(state.editingId)
         assertEquals("", state.inputs[ProfileField.Name])
-        assertTrue(state.canMutate)
+        assertTrue(state.canSave)
     }
 
     @Test
@@ -64,7 +66,7 @@ class ProfileEditorViewModelTest {
         val editor = editor(EditedProfile.Existing(bia.id))
 
         // Then
-        assertEquals(R.string.profile_load_failed, editor.state.value.loadError)
+        assertIs<LoadResult.Error>(editor.state.value.load)
     }
 
     @Test
@@ -79,7 +81,7 @@ class ProfileEditorViewModelTest {
 
         // Then
         val retried = editor.state.value
-        assertNull(retried.loadError)
+        assertTrue(retried.canSave)
         assertEquals("Ana", retried.inputs[ProfileField.Name])
     }
 
@@ -139,7 +141,7 @@ class ProfileEditorViewModelTest {
 
         // Then
         val failed = editor.state.value
-        assertEquals(R.string.profile_save_failed, failed.saveError)
+        assertEquals(R.string.profile_save_failed, failed.error)
         assertNull(failed.saved)
         assertEquals("82", failed.inputs[ProfileField.Waist])
     }
@@ -176,7 +178,8 @@ class ProfileEditorViewModelTest {
 
         // Then
         val failed = editor.state.value
-        assertEquals(R.string.profile_save_failed, failed.saveError)
+        assertEquals(R.string.profile_save_failed, failed.error)
+        assertTrue(failed.canSave)
         assertNull(failed.saved)
         assertEquals("Bia", failed.inputs[ProfileField.Name])
         assertEquals(listOf(ana), storage.current)
@@ -205,6 +208,43 @@ class ProfileEditorViewModelTest {
 
         // Then
         assertFalse(editor.state.value.isDirty)
+    }
+
+    @Test
+    fun edit_waistRetypedAsTheSameLength_keepsTheFormClean() = runTest {
+        // Given
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Waist, "80,0")
+
+        // Then
+        assertFalse(editor.state.value.isDirty)
+    }
+
+    @Test
+    fun edit_waistToAnotherLength_makesTheFormDirty() = runTest {
+        // Given
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Waist, "81")
+
+        // Then
+        assertTrue(editor.state.value.isDirty)
+    }
+
+    @Test
+    fun edit_nameRetypedAsTheSameNumber_makesTheFormDirty() = runTest {
+        // Given
+        storage.update(profile(ana.id.value, "80", 80.0))
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Name, "80,0")
+
+        // Then
+        assertTrue(editor.state.value.isDirty)
     }
 
     @Test
@@ -271,7 +311,13 @@ class ProfileEditorViewModelTest {
 internal val ana = profile(1, "Ana", 80.0)
 internal val bia = profile(2, "Bia", 95.0)
 
-private fun profile(id: Long, name: String, waist: Double) = MeasurementProfile(
+internal fun profile(
+    id: Long,
+    name: String,
+    waist: Double,
+    notes: String = "",
+    date: LocalDate = LocalDate.of(2026, 10, 12),
+) = MeasurementProfile(
     ProfileId(id),
-    ProfileMeasurements(ProfileName(name), Length(waist), LocalDate.of(2026, 10, 12)),
+    ProfileMeasurements(ProfileName(name), Length(waist), date, notes),
 )

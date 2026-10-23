@@ -10,15 +10,16 @@ import kotlin.coroutines.cancellation.CancellationException
  * value that fails domain validation, or a row that no longer exists. Anything else is a bug and
  * propagates.
  */
-internal suspend fun <T> resultOf(block: suspend () -> T): Result<T> = try {
-    Result.success(block())
-} catch (cancelled: CancellationException) {
-    // A subclass of IllegalStateException, so it must be rethrown before that is caught.
-    throw cancelled
-} catch (failure: SQLiteException) {
-    Result.failure(failure)
-} catch (failure: IllegalArgumentException) {
-    Result.failure(failure)
-} catch (failure: IllegalStateException) {
-    Result.failure(failure)
-}
+internal suspend fun <T> resultOf(block: suspend () -> T): Result<T> =
+    runCatching { block() }.onFailure { if (!it.isExpectedStorageFailure) throw it }
+
+/** Whether [resultOf] turns [this] failure into a [Result.failure] rather than propagating it. */
+internal val Throwable.isExpectedStorageFailure: Boolean
+    get() = when (this) {
+        // A subclass of IllegalStateException, so it must be excluded before that is matched.
+        is CancellationException -> false
+
+        is SQLiteException, is IllegalArgumentException, is IllegalStateException -> true
+
+        else -> false
+    }
