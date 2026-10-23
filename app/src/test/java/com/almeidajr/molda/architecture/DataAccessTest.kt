@@ -16,7 +16,8 @@ class DataAccessTest {
 
         // When/Then
         files.assertFalse(
-            additionalMessage = "Only dependency injection may import data-layer code.",
+            additionalMessage = "Only dependency injection may import data-layer code, " +
+                "except the load-result convention.",
         ) { file ->
             file.hasImport { import ->
                 DATA_IMPORT.matches(import.name) && import.name !in LOAD_RESULT_IMPORTS
