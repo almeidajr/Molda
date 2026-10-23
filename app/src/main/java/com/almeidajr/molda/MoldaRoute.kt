@@ -21,17 +21,13 @@ import com.almeidajr.molda.guide.ui.guideSection
 import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.pattern.ui.patternSection
 import com.almeidajr.molda.profile.navigation.EditedProfile
-import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
-import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.profile.ui.ProfileCreateAction
 import com.almeidajr.molda.profile.ui.profileSection
-import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.project.ui.projectSection
-import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.skirt.ui.SavedSkirtResult
 import com.almeidajr.molda.skirt.ui.skirtSection
 import com.almeidajr.molda.ui.navigation.EditorKind
@@ -109,15 +105,7 @@ private fun EditorReport?.editorStatus(): EditorStatus = when (this) {
 }
 
 /**
- * The profile editor that finishing closes on [stack]: the one the holder answers, or the topmost
- * profile editor there in the frame before a just-pushed one first reports.
- */
-private fun EditorStatusHolder.profileEditorOn(stack: List<NavKey>): NavKey? = editorOn(stack)
-    ?.takeIf { it.report.kind == EditorKind.Profile }?.key
-    ?: stack.lastOrNull { it.isProfileEditor }
-
-/**
- * The app's [navigator], which wires the features' entries together and carries out the
+ * The app's [navigator], which wires the features' entries together and has [carryOut] perform the
  * transitions decided from the status of the editor an action on a stack concerns, which
  * [editors] answer.
  */
@@ -161,7 +149,7 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
                 state.snapshot()?.let { navigator.push(SaveProjectKey(it)) }
             },
             onCalculateOwn = {
-                navigator.select(PatternCatalogKey)
+                perform(Transition.Select(PatternCatalogKey))
                 perform(calculateOwn(stacks.current, status(stacks.current)))
             },
         )
@@ -195,42 +183,5 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
     /** The status of the editor an action on [stack] concerns, read when the sewist acts. */
     private fun status(stack: List<NavKey>) = editors.editorOn(stack)?.report.editorStatus()
 
-    /** Carries out [transition] on the back stacks; an editor's ViewModel leaves with its key. */
-    private fun perform(transition: Transition) {
-        when (transition) {
-            Transition.None -> Unit
-
-            is Transition.Select -> navigator.select(transition.root)
-
-            Transition.Back -> navigator.back()
-
-            is Transition.AskToDiscard -> navigator.push(DiscardChangesKey(transition.afterDiscard))
-
-            // The selected stack's profile editor; the picker's returns to the picker below it.
-            Transition.FinishProfileEditor ->
-                editors.profileEditorOn(stacks.current)?.let(navigator::remove)
-
-            Transition.CloseProjectEditor -> navigator.removeAll { it is ProjectEditorKey }
-
-            // Popping to the calculator also closes the picker's editor above it.
-            is Transition.ShowCalculator -> navigator.popTo(SkirtCalculatorKey)
-
-            is Transition.OpenProfileEditor -> openProfileEditor(transition)
-
-            is Transition.OpenPickerEditor ->
-                navigator.push(PickerProfileEditorKey(transition.resultKey))
-        }
-    }
-
-    /**
-     * Opens the Perfis editor, which shows one beside its list, unless it already shows that
-     * profile; a confirmed discard always gets a fresh one. The pickers' editors stay independent.
-     */
-    private fun openProfileEditor(transition: Transition.OpenProfileEditor) {
-        val open = stacks.stackOf(ProfileManagementKey).last()
-        val isOpen = open is ProfileEditorKey && open.profile == transition.profile
-        if (isOpen && !transition.discardsDraft) return
-        navigator.removeAll { it is ProfileEditorKey }
-        navigator.push(ProfileEditorKey(transition.profile), root = ProfileManagementKey)
-    }
+    private fun perform(transition: Transition) = navigator.carryOut(transition, editors)
 }

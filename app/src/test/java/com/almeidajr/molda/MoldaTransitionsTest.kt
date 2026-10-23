@@ -209,13 +209,13 @@ class MoldaTransitionsTest {
     fun calculateOwn_withoutPickerEditor_showsTheCalculator() {
         // When/Then
         assertEquals(
-            Transition.ShowCalculator(finishesPickerEditor = false),
+            Transition.ShowCalculator,
             calculateOwn(listOf(PatternCatalogKey, SkirtCalculatorKey), EditorStatus.None),
         )
     }
 
     @Test
-    fun calculateOwn_overCleanPickerEditor_finishesItFirst() {
+    fun calculateOwn_overCleanPickerEditor_showsTheCalculator() {
         // Given
         val picker = ProfilePickerKey(MOLDES_PROFILE_RESULT_KEY)
         val editor = PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY)
@@ -223,7 +223,7 @@ class MoldaTransitionsTest {
 
         // When/Then
         assertEquals(
-            Transition.ShowCalculator(finishesPickerEditor = true),
+            Transition.ShowCalculator,
             calculateOwn(stack, EditorStatus.Profile()),
         )
     }
@@ -323,8 +323,8 @@ class MoldaTransitionsTest {
             listOf(
                 Transition.FinishProfileEditor,
                 Transition.OpenProfileEditor(profile, discardsDraft = true),
-                Transition.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY, discardsDraft = true),
-                Transition.ShowCalculator(finishesPickerEditor = true),
+                Transition.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY),
+                Transition.ShowCalculator,
                 Transition.CloseProjectEditor,
                 Transition.Select(ProjectsKey),
             ),

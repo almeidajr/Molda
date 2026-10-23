@@ -2,7 +2,6 @@ package com.almeidajr.molda
 
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.profile.navigation.EditedProfile
-import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
@@ -78,15 +77,17 @@ internal sealed interface Transition {
 
     data object CloseProjectEditor : Transition
 
-    /** Shows the Moldes calculator, closing what is above it. */
-    data class ShowCalculator(val finishesPickerEditor: Boolean) : Transition
+    /** Shows the Moldes calculator, closing what is above it, the picker's editor included. */
+    data object ShowCalculator : Transition
 
     data class OpenProfileEditor(val profile: EditedProfile, val discardsDraft: Boolean = false) :
         Transition
 
-    /** Opens a new profile's editor above the picker on [resultKey]. */
-    data class OpenPickerEditor(val resultKey: String, val discardsDraft: Boolean = false) :
-        Transition
+    /**
+     * Opens a new profile's editor above the picker on [resultKey], in place of any editor already
+     * open for that picker.
+     */
+    data class OpenPickerEditor(val resultKey: String) : Transition
 }
 
 /** Selecting [root] while [selected] shows [stack]. */
@@ -132,16 +133,13 @@ internal fun goBack(stack: List<NavKey>, status: EditorStatus): Transition {
  * Leaving the example guide for the calculator, once Moldes shows [stack]: it keeps the calculator
  * and its draft, closing what is open above it; the picker's editor closes the usual way first.
  */
-internal fun calculateOwn(stack: List<NavKey>, status: EditorStatus): Transition {
-    val hasPickerEditor = stack.any { it is PickerProfileEditorKey }
-    return when {
-        stack.last() is DiscardChangesKey -> Transition.None
+internal fun calculateOwn(stack: List<NavKey>, status: EditorStatus): Transition = when {
+    stack.last() is DiscardChangesKey -> Transition.None
 
-        status is EditorStatus.Profile && status.isDirty ->
-            Transition.AskToDiscard(AfterDiscard.CalculateOwn)
+    status is EditorStatus.Profile && status.isDirty ->
+        Transition.AskToDiscard(AfterDiscard.CalculateOwn)
 
-        else -> Transition.ShowCalculator(finishesPickerEditor = hasPickerEditor)
-    }
+    else -> Transition.ShowCalculator
 }
 
 /** Opening the editor of [profile], asking first when the open one has changes. */
@@ -186,8 +184,8 @@ internal fun closeProjectEditor(status: EditorStatus): Transition = when (status
 internal fun AfterDiscard.transition(): Transition = when (this) {
     AfterDiscard.CloseEditor -> Transition.FinishProfileEditor
     is AfterDiscard.OpenEditor -> Transition.OpenProfileEditor(profile, discardsDraft = true)
-    is AfterDiscard.OpenPickerEditor -> Transition.OpenPickerEditor(resultKey, discardsDraft = true)
-    AfterDiscard.CalculateOwn -> Transition.ShowCalculator(finishesPickerEditor = true)
+    is AfterDiscard.OpenPickerEditor -> Transition.OpenPickerEditor(resultKey)
+    AfterDiscard.CalculateOwn -> Transition.ShowCalculator
     AfterDiscard.CloseProjectEditor -> Transition.CloseProjectEditor
     AfterDiscard.ShowProjects -> Transition.Select(ProjectsKey)
 }
