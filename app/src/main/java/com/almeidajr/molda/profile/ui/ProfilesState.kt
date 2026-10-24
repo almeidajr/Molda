@@ -8,6 +8,7 @@ import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileError
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
+import com.almeidajr.molda.ui.command.CommandState
 import kotlinx.serialization.Serializable
 
 enum class ProfileField(@param:StringRes val label: Int) {
@@ -79,12 +80,14 @@ sealed interface ProfileDeletion {
 data class ProfileListState(
     val load: LoadResult<List<MeasurementProfile>> = LoadResult.Loading,
     val deletion: ProfileDeletion? = null,
-    /** The profile the list deleted, until its entry has shown it. */
-    val deleted: ProfileId? = null,
-) {
+    /** The profile the list deleted, until its entry has reacted to it. */
+    override val outcome: ProfileId? = null,
+) : CommandState<ProfileId> {
+    override val isBusy: Boolean get() = deletion is ProfileDeletion.Running
+
     /** Whether the rows can be edited, deleted or added to now: loaded, no delete in flight. */
     val canChangeProfiles: Boolean
-        get() = load is LoadResult.Success && deletion !is ProfileDeletion.Running
+        get() = load is LoadResult.Success && !isBusy
 
     fun isDeleting(id: ProfileId): Boolean = deletion == ProfileDeletion.Running(id)
 
@@ -112,16 +115,18 @@ data class ProfileEditorState(
     val load: LoadResult<Unit> = LoadResult.Loading,
     val errors: Map<ProfileField, ProfileError> = emptyMap(),
     val saving: ProfileSaving? = null,
-    /** What the editor's save stored, until its entry has shown it and closed the editor. */
-    val saved: ProfileSave? = null,
-) {
+    /** What the editor's save stored, until its entry has reacted to it and closed the editor. */
+    override val outcome: ProfileSave? = null,
+) : CommandState<ProfileSave> {
+    override val isBusy: Boolean get() = isSaving
+
     val inputs: Map<ProfileField, String> get() = form.inputs
     val isDirty: Boolean get() = form.isDirty
     val editingId: ProfileId? get() = form.editingId
     val isSaving: Boolean get() = saving == ProfileSaving.Running
 
-    /** Whether Save is available: the form is ready, not saving and not stored yet. */
-    val canSave: Boolean get() = load is LoadResult.Success && !isSaving && saved == null
+    /** Whether Save is available: ready, not saving, not stored yet (acknowledged or not). */
+    val canSave: Boolean get() = load is LoadResult.Success && !isSaving && form.saved == null
 
     /** The editor's failure to store its form. */
     @get:StringRes

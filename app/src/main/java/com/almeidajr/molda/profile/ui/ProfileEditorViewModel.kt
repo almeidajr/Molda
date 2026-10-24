@@ -54,7 +54,7 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
     private val mutableState = MutableStateFlow(
         savedForm?.let { form ->
             // Nothing to load: the form is what the editor shows.
-            ProfileEditorState(form = form, load = LoadResult.Success(Unit), saved = form.saved)
+            ProfileEditorState(form = form, load = LoadResult.Success(Unit), outcome = form.saved)
         }
             ?: ProfileEditorState(form = ProfileForm(editingId = editingId)),
     )
@@ -89,7 +89,7 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
 
     fun edit(field: ProfileField, text: String) = transition { it.edited(field, text) }
 
-    /** Stores the form unless Save is unavailable; then it is [ProfileEditorState.saved]. */
+    /** Stores the form unless Save is unavailable; its result is [ProfileEditorState.outcome]. */
     fun save() {
         val current = mutableState.value
         if (!current.canSave) return
@@ -114,6 +114,9 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
             transition { it.savedWith(result) }
         }
     }
+
+    /** Forgets the save's outcome, once the editor's entry has reacted to it. */
+    fun acknowledge() = transition { it.copy(outcome = null) }
 
     // Main-thread only, so reading back the new value cannot race another transition.
     private fun transition(next: (ProfileEditorState) -> ProfileEditorState) {

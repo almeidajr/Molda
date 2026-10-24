@@ -9,9 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -31,6 +29,7 @@ import com.almeidajr.molda.profile.navigation.closePickerEditor
 import com.almeidajr.molda.profile.navigation.showsProfileCreateAction
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
+import com.almeidajr.molda.ui.command.OutcomeEffect
 import com.almeidajr.molda.ui.navigation.LocalEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
@@ -59,7 +58,11 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         }),
     ) {
         val profiles = hiltViewModel<ProfileListViewModel>()
-        ProfileDeletedEffect(profiles, navigator, onShowSnackbar)
+        val list by profiles.state.collectAsStateWithLifecycle()
+        OutcomeEffect(list.outcome, profiles::acknowledge) { deleted ->
+            onShowSnackbar(R.string.profile_deleted)
+            navigator.closeEditorOf(deleted)
+        }
         Column(Modifier.fillMaxSize()) {
             MoldaTopAppBar(
                 stringResource(R.string.profile_manage),
@@ -71,7 +74,8 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
         val editor = editorViewModel(key.profile)
         ReportEditorStatus(key, editor.report)
-        ProfileSavedEffect(editor) {
+        val state by editor.state.collectAsStateWithLifecycle()
+        OutcomeEffect(state.outcome, editor::acknowledge) {
             onShowSnackbar(R.string.profile_saved)
             navigator.remove(key)
         }
@@ -82,7 +86,8 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         val editor = editorViewModel(EditedProfile.New)
         ReportEditorStatus(key, editor.report)
         val results = LocalResultEventBus.current
-        ProfileSavedEffect(editor) { save ->
+        val state by editor.state.collectAsStateWithLifecycle()
+        OutcomeEffect(state.outcome, editor::acknowledge) { save ->
             onShowSnackbar(R.string.profile_saved)
             if (save is ProfileSave.Created) results.sendResult(key.resultKey, save.profile)
             navigator.closePickerEditor(key)
@@ -94,31 +99,6 @@ internal fun EntryProviderScope<NavKey>.profileSection(
 @Composable
 private fun editorViewModel(profile: EditedProfile) =
     hiltViewModel<ProfileEditorViewModel, ProfileEditorViewModel.Factory> { it.create(profile) }
-
-/** Runs [onSaved] once [editor]'s save has stored the profile; it closes the editor. */
-@Composable
-private fun ProfileSavedEffect(editor: ProfileEditorViewModel, onSaved: (ProfileSave) -> Unit) {
-    val saved = editor.state.collectAsStateWithLifecycle().value.saved
-    val currentOnSaved by rememberUpdatedState(onSaved)
-    LaunchedEffect(saved) { saved?.let(currentOnSaved) }
-}
-
-/** Shows each deletion from [profiles] and closes any editor of the deleted profile. */
-@Composable
-private fun ProfileDeletedEffect(
-    profiles: ProfileListViewModel,
-    navigator: Navigator,
-    onShowSnackbar: (Int) -> Unit,
-) {
-    val deleted = profiles.state.collectAsStateWithLifecycle().value.deleted
-    val currentOnShowSnackbar by rememberUpdatedState(onShowSnackbar)
-    LaunchedEffect(deleted) {
-        if (deleted == null) return@LaunchedEffect
-        currentOnShowSnackbar(R.string.profile_deleted)
-        navigator.closeEditorOf(deleted)
-        profiles.deletionShown()
-    }
-}
 
 @Composable
 private fun OpenEditor(editor: ProfileEditorViewModel, onCancel: () -> Unit, isUpShown: Boolean) {

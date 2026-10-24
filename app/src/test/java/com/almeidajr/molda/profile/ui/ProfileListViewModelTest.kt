@@ -91,20 +91,20 @@ class ProfileListViewModelTest {
         // Then
         val deleted = profiles.state.value
         assertEquals(LoadResult.Success(emptyList()), deleted.load)
-        assertEquals(ana.id, deleted.deleted)
+        assertEquals(ana.id, deleted.outcome)
     }
 
     @Test
-    fun deletionShown_afterDeleting_forgetsTheDeletion() = runTest {
+    fun acknowledge_afterDeleting_forgetsTheOutcome() = runTest {
         // Given
         val profiles = ProfileListViewModel(storage)
         profiles.delete(ana.id)
 
         // When
-        profiles.deletionShown()
+        profiles.acknowledge()
 
         // Then
-        assertNull(profiles.state.value.deleted)
+        assertNull(profiles.state.value.outcome)
     }
 
     @Test
@@ -122,7 +122,7 @@ class ProfileListViewModelTest {
         assertNull(failed.deleteError(bia.id))
         assertFalse(failed.isDeleting(ana.id))
         assertTrue(failed.canChangeProfiles)
-        assertNull(failed.deleted)
+        assertNull(failed.outcome)
         assertEquals(LoadResult.Success(listOf(ana, bia)), failed.load)
     }
 
