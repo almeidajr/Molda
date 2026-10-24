@@ -52,6 +52,7 @@ fun ProfilesContent(
     state: ProfileListState,
     onRetry: () -> Unit,
     onStartEdit: (ProfileId) -> Unit,
+    /** Asks to delete the profile; the app confirms first. */
     onDelete: (ProfileId) -> Unit,
     /** False while a profile operation or the open editor's save is in flight. */
     canChangeProfiles: Boolean,
@@ -120,13 +121,6 @@ private fun ProfileManagementRow(
     isDeleting: Boolean,
     @StringRes deleteError: Int?,
 ) {
-    var confirmDelete by remember(profile.id) { mutableStateOf(false) }
-    if (confirmDelete) {
-        ConfirmProfileDeletion(profile, enabled, { confirmDelete = false }) {
-            confirmDelete = false
-            onDelete(profile.id)
-        }
-    }
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -159,7 +153,7 @@ private fun ProfileManagementRow(
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
-            ProfileRowActions(profile, enabled, onStartEdit) { confirmDelete = true }
+            ProfileRowActions(profile, enabled, onStartEdit) { onDelete(profile.id) }
         }
     }
     if (isDeleting) Text(stringResource(R.string.profile_deleting, profile.measurements.name.text))
@@ -205,25 +199,15 @@ private fun ProfileRowActions(
     }
 }
 
+/** The confirmation of deleting the profile called [name]. */
 @Composable
-private fun ConfirmProfileDeletion(
-    profile: MeasurementProfile,
-    enabled: Boolean,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
+internal fun ConfirmProfileDeletion(name: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(stringResource(R.string.profile_delete_title, profile.measurements.name.text))
-        },
+        title = { Text(stringResource(R.string.profile_delete_title, name)) },
         text = { Text(stringResource(R.string.profile_delete_body)) },
         confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                enabled = enabled,
-                modifier = Modifier.heightIn(min = 48.dp),
-            ) {
+            TextButton(onClick = onConfirm, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.action_confirm_delete))
             }
         },

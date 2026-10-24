@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -18,9 +19,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.result.LocalResultEventBus
+import androidx.navigation3.runtime.result.ResultEffect
 import com.almeidajr.molda.R
 import com.almeidajr.molda.about.navigation.AboutKey
+import com.almeidajr.molda.data.LoadResult
+import com.almeidajr.molda.profile.domain.ProfileId
+import com.almeidajr.molda.profile.navigation.DeleteProfileKey
 import com.almeidajr.molda.profile.navigation.EditedProfile
+import com.almeidajr.molda.profile.navigation.PROFILE_DELETE_RESULT_KEY
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
@@ -35,6 +41,7 @@ import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
+import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
 
 /**
  * Perfis: the profiles beside the open editor, and the picker's editor, which returns the profile
@@ -59,6 +66,8 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     ) {
         val profiles = hiltViewModel<ProfileListViewModel>()
         val list by profiles.state.collectAsStateWithLifecycle()
+        // The confirmation is its own entry, so the list deletes what it sends back.
+        ResultEffect<ProfileId>(PROFILE_DELETE_RESULT_KEY) { id -> profiles.delete(id) }
         OutcomeEffect(list.outcome, profiles::acknowledge) { deleted ->
             onShowSnackbar(R.string.profile_deleted)
             navigator.closeEditorOf(deleted)
@@ -68,8 +77,11 @@ internal fun EntryProviderScope<NavKey>.profileSection(
                 stringResource(R.string.profile_manage),
                 onAbout = { navigator.push(AboutKey) },
             )
-            ProfilePane { ProfileList(profiles, navigator.state, onRequestEditor) }
+            ProfilePane { ProfileList(profiles, navigator, onRequestEditor) }
         }
+    }
+    entry<DeleteProfileKey>(metadata = windowOverlay()) { key ->
+        DeleteProfileEntry(key, navigator)
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
         val editor = editorViewModel(key.profile)
@@ -93,6 +105,30 @@ internal fun EntryProviderScope<NavKey>.profileSection(
             navigator.closePickerEditor(key)
         }
         OpenEditor(editor, onCancelEditor, isUpShown = true)
+    }
+}
+
+/** Confirms deleting the profile [key] names, then sends it to the list and closes. */
+@Composable
+private fun DeleteProfileEntry(key: DeleteProfileKey, navigator: Navigator) {
+    val results = LocalResultEventBus.current
+    // This entry's own list only names the profile; the Perfis entry's list deletes it.
+    val profiles = hiltViewModel<ProfileListViewModel>()
+    val state by profiles.state.collectAsStateWithLifecycle()
+    val load = state.load
+    if (load is LoadResult.Success) {
+        val profile = load.value.firstOrNull { it.id == key.id }
+        if (profile == null) {
+            LaunchedEffect(Unit) { navigator.remove(key) }
+        } else {
+            ConfirmProfileDeletion(
+                profile.measurements.name.text,
+                onDismiss = { navigator.remove(key) },
+            ) {
+                results.sendResult(PROFILE_DELETE_RESULT_KEY, key.id)
+                navigator.remove(key)
+            }
+        }
     }
 }
 
@@ -125,15 +161,16 @@ private fun OpenEditor(editor: ProfileEditorViewModel, onCancel: () -> Unit, isU
 @Composable
 private fun ProfileList(
     profiles: ProfileListViewModel,
-    stacks: TopLevelBackStacks,
+    navigator: Navigator,
     onRequestEditor: (EditedProfile) -> Unit,
 ) {
+    val stacks = navigator.state
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilesContent(
         state,
         profiles::load,
         { onRequestEditor(EditedProfile.Existing(it)) },
-        profiles::delete,
+        { navigator.push(DeleteProfileKey(it)) },
         canChangeProfiles = state.canChangeProfiles && !isPerfisEditorSaving(stacks),
         Modifier.padding(16.dp),
     )

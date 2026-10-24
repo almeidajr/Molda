@@ -99,6 +99,25 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun deleteConfirmation_afterRecreation_staysOnTheSameProfile() {
+        // Given
+        val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Bia")))
+        profileRepository = storage
+        composeRule.launchProfiles()
+        composeRule.click("Ações: Bia")
+        composeRule.click("Excluir perfil")
+
+        // When
+        composeRule.recreate()
+        composeRule.showProfileRoute()
+        composeRule.click("Confirmar exclusão")
+
+        // Then
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertIsDisplayed()
+        assertEquals(ProfileId(1), storage.current.single().id)
+    }
+
+    @Test
     fun confirmDelete_withDuplicateNames_removesOnlyTheChosenProfile() {
         // Given
         val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Ana")))

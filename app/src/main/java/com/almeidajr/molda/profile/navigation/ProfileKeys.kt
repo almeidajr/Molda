@@ -37,6 +37,13 @@ internal data class PickerProfileEditorKey(val resultKey: String, val opening: S
     constructor(resultKey: String) : this(resultKey, newOpening())
 }
 
+/** The dialog that confirms deleting the stored profile [id], over the stack that opened it. */
+@Serializable
+internal data class DeleteProfileKey(val id: ProfileId) : NavKey
+
+/** The result key on which Perfis' list hears which profile the sewist confirmed deleting. */
+internal const val PROFILE_DELETE_RESULT_KEY = "profile/delete"
+
 private fun newOpening() = UUID.randomUUID().toString()
 
 /**
