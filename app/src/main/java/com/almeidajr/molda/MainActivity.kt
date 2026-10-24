@@ -19,6 +19,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Rive.init(this)
         WindowCompat.enableEdgeToEdge(window)
+        // Keep the scrim behind 3-button navigation that WindowCompat.enableEdgeToEdge turns off.
+        window.isNavigationBarContrastEnforced = true
         // Read once here: the package manager is I/O and stays out of composition.
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
         setContent {

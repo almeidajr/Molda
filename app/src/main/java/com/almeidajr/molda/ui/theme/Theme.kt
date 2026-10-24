@@ -1,7 +1,7 @@
 package com.almeidajr.molda.ui.theme
 
-import android.app.Activity
 import android.content.Context
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -14,7 +14,6 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
@@ -25,12 +24,11 @@ fun MoldaTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val view = LocalView.current
-    if (!view.isInEditMode) {
+    val window = LocalActivity.current?.window
+    if (window != null) {
         // WindowCompat.enableEdgeToEdge leaves the system bar icon colours to the app.
         SideEffect {
-            val window = (view.context as? Activity)?.window ?: return@SideEffect
-            WindowCompat.getInsetsController(window, view).apply {
+            WindowCompat.getInsetsController(window, window.decorView).apply {
                 isAppearanceLightStatusBars = !darkTheme
                 isAppearanceLightNavigationBars = !darkTheme
             }

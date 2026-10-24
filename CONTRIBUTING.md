@@ -2,7 +2,7 @@
 
 ## Development
 
-Install Android SDK 37 and a JDK capable of launching Gradle (JDK 25 recommended).
+Install Android SDK platform 37.2 (`platforms;android-37.2`) and a JDK capable of launching Gradle (JDK 25 recommended).
 The committed daemon criteria select JDK 25. Keep your SDK path in ignored
 `local.properties`; CI uses the Android SDK environment. Devices need API 36+.
 
