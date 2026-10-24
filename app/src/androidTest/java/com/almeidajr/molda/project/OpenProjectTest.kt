@@ -43,7 +43,6 @@ import dagger.hilt.android.testing.UninstallModules
 import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertTrue
-import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -64,9 +63,10 @@ class OpenProjectTest {
     @BindValue @JvmField
     var profileRepository: ProfileRepository = FakeProfileRepository()
 
+    private val projects = FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
+
     @BindValue @JvmField
-    val projectRepository: ProjectRepository =
-        FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
+    val projectRepository: ProjectRepository = projects
 
     @BindValue @JvmField
     val clock: Clock = October18Clock
@@ -262,7 +262,7 @@ class OpenProjectTest {
         openProject()
 
         // When: deleted elsewhere, as after a restore.
-        runTest { projectRepository.delete(ProjectId(1)).getOrThrow() }
+        composeRule.runOnIdle { projects.forget(ProjectId(1)) }
 
         // Then
         composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()

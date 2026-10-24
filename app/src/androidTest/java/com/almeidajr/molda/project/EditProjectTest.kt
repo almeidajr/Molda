@@ -18,6 +18,7 @@ import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.di.ClockModule
 import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
@@ -47,7 +48,6 @@ import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -155,6 +155,24 @@ class EditProjectTest {
     }
 
     @Test
+    fun salvar_whenTheStorageFindsTheProjectDeleted_closesTheEditorWithTheMessage() {
+        // Given
+        launch()
+        openEditor()
+        editEase("4")
+        composeRule.click("Calcular")
+        projects.commandFailure = NoLongerExistsException("Deleted meanwhile")
+
+        // When
+        composeRule.click("Salvar")
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.screenTitle("Editar Saia da formatura").assertDoesNotExist()
+        composeRule.onNodeWithText(UPDATE_FAILED).assertDoesNotExist()
+    }
+
+    @Test
     fun saveAsNew_afterEditing_keepsTheOriginalAndShowsTheNewProject() {
         // Given
         launch()
@@ -200,7 +218,7 @@ class EditProjectTest {
         composeRule.click("Calcular")
 
         // When: deleted elsewhere while the editor has unsaved changes.
-        runTest { projects.delete(ProjectId(1)).getOrThrow() }
+        composeRule.runOnIdle { projects.forget(ProjectId(1)) }
 
         // Then
         composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()

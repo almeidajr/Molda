@@ -14,6 +14,7 @@ import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.di.ClockModule
 import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.ProfileRepository
@@ -38,7 +39,6 @@ import java.time.Clock
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -106,7 +106,7 @@ class ProjectManagementTest {
         composeRule.dialogTextField().performTextReplacement("Saia da formatura")
 
         // When: deleted elsewhere while the dialog is open.
-        runTest { projects.delete(saiaAntiga.id).getOrThrow() }
+        composeRule.runOnIdle { projects.forget(saiaAntiga.id) }
 
         // Then
         composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
@@ -114,6 +114,26 @@ class ProjectManagementTest {
         composeRule.onNodeWithText("Não foi possível renomear o projeto", substring = true)
             .assertDoesNotExist()
         assertEquals(listOf(saiaNova), projects.current)
+    }
+
+    @Test
+    fun rename_foundDeletedByTheStorage_closesTheDialogWithTheMessage() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+            .apply { commandFailure = NoLongerExistsException("Deleted meanwhile") }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+
+        // When
+        click("Renomear")
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        composeRule.onNodeWithText("Não foi possível renomear o projeto", substring = true)
+            .assertDoesNotExist()
     }
 
     @Test
@@ -332,13 +352,33 @@ class ProjectManagementTest {
         click("Excluir projeto")
 
         // When: deleted elsewhere while the dialog is open.
-        runTest { projects.delete(saiaAntiga.id).getOrThrow() }
+        composeRule.runOnIdle { projects.forget(saiaAntiga.id) }
 
         // Then
         composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
         composeRule.onNode(isDialog()).assertDoesNotExist()
         composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertDoesNotExist()
         assertEquals(listOf(saiaNova), projects.current)
+    }
+
+    @Test
+    fun delete_foundDeletedByTheStorage_closesTheDialogWithTheMessage() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga))
+            .apply { commandFailure = NoLongerExistsException("Deleted meanwhile") }
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
+
+        // When
+        click("Confirmar exclusão")
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        composeRule.onNodeWithText("Não foi possível excluir o projeto", substring = true)
+            .assertDoesNotExist()
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertDoesNotExist()
     }
 
     @Test

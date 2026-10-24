@@ -28,8 +28,16 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
     /** Makes loading the projects throw. */
     @Volatile var failsLoad = false
 
-    /** Makes every command fail without changing the stored projects. */
-    @Volatile var failsCommands = false
+    /** Makes every command fail with it, without changing the stored projects. */
+    @Volatile var commandFailure: Throwable? = null
+
+    /** Makes every command fail as storage does, without changing the stored projects. */
+    var failsCommands: Boolean
+        get() = commandFailure != null
+        set(fails) {
+            commandFailure =
+                if (fails) IllegalStateException("Controlled storage failure") else null
+        }
 
     /** When set, loading waits for it to complete, so tests can observe the pending state. */
     @Volatile var loadGate: CompletableDeferred<Unit>? = null
@@ -60,7 +68,12 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
     override suspend fun rename(id: ProjectId, name: ProjectName, renamedAt: Instant) =
         command { change(id) { it.copy(name = name, updatedAt = renamedAt) } }
 
-    override suspend fun delete(id: ProjectId) = command {
+    override suspend fun delete(id: ProjectId) = command { remove(id) }
+
+    /** Removes the project [id] at once, as a delete elsewhere does, bypassing every gate. */
+    fun forget(id: ProjectId) = remove(id)
+
+    private fun remove(id: ProjectId) {
         requireStored(id)
         stored.update { projects -> projects.filterNot { it.id == id } }
     }
@@ -78,11 +91,7 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
 
     private suspend fun <T> command(block: () -> T): Result<T> {
         commandGate?.await()
-        return if (failsCommands) {
-            Result.failure(IllegalStateException("Controlled storage failure"))
-        } else {
-            resultOf { block() }
-        }
+        return commandFailure?.let { Result.failure(it) } ?: resultOf { block() }
     }
 }
 
