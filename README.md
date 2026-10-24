@@ -1,5 +1,10 @@
 # Molda
 
+[![CI](https://github.com/almeidajr/Molda/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/almeidajr/Molda/actions/workflows/ci.yml)
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=almeidajr_Molda&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=almeidajr_Molda)
+[![Latest release](https://img.shields.io/github/v/release/almeidajr/Molda?include_prereleases&label=release)](https://github.com/almeidajr/Molda/releases)
+[![License](https://img.shields.io/github/license/almeidajr/Molda)](LICENSE)
+
 Molda is an Android app for sewists who draft patterns on paper. It turns body
 measurements into clear, checkable drafting dimensions, shows the formulas
 behind every result, and keeps measurements for the people you sew for.
