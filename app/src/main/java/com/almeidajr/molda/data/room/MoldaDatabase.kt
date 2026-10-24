@@ -25,15 +25,26 @@ abstract class MoldaDatabase : RoomDatabase() {
 val AddProjects = object : Migration(1, 2) {
     override suspend fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `projects` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
-                "`pattern_kind` TEXT NOT NULL, " +
-                "`waist` REAL NOT NULL, `ease` REAL NOT NULL, `finished_length` REAL NOT NULL, " +
-                "`waist_seam_allowance` REAL NOT NULL, `hem_allowance` REAL NOT NULL, " +
-                "`waist_stitching_radius` REAL NOT NULL, `finished_hem_radius` REAL NOT NULL, " +
-                "`waist_cutting_radius` REAL NOT NULL, `hem_cutting_radius` REAL NOT NULL, " +
-                "`profile_name` TEXT, `measurement_date` TEXT, " +
-                "`created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)",
+            """
+            |CREATE TABLE IF NOT EXISTS `projects` (
+            |    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            |    `name` TEXT NOT NULL,
+            |    `pattern_kind` TEXT NOT NULL,
+            |    `waist` REAL NOT NULL,
+            |    `ease` REAL NOT NULL,
+            |    `finished_length` REAL NOT NULL,
+            |    `waist_seam_allowance` REAL NOT NULL,
+            |    `hem_allowance` REAL NOT NULL,
+            |    `waist_stitching_radius` REAL NOT NULL,
+            |    `finished_hem_radius` REAL NOT NULL,
+            |    `waist_cutting_radius` REAL NOT NULL,
+            |    `hem_cutting_radius` REAL NOT NULL,
+            |    `profile_name` TEXT,
+            |    `measurement_date` TEXT,
+            |    `created_at` INTEGER NOT NULL,
+            |    `updated_at` INTEGER NOT NULL
+            |)
+            """.trimMargin(),
         )
     }
 }

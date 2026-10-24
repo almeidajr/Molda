@@ -58,7 +58,11 @@ templates, trailing lambdas, and destructuring when component meanings remain
 clear. Infer obvious local types and declare public API types explicitly. Use
 top-level functions or extensions when they fit; avoid utility objects and
 extensions that hide effects. Use `let`, `run`, `with`, `apply`, and `also` only
-when the receiver and result stay obvious. Avoid nested scope functions.
+when the receiver and result stay obvious. Avoid nested scope functions. Write
+text with real line breaks, and SQL, as raw strings: `trimIndent()` when no line
+is indented within the text, a `|` margin and `trimMargin()` when one is. Keep
+prose wrapped only for line length as `+` concatenation, since a raw string
+would add line breaks to it.
 Experimental features need a concrete benefit and a narrow, explained opt-in.
 
 **Idiomatic coroutines.** Use `suspend` for asynchronous one-shot operations and

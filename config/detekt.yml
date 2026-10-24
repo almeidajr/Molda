@@ -46,6 +46,9 @@ style:
     active: true
   RedundantExplicitType:
     active: true
+  # Text with real line breaks is a raw string; see .agents/rules/kotlin-style.md.
+  StringShouldBeRawString:
+    active: true
   # These two stand in for compiler checks app/build.gradle.kts disables for Room's code.
   RedundantVisibilityModifier:
     active: true
