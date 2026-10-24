@@ -9,6 +9,7 @@ import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import com.almeidajr.molda.testing.October18Clock
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -156,6 +157,20 @@ class ProjectDialogViewModelsTest {
     }
 
     @Test
+    fun rename_ofProjectDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
+        // Given
+        val dialog = RenameProjectViewModel(storage, October18Clock, RenameProjectKey(saved.id))
+        storage.delete(saved.id).getOrThrow()
+
+        // When
+        dialog.rename(ProjectName("Saia da formatura"))
+
+        // Then
+        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
+        assertNull(dialog.state.value.error)
+    }
+
+    @Test
     fun rename_duringTheStorageCall_isBusyAndIgnoresAnotherRename() = runTest {
         // Given
         val gate = CompletableDeferred<Unit>()
@@ -201,6 +216,34 @@ class ProjectDialogViewModelsTest {
         // Then
         assertEquals(emptyList(), storage.current)
         assertEquals(ProjectCommandState.Done(Unit), dialog.state.value)
+    }
+
+    @Test
+    fun delete_ofProjectDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
+        // Given
+        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+        storage.delete(saved.id).getOrThrow()
+
+        // When
+        dialog.delete()
+
+        // Then
+        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
+        assertNull(dialog.state.value.error)
+    }
+
+    @Test
+    fun acknowledge_afterTheProjectWasFoundDeleted_spendsTheCommand() = runTest {
+        // Given
+        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+        storage.delete(saved.id).getOrThrow()
+        dialog.delete()
+
+        // When
+        dialog.acknowledge()
+
+        // Then
+        assertEquals(ProjectCommandState.Spent, dialog.state.value)
     }
 
     @Test

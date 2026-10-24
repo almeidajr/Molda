@@ -57,6 +57,15 @@ class OpenedProjectViewModelTest {
     }
 
     @Test
+    fun state_ofAProjectNoLongerStored_isNoProject() = runTest {
+        // Given
+        storage.delete(saved.id).getOrThrow()
+
+        // When/Then
+        assertEquals(LoadResult.Success(null), openedViewModel().state.value)
+    }
+
+    @Test
     fun state_whenTheLoadFails_isError() = runTest {
         // Given
         storage.failsLoad = true

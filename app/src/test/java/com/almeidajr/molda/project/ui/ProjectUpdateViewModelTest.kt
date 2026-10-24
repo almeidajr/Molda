@@ -62,6 +62,22 @@ class ProjectUpdateViewModelTest {
         )
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun update_ofProjectDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
+        // Given
+        val update = updateViewModel()
+        storage.delete(saved.id).getOrThrow()
+
+        // When
+        update.update(fromProfile)
+        advanceUntilIdle()
+
+        // Then
+        assertEquals(ProjectCommandState.Deleted, update.state.value)
+        assertEquals(emptyList(), storage.current)
+    }
+
     @Test
     fun update_duringTheStorageCall_isBusy() = runTest {
         // Given

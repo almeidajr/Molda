@@ -26,6 +26,8 @@ import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
 import com.almeidajr.molda.project.navigation.RenameProjectKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
+import com.almeidajr.molda.project.navigation.closeProject
+import com.almeidajr.molda.project.navigation.isDeletingProject
 import com.almeidajr.molda.project.navigation.isShowingProject
 import com.almeidajr.molda.project.navigation.openProject
 import com.almeidajr.molda.project.navigation.showProject
@@ -56,13 +58,15 @@ internal fun EntryProviderScope<NavKey>.projectSection(
         ProjectList(navigator)
     }
     entry<ProjectKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-        OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
+        OpenedProject(key.id, onDeleted = {
+            navigator.closeDeletedProject(key.id, onShowSnackbar)
+        }) { project ->
             ProjectScreen(
                 project,
                 // Beside the list the project is a pane, closed by choosing from the list or Back.
                 onUp = if (LocalIsTwoPane.current) null else navigator::back,
                 onEdit = { navigator.push(ProjectEditorKey(project.id, project.snapshot)) },
-                // Deleting the open project closes it: OpenedProject no longer finds it.
+                // Its delete dialog closes it once the project is deleted.
                 onRename = { navigator.push(RenameProjectKey(project.id)) },
                 onDelete = { navigator.push(DeleteProjectKey(project.id)) },
             ) {
@@ -122,6 +126,9 @@ internal fun ProjectUpdateEffect(
         onShowSnackbar(R.string.project_updated)
         navigator.showProject(id)
     }
+    OutcomeEffect(state.deleted, update::acknowledge) {
+        navigator.closeDeletedProject(id, onShowSnackbar)
+    }
     // The editor stays open after a failure, so it shows as a snackbar once rather than inline.
     OutcomeEffect(state.error, update::acknowledgeError, onShowSnackbar)
 }
@@ -140,9 +147,11 @@ private fun RenameProjectEntry(
         onShowSnackbar(R.string.project_renamed)
         navigator.remove(key)
     }
+    val closeDeleted = { navigator.closeDeletedProject(key.id, onShowSnackbar) }
+    OutcomeEffect(state.deleted, dialog::acknowledge) { closeDeleted() }
     OpenedProject(
         key.id,
-        onClose = { navigator.remove(key) },
+        onDeleted = closeDeleted,
         failed = { ProjectLoadFailureDialog(it, onDismiss = { navigator.remove(key) }) },
     ) { project ->
         RenameProjectDialog(
@@ -165,13 +174,24 @@ private fun DeleteProjectEntry(
         it.create(key)
     }
     val state by dialog.state.collectAsStateWithLifecycle()
+    // The dialog reports the deletion and closes every entry of the project, which those entries
+    // leave to it while it is open.
     OutcomeEffect(state.outcome, dialog::acknowledge) {
         onShowSnackbar(R.string.project_deleted)
-        navigator.remove(key)
+        navigator.closeProject(key.id)
     }
+    // Only the first of the dialog's reactions to the deletion finds the dialog open.
+    val closeDeleted = {
+        if (navigator.closeProject(key.id)) onShowSnackbar(R.string.project_deleted_meanwhile)
+    }
+    OutcomeEffect(state.deleted, dialog::acknowledge) { closeDeleted() }
     OpenedProject(
         key.id,
-        onClose = { navigator.remove(key) },
+        // Gone by its own delete, which reports through its outcome, or deleted meanwhile.
+        onDeleted = {
+            val own = dialog.state.value
+            if (!own.isBusy && own.outcome == null) closeDeleted()
+        },
         failed = { ProjectLoadFailureDialog(it, onDismiss = { navigator.remove(key) }) },
     ) { project ->
         DeleteProjectDialog(
@@ -208,14 +228,24 @@ private fun ProjectList(navigator: Navigator) {
 }
 
 /**
+ * Closes every entry of the project [id], found deleted meanwhile, showing "Este projeto foi
+ * excluído." once; while its delete dialog is open, that dialog reports and closes them instead.
+ */
+internal fun Navigator.closeDeletedProject(id: ProjectId, onShowSnackbar: (Int) -> Unit) {
+    if (!isDeletingProject(id) && closeProject(id)) {
+        onShowSnackbar(R.string.project_deleted_meanwhile)
+    }
+}
+
+/**
  * Shows the stored project [id] with [content] once it loads, the load failure with its retry
- * through [failed], or closes with [onClose] when it is no longer stored. It follows the project in
- * a ViewModel of the entry it is composed in.
+ * through [failed], or calls [onDeleted] when it is no longer stored. It follows the project in a
+ * ViewModel of the entry it is composed in.
  */
 @Composable
 internal fun OpenedProject(
     id: ProjectId,
-    onClose: () -> Unit,
+    onDeleted: () -> Unit,
     failed: @Composable (onRetry: () -> Unit) -> Unit = {
         ProjectLoadFailure(it, Modifier.padding(16.dp))
     },
@@ -231,7 +261,7 @@ internal fun OpenedProject(
         is LoadResult.Error -> failed(opened::retry)
 
         is LoadResult.Success -> when (val project = load.value) {
-            null -> LaunchedEffect(Unit) { onClose() }
+            null -> LaunchedEffect(Unit) { onDeleted() }
             else -> content(project)
         }
     }

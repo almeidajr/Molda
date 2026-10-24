@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.R
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
@@ -36,6 +37,9 @@ sealed interface ProjectCommandState<out T : Any> {
 
     data class Done<out T : Any>(override val outcome: T) : ProjectCommandState<T>
 
+    /** Found its project deleted meanwhile; its entry closes, and it never runs again. */
+    data object Deleted : ProjectCommandState<Nothing>
+
     /** Succeeded and acknowledged; it never runs again. */
     data object Spent : ProjectCommandState<Nothing>
 
@@ -46,11 +50,14 @@ sealed interface ProjectCommandState<out T : Any> {
 
     /** The outcome awaiting its entry's reaction, held only while [Done]. */
     val outcome: T? get() = null
+
+    /** [Deleted] while its entry has yet to react to it, null otherwise. */
+    val deleted: Deleted? get() = this as? Deleted
 }
 
 /**
  * A project storage command, run in [scope] once: it runs again only after a failure, which shows
- * [failure], and keeps its outcome until acknowledged.
+ * [failure], and keeps its outcome, or its project found deleted, until acknowledged.
  */
 internal class ProjectCommand<T : Any>(
     private val scope: CoroutineScope,
@@ -67,14 +74,24 @@ internal class ProjectCommand<T : Any>(
         scope.launch {
             mutableState.value = command().fold(
                 onSuccess = { ProjectCommandState.Done(it) },
-                onFailure = { ProjectCommandState.Failed(failure) },
+                onFailure = {
+                    if (it is NoLongerExistsException) {
+                        ProjectCommandState.Deleted
+                    } else {
+                        ProjectCommandState.Failed(failure)
+                    }
+                },
             )
         }
     }
 
-    /** Spends the command once its entry has reacted to the outcome. */
+    /** Spends the command once its entry has reacted to the outcome or the deletion. */
     fun acknowledge() = mutableState.update {
-        if (it is ProjectCommandState.Done) ProjectCommandState.Spent else it
+        if (it is ProjectCommandState.Done || it == ProjectCommandState.Deleted) {
+            ProjectCommandState.Spent
+        } else {
+            it
+        }
     }
 
     /** Forgets a failure once its entry has shown it; an outcome stays until acknowledged. */

@@ -47,6 +47,7 @@ import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -188,6 +189,24 @@ class EditProjectTest {
         // Then
         composeRule.onNode(isDialog()).assertDoesNotExist()
         assertEquals(listOf("Saia da formatura"), projects.current.map { it.name.text })
+    }
+
+    @Test
+    fun editor_ofProjectDeletedMeanwhile_closesWithTheMessage() {
+        // Given
+        launch()
+        openEditor()
+        editEase("4")
+        composeRule.click("Calcular")
+
+        // When: deleted elsewhere while the editor has unsaved changes.
+        runTest { projects.delete(ProjectId(1)).getOrThrow() }
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.screenTitle("Editar Saia da formatura").assertDoesNotExist()
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
     }
 
     @Test

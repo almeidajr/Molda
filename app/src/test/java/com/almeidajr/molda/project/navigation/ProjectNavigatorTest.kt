@@ -161,5 +161,65 @@ class ProjectNavigatorTest {
         assertEquals(listOf(listOf(ProjectsKey, ProjectKey(first))), navigator.stacks)
     }
 
+    @Test
+    fun closeProject_withItsEntriesOpen_closesThemAll() {
+        // Given
+        val navigator = projetos(
+            ProjectKey(first),
+            ProjectEditorKey(first, snapshot),
+            ProjectEditorGuideKey(snapshot.radii),
+            DeleteProjectKey(first),
+        )
+
+        // When
+        val closed = navigator.closeProject(first)
+
+        // Then
+        assertTrue(closed)
+        assertEquals(listOf(listOf(ProjectsKey)), navigator.stacks)
+    }
+
+    @Test
+    fun closeProject_withItsGuideAndRenameDialogOpen_closesThem() {
+        // Given
+        val navigator = projetos(ProjectKey(first), ProjectGuideKey(first), RenameProjectKey(first))
+
+        // When
+        val closed = navigator.closeProject(first)
+
+        // Then
+        assertTrue(closed)
+        assertEquals(listOf(listOf(ProjectsKey)), navigator.stacks)
+    }
+
+    @Test
+    fun closeProject_whileAnotherIsEdited_keepsItsEntries() {
+        // Given
+        val open = listOf(
+            ProjectsKey,
+            ProjectKey(second),
+            ProjectEditorKey(second, snapshot),
+            ProjectEditorGuideKey(snapshot.radii),
+        )
+        val navigator = navigatorOf(listOf(open))
+
+        // When
+        val closed = navigator.closeProject(first)
+
+        // Then
+        assertFalse(closed)
+        assertEquals(listOf(open), navigator.stacks)
+    }
+
+    @Test
+    fun isDeletingProject_onlyWhileItsDeleteDialogIsOpen() {
+        // Given
+        val navigator = projetos(ProjectKey(first), DeleteProjectKey(first))
+
+        // When/Then
+        assertTrue(navigator.isDeletingProject(first))
+        assertFalse(navigator.isDeletingProject(second))
+    }
+
     private data object OtherKey : NavKey
 }

@@ -1,5 +1,6 @@
 package com.almeidajr.molda.project.navigation
 
+import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.ui.navigation.Navigator
 
@@ -22,6 +23,32 @@ internal fun Navigator.showProject(id: ProjectId) {
     }
     push(ProjectKey(id), root = ProjectsKey)
 }
+
+/**
+ * Closes every entry showing the project [id]: opened, its guide, its editor with the editor's
+ * guide, and its dialogs; returns whether one was open.
+ */
+internal fun Navigator.closeProject(id: ProjectId): Boolean {
+    val isEditorOf: (NavKey) -> Boolean = { it is ProjectEditorKey && it.id == id }
+    val hasEditor = state.stacks.any { it.any(isEditorOf) }
+    val keys =
+        setOf(ProjectKey(id), ProjectGuideKey(id), RenameProjectKey(id), DeleteProjectKey(id))
+    val showsProject: (NavKey) -> Boolean = { key ->
+        when (key) {
+            is ProjectEditorKey -> isEditorOf(key)
+
+            // One project is edited at a time, so an editor's guide is that editor's.
+            is ProjectEditorGuideKey -> hasEditor
+
+            else -> key in keys
+        }
+    }
+    return state.stacks.any { it.any(showsProject) }.also { removeAll(showsProject) }
+}
+
+/** Whether the delete dialog of the project [id] is open; it reports that project's deletion. */
+internal fun Navigator.isDeletingProject(id: ProjectId): Boolean =
+    state.stacks.any { DeleteProjectKey(id) in it }
 
 /** Closes the project editor and its guide, back to what was under them. */
 internal fun Navigator.closeProjectEditor() =

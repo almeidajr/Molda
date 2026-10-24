@@ -29,6 +29,7 @@ import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
 import com.almeidajr.molda.project.ui.ProjectUpdateEffect
 import com.almeidajr.molda.project.ui.ProjectUpdateViewModel
+import com.almeidajr.molda.project.ui.closeDeletedProject
 import com.almeidajr.molda.skirt.ui.CalculatorDestination
 import com.almeidajr.molda.skirt.ui.CalculatorState
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
@@ -54,8 +55,8 @@ internal const val DISCARD_RESULT_KEY = "discard"
 /**
  * A saved project's skirt draft: its editor, with a calculator of its own started from the key's
  * snapshot so editing a project never touches the calculator in Moldes, and its folding guides.
- * [onShowSnackbar] shows the outcome of updating the project; [onCloseEditor] asks before the
- * editor's changes are dropped.
+ * [onShowSnackbar] shows the outcome of updating the project, also when it was deleted meanwhile;
+ * [onCloseEditor] asks before the editor's changes are dropped.
  */
 internal fun EntryProviderScope<NavKey>.projectDraftSection(
     navigator: Navigator,
@@ -72,7 +73,9 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         ReportEditorStatus(key, update.report)
         ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
-        OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
+        OpenedProject(key.id, onDeleted = {
+            navigator.closeDeletedProject(key.id, onShowSnackbar)
+        }) { project ->
             CalculatorDestination(
                 editor,
                 title = stringResource(R.string.project_edit_title, project.name.text),
@@ -96,9 +99,10 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         FabricFoldingPlayer(key.radii, onClose = { navigator.remove(key) })
     }
     entry<ProjectGuideKey> { key ->
-        val close: () -> Unit = { navigator.remove(key) }
-        OpenedProject(key.id, onClose = close) { project ->
-            FabricFoldingPlayer(project.snapshot.radii, close)
+        OpenedProject(key.id, onDeleted = {
+            navigator.closeDeletedProject(key.id, onShowSnackbar)
+        }) { project ->
+            FabricFoldingPlayer(project.snapshot.radii, onClose = { navigator.remove(key) })
         }
     }
 }

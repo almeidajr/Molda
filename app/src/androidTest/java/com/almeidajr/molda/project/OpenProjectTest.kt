@@ -27,6 +27,7 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
@@ -42,6 +43,7 @@ import dagger.hilt.android.testing.UninstallModules
 import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -246,8 +248,25 @@ class OpenProjectTest {
         composeRule.click("Excluir projeto")
         composeRule.click("Confirmar exclusão")
 
-        // Then
+        // Then: the dialog's message only, not also the opened project's.
         composeRule.screenTitle("Projetos").assertIsDisplayed()
+        composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertDoesNotExist()
+    }
+
+    @Test
+    fun openedProject_deletedMeanwhile_closesWithTheMessage() {
+        // Given
+        launch()
+        openProject()
+
+        // When: deleted elsewhere, as after a restore.
+        runTest { projectRepository.delete(ProjectId(1)).getOrThrow() }
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.screenTitle("Saia da formatura").assertDoesNotExist()
         composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
     }
 
@@ -266,6 +285,8 @@ class OpenProjectTest {
         // Then
         composeRule.onNodeWithText("Escolha um projeto na lista.").assertIsDisplayed()
         composeRule.screenTitle("Saia da formatura").assertDoesNotExist()
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertDoesNotExist()
     }
 
     private fun openProject() {

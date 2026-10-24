@@ -38,6 +38,7 @@ import java.time.Clock
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -93,6 +94,26 @@ class ProjectManagementTest {
         composeRule.onNodeWithText("Projeto renomeado.").assertIsDisplayed()
         composeRule.onNodeWithText("Saia da formatura").assertIsDisplayed()
         composeRule.onNodeWithText("Saia antiga").assertDoesNotExist()
+    }
+
+    @Test
+    fun rename_ofProjectDeletedMeanwhile_closesTheDialogWithTheMessage() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga, saiaNova))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Renomear projeto")
+        composeRule.dialogTextField().performTextReplacement("Saia da formatura")
+
+        // When: deleted elsewhere while the dialog is open.
+        runTest { projects.delete(saiaAntiga.id).getOrThrow() }
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        composeRule.onNodeWithText("Não foi possível renomear o projeto", substring = true)
+            .assertDoesNotExist()
+        assertEquals(listOf(saiaNova), projects.current)
     }
 
     @Test
@@ -300,6 +321,24 @@ class ProjectManagementTest {
         composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
         composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
         assertEquals(emptyList(), projects.current)
+    }
+
+    @Test
+    fun delete_ofProjectDeletedMeanwhile_closesTheDialogWithTheMessage() {
+        // Given
+        val projects = FakeProjectRepository(listOf(saiaAntiga, saiaNova))
+        showProjetos(projects)
+        click("Ações: Saia antiga")
+        click("Excluir projeto")
+
+        // When: deleted elsewhere while the dialog is open.
+        runTest { projects.delete(saiaAntiga.id).getOrThrow() }
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertDoesNotExist()
+        assertEquals(listOf(saiaNova), projects.current)
     }
 
     @Test
