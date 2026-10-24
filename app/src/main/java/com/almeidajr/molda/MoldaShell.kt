@@ -52,7 +52,6 @@ import com.almeidajr.molda.ui.navigation.NavigationLabel
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.TitleFocus
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy
-import com.almeidajr.molda.ui.navigation.materialTransition
 
 /** Windows narrower than this show a navigation bar; wider ones show a rail. */
 private val NavigationRailMinWidth = 600.dp
@@ -150,11 +149,6 @@ private fun ShellContent(
                         .padding(bottom = snackbarInset),
                     // A narrow window shows one destination at a time, in a single pane.
                     sceneStrategies = listOfNotNull(overlayStrategy, listDetail),
-                    transitionSpec = { materialTransition(density, isForward = true) },
-                    popTransitionSpec = { materialTransition(density, isForward = false) },
-                    predictivePopTransitionSpec = {
-                        materialTransition(density, isForward = false)
-                    },
                     onBack = onBack,
                 )
             }
