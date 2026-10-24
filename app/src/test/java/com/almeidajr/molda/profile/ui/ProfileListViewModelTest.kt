@@ -127,6 +127,25 @@ class ProfileListViewModelTest {
     }
 
     @Test
+    fun delete_ofProfileDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        storage.commandGate = gate
+        val profiles = ProfileListViewModel(storage)
+        profiles.delete(ana.id)
+        storage.forget(ana.id)
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        val deleted = profiles.state.value
+        assertEquals(ana.id, deleted.deleted)
+        assertNull(deleted.deleteError(ana.id))
+        assertFalse(deleted.isDeleting(ana.id))
+    }
+
+    @Test
     fun delete_afterAFailedOne_clearsThatRowsError() = runTest {
         // Given
         val storage = FakeProfileRepository(listOf(ana, bia)).apply { failsCommands = true }

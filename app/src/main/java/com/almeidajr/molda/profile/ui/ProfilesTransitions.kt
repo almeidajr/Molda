@@ -70,7 +70,14 @@ internal fun ProfileEditorState.savedWith(result: Result<ProfileSave>) = result.
     },
 )
 
+/** Reports profile [id] deleted, also when it was found deleted meanwhile, or the failure. */
 internal fun ProfileListState.deletedWith(id: ProfileId, result: Result<Unit>) = result.fold(
     onSuccess = { copy(deletion = null, deleted = id) },
-    onFailure = { copy(deletion = ProfileDeletion.Failed(id)) },
+    onFailure = { failure ->
+        if (failure is NoLongerExistsException) {
+            copy(deletion = null, deleted = id)
+        } else {
+            copy(deletion = ProfileDeletion.Failed(id))
+        }
+    },
 )
