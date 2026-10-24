@@ -1,62 +1,61 @@
 # Molda
 
-Kotlin Android app using Jetpack Compose and Material 3.
+Molda is an Android app for sewists who draft patterns on paper. It turns body
+measurements into clear, checkable drafting dimensions, shows the formulas
+behind every result, and keeps measurements for the people you sew for.
 
-## Development
+The app is in Brazilian Portuguese and uses centimetres.
 
-Install Android SDK 37 and a JDK capable of launching Gradle (JDK 25 recommended).
-The committed daemon criteria select JDK 25. Keep your SDK path in ignored
-`local.properties`; CI uses the Android SDK environment. Devices need API 36+.
+| Moldes | Saia godê | Guia de dobra | Perfis |
+| --- | --- | --- | --- |
+| ![Moldes catalog listing the full-circle skirt pattern](docs/images/catalog.png) | ![Full-circle skirt calculator showing the four radii and line diagram for a 70 cm waist](docs/images/calculator.png) | ![Fabric-folding guide step 4 of 6, marking the four radii on folded fabric, with the values listed below the drawing](docs/images/guide.png) | ![Perfis list with three measurement profiles: Ana, Beatriz and Carla](docs/images/profiles.png) |
 
-Run from the repository root in PowerShell:
+## Features
+
+- **Full-circle skirt calculator:** enter waist, ease, finished length and seam
+  allowances to get the four radii to mark: waist and hem, sewing and cutting
+  lines, with the formulas used.
+- **Fabric-folding guide:** an animated, step-by-step guide from flat fabric
+  through folding, marking, cutting and unfolding, drawn to the proportions of
+  your calculation.
+- **Perfis:** save measurement profiles and fill the calculator from one.
+- **Projetos:** save a calculation as a named project. It keeps its measurements
+  and results even if the profile changes later.
+- **Adaptive layout:** navigation bar on phones, rail and list-detail panes on
+  tablets and foldables.
+
+Results are a starting point: check the measurements and make a test garment
+before cutting your fabric.
+
+## Status
+
+Molda is in beta. Signed beta builds are published as
+[GitHub pre-releases](https://github.com/almeidajr/Molda/releases); they need
+Android 16 (API 36) or newer. The fabric-folding guide still needs a practical
+trial with a sewist before the first stable release; see the
+[roadmap](docs/roadmap.md).
+
+## Feedback
+
+Report bugs, accessibility barriers and ideas through
+[GitHub Issues](https://github.com/almeidajr/Molda/issues/new/choose). See
+[ACCESSIBILITY.md](ACCESSIBILITY.md) for our accessibility commitments.
+
+## Build and contribute
+
+Molda is built with Kotlin, Jetpack Compose and Material 3, Navigation 3,
+Room and Rive. With Android SDK 37 and JDK 25:
 
 ```powershell
-.\gradlew.bat spotlessApply
-.\gradlew.bat spotlessCheck :app:detektMain :app:detektTest :app:lintDebug :app:testDebugUnitTest :app:assembleDebug --continue
-.\gradlew.bat :app:connectedDebugAndroidTest
+.\gradlew.bat :app:installDebug
 ```
 
-On macOS/Linux use `bash ./gradlew`. Device tests require a running emulator or
-connected device. CI runs quality checks and one API 36 emulator on every PR
-and push to main; reports are retained for seven days. Main protection also requires
-`PR title` and `PR commits`; see [repository governance](CONTRIBUTING.md#repository-governance)
-for GitHub setup and verification.
+[CONTRIBUTING.md](CONTRIBUTING.md) covers setup, checks, commit conventions and
+releases. Product and design rationale live in [docs](docs/), domain terms in
+[GLOSSARY.md](GLOSSARY.md), and specifications in
+[GitHub Issues](https://github.com/almeidajr/Molda/issues).
 
-## Conventions
+## License
 
-Product rationale and design decisions live in [docs](docs/). Specifications,
-issue-specific validation reports and screenshots live in
-[GitHub Issues](https://github.com/almeidajr/Molda/issues), alongside acceptance
-results and any checks that remain unverified.
-
-Spotless + ktlint and `.editorconfig` define formatting, including Kotlin build
-scripts. Apply formatting locally; CI only checks it. Detekt runs with type resolution for Kotlin
-analysis without its optional formatting rules, and the Kotlin compiler and
-Android Lint (all checks, including tests) treat warnings as errors; Kotlin also
-reports its extra checks (`-Wextra`), such as unused variables. Lint keeps its
-dependency and Gradle update notices on: when a newer release is published,
-update the version (and the wrapper checksum for Gradle) instead of suppressing
-the notice. `SyntheticAccessor` is disabled because R8 inlines those accessors. No baselines:
-fix findings or explain a narrow suppression.
-Detekt currently uses a pinned 2.x alpha for the Gradle 9/JDK 25 toolchain;
-review compatibility when updating it.
-Material 3 is pinned to 1.5.0-beta02 over the Compose BOM for the guide's expressive
-LoadingIndicator; return it to the BOM once 1.5.0 is stable.
-
-Use JUnit 4 in `app/src/test` for logic and AndroidJUnit4/Compose tests in
-`app/src/androidTest` for UI behavior. Name classes `*Test` and methods after
-the behavior being checked. Cover branches and regressions; there is no coverage
-percentage gate. The arithmetic template is temporary scaffolding, not app coverage;
-replace it when application logic exists. The device smoke test checks the launch UI.
-
-Use `gradle/libs.versions.toml` for dependency/plugin versions and the Compose
-BOM for Compose libraries. The settings-only Foojay plugin remains in
-`settings.gradle.kts` because settings plugins resolve before the project catalog.
-Dependabot opens weekly Gradle and Actions updates; review and merge manually.
-Coordinate AGP, Gradle, Kotlin, JDK, and Detekt upgrades and run both CI jobs.
-Keep the wrapper distribution checksum updated when upgrading Gradle.
-
-Keep IDE state, SDK paths, build output, credentials, and signing keys out of Git.
-Git normalizes source files to LF and Windows batch files to CRLF.
-Follow [the contributor workflow](CONTRIBUTING.md) for hook setup, Conventional
-Commits, and validation. Describe validation in PRs; include screenshots for UI changes.
+Copyright 2026 José Rogério de Almeida Júnior. Licensed under the
+[Apache License 2.0](LICENSE).

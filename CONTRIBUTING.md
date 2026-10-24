@@ -1,5 +1,58 @@
 # Contributing
 
+## Development
+
+Install Android SDK 37 and a JDK capable of launching Gradle (JDK 25 recommended).
+The committed daemon criteria select JDK 25. Keep your SDK path in ignored
+`local.properties`; CI uses the Android SDK environment. Devices need API 36+.
+
+Run from the repository root in PowerShell:
+
+```powershell
+.\gradlew.bat spotlessApply
+.\gradlew.bat spotlessCheck :app:detektMain :app:detektTest :app:lintDebug :app:testDebugUnitTest :app:assembleDebug --continue
+.\gradlew.bat :app:connectedDebugAndroidTest
+```
+
+On macOS/Linux use `bash ./gradlew`. Device tests require a running emulator or
+connected device. CI runs quality checks and one API 36 emulator on every PR
+and push to main; reports are retained for seven days. Main protection also requires
+`PR title` and `PR commits`; see [repository governance](#repository-governance).
+
+## Code quality and dependencies
+
+Spotless + ktlint and `.editorconfig` define formatting, including Kotlin build
+scripts. Apply formatting locally; CI only checks it. Detekt runs with type resolution for Kotlin
+analysis without its optional formatting rules, and the Kotlin compiler and
+Android Lint (all checks, including tests) treat warnings as errors; Kotlin also
+reports its extra checks (`-Wextra`), such as unused variables. Lint keeps its
+dependency and Gradle update notices on: when a newer release is published,
+update the version (and the wrapper checksum for Gradle) instead of suppressing
+the notice. `SyntheticAccessor` is disabled because R8 inlines those accessors. No baselines:
+fix findings or explain a narrow suppression.
+Detekt currently uses a pinned 2.x alpha for the Gradle 9/JDK 25 toolchain;
+review compatibility when updating it.
+Material 3 is pinned to 1.5.0-beta02 over the Compose BOM for the guide's expressive
+LoadingIndicator; return it to the BOM once 1.5.0 is stable.
+
+Use JUnit 4 in `app/src/test` for logic and AndroidJUnit4/Compose tests in
+`app/src/androidTest` for UI behavior. Name classes `*Test` and methods after
+the behavior being checked. Cover branches and regressions; there is no coverage
+percentage gate.
+
+Use `gradle/libs.versions.toml` for dependency/plugin versions and the Compose
+BOM for Compose libraries. The settings-only Foojay plugin remains in
+`settings.gradle.kts` because settings plugins resolve before the project catalog.
+Dependabot opens weekly Gradle and Actions updates; review and merge manually.
+Coordinate AGP, Gradle, Kotlin, JDK, and Detekt upgrades and run both CI jobs.
+Keep the wrapper distribution checksum updated when upgrading Gradle.
+
+Keep IDE state, SDK paths, build output, credentials, and signing keys out of Git.
+Git normalizes source files to LF and Windows batch files to CRLF.
+Describe validation in PRs; include screenshots for UI changes, and follow
+[ACCESSIBILITY.md](ACCESSIBILITY.md#contributor-expectations).
+
+
 ## Install fast local hooks
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), Git, and
@@ -35,7 +88,7 @@ downloads isolated hook environments; later runs check staged files quickly.
 Hooks do not run Gradle or devices. Quality runs hygiene over all tracked files.
 CI uses pinned uv 0.13.0 and `uvx --python 3.12 pre-commit@4.6.2`;
 local Git hooks use the persistent `uv tool install` executable.
-Run the [existing Gradle checks](README.md#development) before submitting work.
+Run the [existing Gradle checks](#development) before submitting work.
 
 The hygiene hooks trim trailing whitespace (preserving Markdown hard breaks),
 fix final newlines, parse YAML, reject merge-conflict markers, reject newly added

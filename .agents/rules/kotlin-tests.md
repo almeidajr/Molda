@@ -206,7 +206,7 @@ window sizes when the changed behavior depends on them. Screen tests seed data
 through the fake's constructor and assert through the fake's current state, so
 they need no coroutines.
 
-Run the checks relevant to the change using the commands in [README.md](../../README.md).
+Run the checks relevant to the change using the commands in [CONTRIBUTING.md](../../CONTRIBUTING.md#development).
 Device tests require a connected device or emulator. Report checks actually run
 and any meaningful gap; test counts and coverage percentages are not completion
 criteria. Follow [Kotlin style](kotlin-style.md) for test code too.
