@@ -37,7 +37,6 @@ import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -308,7 +307,7 @@ class ProfileFailuresTest {
         composeRule.edit("Nome ou apelido", "Rascunho")
         composeRule.closeKeyboard()
         // Deleted elsewhere after the editor loaded it.
-        runTest { storage.delete(ProfileId(1)).getOrThrow() }
+        composeRule.runOnIdle { storage.forget(ProfileId(1)) }
 
         // When
         composeRule.click("Salvar alterações")

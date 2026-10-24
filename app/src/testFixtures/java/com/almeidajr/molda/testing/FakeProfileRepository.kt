@@ -53,7 +53,12 @@ class FakeProfileRepository(profiles: List<MeasurementProfile> = emptyList()) : 
         stored.update { profiles -> profiles.map { if (it.id == profile.id) profile else it } }
     }
 
-    override suspend fun delete(id: ProfileId) = command {
+    override suspend fun delete(id: ProfileId) = command { remove(id) }
+
+    /** Removes the profile [id] at once, as a delete elsewhere does, bypassing every gate. */
+    fun forget(id: ProfileId) = remove(id)
+
+    private fun remove(id: ProfileId) {
         requireStored(id)
         stored.update { profiles -> profiles.filterNot { it.id == id } }
     }
