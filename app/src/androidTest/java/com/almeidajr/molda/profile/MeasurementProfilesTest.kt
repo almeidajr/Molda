@@ -28,8 +28,6 @@ import com.almeidajr.molda.testing.FakeProfileRepository
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
@@ -175,30 +173,50 @@ class MeasurementProfilesTest {
         composeRule.openCalendar()
 
         // Then
-        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 1)), ignoreCase = true)
+        composeRule.onNodeWithText(
+            composeRule.calendarDay(LocalDate.of(2026, 10, 1)),
+            ignoreCase = true,
+        )
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun dateField_tap_opensCalendar() {
+        // Given
+        showNewProfileEditor()
+
+        // When
+        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo().performClick()
+
+        // Then
+        composeRule.onNodeWithText("Cancelar calendário").assertIsDisplayed()
     }
 
     @Test
     fun calendar_withFutureDate_opensOnTodaysMonthWithNothingSelected() {
         // Given
-        showNewProfileEditor()
-        composeRule.edit("Data da medida (dd/mm/aaaa)", "15/12/2026")
+        composeRule.launchProfiles(
+            FakeProfileRepository(listOf(profile(1, "Ana", date = LocalDate.of(2026, 12, 15)))),
+        )
+        composeRule.click("Ana")
 
         // When
         composeRule.openCalendar()
 
         // Then
-        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 1)), ignoreCase = true)
+        composeRule.onNodeWithText(
+            composeRule.calendarDay(LocalDate.of(2026, 10, 1)),
+            ignoreCase = true,
+        )
             .assertIsDisplayed()
         composeRule.onNodeWithText("Confirmar data").assertIsNotEnabled()
     }
 
     @Test
-    fun calendar_withTypedDate_canConfirmIt() {
+    fun calendar_withStoredDate_canConfirmIt() {
         // Given
-        showNewProfileEditor()
-        composeRule.edit("Data da medida (dd/mm/aaaa)", "12/10/2026")
+        composeRule.launchProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
+        composeRule.click("Ana")
 
         // When
         composeRule.openCalendar()
@@ -211,14 +229,13 @@ class MeasurementProfilesTest {
     fun calendar_tomorrow_isNotSelectable() {
         // Given
         showNewProfileEditor()
-        composeRule.edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
 
         // When
         composeRule.openCalendar()
 
         // Then
         composeRule.onNodeWithText(
-            calendarDay(LocalDate.of(2026, 10, 14)),
+            composeRule.calendarDay(LocalDate.of(2026, 10, 14)),
             substring = true,
             ignoreCase = true,
         ).assertIsNotEnabled()
@@ -228,11 +245,13 @@ class MeasurementProfilesTest {
     fun calendar_pickDay_fillsDateField() {
         // Given
         showNewProfileEditor()
-        composeRule.edit("Data da medida (dd/mm/aaaa)", "13/10/2026")
         composeRule.openCalendar()
 
         // When
-        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 12)), ignoreCase = true)
+        composeRule.onNodeWithText(
+            composeRule.calendarDay(LocalDate.of(2026, 10, 12)),
+            ignoreCase = true,
+        )
             .performClick()
         composeRule.click("Confirmar data")
 
@@ -260,7 +279,10 @@ class MeasurementProfilesTest {
         // callback moves to the next focused window, so Back would close it instead of the
         // calendar.
         composeRule.openCalendar()
-        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 12)), ignoreCase = true)
+        composeRule.onNodeWithText(
+            composeRule.calendarDay(LocalDate.of(2026, 10, 12)),
+            ignoreCase = true,
+        )
             .performClick()
         composeRule.click("Confirmar data")
         composeRule.openCalendar()
@@ -385,7 +407,6 @@ class MeasurementProfilesTest {
         val storage = FakeProfileRepository()
         showNewProfileEditor(storage)
         composeRule.edit("Cintura do perfil (cm)", "NaN")
-        composeRule.edit("Data da medida (dd/mm/aaaa)", "32/02/2026")
         composeRule.closeKeyboard()
 
         // When
@@ -731,11 +752,6 @@ class MeasurementProfilesTest {
         composeRule.click(label)
         composeRule.onNodeWithText("Nome ou apelido").assertDoesNotExist()
     }
-
-    private fun calendarDay(date: LocalDate): String = date.format(
-        DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
-            .withLocale(composeRule.activity.resources.configuration.locales[0]),
-    )
 
     private companion object {
         const val WAIST_LABEL = "Circunferência da cintura (cm)"
