@@ -1,6 +1,7 @@
 package com.almeidajr.molda.data
 
 import androidx.sqlite.SQLiteException
+import com.almeidajr.molda.domain.NoLongerExistsException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException

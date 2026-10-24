@@ -1,6 +1,7 @@
 package com.almeidajr.molda.data
 
 import androidx.sqlite.SQLiteException
+import com.almeidajr.molda.domain.NoLongerExistsException
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -12,12 +13,6 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 internal suspend fun <T> resultOf(block: suspend () -> T): Result<T> =
     runCatching { block() }.onFailure { if (!it.isExpectedStorageFailure) throw it }
-
-/**
- * A command or load reached a stored row, such as a profile or a project, that no longer exists:
- * it was deleted meanwhile. Expected by [resultOf], and told apart from other storage failures.
- */
-class NoLongerExistsException(message: String) : Exception(message)
 
 /** Whether [resultOf] turns [this] failure into a [Result.failure] rather than propagating it. */
 internal val Throwable.isExpectedStorageFailure: Boolean

@@ -1,7 +1,7 @@
 package com.almeidajr.molda.profile.data
 
-import com.almeidajr.molda.data.NoLongerExistsException
 import com.almeidajr.molda.data.resultOf
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId

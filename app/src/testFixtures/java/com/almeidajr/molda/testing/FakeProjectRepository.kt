@@ -1,7 +1,7 @@
 package com.almeidajr.molda.testing
 
-import com.almeidajr.molda.data.NoLongerExistsException
 import com.almeidajr.molda.data.resultOf
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName

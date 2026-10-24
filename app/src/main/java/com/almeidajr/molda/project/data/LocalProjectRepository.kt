@@ -1,7 +1,7 @@
 package com.almeidajr.molda.project.data
 
-import com.almeidajr.molda.data.NoLongerExistsException
 import com.almeidajr.molda.data.resultOf
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.project.domain.PatternDraftKind

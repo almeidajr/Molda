@@ -1,5 +1,6 @@
 package com.almeidajr.molda.profile.domain
 
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.measurement.IsoLocalDateSerializer
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
@@ -47,7 +48,7 @@ data class MeasurementProfile(val id: ProfileId, val measurements: ProfileMeasur
 
 /**
  * Stored measurement profiles; commands report storage failures as [Result.failure], and a profile
- * that is no longer stored as the data layer's `NoLongerExistsException`.
+ * that is no longer stored as [NoLongerExistsException].
  */
 interface ProfileRepository {
     /** Every stored profile in creation order, emitted again after each change. */
@@ -55,7 +56,7 @@ interface ProfileRepository {
 
     /**
      * The stored profile [id], emitted again after each change; fails with
-     * `NoLongerExistsException` once it is no longer stored.
+     * [NoLongerExistsException] once it is no longer stored.
      */
     fun profile(id: ProfileId): Flow<MeasurementProfile>
     suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile>

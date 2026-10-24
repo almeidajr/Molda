@@ -3,9 +3,9 @@ package com.almeidajr.molda.project
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.data.LoadResult
-import com.almeidajr.molda.data.NoLongerExistsException
 import com.almeidajr.molda.data.asLoadResult
 import com.almeidajr.molda.data.room.openMoldaDatabase
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.project.data.LocalProjectRepository
