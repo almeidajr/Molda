@@ -46,6 +46,13 @@ internal fun Navigator.closeProject(id: ProjectId): Boolean {
     return state.stacks.any { it.any(showsProject) }.also { removeAll(showsProject) }
 }
 
+/**
+ * Closes every entry of the project [id], found deleted meanwhile, unless its delete dialog is
+ * open, which reports and closes them instead; returns whether one was open.
+ */
+internal fun Navigator.closeDeletedProject(id: ProjectId): Boolean =
+    !isDeletingProject(id) && closeProject(id)
+
 /** Whether the delete dialog of the project [id] is open; it reports that project's deletion. */
 internal fun Navigator.isDeletingProject(id: ProjectId): Boolean =
     state.stacks.any { DeleteProjectKey(id) in it }

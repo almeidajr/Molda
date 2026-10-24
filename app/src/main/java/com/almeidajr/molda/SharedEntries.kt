@@ -25,11 +25,11 @@ import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
+import com.almeidajr.molda.project.navigation.closeDeletedProject
 import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
 import com.almeidajr.molda.project.ui.ProjectUpdateEffect
 import com.almeidajr.molda.project.ui.ProjectUpdateViewModel
-import com.almeidajr.molda.project.ui.closeDeletedProject
 import com.almeidajr.molda.skirt.ui.CalculatorDestination
 import com.almeidajr.molda.skirt.ui.CalculatorState
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
@@ -74,7 +74,9 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
         OpenedProject(key.id, onDeleted = {
-            navigator.closeDeletedProject(key.id, onShowSnackbar)
+            if (navigator.closeDeletedProject(key.id)) {
+                onShowSnackbar(R.string.project_deleted_meanwhile)
+            }
         }) { project ->
             CalculatorDestination(
                 editor,
@@ -100,7 +102,9 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
     }
     entry<ProjectGuideKey> { key ->
         OpenedProject(key.id, onDeleted = {
-            navigator.closeDeletedProject(key.id, onShowSnackbar)
+            if (navigator.closeDeletedProject(key.id)) {
+                onShowSnackbar(R.string.project_deleted_meanwhile)
+            }
         }) { project ->
             FabricFoldingPlayer(project.snapshot.radii, onClose = { navigator.remove(key) })
         }

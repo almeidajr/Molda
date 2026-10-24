@@ -26,8 +26,8 @@ import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
 import com.almeidajr.molda.project.navigation.RenameProjectKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
+import com.almeidajr.molda.project.navigation.closeDeletedProject
 import com.almeidajr.molda.project.navigation.closeProject
-import com.almeidajr.molda.project.navigation.isDeletingProject
 import com.almeidajr.molda.project.navigation.isShowingProject
 import com.almeidajr.molda.project.navigation.openProject
 import com.almeidajr.molda.project.navigation.showProject
@@ -59,7 +59,9 @@ internal fun EntryProviderScope<NavKey>.projectSection(
     }
     entry<ProjectKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
         OpenedProject(key.id, onDeleted = {
-            navigator.closeDeletedProject(key.id, onShowSnackbar)
+            if (navigator.closeDeletedProject(key.id)) {
+                onShowSnackbar(R.string.project_deleted_meanwhile)
+            }
         }) { project ->
             ProjectScreen(
                 project,
@@ -127,7 +129,7 @@ internal fun ProjectUpdateEffect(
         navigator.showProject(id)
     }
     OutcomeEffect(state.deleted, update::acknowledge) {
-        navigator.closeDeletedProject(id, onShowSnackbar)
+        if (navigator.closeDeletedProject(id)) onShowSnackbar(R.string.project_deleted_meanwhile)
     }
     // The editor stays open after a failure, so it shows as a snackbar once rather than inline.
     OutcomeEffect(state.error, update::acknowledgeError, onShowSnackbar)
@@ -147,7 +149,11 @@ private fun RenameProjectEntry(
         onShowSnackbar(R.string.project_renamed)
         navigator.remove(key)
     }
-    val closeDeleted = { navigator.closeDeletedProject(key.id, onShowSnackbar) }
+    val closeDeleted = {
+        if (navigator.closeDeletedProject(key.id)) {
+            onShowSnackbar(R.string.project_deleted_meanwhile)
+        }
+    }
     OutcomeEffect(state.deleted, dialog::acknowledge) { closeDeleted() }
     OpenedProject(
         key.id,
@@ -225,16 +231,6 @@ private fun ProjectList(navigator: Navigator) {
         onRename = { navigator.push(RenameProjectKey(it.id)) },
         onDelete = { navigator.push(DeleteProjectKey(it.id)) },
     )
-}
-
-/**
- * Closes every entry of the project [id], found deleted meanwhile, showing "Este projeto foi
- * excluído." once; while its delete dialog is open, that dialog reports and closes them instead.
- */
-internal fun Navigator.closeDeletedProject(id: ProjectId, onShowSnackbar: (Int) -> Unit) {
-    if (!isDeletingProject(id) && closeProject(id)) {
-        onShowSnackbar(R.string.project_deleted_meanwhile)
-    }
 }
 
 /**

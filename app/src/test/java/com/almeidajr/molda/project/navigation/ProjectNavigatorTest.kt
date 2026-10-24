@@ -212,6 +212,33 @@ class ProjectNavigatorTest {
     }
 
     @Test
+    fun closeDeletedProject_withItsEntriesOpen_closesThem() {
+        // Given
+        val navigator = projetos(ProjectKey(first), ProjectGuideKey(first))
+
+        // When
+        val closed = navigator.closeDeletedProject(first)
+
+        // Then
+        assertTrue(closed)
+        assertEquals(listOf(listOf(ProjectsKey)), navigator.stacks)
+    }
+
+    @Test
+    fun closeDeletedProject_whileItsDeleteDialogIsOpen_leavesThemToTheDialog() {
+        // Given
+        val open = listOf(ProjectsKey, ProjectKey(first), DeleteProjectKey(first))
+        val navigator = navigatorOf(listOf(open))
+
+        // When
+        val closed = navigator.closeDeletedProject(first)
+
+        // Then
+        assertFalse(closed)
+        assertEquals(listOf(open), navigator.stacks)
+    }
+
+    @Test
     fun isDeletingProject_withItsDeleteDialogOpen_isTrueOnlyForThatProject() {
         // Given
         val navigator = projetos(ProjectKey(first), DeleteProjectKey(first))
