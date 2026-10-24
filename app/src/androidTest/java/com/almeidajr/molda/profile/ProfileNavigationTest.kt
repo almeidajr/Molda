@@ -7,7 +7,6 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -16,44 +15,34 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import com.almeidajr.molda.AnimatorDurationScaleRule
 import com.almeidajr.molda.KeyboardModeRule
-import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.SkirtTitle
 import com.almeidajr.molda.awaitActivityFocus
 import com.almeidajr.molda.awaitKeyboardHidden
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.closeKeyboard
+import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.destination
-import com.almeidajr.molda.di.ClockModule
-import com.almeidajr.molda.di.RepositoryModule
+import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.pressKey
-import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showSkirtCalculator
-import com.almeidajr.molda.testing.FakeProfileRepository
-import com.almeidajr.molda.testing.FakeProjectRepository
-import com.almeidajr.molda.testing.October13Clock
-import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import dagger.hilt.android.testing.UninstallModules
-import java.time.Clock
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 @HiltAndroidTest
-@UninstallModules(RepositoryModule::class, ClockModule::class)
 class ProfileNavigationTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createLaunchLaterComposeRule()
 
     @get:Rule(order = 2)
     val keyboardMode = KeyboardModeRule(composeRule)
@@ -61,18 +50,9 @@ class ProfileNavigationTest {
     @get:Rule(order = 3)
     val animatorScale = AnimatorDurationScaleRule(composeRule)
 
-    @BindValue @JvmField
-    val profileRepository: ProfileRepository = FakeProfileRepository()
-
-    @BindValue @JvmField
-    val projectRepository: ProjectRepository = FakeProjectRepository()
-
-    @BindValue @JvmField
-    val clock: Clock = October13Clock
-
     @Before
     fun openSkirtCalculator() {
-        composeRule.showProfileRoute()
+        composeRule.launchApp(frame = profileFrame())
         composeRule.showSkirtCalculator()
     }
 
@@ -116,7 +96,6 @@ class ProfileNavigationTest {
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
         composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Bia")
         composeRule.recreate()
-        composeRule.showProfileRoute()
 
         // When A key reaches only the focused window: the recreated activity, then again after the
         // dialog.
@@ -232,7 +211,6 @@ class ProfileNavigationTest {
 
         // When
         composeRule.recreate()
-        composeRule.showProfileRoute()
 
         // Then
         composeRule.onNodeWithText("Cancelar seleção").assertIsDisplayed()
@@ -250,7 +228,6 @@ class ProfileNavigationTest {
 
         // When
         composeRule.recreate()
-        composeRule.showProfileRoute()
 
         // Then
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
@@ -307,7 +284,6 @@ class ProfileNavigationTest {
         composeRule.closeKeyboard()
         composeRule.onNodeWithText("Cancelar").performScrollTo().performClick()
         composeRule.recreate()
-        composeRule.showProfileRoute()
     }
 
     private fun openPickerEditor() {

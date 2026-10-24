@@ -12,31 +12,24 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.createLaunchLaterComposeRule
-import com.almeidajr.molda.di.ClockModule
-import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.labelText
+import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
-import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.selectDestination
-import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
-import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import dagger.hilt.android.testing.UninstallModules
-import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
@@ -45,23 +38,12 @@ import org.junit.Test
 
 /** Saving a calculated skirt as a project, from the result to the Projetos list. */
 @HiltAndroidTest
-@UninstallModules(RepositoryModule::class, ClockModule::class)
 class ProjectSavingTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
     val composeRule = createLaunchLaterComposeRule()
-
-    // Each test binds its own profiles and projects, then launches the app.
-    @BindValue @JvmField
-    var profileRepository: ProfileRepository = FakeProfileRepository()
-
-    @BindValue @JvmField
-    var projectRepository: ProjectRepository = FakeProjectRepository()
-
-    @BindValue @JvmField
-    val clock: Clock = October18Clock
 
     @Test
     fun save_fromProfileResultWithSuggestedName_storesItsSourceAndListsIt() {
@@ -71,10 +53,11 @@ class ProjectSavingTest {
             ProfileMeasurements(ProfileName("Ana"), Length(80.0), LocalDate.of(2026, 10, 12)),
         )
         val projects = FakeProjectRepository()
-        profileRepository = FakeProfileRepository(listOf(ana))
-        projectRepository = projects
-        composeRule.activityRule.launch()
-        composeRule.showRoute()
+        composeRule.launchApp(
+            profiles = FakeProfileRepository(listOf(ana)),
+            projects = projects,
+            clock = October18Clock,
+        )
         composeRule.showSkirtCalculator()
         click("Usar perfil")
         composeRule.onAllNodes(hasText("Usar perfil: Ana", substring = true))[0].performClick()
@@ -136,7 +119,6 @@ class ProjectSavingTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute()
         composeRule.clickInDialog("Salvar")
 
         // Then
@@ -155,7 +137,6 @@ class ProjectSavingTest {
         click("Salvar projeto")
         composeRule.clickInDialog("Salvar")
         composeRule.recreate()
-        composeRule.showRoute()
 
         // When
         gate.complete(Unit)
@@ -168,9 +149,7 @@ class ProjectSavingTest {
 
     /** Shows the calculator's result for a 70 cm waist typed by hand, stored in [projects]. */
     private fun showCalculatedHandTypedSkirt(projects: FakeProjectRepository) {
-        projectRepository = projects
-        composeRule.activityRule.launch()
-        composeRule.showRoute()
+        composeRule.launchApp(projects = projects, clock = October18Clock)
         composeRule.showSkirtCalculator()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
             .performTextReplacement("70")

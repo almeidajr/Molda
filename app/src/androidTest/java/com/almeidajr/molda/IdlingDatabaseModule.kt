@@ -9,9 +9,9 @@ import dagger.hilt.testing.TestInstallIn
 import javax.inject.Singleton
 
 /**
- * Opens the database of every device test on [IsolatedStorage], so journey tests run the real
- * repositories on Room that Compose waits for. Screen tests replace the repositories instead and
- * never open it. A test that opens it injects the storage and removes it afterwards.
+ * Opens the database of every device test on [IsolatedStorage], so journey tests run the
+ * production repositories on Room that Compose waits for. Screen tests run on fakes and never open
+ * it. A test that opens it injects the storage and removes it afterwards.
  */
 @Module
 @TestInstallIn(components = [SingletonComponent::class], replaces = [DatabaseModule::class])

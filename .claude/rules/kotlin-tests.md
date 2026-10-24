@@ -103,21 +103,25 @@ Every device test that launches `MainActivity` is a Hilt Android test:
 ViewModels from the test's bindings exactly as in production
 ([ADR 0006](../../docs/adr/0006-entry-scoped-viewmodels-results-and-dialogs.md)).
 
-- Annotate the class `@HiltAndroidTest` and make `HiltAndroidRule(this)` the
-  first rule, `@get:Rule(order = 0)`, with every other rule ordered after it:
-  the compose rule launches the activity, which injects in `onCreate`.
-- Screen tests uninstall `@UninstallModules(RepositoryModule::class, ClockModule::class)`
-  and bind one `@BindValue @JvmField` field per binding, typed as the interface
-  (`ProfileRepository`, `ProjectRepository`, `Clock`) and set in its
-  initializer. Keep a second reference typed as the fake when the test sets a
-  gate or reads `current`.
-- When seeds differ per test, make the field a `var` and use
-  `createLaunchLaterComposeRule()`: each test binds its fake first, then
-  launches the app (`activityRule.launch()` or a `launch...` helper).
-- Journey tests uninstall only `ClockModule` and bind the clock, so the real
-  repositories run on `IdlingDatabaseModule`'s idling-aware Room. Inject
-  `IsolatedStorage` (`@Inject lateinit var`, `hiltRule.inject()` in `@Before`)
-  and remove it in `@After` with `storage.remove(composeRule.activityRule.scenario)`.
+- Annotate the class `@HiltAndroidTest`, make `HiltAndroidRule(this)` the first
+  rule, `@get:Rule(order = 0)`, and `createLaunchLaterComposeRule()` the second,
+  with every other rule ordered after them: the activity injects in `onCreate`.
+- No class binds or uninstalls modules. `TestBindingsModule` gives every device
+  test's app the repositories and clock held by `TestBindings`: empty fakes and
+  13/10/2026 unless the test seeds others. One call seeds them and starts the
+  app: `launchApp(profiles, projects, clock, size, frame)`, every argument
+  optional. Keep a reference typed as the fake when the test sets a gate or
+  reads `current`. Starting the app freezes the holder, so assigning a fake
+  afterwards throws.
+- `launchApp` shows the route in the theme, inside `frame` and at `size` when
+  given; `frame = null` keeps the app's own content, which alone shows the
+  installed version. `showRoute` changes the frame later, and `recreate()` shows
+  the same content again, so a test never shows it again after recreating.
+- Journey tests launch on the production repositories built on their
+  `IsolatedStorage` (`RepositoryModule.projectRepository(storage.database)`),
+  `IdlingDatabaseModule`'s idling-aware Room. Inject the storage
+  (`@Inject lateinit var`, `hiltRule.inject()` in `@Before`) and remove it in
+  `@After` with `storage.remove(composeRule.activityRule.scenario)`.
 
 ## Coroutines and flows
 
