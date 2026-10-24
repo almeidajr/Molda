@@ -2,7 +2,7 @@
 
 ## Development
 
-Install Android SDK 37 and a JDK capable of launching Gradle (JDK 25 recommended).
+Install Android SDK platform 37.2 (`platforms;android-37.2`) and a JDK capable of launching Gradle (JDK 25 recommended).
 The committed daemon criteria select JDK 25. Keep your SDK path in ignored
 `local.properties`; CI uses the Android SDK environment. Devices need API 36+.
 
@@ -32,8 +32,9 @@ the notice. `SyntheticAccessor` is disabled because R8 inlines those accessors. 
 fix findings or explain a narrow suppression.
 Detekt currently uses a pinned 2.x alpha for the Gradle 9/JDK 25 toolchain;
 review compatibility when updating it.
-Material 3 is pinned to 1.5.0-beta02 over the Compose BOM for the guide's expressive
-LoadingIndicator; return it to the BOM once 1.5.0 is stable.
+Compose (through the alpha Compose BOM, which also drives Material 3 and Material
+adaptive), Navigation 3, lifecycle, window and activity follow their newest
+prereleases; return them to stable channels once motion is settled.
 
 Use JUnit 4 in `app/src/test` for logic and AndroidJUnit4/Compose tests in
 `app/src/androidTest` for UI behavior. Name classes `*Test` and methods after

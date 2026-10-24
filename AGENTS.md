@@ -16,7 +16,7 @@ Run these commands from the repository root in PowerShell:
 - `.\gradlew.bat :app:lintDebug` runs Android Lint.
 - `.\gradlew.bat :app:installDebug` installs the debug app; launch it from the device or Android Studio.
 
-On macOS/Linux, use `./gradlew`. Configure Android SDK 37; devices require API 36 or newer. Gradle daemon criteria specify JDK 25, while Java source compatibility is 11.
+On macOS/Linux, use `./gradlew`. Configure Android SDK platform 37.2 (`platforms;android-37.2`); devices require API 36 or newer. Gradle daemon criteria specify JDK 25, while Java source compatibility is 11.
 
 ## Coding Style & Naming Conventions
 

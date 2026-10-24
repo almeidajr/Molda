@@ -109,12 +109,13 @@ Grouped surfaces use 16dp corners; the cutting card and modal surfaces use
 28dp. Primary actions use full rounded ends. Keep standard outlined field
 shapes. Use tonal grouping rather than nested cards or decorative shadows.
 
-Use Material interaction feedback and available Expressive motion defaults.
-Motion communicates pressed state, disclosure and navigation continuity; it
-never delays calculation or makes dimensions move while being read. Respect
-system animation settings and show the same final state when motion is disabled.
-Avoid bespoke animation choreography; check Expressive API availability against
-the installed Material3 version before later implementation.
+The app theme is the Expressive Material theme with the expressive motion
+scheme, so Material components take their timing from that one scheme. Screen
+navigation uses Navigation 3's built-in transitions for now. Motion communicates
+pressed state, disclosure and navigation continuity; it never delays calculation
+or makes dimensions move while being read. Respect system animation settings and
+show the same final state when motion is disabled. Hand-tuned timing (durations,
+delays, easing curves) is not allowed.
 
 ## Navigation and adaptive layout
 

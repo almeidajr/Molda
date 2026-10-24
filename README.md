@@ -49,7 +49,7 @@ Report bugs, accessibility barriers and ideas through
 ## Build and contribute
 
 Molda is built with Kotlin, Jetpack Compose and Material 3, Navigation 3,
-Room and Rive. With Android SDK 37 and JDK 25:
+Room and Rive. With Android SDK platform 37.2 and JDK 25:
 
 ```powershell
 .\gradlew.bat :app:installDebug
