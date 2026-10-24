@@ -43,21 +43,18 @@ class OutcomeEffectTest {
     }
 
     @Test
-    fun outcome_afterTheReactionIsSwapped_runsTheLatestReaction() {
+    fun outcome_afterTheReactionIsSwapped_runsOnlyTheLatestReaction() {
         // Given
-        val firstReactions = mutableListOf<Int>()
-        var reaction by mutableStateOf<(Int) -> Unit>({ firstReactions += it })
+        var reaction by mutableStateOf<(Int) -> Unit>({ reactions += it })
         composeRule.setContent { OutcomeEffect(outcome, ::acknowledge, reaction) }
-        composeRule.runOnIdle { reaction = { reactions += it } }
+        // Composed with the first reaction, then given one that records a different value.
+        composeRule.runOnIdle { reaction = { reactions += it * 10 } }
 
         // When
         composeRule.runOnIdle { outcome = 1 }
 
         // Then
-        composeRule.runOnIdle {
-            assertEquals(emptyList(), firstReactions)
-            assertEquals(listOf(1), reactions)
-        }
+        composeRule.runOnIdle { assertEquals(listOf(10), reactions) }
     }
 
     @Test
