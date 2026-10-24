@@ -68,7 +68,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         val list by profiles.state.collectAsStateWithLifecycle()
         // The confirmation is its own entry, so the list deletes what it sends back.
         ResultEffect<ProfileId>(PROFILE_DELETE_RESULT_KEY) { id -> profiles.delete(id) }
-        OutcomeEffect(list.outcome, profiles::acknowledge) { deleted ->
+        OutcomeEffect(list.deleted, profiles::acknowledge) { deleted ->
             onShowSnackbar(R.string.profile_deleted)
             navigator.closeEditorOf(deleted)
         }
@@ -87,7 +87,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         val editor = editorViewModel(key.profile)
         ReportEditorStatus(key, editor.report)
         val state by editor.state.collectAsStateWithLifecycle()
-        OutcomeEffect(state.outcome, editor::acknowledge) {
+        OutcomeEffect(state.saved, editor::acknowledge) {
             onShowSnackbar(R.string.profile_saved)
             navigator.remove(key)
         }
@@ -99,7 +99,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         ReportEditorStatus(key, editor.report)
         val results = LocalResultEventBus.current
         val state by editor.state.collectAsStateWithLifecycle()
-        OutcomeEffect(state.outcome, editor::acknowledge) { save ->
+        OutcomeEffect(state.saved, editor::acknowledge) { save ->
             onShowSnackbar(R.string.profile_saved)
             if (save is ProfileSave.Created) results.sendResult(key.resultKey, save.profile)
             navigator.closePickerEditor(key)

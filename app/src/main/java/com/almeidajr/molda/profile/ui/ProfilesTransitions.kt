@@ -50,12 +50,12 @@ internal fun ProfileEditorState.submitted(validation: ProfileValidation) = when 
 internal fun ProfileEditorState.savedWith(result: Result<ProfileSave>) = result.fold(
     onSuccess = {
         val stored = form.copy(originalInputs = form.inputs, saved = it)
-        copy(form = stored, saving = null, outcome = it)
+        copy(form = stored, saving = null, saved = it)
     },
     onFailure = { copy(saving = ProfileSaving.Failed) },
 )
 
 internal fun ProfileListState.deletedWith(id: ProfileId, result: Result<Unit>) = result.fold(
-    onSuccess = { copy(deletion = null, outcome = id) },
+    onSuccess = { copy(deletion = null, deleted = id) },
     onFailure = { copy(deletion = ProfileDeletion.Failed(id)) },
 )

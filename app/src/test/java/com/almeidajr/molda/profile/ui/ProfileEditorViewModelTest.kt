@@ -177,7 +177,7 @@ class ProfileEditorViewModelTest {
         // Then
         val created = storage.current.last()
         assertEquals("Bia", created.measurements.name.text)
-        assertEquals(ProfileSave.Created(created), editor.state.value.outcome)
+        assertEquals(ProfileSave.Created(created), editor.state.value.saved)
         assertFalse(editor.state.value.isDirty)
     }
 
@@ -207,7 +207,7 @@ class ProfileEditorViewModelTest {
         editor.save()
 
         // Then
-        assertNull(editor.state.value.outcome)
+        assertNull(editor.state.value.saved)
         assertFalse(editor.state.value.canSave)
         assertEquals(2, storage.current.size)
     }
@@ -223,7 +223,7 @@ class ProfileEditorViewModelTest {
 
         // Then
         assertEquals(Length(82.0), storage.current.single().measurements.waist)
-        assertEquals(ProfileSave.Updated, editor.state.value.outcome)
+        assertEquals(ProfileSave.Updated, editor.state.value.saved)
     }
 
     @Test
@@ -239,7 +239,7 @@ class ProfileEditorViewModelTest {
         // Then
         val failed = editor.state.value
         assertEquals(R.string.profile_save_failed, failed.error)
-        assertNull(failed.outcome)
+        assertNull(failed.saved)
         assertEquals("82", failed.inputs[ProfileField.Waist])
     }
 
@@ -277,7 +277,7 @@ class ProfileEditorViewModelTest {
         val failed = editor.state.value
         assertEquals(R.string.profile_save_failed, failed.error)
         assertTrue(failed.canSave)
-        assertNull(failed.outcome)
+        assertNull(failed.saved)
         assertEquals("Bia", failed.inputs[ProfileField.Name])
         assertEquals(listOf(ana), storage.current)
     }
@@ -391,7 +391,7 @@ class ProfileEditorViewModelTest {
             scenario.viewModel.save()
 
             // Then
-            assertEquals(ProfileSave.Updated, scenario.viewModel.state.value.outcome)
+            assertEquals(ProfileSave.Updated, scenario.viewModel.state.value.saved)
             assertEquals(stored, storage.current)
         }
     }
@@ -409,14 +409,14 @@ class ProfileEditorViewModelTest {
             // Given
             scenario.viewModel.fill(name = "Bia", waist = "95", date = "11/10/2026")
             scenario.viewModel.save()
-            val created = assertIs<ProfileSave.Created>(scenario.viewModel.state.value.outcome)
+            val created = assertIs<ProfileSave.Created>(scenario.viewModel.state.value.saved)
 
             // When
             scenario.recreate()
             scenario.viewModel.save()
 
             // Then
-            assertEquals(created, scenario.viewModel.state.value.outcome)
+            assertEquals(created, scenario.viewModel.state.value.saved)
             assertEquals(2, storage.current.size)
         }
     }

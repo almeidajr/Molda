@@ -40,7 +40,7 @@ class ProfileListViewModel @Inject constructor(private val repository: ProfileRe
         }
     }
 
-    /** Deletes profile [id] unless this list is busy; then it is [ProfileListState.outcome]. */
+    /** Deletes profile [id] unless this list is busy; then it is [ProfileListState.deleted]. */
     fun delete(id: ProfileId) {
         val current = mutableState.value
         val profiles = (current.load as? LoadResult.Success)?.value.orEmpty()
@@ -52,6 +52,6 @@ class ProfileListViewModel @Inject constructor(private val repository: ProfileRe
         }
     }
 
-    /** Forgets the deletion's outcome, once the list's entry has reacted to it. */
-    fun acknowledge() = mutableState.update { it.copy(outcome = null) }
+    /** Forgets the deletion, once the list's entry has reacted to it. */
+    fun acknowledge() = mutableState.update { it.copy(deleted = null) }
 }
