@@ -212,13 +212,25 @@ class ProjectNavigatorTest {
     }
 
     @Test
-    fun isDeletingProject_onlyWhileItsDeleteDialogIsOpen() {
+    fun isDeletingProject_withItsDeleteDialogOpen_isTrueOnlyForThatProject() {
         // Given
         val navigator = projetos(ProjectKey(first), DeleteProjectKey(first))
 
         // When/Then
         assertTrue(navigator.isDeletingProject(first))
         assertFalse(navigator.isDeletingProject(second))
+    }
+
+    @Test
+    fun isDeletingProject_withItsDeleteDialogClosed_isFalse() {
+        // Given
+        val navigator = projetos(ProjectKey(first), DeleteProjectKey(first))
+
+        // When
+        navigator.remove(DeleteProjectKey(first))
+
+        // Then
+        assertFalse(navigator.isDeletingProject(first))
     }
 
     private data object OtherKey : NavKey
