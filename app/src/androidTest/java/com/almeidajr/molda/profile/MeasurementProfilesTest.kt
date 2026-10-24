@@ -191,6 +191,34 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun calendar_withoutDate_opensOnTodaysMonth() {
+        // Given
+        showNewProfileEditor()
+
+        // When
+        composeRule.openCalendar()
+
+        // Then
+        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 1)), ignoreCase = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun calendar_withFutureDate_opensOnTodaysMonthWithNothingSelected() {
+        // Given
+        showNewProfileEditor()
+        composeRule.edit("Data da medida (dd/mm/aaaa)", "15/12/2026")
+
+        // When
+        composeRule.openCalendar()
+
+        // Then
+        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 1)), ignoreCase = true)
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Confirmar data").assertIsNotEnabled()
+    }
+
+    @Test
     fun calendar_withTypedDate_canConfirmIt() {
         // Given
         showNewProfileEditor()

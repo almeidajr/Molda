@@ -86,6 +86,8 @@ class ProfileEditorViewModelTest {
         // Then
         val loading = editor.state.value
         assertEquals(R.string.profile_editor_edit, loading.title)
+        assertEquals(R.string.profile_save_changes, loading.saveLabel)
+        assertFalse(loading.showsLocalOnlyNote)
         assertFalse(loading.canEdit)
         assertFalse(loading.canRetryLoad)
         assertEquals("", loading.inputs[ProfileField.Name])
@@ -102,6 +104,8 @@ class ProfileEditorViewModelTest {
 
         // Then
         val failed = editor.state.value
+        assertEquals(R.string.profile_save_changes, failed.saveLabel)
+        assertFalse(failed.showsLocalOnlyNote)
         assertTrue(failed.canRetryLoad)
         assertFalse(failed.canEdit)
         assertEquals("", failed.inputs[ProfileField.Name])
@@ -121,6 +125,8 @@ class ProfileEditorViewModelTest {
         // Then
         val saving = editor.state.value
         assertEquals(R.string.status_saving, saving.saveLabel)
+        assertEquals(R.string.profile_editor_edit, saving.title)
+        assertFalse(saving.showsLocalOnlyNote)
         assertFalse(saving.canEdit)
         assertEquals("Ana", saving.inputs[ProfileField.Name])
     }
