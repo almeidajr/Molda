@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
@@ -37,8 +36,7 @@ internal class OpenedProjectViewModel @AssistedInject constructor(
     val state: StateFlow<LoadResult<Project?>> = attempts
         .flatMapLatest { _ ->
             repository.project(key.id)
-                .map<Project, Project?> { project -> project }
-                .catch { failure ->
+                .catch<Project?> { failure ->
                     if (failure is NoLongerExistsException) emit(null) else throw failure
                 }
                 .asLoadResult()

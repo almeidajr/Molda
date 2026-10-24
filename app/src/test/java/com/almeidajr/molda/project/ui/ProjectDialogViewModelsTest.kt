@@ -233,6 +233,67 @@ class ProjectDialogViewModelsTest {
     }
 
     @Test
+    fun markProjectGone_withNoDeleteRunning_reportsItDeleted() = runTest {
+        // Given
+        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+
+        // When
+        dialog.markProjectGone()
+
+        // Then
+        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
+    }
+
+    @Test
+    fun markProjectGone_afterAFailedDelete_reportsItDeleted() = runTest {
+        // Given
+        storage.failsCommands = true
+        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+        dialog.delete()
+
+        // When
+        dialog.markProjectGone()
+
+        // Then
+        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
+    }
+
+    @Test
+    fun markProjectGone_duringItsOwnDelete_leavesTheOutcomeToTheDelete() = runTest {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        storage.commandGate = gate
+        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+        dialog.delete()
+
+        // When
+        dialog.markProjectGone()
+
+        // Then
+        assertEquals(ProjectCommandState.Running, dialog.state.value)
+        gate.complete(Unit)
+        assertEquals(ProjectCommandState.Done(Unit), dialog.state.value)
+    }
+
+    @Test
+    fun markProjectGone_duringADeleteThatThenFails_reportsItDeleted() = runTest {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        storage.commandGate = gate
+        storage.failsCommands = true
+        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+        dialog.delete()
+        dialog.markProjectGone()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
+        assertNull(dialog.state.value.error)
+    }
+
+    @Test
     fun acknowledge_afterTheProjectWasFoundDeleted_spendsTheCommand() = runTest {
         // Given
         val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))

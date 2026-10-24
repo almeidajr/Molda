@@ -186,18 +186,14 @@ private fun DeleteProjectEntry(
         onShowSnackbar(R.string.project_deleted)
         navigator.closeProject(key.id)
     }
-    // Only the first of the dialog's reactions to the deletion finds the dialog open.
-    val closeDeleted = {
-        if (navigator.closeProject(key.id)) onShowSnackbar(R.string.project_deleted_meanwhile)
+    // Found deleted meanwhile, by its own command or once the project is gone.
+    OutcomeEffect(state.deleted, dialog::acknowledge) {
+        onShowSnackbar(R.string.project_deleted_meanwhile)
+        navigator.closeProject(key.id)
     }
-    OutcomeEffect(state.deleted, dialog::acknowledge) { closeDeleted() }
     OpenedProject(
         key.id,
-        // Gone by its own delete, which reports through its outcome, or deleted meanwhile.
-        onDeleted = {
-            val own = dialog.state.value
-            if (!own.isBusy && own.outcome == null) closeDeleted()
-        },
+        onDeleted = dialog::markProjectGone,
         failed = { ProjectLoadFailureDialog(it, onDismiss = { navigator.remove(key) }) },
     ) { project ->
         DeleteProjectDialog(

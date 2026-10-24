@@ -66,6 +66,9 @@ internal class ProjectCommand<T : Any>(
     private val mutableState = MutableStateFlow<ProjectCommandState<T>>(ProjectCommandState.Idle)
     val state: StateFlow<ProjectCommandState<T>> = mutableState.asStateFlow()
 
+    // Once its project is found gone, a command that fails reports it deleted instead.
+    private var isProjectGone = false
+
     /** Runs [command], unless it is running, done or spent. */
     fun submit(command: suspend () -> Result<T>) {
         val current = mutableState.value
@@ -75,13 +78,28 @@ internal class ProjectCommand<T : Any>(
             mutableState.value = command().fold(
                 onSuccess = { ProjectCommandState.Done(it) },
                 onFailure = {
-                    if (it is NoLongerExistsException) {
+                    if (it is NoLongerExistsException || isProjectGone) {
                         ProjectCommandState.Deleted
                     } else {
                         ProjectCommandState.Failed(failure)
                     }
                 },
             )
+        }
+    }
+
+    /**
+     * Reports its project, found no longer stored, deleted; a running command's outcome decides
+     * instead, since the command may be what deleted it.
+     */
+    fun markProjectGone() {
+        isProjectGone = true
+        mutableState.update {
+            if (it == ProjectCommandState.Idle || it is ProjectCommandState.Failed) {
+                ProjectCommandState.Deleted
+            } else {
+                it
+            }
         }
     }
 
@@ -160,6 +178,9 @@ internal class DeleteProjectViewModel @AssistedInject constructor(
     fun acknowledge() = command.acknowledge()
 
     fun delete() = command.submit { repository.delete(key.id) }
+
+    /** Its project was found no longer stored: deleted meanwhile, unless by its own delete. */
+    fun markProjectGone() = command.markProjectGone()
 
     @AssistedFactory
     interface Factory {
