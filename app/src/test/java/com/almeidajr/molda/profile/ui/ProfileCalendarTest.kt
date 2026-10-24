@@ -1,26 +1,20 @@
 package com.almeidajr.molda.profile.ui
 
 import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.junit.Test
 
 class ProfileCalendarTest {
-    private val zones = listOf("UTC", "Pacific/Kiritimati", "Pacific/Pago_Pago").map(ZoneId::of)
-    private val instant = ZonedDateTime.of(2026, 10, 12, 23, 30, 0, 0, ZoneId.of("UTC")).toInstant()
-
     @Test
-    fun calendarConversions_inAnyZone_roundTripTheDatePicked() {
-        zones.forEach { zone ->
-            // Given
-            val today = instant.atZone(zone).toLocalDate()
+    fun calendarConversions_forADate_roundTripTheDatePicked() {
+        // Given
+        val date = LocalDate.of(2026, 10, 12)
 
-            // When/Then
-            assertEquals(today, calendarMillisToDate(dateToCalendarMillis(today)), zone.id)
-        }
+        // When/Then
+        assertEquals(date, calendarMillisToDate(dateToCalendarMillis(date)))
     }
 
     @Test
@@ -30,15 +24,38 @@ class ProfileCalendarTest {
     }
 
     @Test
-    fun isSelectableDate_afterToday_isRefusedInEveryZone() {
-        zones.forEach { zone ->
-            // Given
-            val today = instant.atZone(zone).toLocalDate()
+    fun calendarMillisToDate_aroundNewYear_keepsEachSideInItsYear() {
+        // When/Then
+        assertEquals(LocalDate.of(2025, 12, 31), calendarMillisToDate(1_767_225_599_999L))
+        assertEquals(LocalDate.of(2026, 1, 1), calendarMillisToDate(1_767_225_600_000L))
+    }
 
-            // When/Then
-            assertTrue(isSelectableDate(today, today), zone.id)
-            assertFalse(isSelectableDate(today.plusDays(1), today), zone.id)
-        }
+    @Test
+    fun calendarConversions_beforeTheEpoch_useNegativeMillis() {
+        // Given
+        val date = LocalDate.of(1965, 3, 9)
+
+        // When
+        val millis = dateToCalendarMillis(date)
+
+        // Then
+        assertEquals(-151_977_600_000L, millis)
+        assertEquals(date, calendarMillisToDate(millis))
+    }
+
+    @Test
+    fun isSelectableDate_today_isAllowed() {
+        // Given
+        val today = LocalDate.of(2026, 10, 12)
+
+        // When/Then
+        assertTrue(isSelectableDate(today, today))
+    }
+
+    @Test
+    fun isSelectableDate_tomorrow_isRefused() {
+        // When/Then
+        assertFalse(isSelectableDate(LocalDate.of(2026, 10, 13), LocalDate.of(2026, 10, 12)))
     }
 
     @Test
@@ -66,5 +83,20 @@ class ProfileCalendarTest {
 
         // When/Then
         assertEquals(today, initialCalendarDate(today.plusDays(3), today))
+    }
+
+    @Test
+    fun initialCalendarSelection_withPastValue_selectsIt() {
+        // When/Then
+        assertEquals(
+            LocalDate.of(2026, 1, 5),
+            initialCalendarSelection(LocalDate.of(2026, 1, 5), LocalDate.of(2026, 10, 12)),
+        )
+    }
+
+    @Test
+    fun initialCalendarSelection_withFutureValue_selectsNothing() {
+        // When/Then
+        assertNull(initialCalendarSelection(LocalDate.of(2026, 10, 15), LocalDate.of(2026, 10, 12)))
     }
 }

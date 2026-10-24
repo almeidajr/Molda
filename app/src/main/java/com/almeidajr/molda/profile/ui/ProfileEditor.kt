@@ -149,7 +149,7 @@ private fun ProfileDatePicker(
     }
     val current = parseProfileDate(text)
     val picker = rememberDatePickerState(
-        initialSelectedDateMillis = current?.takeIf { isSelectableDate(it, today) }
+        initialSelectedDateMillis = initialCalendarSelection(current, today)
             ?.let(::dateToCalendarMillis),
         initialDisplayedMonthMillis = dateToCalendarMillis(initialCalendarDate(current, today)),
         yearRange = 1..maxOf(2100, today.year),

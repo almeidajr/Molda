@@ -18,3 +18,7 @@ internal fun isSelectableDate(date: LocalDate, today: LocalDate): Boolean = !dat
 /** The date the calendar opens on: the current value, otherwise [today], never after [today]. */
 internal fun initialCalendarDate(current: LocalDate?, today: LocalDate): LocalDate =
     minOf(current ?: today, today)
+
+/** The date the calendar opens selected: the current value if it can be picked, else none. */
+internal fun initialCalendarSelection(current: LocalDate?, today: LocalDate): LocalDate? =
+    current?.takeIf { isSelectableDate(it, today) }
