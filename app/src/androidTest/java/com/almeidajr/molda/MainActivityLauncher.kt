@@ -54,8 +54,11 @@ class MainActivityLauncher internal constructor() : ExternalResource() {
     }
 
     override fun after() {
-        launched?.close()
-        ActivityLifecycleMonitorRegistry.getInstance().removeLifecycleCallback(showContent)
+        try {
+            launched?.close()
+        } finally {
+            ActivityLifecycleMonitorRegistry.getInstance().removeLifecycleCallback(showContent)
+        }
     }
 }
 
