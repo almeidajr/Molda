@@ -106,6 +106,7 @@ class AboutTest {
         // Then
         composeRule.screenTitle("Licenças de código aberto").assertIsDisplayed()
         // A dependency the app ships with, listed from its build-time metadata.
+        composeRule.awaitLicencesLoaded()
         composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Hilt Android"))
         composeRule.onNodeWithText("Hilt Android").assertIsDisplayed()
         composeRule.onNode(

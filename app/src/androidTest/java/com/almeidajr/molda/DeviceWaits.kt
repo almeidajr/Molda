@@ -6,11 +6,15 @@ import android.view.WindowManager
 import android.view.inspector.WindowInspector
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -78,6 +82,19 @@ internal fun AndroidComposeTestRule<*, *>.awaitActivityFocus() =
 /** Waits for the activity to start finishing, for example after Back leaves the app. */
 internal fun AndroidComposeTestRule<*, *>.awaitActivityFinishing() =
     waitUntil("activity finishing", DeviceWaitTimeout.inWholeMilliseconds) { activity.isFinishing }
+
+/**
+ * Waits until the licences list has rows. AboutLibraries parses its metadata on
+ * `Dispatchers.IO`, which Compose cannot see, so the list can still be empty once Compose is idle.
+ */
+@OptIn(ExperimentalTestApi::class)
+internal fun AndroidComposeTestRule<*, *>.awaitLicencesLoaded() = waitUntilAtLeastOneExists(
+    hasScrollAction() and SemanticsMatcher("has rows") {
+        val rows = it.config.getOrNull(SemanticsProperties.CollectionInfo)?.rowCount ?: 0
+        rows > 0
+    },
+    DeviceWaitTimeout.inWholeMilliseconds,
+)
 
 /** The drawing frame's loading indicator. */
 internal val isLoadingIndicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
