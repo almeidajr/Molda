@@ -1,5 +1,6 @@
 package com.almeidajr.molda.profile.navigation
 
+import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
@@ -29,9 +30,14 @@ internal fun Navigator.openPickerEditor(resultKey: String) {
 internal fun Navigator.closePickerEditor(editor: PickerProfileEditorKey) =
     removeAll { it == editor || it == ProfilePickerKey(editor.resultKey) }
 
-/** Closes every editor of the deleted profile [id]. */
-internal fun Navigator.closeEditorOf(id: ProfileId) =
-    removeAll { it is ProfileEditorKey && it.profile == EditedProfile.Existing(id) }
+/** Closes every editor of the deleted profile [id]; returns whether one was open. */
+internal fun Navigator.closeEditorOf(id: ProfileId): Boolean {
+    val isEditorOf: (NavKey) -> Boolean =
+        { it is ProfileEditorKey && it.profile == EditedProfile.Existing(id) }
+    val wasOpen = state.stacks.any { it.any(isEditorOf) }
+    removeAll(isEditorOf)
+    return wasOpen
+}
 
 /**
  * Whether Perfis shows its new-profile action: over its list or an editor, but not over another

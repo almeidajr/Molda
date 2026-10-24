@@ -1,6 +1,7 @@
 package com.almeidajr.molda.project.data
 
 import com.almeidajr.molda.data.resultOf
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.project.domain.PatternDraftKind
@@ -21,6 +22,9 @@ class LocalProjectRepository internal constructor(private val dao: ProjectDao) :
     override fun projects(): Flow<List<Project>> =
         dao.projects().map { rows -> rows.map { it.toProject() } }
 
+    override fun project(id: ProjectId): Flow<Project> =
+        dao.project(id.value).map { row -> row?.toProject() ?: throw projectMissing() }
+
     override suspend fun create(
         name: ProjectName,
         snapshot: SkirtSnapshot,
@@ -38,7 +42,7 @@ class LocalProjectRepository internal constructor(private val dao: ProjectDao) :
         val updated = dao.update(
             SkirtUpdate(id.value, snapshot.toColumns(), updatedAt.toEpochMilli()),
         )
-        check(updated == 1) { PROJECT_MISSING }
+        if (updated == 0) throw projectMissing()
     }
 
     override suspend fun rename(
@@ -46,17 +50,15 @@ class LocalProjectRepository internal constructor(private val dao: ProjectDao) :
         name: ProjectName,
         renamedAt: Instant,
     ): Result<Unit> = resultOf {
-        check(dao.rename(id.value, name.text, renamedAt.toEpochMilli()) == 1) {
-            PROJECT_MISSING
-        }
+        if (dao.rename(id.value, name.text, renamedAt.toEpochMilli()) == 0) throw projectMissing()
     }
 
     override suspend fun delete(id: ProjectId): Result<Unit> = resultOf {
-        check(dao.delete(id.value) == 1) { PROJECT_MISSING }
+        if (dao.delete(id.value) == 0) throw projectMissing()
     }
 }
 
-private const val PROJECT_MISSING = "Project no longer exists"
+private fun projectMissing() = NoLongerExistsException("Project no longer exists")
 
 // Domain constructors validate every loaded row, so a malformed row fails the load as storage
 // expects. So does a stored kind that is not the snapshot's: unknown to this version or

@@ -1,6 +1,7 @@
 package com.almeidajr.molda.data
 
 import androidx.sqlite.SQLiteException
+import com.almeidajr.molda.domain.NoLongerExistsException
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -19,7 +20,11 @@ internal val Throwable.isExpectedStorageFailure: Boolean
         // A subclass of IllegalStateException, so it must be excluded before that is matched.
         is CancellationException -> false
 
-        is SQLiteException, is IllegalArgumentException, is IllegalStateException -> true
+        is NoLongerExistsException,
+        is SQLiteException,
+        is IllegalArgumentException,
+        is IllegalStateException,
+        -> true
 
         else -> false
     }

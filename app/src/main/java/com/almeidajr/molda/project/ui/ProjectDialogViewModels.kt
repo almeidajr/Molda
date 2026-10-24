@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.R
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.domain.ProjectRepository
@@ -21,40 +22,99 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * A project dialog's storage command: running, failed with [error], or ended with an [outcome]
- * its entry reacts to.
- */
-data class ProjectCommandState<out T : Any>(
-    val isBusy: Boolean = false,
-    @param:StringRes val error: Int? = null,
-    val outcome: T? = null,
-)
+/** A project storage command's state; [Done] holds the outcome its entry has yet to react to. */
+sealed interface ProjectCommandState<out T : Any> {
+    /** Ready to run: never run, or failed and acknowledged. */
+    data object Idle : ProjectCommandState<Nothing>
+
+    data object Running : ProjectCommandState<Nothing>
+
+    /** Failed with [message]; it runs again when submitted. */
+    data class Failed(@param:StringRes val message: Int) : ProjectCommandState<Nothing>
+
+    data class Done<out T : Any>(override val outcome: T) : ProjectCommandState<T>
+
+    /** Found its project deleted meanwhile; its entry closes, and it never runs again. */
+    data object Deleted : ProjectCommandState<Nothing>
+
+    /** Succeeded and acknowledged; it never runs again. */
+    data object Spent : ProjectCommandState<Nothing>
+
+    val isBusy: Boolean get() = this == Running
+
+    @get:StringRes
+    val error: Int? get() = (this as? Failed)?.message
+
+    /** The outcome awaiting its entry's reaction, held only while [Done]. */
+    val outcome: T? get() = null
+
+    /** [Deleted] while its entry has yet to react to it, null otherwise. */
+    val deleted: Deleted? get() = this as? Deleted
+}
 
 /**
- * A project dialog's storage command, run in [scope] once at a time; it keeps how it ended, and a
- * failure shows [failure].
+ * A project storage command, run in [scope] once: it runs again only after a failure, which shows
+ * [failure], and keeps its outcome, or its project found deleted, until acknowledged.
  */
-private class ProjectCommand<T : Any>(
+internal class ProjectCommand<T : Any>(
     private val scope: CoroutineScope,
     @param:StringRes private val failure: Int,
 ) {
-    private val mutableState = MutableStateFlow(ProjectCommandState<T>())
+    private val mutableState = MutableStateFlow<ProjectCommandState<T>>(ProjectCommandState.Idle)
     val state: StateFlow<ProjectCommandState<T>> = mutableState.asStateFlow()
 
-    /** Runs [command], unless it is running or has already succeeded. */
+    // Once its project is found gone, a command that fails reports it deleted instead.
+    private var isProjectGone = false
+
+    /** Runs [command], unless it is running, done or spent. */
     fun submit(command: suspend () -> Result<T>) {
         val current = mutableState.value
-        if (current.isBusy || current.outcome != null) return
-        mutableState.value = ProjectCommandState(isBusy = true)
+        if (current != ProjectCommandState.Idle && current !is ProjectCommandState.Failed) return
+        mutableState.value = ProjectCommandState.Running
         scope.launch {
             mutableState.value = command().fold(
-                onSuccess = { ProjectCommandState(outcome = it) },
-                onFailure = { ProjectCommandState(error = failure) },
+                onSuccess = { ProjectCommandState.Done(it) },
+                onFailure = {
+                    if (it is NoLongerExistsException || isProjectGone) {
+                        ProjectCommandState.Deleted
+                    } else {
+                        ProjectCommandState.Failed(failure)
+                    }
+                },
             )
         }
+    }
+
+    /**
+     * Reports its project, found no longer stored, deleted; a running command's outcome decides
+     * instead, since the command may be what deleted it.
+     */
+    fun markProjectGone() {
+        isProjectGone = true
+        mutableState.update {
+            if (it == ProjectCommandState.Idle || it is ProjectCommandState.Failed) {
+                ProjectCommandState.Deleted
+            } else {
+                it
+            }
+        }
+    }
+
+    /** Spends the command once its entry has reacted to the outcome or the deletion. */
+    fun acknowledge() = mutableState.update {
+        if (it is ProjectCommandState.Done || it == ProjectCommandState.Deleted) {
+            ProjectCommandState.Spent
+        } else {
+            it
+        }
+    }
+
+    /** Forgets a failure once its entry has shown it; an outcome stays until acknowledged. */
+    fun acknowledgeError() = mutableState.update {
+        if (it is ProjectCommandState.Failed) ProjectCommandState.Idle else it
     }
 }
 
@@ -71,6 +131,8 @@ internal class SaveProjectViewModel @AssistedInject constructor(
     /** The name offered for the new project, after its kind's [kindLabel]. */
     fun defaultName(kindLabel: String): String =
         defaultProjectName(kindLabel, key.snapshot.source?.profileName, LocalDate.now(clock))
+
+    fun acknowledge() = command.acknowledge()
 
     fun save(name: ProjectName) =
         command.submit { repository.create(name, key.snapshot, clock.instant()).map { it.id } }
@@ -92,6 +154,8 @@ internal class RenameProjectViewModel @AssistedInject constructor(
     private val command = ProjectCommand<Unit>(viewModelScope, R.string.project_rename_failed)
     val state: StateFlow<ProjectCommandState<Unit>> = command.state
 
+    fun acknowledge() = command.acknowledge()
+
     fun rename(name: ProjectName) =
         command.submit { repository.rename(key.id, name, clock.instant()) }
 
@@ -111,7 +175,12 @@ internal class DeleteProjectViewModel @AssistedInject constructor(
     private val command = ProjectCommand<Unit>(viewModelScope, R.string.project_delete_failed)
     val state: StateFlow<ProjectCommandState<Unit>> = command.state
 
+    fun acknowledge() = command.acknowledge()
+
     fun delete() = command.submit { repository.delete(key.id) }
+
+    /** Its project was found no longer stored: deleted meanwhile, unless by its own delete. */
+    fun markProjectGone() = command.markProjectGone()
 
     @AssistedFactory
     interface Factory {

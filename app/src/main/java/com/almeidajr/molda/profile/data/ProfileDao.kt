@@ -24,6 +24,9 @@ internal interface ProfileDao {
     @Query("SELECT * FROM profiles ORDER BY id")
     fun profiles(): Flow<List<ProfileEntity>>
 
+    @Query("SELECT * FROM profiles WHERE id = :id")
+    fun profile(id: Long): Flow<ProfileEntity?>
+
     @Insert
     suspend fun insert(profile: ProfileEntity): Long
 

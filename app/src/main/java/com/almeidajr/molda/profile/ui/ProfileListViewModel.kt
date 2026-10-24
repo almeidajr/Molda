@@ -52,6 +52,6 @@ class ProfileListViewModel @Inject constructor(private val repository: ProfileRe
         }
     }
 
-    /** Forgets the deletion once the list's entry has shown it. */
-    fun deletionShown() = mutableState.update { it.copy(deleted = null) }
+    /** Forgets the deletion, once the list's entry has reacted to it. */
+    fun acknowledge() = mutableState.update { it.copy(deleted = null) }
 }

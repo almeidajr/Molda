@@ -27,6 +27,7 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
@@ -42,6 +43,7 @@ import dagger.hilt.android.testing.UninstallModules
 import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
@@ -62,9 +64,10 @@ class OpenProjectTest {
     @BindValue @JvmField
     var profileRepository: ProfileRepository = FakeProfileRepository()
 
+    private val projects = FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
+
     @BindValue @JvmField
-    val projectRepository: ProjectRepository =
-        FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
+    val projectRepository: ProjectRepository = projects
 
     @BindValue @JvmField
     val clock: Clock = October18Clock
@@ -246,9 +249,50 @@ class OpenProjectTest {
         composeRule.click("Excluir projeto")
         composeRule.click("Confirmar exclusão")
 
-        // Then
+        // Then: the dialog's message only, not also the opened project's.
         composeRule.screenTitle("Projetos").assertIsDisplayed()
         composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertDoesNotExist()
+    }
+
+    @Test
+    fun openedProject_deletedMeanwhile_closesWithTheMessage() {
+        // Given
+        launch()
+        openProject()
+
+        // When: deleted elsewhere, as after a restore.
+        composeRule.runOnIdle { projects.forget(ProjectId(1)) }
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.screenTitle("Saia da formatura").assertDoesNotExist()
+        composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
+    }
+
+    @Test
+    fun delete_ofOpenedProjectFailedThenCancelled_showsTheProjectAgain() {
+        // Given: its delete is held, then fails.
+        val gate = CompletableDeferred<Unit>()
+        projects.commandGate = gate
+        projects.failsCommands = true
+        launch()
+        openProject()
+        composeRule.click("Ações: Saia da formatura")
+        composeRule.click("Excluir projeto")
+        composeRule.click("Confirmar exclusão")
+        gate.complete(Unit)
+        composeRule.onNodeWithText("Não foi possível excluir o projeto", substring = true)
+            .assertIsDisplayed()
+
+        // When
+        composeRule.click("Cancelar")
+
+        // Then
+        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText("Editar").assertIsDisplayed()
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertDoesNotExist()
     }
 
     @Test
@@ -266,6 +310,8 @@ class OpenProjectTest {
         // Then
         composeRule.onNodeWithText("Escolha um projeto na lista.").assertIsDisplayed()
         composeRule.screenTitle("Saia da formatura").assertDoesNotExist()
+        composeRule.onNodeWithText("Projeto excluído deste aparelho.").assertIsDisplayed()
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertDoesNotExist()
     }
 
     private fun openProject() {

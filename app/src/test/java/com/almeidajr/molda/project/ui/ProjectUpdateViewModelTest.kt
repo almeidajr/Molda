@@ -1,5 +1,6 @@
 package com.almeidajr.molda.project.ui
 
+import com.almeidajr.molda.R
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
@@ -39,7 +40,7 @@ class ProjectUpdateViewModelTest {
             listOf(saved.copy(snapshot = fromProfile, updatedAt = October18Clock.instant())),
             storage.current,
         )
-        assertEquals(ProjectUpdateState(outcome = ProjectUpdateOutcome.Updated), update.state.value)
+        assertEquals(ProjectCommandState.Done(Unit), update.state.value)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -55,11 +56,30 @@ class ProjectUpdateViewModelTest {
 
         // Then
         assertEquals(listOf(saved), storage.current)
-        assertEquals(ProjectUpdateState(outcome = ProjectUpdateOutcome.Failed), update.state.value)
+        assertEquals(
+            ProjectCommandState.Failed(R.string.project_update_failed),
+            update.state.value,
+        )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun update_ofProjectDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
+        // Given
+        val update = updateViewModel()
+        storage.delete(saved.id).getOrThrow()
+
+        // When
+        update.update(fromProfile)
+        advanceUntilIdle()
+
+        // Then
+        assertEquals(ProjectCommandState.Deleted, update.state.value)
+        assertEquals(emptyList(), storage.current)
     }
 
     @Test
-    fun update_duringTheStorageCall_isUpdating() = runTest {
+    fun update_duringTheStorageCall_isBusy() = runTest {
         // Given
         storage.commandGate = CompletableDeferred()
         val update = updateViewModel()
@@ -68,22 +88,69 @@ class ProjectUpdateViewModelTest {
         update.update(fromProfile)
 
         // Then
-        assertEquals(ProjectUpdateState(isUpdating = true), update.state.value)
+        assertEquals(ProjectCommandState.Running, update.state.value)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun outcomeShown_afterAnUpdate_forgetsTheOutcome() = runTest {
+    fun acknowledge_afterAnUpdate_spendsTheCommand() = runTest {
         // Given
         val update = updateViewModel()
         update.update(fromProfile)
         advanceUntilIdle()
 
         // When
-        update.outcomeShown()
+        update.acknowledge()
 
         // Then
-        assertEquals(ProjectUpdateState(), update.state.value)
+        assertEquals(ProjectCommandState.Spent, update.state.value)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun acknowledgeError_afterAFailure_forgetsTheFailure() = runTest {
+        // Given
+        storage.failsCommands = true
+        val update = updateViewModel()
+        update.update(fromProfile)
+        advanceUntilIdle()
+
+        // When
+        update.acknowledgeError()
+
+        // Then
+        assertEquals(ProjectCommandState.Idle, update.state.value)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun acknowledgeError_afterAnUpdate_keepsTheOutcome() = runTest {
+        // Given: a retry succeeded before the failure's reaction acknowledged it
+        val update = updateViewModel()
+        update.update(fromProfile)
+        advanceUntilIdle()
+
+        // When
+        update.acknowledgeError()
+
+        // Then
+        assertEquals(ProjectCommandState.Done(Unit), update.state.value)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun update_beforeTheOutcomeIsAcknowledged_isIgnored() = runTest {
+        // Given
+        val update = updateViewModel()
+        update.update(fromProfile)
+        advanceUntilIdle()
+
+        // When
+        update.update(saved.snapshot)
+        advanceUntilIdle()
+
+        // Then
+        assertEquals(fromProfile, storage.current.single().snapshot)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

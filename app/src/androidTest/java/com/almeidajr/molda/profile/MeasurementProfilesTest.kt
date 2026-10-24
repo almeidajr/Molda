@@ -99,6 +99,25 @@ class MeasurementProfilesTest {
     }
 
     @Test
+    fun deleteConfirmation_afterRecreation_staysOnTheSameProfile() {
+        // Given
+        val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Bia")))
+        profileRepository = storage
+        composeRule.launchProfiles()
+        composeRule.click("Ações: Bia")
+        composeRule.click("Excluir perfil")
+
+        // When
+        composeRule.recreate()
+        composeRule.showProfileRoute()
+        composeRule.click("Confirmar exclusão")
+
+        // Then
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertIsDisplayed()
+        assertEquals(ProfileId(1), storage.current.single().id)
+    }
+
+    @Test
     fun confirmDelete_withDuplicateNames_removesOnlyTheChosenProfile() {
         // Given
         val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Ana")))
@@ -168,6 +187,34 @@ class MeasurementProfilesTest {
         composeRule.openCalendar()
 
         // Then
+        composeRule.onNodeWithText("Confirmar data").assertIsNotEnabled()
+    }
+
+    @Test
+    fun calendar_withoutDate_opensOnTodaysMonth() {
+        // Given
+        showNewProfileEditor()
+
+        // When
+        composeRule.openCalendar()
+
+        // Then
+        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 1)), ignoreCase = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun calendar_withFutureDate_opensOnTodaysMonthWithNothingSelected() {
+        // Given
+        showNewProfileEditor()
+        composeRule.edit("Data da medida (dd/mm/aaaa)", "15/12/2026")
+
+        // When
+        composeRule.openCalendar()
+
+        // Then
+        composeRule.onNodeWithText(calendarDay(LocalDate.of(2026, 10, 1)), ignoreCase = true)
+            .assertIsDisplayed()
         composeRule.onNodeWithText("Confirmar data").assertIsNotEnabled()
     }
 

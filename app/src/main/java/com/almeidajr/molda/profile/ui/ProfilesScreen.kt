@@ -52,6 +52,7 @@ fun ProfilesContent(
     state: ProfileListState,
     onRetry: () -> Unit,
     onStartEdit: (ProfileId) -> Unit,
+    /** Asks to delete the profile; the app confirms first. */
     onDelete: (ProfileId) -> Unit,
     /** False while a profile operation or the open editor's save is in flight. */
     canChangeProfiles: Boolean,
@@ -87,8 +88,6 @@ fun ProfilesContent(
                     canChangeProfiles,
                     onStartEdit,
                     onDelete,
-                    isDeleting = state.isDeleting(profile.id),
-                    deleteError = state.deleteError(profile.id),
                 )
             }
         }
@@ -117,16 +116,7 @@ private fun ProfileManagementRow(
     enabled: Boolean,
     onStartEdit: (ProfileId) -> Unit,
     onDelete: (ProfileId) -> Unit,
-    isDeleting: Boolean,
-    @StringRes deleteError: Int?,
 ) {
-    var confirmDelete by remember(profile.id) { mutableStateOf(false) }
-    if (confirmDelete) {
-        ConfirmProfileDeletion(profile, enabled, { confirmDelete = false }) {
-            confirmDelete = false
-            onDelete(profile.id)
-        }
-    }
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -159,16 +149,8 @@ private fun ProfileManagementRow(
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
-            ProfileRowActions(profile, enabled, onStartEdit) { confirmDelete = true }
+            ProfileRowActions(profile, enabled, onStartEdit) { onDelete(profile.id) }
         }
-    }
-    if (isDeleting) Text(stringResource(R.string.profile_deleting, profile.measurements.name.text))
-    deleteError?.let {
-        Text(
-            stringResource(it),
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-        )
     }
 }
 
@@ -205,26 +187,64 @@ private fun ProfileRowActions(
     }
 }
 
+/**
+ * The confirmation of deleting the profile called [name], which stays open while [isDeleting] and
+ * shows the delete's [error]; Delete is available only when [canConfirm].
+ */
 @Composable
-private fun ConfirmProfileDeletion(
-    profile: MeasurementProfile,
-    enabled: Boolean,
+internal fun ConfirmProfileDeletion(
+    name: String,
+    isDeleting: Boolean,
+    canConfirm: Boolean,
+    @StringRes error: Int?,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(stringResource(R.string.profile_delete_title, profile.measurements.name.text))
+        title = { Text(stringResource(R.string.profile_delete_title, name)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.profile_delete_body))
+                error?.let { ProfileErrorText(it) }
+            }
         },
-        text = { Text(stringResource(R.string.profile_delete_body)) },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                enabled = enabled,
+                enabled = canConfirm,
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
-                Text(stringResource(R.string.action_confirm_delete))
+                Text(
+                    if (isDeleting) {
+                        stringResource(R.string.profile_deleting, name)
+                    } else {
+                        stringResource(R.string.action_confirm_delete)
+                    },
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isDeleting,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
+}
+
+/** The profiles a dialog acts on failed to load: says so and offers [onRetry] or [onDismiss]. */
+@Composable
+internal fun ProfileLoadFailureDialog(onRetry: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = { ProfileErrorText(R.string.profile_load_failed) },
+        confirmButton = {
+            TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.action_retry_load))
             }
         },
         dismissButton = {
@@ -232,6 +252,15 @@ private fun ConfirmProfileDeletion(
                 Text(stringResource(R.string.action_cancel))
             }
         },
+    )
+}
+
+@Composable
+private fun ProfileErrorText(@StringRes error: Int) {
+    Text(
+        stringResource(error),
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
     )
 }
 

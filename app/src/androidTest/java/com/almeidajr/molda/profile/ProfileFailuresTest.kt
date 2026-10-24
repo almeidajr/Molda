@@ -6,18 +6,21 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import com.almeidajr.molda.awaitDialogFocus
 import com.almeidajr.molda.click
 import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.di.ClockModule
 import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.pressBack
+import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
@@ -185,7 +188,7 @@ class ProfileFailuresTest {
     }
 
     @Test
-    fun delete_whilePending_disablesEveryRowsActions() {
+    fun delete_whilePending_keepsTheDialogBusy() {
         // Given
         profileRepository = existingProfiles().apply { commandGate = CompletableDeferred() }
         composeRule.launchProfiles()
@@ -196,9 +199,72 @@ class ProfileFailuresTest {
         composeRule.click("Confirmar exclusão")
 
         // Then
-        composeRule.onNodeWithText("Excluindo Existente…").assertIsDisplayed()
-        composeRule.onNodeWithText("Ações: Existente").assertIsNotEnabled()
-        composeRule.onNodeWithText("Ações: Outra pessoa").assertIsNotEnabled()
+        composeRule.onNodeWithText("Excluindo Existente…").assertIsNotEnabled()
+        composeRule.onNodeWithText("Cancelar").assertIsNotEnabled()
+    }
+
+    @Test
+    fun back_whileDeleting_keepsTheDialog() {
+        // Given
+        profileRepository = existingProfiles().apply { commandGate = CompletableDeferred() }
+        composeRule.launchProfiles()
+        composeRule.click("Ações: Existente")
+        composeRule.click("Excluir perfil")
+        composeRule.click("Confirmar exclusão")
+        composeRule.awaitDialogFocus()
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.onNodeWithText("Excluir perfil Existente?").assertIsDisplayed()
+    }
+
+    @Test
+    fun deleteHeld_afterRecreation_deletesOnceAndShowsTheMessageOnce() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val storage = existingProfiles().apply { commandGate = gate }
+        profileRepository = storage
+        // The app's own content, so the recreated activity composes the same route.
+        composeRule.activityRule.launch()
+        composeRule.showProfiles()
+        composeRule.click("Ações: Existente")
+        composeRule.click("Excluir perfil")
+        composeRule.click("Confirmar exclusão")
+        composeRule.recreate()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertIsDisplayed()
+        composeRule.onNodeWithText("Excluir perfil Existente?").assertDoesNotExist()
+        assertEquals(listOf(ProfileId(2)), storage.current.map { it.id })
+        // A new activity has a new snackbar host: the message shows again only if sent again.
+        composeRule.recreate()
+        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
+    }
+
+    @Test
+    fun deleteDialog_whenProfilesFailToLoad_showsTheFailureAndItsRetry() {
+        // Given
+        val storage = existingProfiles()
+        profileRepository = storage
+        composeRule.launchProfiles()
+        // The list has loaded; only the dialog's own load fails.
+        composeRule.runOnIdle { storage.failsLoad = true }
+        composeRule.click("Ações: Existente")
+        composeRule.click("Excluir perfil")
+        composeRule.onNodeWithText("Não foi possível carregar os perfis.", substring = true)
+            .assertIsDisplayed()
+        composeRule.runOnIdle { storage.failsLoad = false }
+
+        // When
+        composeRule.click("Tentar carregar novamente")
+
+        // Then
+        composeRule.onNodeWithText("Excluir perfil Existente?").assertIsDisplayed()
     }
 
     @Test
@@ -229,6 +295,52 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("14/10/2026")
+    }
+
+    @Test
+    fun saveEdit_ofProfileDeletedMeanwhile_closesTheEditorWithTheMessage() {
+        // Given
+        val storage = existingProfiles()
+        profileRepository = storage
+        composeRule.launchProfiles()
+        composeRule.click("Existente", useUnmergedTree = true)
+        composeRule.edit("Nome ou apelido", "Rascunho")
+        composeRule.closeKeyboard()
+        // Deleted elsewhere after the editor loaded it.
+        composeRule.runOnIdle { storage.forget(ProfileId(1)) }
+
+        // When
+        composeRule.click("Salvar alterações")
+
+        // Then
+        composeRule.onNodeWithText("Este perfil foi excluído.").assertIsDisplayed()
+        composeRule.onNodeWithText("Editar perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Não foi possível salvar o perfil.", substring = true)
+            .assertDoesNotExist()
+        assertEquals(listOf(ProfileId(2)), storage.current.map { it.id })
+    }
+
+    @Test
+    fun wideWindow_deleteTheEditedProfile_closesItsEditorWithTheMessage() {
+        // Given
+        val storage = existingProfiles()
+        profileRepository = storage
+        composeRule.launchProfileRoute(width = 1200)
+        composeRule.showProfiles()
+        composeRule.click("Existente", useUnmergedTree = true)
+        composeRule.edit("Nome ou apelido", "Rascunho")
+        composeRule.closeKeyboard()
+        composeRule.click("Ações: Existente")
+        composeRule.click("Excluir perfil")
+
+        // When
+        composeRule.click("Confirmar exclusão")
+
+        // Then
+        composeRule.onNodeWithText("Este perfil foi excluído.").assertIsDisplayed()
+        composeRule.onNodeWithText("Editar perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        assertEquals(listOf(ProfileId(2)), storage.current.map { it.id })
     }
 
     @Test
@@ -277,6 +389,29 @@ class ProfileFailuresTest {
 
         // Then
         composeRule.onNodeWithText("Existente").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun editorLoad_whenStorageFails_keepsFieldsReadOnlyUntilRetried() {
+        // Given
+        val storage = existingProfiles()
+        profileRepository = storage
+        composeRule.launchProfiles()
+        // The list has loaded; only the editor's own load fails.
+        composeRule.runOnIdle { storage.failsLoad = true }
+        composeRule.click("Existente", useUnmergedTree = true)
+        composeRule.onNodeWithText("Nome ou apelido").assertIsNotEnabled()
+        composeRule.onNodeWithText("Não foi possível carregar os perfis.", substring = true)
+            .performScrollTo().assertIsDisplayed()
+        composeRule.runOnIdle { storage.failsLoad = false }
+
+        // When
+        composeRule.click("Tentar carregar novamente")
+
+        // Then
+        composeRule.onNodeWithText("Nome ou apelido").assertIsEnabled()
+            .assertTextContains("Existente")
+        composeRule.onNodeWithText("Tentar carregar novamente").assertDoesNotExist()
     }
 
     @Test

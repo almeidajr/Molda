@@ -18,6 +18,7 @@ import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.di.ClockModule
 import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.labelText
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
@@ -46,6 +47,7 @@ import dagger.hilt.android.testing.UninstallModules
 import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
@@ -107,6 +109,71 @@ class EditProjectTest {
     }
 
     @Test
+    fun recreation_duringTheUpdate_updatesOnceAndShowsTheProject() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        projects.commandGate = gate
+        launch()
+        openEditor()
+        editEase("4")
+        composeRule.click("Calcular")
+        composeRule.click("Salvar")
+        composeRule.recreate()
+        composeRule.showRoute()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText("Projeto atualizado.").assertIsDisplayed()
+        assertEquals(Length(4.0), projects.current.single().snapshot.draft.ease)
+        // A new activity has a new snackbar host: the message shows again only if sent again.
+        composeRule.recreate()
+        composeRule.onNodeWithText("Projeto atualizado.").assertDoesNotExist()
+    }
+
+    @Test
+    fun salvar_whenStorageFails_showsTheFailureOnceAndKeepsTheEditor() {
+        // Given
+        launch()
+        openEditor()
+        editEase("4")
+        composeRule.click("Calcular")
+        projects.failsCommands = true
+
+        // When
+        composeRule.click("Salvar")
+
+        // Then
+        composeRule.onNodeWithText(UPDATE_FAILED).assertIsDisplayed()
+        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
+        assertEquals(Length(2.0), projects.current.single().snapshot.draft.ease)
+        composeRule.recreate()
+        composeRule.showRoute()
+        composeRule.onNodeWithText(UPDATE_FAILED).assertDoesNotExist()
+        composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
+    }
+
+    @Test
+    fun salvar_whenTheStorageFindsTheProjectDeleted_closesTheEditorWithTheMessage() {
+        // Given
+        launch()
+        openEditor()
+        editEase("4")
+        composeRule.click("Calcular")
+        projects.commandFailure = NoLongerExistsException("Deleted meanwhile")
+
+        // When
+        composeRule.click("Salvar")
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.screenTitle("Editar Saia da formatura").assertDoesNotExist()
+        composeRule.onNodeWithText(UPDATE_FAILED).assertDoesNotExist()
+    }
+
+    @Test
     fun saveAsNew_afterEditing_keepsTheOriginalAndShowsTheNewProject() {
         // Given
         launch()
@@ -141,6 +208,24 @@ class EditProjectTest {
         // Then
         composeRule.onNode(isDialog()).assertDoesNotExist()
         assertEquals(listOf("Saia da formatura"), projects.current.map { it.name.text })
+    }
+
+    @Test
+    fun editor_ofProjectDeletedMeanwhile_closesWithTheMessage() {
+        // Given
+        launch()
+        openEditor()
+        editEase("4")
+        composeRule.click("Calcular")
+
+        // When: deleted elsewhere while the editor has unsaved changes.
+        composeRule.runOnIdle { projects.forget(ProjectId(1)) }
+
+        // Then
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
+        composeRule.screenTitle("Editar Saia da formatura").assertDoesNotExist()
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
     }
 
     @Test
@@ -422,6 +507,9 @@ class EditProjectTest {
     }
 
     private companion object {
+        const val UPDATE_FAILED = "Não foi possível salvar as alterações. O projeto anterior foi " +
+            "mantido e as alterações continuam na tela. Tente novamente."
+
         val BIA = MeasurementProfile(
             ProfileId(1),
             ProfileMeasurements(ProfileName("Bia"), Length(95.0), LocalDate.of(2026, 10, 17)),

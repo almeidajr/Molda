@@ -179,9 +179,10 @@ class ProfileNavigatorTest {
             app(perfis = listOf(ProfileManagementKey, ProfileEditorKey(existing, "first")))
 
         // When
-        navigator.closeEditorOf(ProfileId(2))
+        val closed = navigator.closeEditorOf(ProfileId(2))
 
         // Then
+        assertTrue(closed)
         assertEquals(listOf(ProfileManagementKey), navigator.stacks[1])
     }
 
@@ -192,9 +193,10 @@ class ProfileNavigatorTest {
         val navigator = app(perfis = listOf(ProfileManagementKey, open))
 
         // When
-        navigator.closeEditorOf(ProfileId(3))
+        val closed = navigator.closeEditorOf(ProfileId(3))
 
         // Then
+        assertFalse(closed)
         assertEquals(listOf(ProfileManagementKey, open), navigator.stacks[1])
     }
 
@@ -204,9 +206,10 @@ class ProfileNavigatorTest {
         val navigator = app()
 
         // When
-        navigator.closeEditorOf(ProfileId(2))
+        val closed = navigator.closeEditorOf(ProfileId(2))
 
         // Then
+        assertFalse(closed)
         assertEquals(
             listOf(listOf(SkirtCalculatorKey), listOf(ProfileManagementKey)),
             navigator.stacks,

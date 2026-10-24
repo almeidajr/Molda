@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.data.asLoadResult
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.project.navigation.ProjectKey
@@ -15,8 +16,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
@@ -33,14 +34,16 @@ internal class OpenedProjectViewModel @AssistedInject constructor(
     /** The project, or null once it is no longer stored; [retry] loads again after a failure. */
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<LoadResult<Project?>> = attempts
-        .flatMapLatest {
-            repository.projects()
-                .map { projects -> projects.find { it.id == key.id } }
+        .flatMapLatest { _ ->
+            repository.project(key.id)
+                .catch<Project?> { failure ->
+                    if (failure is NoLongerExistsException) emit(null) else throw failure
+                }
                 .asLoadResult()
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, LoadResult.Loading)
 
-    /** Loads the projects again after the load failed. */
+    /** Loads the project again after the load failed. */
     fun retry() = attempts.update { it + 1 }
 
     @AssistedFactory

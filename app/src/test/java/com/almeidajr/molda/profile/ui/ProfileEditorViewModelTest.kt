@@ -21,6 +21,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -48,6 +49,89 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
+    fun create_forNewProfile_showsTheNewEditorEditable() = runTest {
+        // When
+        val state = editor(EditedProfile.New).state.value
+
+        // Then
+        assertEquals(R.string.profile_editor_new, state.title)
+        assertEquals(R.string.profile_save_new, state.saveLabel)
+        assertTrue(state.showsLocalOnlyNote)
+        assertFalse(state.canRetryLoad)
+        assertTrue(state.canEdit)
+    }
+
+    @Test
+    fun create_forExistingProfile_showsTheEditingEditorEditable() = runTest {
+        // When
+        val state = editor(EditedProfile.Existing(ana.id)).state.value
+
+        // Then
+        assertEquals(R.string.profile_editor_edit, state.title)
+        assertEquals(R.string.profile_save_changes, state.saveLabel)
+        assertFalse(state.showsLocalOnlyNote)
+        assertFalse(state.canRetryLoad)
+        assertTrue(state.canEdit)
+    }
+
+    @Test
+    fun edit_whileTheProfileLoads_isRefused() = runTest {
+        // Given
+        storage.loadGate = CompletableDeferred()
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Name, "Ana Maria")
+
+        // Then
+        val loading = editor.state.value
+        assertEquals(R.string.profile_editor_edit, loading.title)
+        assertEquals(R.string.profile_save_changes, loading.saveLabel)
+        assertFalse(loading.showsLocalOnlyNote)
+        assertFalse(loading.canEdit)
+        assertFalse(loading.canRetryLoad)
+        assertEquals("", loading.inputs[ProfileField.Name])
+    }
+
+    @Test
+    fun edit_afterLoadFailure_isRefused() = runTest {
+        // Given
+        storage.failsLoad = true
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Name, "Ana Maria")
+
+        // Then
+        val failed = editor.state.value
+        assertEquals(R.string.profile_save_changes, failed.saveLabel)
+        assertFalse(failed.showsLocalOnlyNote)
+        assertTrue(failed.canRetryLoad)
+        assertFalse(failed.canEdit)
+        assertEquals("", failed.inputs[ProfileField.Name])
+        assertFalse(failed.isDirty)
+    }
+
+    @Test
+    fun edit_whileSaving_isRefused() = runTest {
+        // Given
+        storage.commandGate = CompletableDeferred()
+        val editor = editor(EditedProfile.Existing(ana.id))
+        editor.save()
+
+        // When
+        editor.edit(ProfileField.Name, "Ana Maria")
+
+        // Then
+        val saving = editor.state.value
+        assertEquals(R.string.status_saving, saving.saveLabel)
+        assertEquals(R.string.profile_editor_edit, saving.title)
+        assertFalse(saving.showsLocalOnlyNote)
+        assertFalse(saving.canEdit)
+        assertEquals("Ana", saving.inputs[ProfileField.Name])
+    }
+
+    @Test
     fun create_forExistingProfile_loadsItsValues() = runTest {
         // When
         val editor = editor(EditedProfile.Existing(ana.id))
@@ -61,12 +145,28 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
-    fun create_forProfileNoLongerStored_showsLoadFailure() = runTest {
+    fun create_forProfileNoLongerStored_reportsItDeletedWithoutAFailure() = runTest {
         // When
         val editor = editor(EditedProfile.Existing(bia.id))
 
         // Then
-        assertIs<LoadResult.Error>(editor.state.value.load)
+        val deleted = editor.state.value
+        assertEquals(bia.id, deleted.deleted)
+        assertFalse(deleted.canRetryLoad)
+    }
+
+    @Test
+    fun create_whenStorageFailsToLoad_showsTheFailureAndNoDeletion() = runTest {
+        // Given
+        storage.failsLoad = true
+
+        // When
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // Then
+        val failed = editor.state.value
+        assertIs<LoadResult.Error>(failed.load)
+        assertNull(failed.deleted)
     }
 
     @Test
@@ -82,6 +182,8 @@ class ProfileEditorViewModelTest {
         // Then
         val retried = editor.state.value
         assertTrue(retried.canSave)
+        assertTrue(retried.canEdit)
+        assertFalse(retried.canRetryLoad)
         assertEquals("Ana", retried.inputs[ProfileField.Name])
     }
 
@@ -116,6 +218,23 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
+    fun acknowledge_afterSaving_forgetsTheOutcomeAndStoresNothingMore() = runTest {
+        // Given
+        val editor = editor(EditedProfile.New)
+        editor.fill(name = "Bia", waist = "95", date = "11/10/2026")
+        editor.save()
+
+        // When
+        editor.acknowledge()
+        editor.save()
+
+        // Then
+        assertNull(editor.state.value.saved)
+        assertFalse(editor.state.value.canSave)
+        assertEquals(2, storage.current.size)
+    }
+
+    @Test
     fun save_editedProfile_replacesItAndReportsTheUpdate() = runTest {
         // Given
         val editor = editor(EditedProfile.Existing(ana.id))
@@ -130,7 +249,7 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
-    fun save_profileDeletedMeanwhile_keepsTheFormAndShowsTheFailure() = runTest {
+    fun save_profileDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
         // Given
         val editor = editor(EditedProfile.Existing(ana.id))
         editor.edit(ProfileField.Waist, "82")
@@ -140,10 +259,24 @@ class ProfileEditorViewModelTest {
         editor.save()
 
         // Then
-        val failed = editor.state.value
-        assertEquals(R.string.profile_save_failed, failed.error)
-        assertNull(failed.saved)
-        assertEquals("82", failed.inputs[ProfileField.Waist])
+        val deleted = editor.state.value
+        assertEquals(ana.id, deleted.deleted)
+        assertNull(deleted.error)
+        assertNull(deleted.saved)
+        assertFalse(deleted.isSaving)
+        assertTrue(storage.current.isEmpty())
+    }
+
+    @Test
+    fun acknowledgeDeleted_afterTheProfileWasDeleted_forgetsTheOutcome() = runTest {
+        // Given
+        val editor = editor(EditedProfile.Existing(bia.id))
+
+        // When
+        editor.acknowledgeDeleted()
+
+        // Then
+        assertNull(editor.state.value.deleted)
     }
 
     @Test

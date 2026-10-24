@@ -1,5 +1,6 @@
 package com.almeidajr.molda.project.domain
 
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
@@ -53,10 +54,19 @@ data class Project(
     val updatedAt: Instant,
 )
 
-/** Stored projects; commands report storage failures as [Result.failure]. */
+/**
+ * Stored projects; commands report storage failures as [Result.failure], and a project that is no
+ * longer stored as [NoLongerExistsException].
+ */
 interface ProjectRepository {
     /** Every stored project, most recently changed first, emitted again after each change. */
     fun projects(): Flow<List<Project>>
+
+    /**
+     * The stored project [id], emitted again after each change; fails with
+     * [NoLongerExistsException] once it is no longer stored.
+     */
+    fun project(id: ProjectId): Flow<Project>
     suspend fun create(
         name: ProjectName,
         snapshot: SkirtSnapshot,

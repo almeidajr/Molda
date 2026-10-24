@@ -25,6 +25,8 @@ import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
+import com.almeidajr.molda.project.navigation.closeDeletedProject
+import com.almeidajr.molda.project.navigation.isDeletingProject
 import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
 import com.almeidajr.molda.project.ui.ProjectUpdateEffect
@@ -54,8 +56,8 @@ internal const val DISCARD_RESULT_KEY = "discard"
 /**
  * A saved project's skirt draft: its editor, with a calculator of its own started from the key's
  * snapshot so editing a project never touches the calculator in Moldes, and its folding guides.
- * [onShowSnackbar] shows the outcome of updating the project; [onCloseEditor] asks before the
- * editor's changes are dropped.
+ * [onShowSnackbar] shows the outcome of updating the project, also when it was deleted meanwhile;
+ * [onCloseEditor] asks before the editor's changes are dropped.
  */
 internal fun EntryProviderScope<NavKey>.projectDraftSection(
     navigator: Navigator,
@@ -69,10 +71,19 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         val update = hiltViewModel<ProjectUpdateViewModel, ProjectUpdateViewModel.Factory> {
             it.create(key, editor.isDirty)
         }
+        val closeDeleted = {
+            if (navigator.closeDeletedProjectEditor(key)) {
+                onShowSnackbar(R.string.project_deleted_meanwhile)
+            }
+        }
         ReportEditorStatus(key, update.report)
-        ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
+        ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar, onDeleted = closeDeleted)
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
-        OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
+        OpenedProject(
+            key.id,
+            isDeleting = navigator.isDeletingProject(key.id),
+            onDeleted = closeDeleted,
+        ) { project ->
             CalculatorDestination(
                 editor,
                 title = stringResource(R.string.project_edit_title, project.name.text),
@@ -96,11 +107,29 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         FabricFoldingPlayer(key.radii, onClose = { navigator.remove(key) })
     }
     entry<ProjectGuideKey> { key ->
-        val close: () -> Unit = { navigator.remove(key) }
-        OpenedProject(key.id, onClose = close) { project ->
-            FabricFoldingPlayer(project.snapshot.radii, close)
+        OpenedProject(key.id, isDeleting = navigator.isDeletingProject(key.id), onDeleted = {
+            if (navigator.closeDeletedProject(key.id)) {
+                onShowSnackbar(R.string.project_deleted_meanwhile)
+            }
+        }) { project ->
+            FabricFoldingPlayer(project.snapshot.radii, onClose = { navigator.remove(key) })
         }
     }
+}
+
+/**
+ * Closes the project [editor] and every entry of its project, found deleted meanwhile, with the
+ * profile picker and the discard dialog opened over the editor; returns whether one was open.
+ */
+internal fun Navigator.closeDeletedProjectEditor(editor: ProjectEditorKey): Boolean {
+    val wasOpen = closeDeletedProject(editor.id)
+    if (wasOpen) {
+        remove(ProfilePickerKey(editor.profileResultKey))
+        removeAll {
+            it is DiscardChangesKey && it.afterDiscard.discardedEditor == EditorKind.Project
+        }
+    }
+    return wasOpen
 }
 
 /**

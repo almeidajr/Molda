@@ -25,6 +25,7 @@
     <string name="project_delete_body">O projeto será excluído deste aparelho. Os perfis de medidas não mudam.</string>
     <string name="project_deleting">Excluindo…</string>
     <string name="project_deleted">Projeto excluído deste aparelho.</string>
+    <string name="project_deleted_meanwhile">Este projeto foi excluído.</string>
     <string name="project_delete_failed">Não foi possível excluir o projeto. Ele continua salvo. Tente novamente.</string>
     <string name="project_save_as_new">Salvar como novo</string>
     <string name="project_edit">Editar</string>

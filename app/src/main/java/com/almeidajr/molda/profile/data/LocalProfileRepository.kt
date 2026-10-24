@@ -1,6 +1,7 @@
 package com.almeidajr.molda.profile.data
 
 import com.almeidajr.molda.data.resultOf
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
@@ -16,21 +17,26 @@ class LocalProfileRepository internal constructor(private val dao: ProfileDao) :
     override fun profiles(): Flow<List<MeasurementProfile>> =
         dao.profiles().map { rows -> rows.map { it.toProfile() } }
 
+    override fun profile(id: ProfileId): Flow<MeasurementProfile> =
+        dao.profile(id.value).map { row -> row?.toProfile() ?: throw profileMissing() }
+
     override suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile> =
         resultOf {
             MeasurementProfile(ProfileId(dao.insert(measurements.toEntity())), measurements)
         }
 
     override suspend fun update(profile: MeasurementProfile): Result<Unit> = resultOf {
-        check(dao.update(profile.measurements.toEntity(profile.id.value)) == 1) {
-            "Profile no longer exists"
+        if (dao.update(profile.measurements.toEntity(profile.id.value)) == 0) {
+            throw profileMissing()
         }
     }
 
     override suspend fun delete(id: ProfileId): Result<Unit> = resultOf {
-        check(dao.delete(id.value) == 1) { "Profile no longer exists" }
+        if (dao.delete(id.value) == 0) throw profileMissing()
     }
 }
+
+private fun profileMissing() = NoLongerExistsException("Profile no longer exists")
 
 // Domain constructors validate every loaded row, so a malformed row fails the load.
 private fun ProfileEntity.toProfile() = MeasurementProfile(

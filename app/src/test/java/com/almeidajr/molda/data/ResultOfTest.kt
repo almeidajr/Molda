@@ -1,6 +1,7 @@
 package com.almeidajr.molda.data
 
 import androidx.sqlite.SQLiteException
+import com.almeidajr.molda.domain.NoLongerExistsException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
@@ -19,9 +20,21 @@ class ResultOfTest {
     }
 
     @Test
-    fun resultOf_whenBlockFails_returnsTheFailure() = runTest {
+    fun resultOf_whenRowNoLongerExists_returnsTheFailure() = runTest {
         // Given
-        val failure = IllegalStateException("Profile no longer exists")
+        val failure = NoLongerExistsException("Profile no longer exists")
+
+        // When
+        val result = resultOf<Int> { throw failure }
+
+        // Then
+        assertEquals(Result.failure(failure), result)
+    }
+
+    @Test
+    fun resultOf_whenStateIsInvalid_returnsTheFailure() = runTest {
+        // Given
+        val failure = IllegalStateException("Stored pattern draft kind is not the snapshot's")
 
         // When
         val result = resultOf<Int> { throw failure }

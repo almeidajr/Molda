@@ -1,6 +1,7 @@
 package com.almeidajr.molda.testing
 
 import com.almeidajr.molda.data.resultOf
+import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /** In-memory profiles, seeded with [profiles], that emit again after each change like Room. */
@@ -37,19 +39,32 @@ class FakeProfileRepository(profiles: List<MeasurementProfile> = emptyList()) : 
         emitAll(stored)
     }
 
+    override fun profile(id: ProfileId): Flow<MeasurementProfile> = profiles().map { profiles ->
+        profiles.find { it.id == id } ?: throw NoLongerExistsException("No profile $id")
+    }
+
     override suspend fun create(measurements: ProfileMeasurements) = command {
         val id = ProfileId((current.maxOfOrNull { it.id.value } ?: 0) + 1)
         MeasurementProfile(id, measurements).also { created -> stored.update { it + created } }
     }
 
     override suspend fun update(profile: MeasurementProfile) = command {
-        check(current.any { it.id == profile.id }) { "No profile ${profile.id}" }
+        requireStored(profile.id)
         stored.update { profiles -> profiles.map { if (it.id == profile.id) profile else it } }
     }
 
-    override suspend fun delete(id: ProfileId) = command {
-        check(current.any { it.id == id }) { "No profile $id" }
+    override suspend fun delete(id: ProfileId) = command { remove(id) }
+
+    /** Removes the profile [id] at once, as a delete elsewhere does, bypassing every gate. */
+    fun forget(id: ProfileId) = remove(id)
+
+    private fun remove(id: ProfileId) {
+        requireStored(id)
         stored.update { profiles -> profiles.filterNot { it.id == id } }
+    }
+
+    private fun requireStored(id: ProfileId) {
+        if (current.none { it.id == id }) throw NoLongerExistsException("No profile $id")
     }
 
     private suspend fun <T> command(block: () -> T): Result<T> {

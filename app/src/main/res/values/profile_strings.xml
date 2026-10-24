@@ -19,6 +19,7 @@
     <string name="profile_delete_failed">Não foi possível excluir o perfil. Os dados não foram apagados. Tente novamente.</string>
     <string name="profile_saved">Perfil salvo neste aparelho.</string>
     <string name="profile_deleted">Perfil excluído deste aparelho.</string>
+    <string name="profile_deleted_meanwhile">Este perfil foi excluído.</string>
 
     <string name="profile_save_changes">Salvar alterações</string>
     <string name="profile_save_new">Salvar perfil</string>
