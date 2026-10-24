@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -33,22 +32,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
-
-/** A motif's dash pattern, given in its 48-unit space, scaled by [unit]; solid when null. */
-fun motifDashEffect(dashes: FloatArray?, unit: Float): PathEffect? =
-    dashes?.let { PathEffect.dashPathEffect(it.map { dash -> dash * unit }.toFloatArray()) }
-
-/** Whether a catalog entry shows selection: only in a list beside its detail. */
-enum class CatalogSelection {
-    /** The list stands alone; opening an entry replaces it. */
-    None,
-
-    /** The list sits beside a detail showing another entry, or none yet. */
-    Unselected,
-
-    /** The list sits beside this entry's detail. */
-    Selected,
-}
 
 /**
  * A catalog root: a top app bar with [title] and the About action, then an [intro] and the
