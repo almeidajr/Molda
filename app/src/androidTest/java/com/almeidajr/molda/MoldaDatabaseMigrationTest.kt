@@ -43,8 +43,10 @@ class MoldaDatabaseMigrationTest {
         // Given
         helper.createDatabase(1).apply {
             execSQL(
-                "INSERT INTO profiles (id, name, waist, measurement_date, notes) " +
-                    "VALUES (7, 'Ana', 80.5, '2026-10-12', 'Medida no cós')",
+                """
+                INSERT INTO profiles (id, name, waist, measurement_date, notes)
+                VALUES (7, 'Ana', 80.5, '2026-10-12', 'Medida no cós')
+                """.trimIndent(),
             )
             close()
         }

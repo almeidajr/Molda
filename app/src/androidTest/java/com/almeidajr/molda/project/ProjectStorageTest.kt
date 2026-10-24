@@ -76,8 +76,10 @@ class ProjectStorageTest {
         ).use { db ->
             // Rejects every new row, as a full or read-only disk would.
             db.execSQL(
-                "CREATE TRIGGER refuse_projects BEFORE INSERT ON projects " +
-                    "BEGIN SELECT RAISE(ABORT, 'refused'); END",
+                """
+                CREATE TRIGGER refuse_projects BEFORE INSERT ON projects
+                BEGIN SELECT RAISE(ABORT, 'refused'); END
+                """.trimIndent(),
             )
         }
 
