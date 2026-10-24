@@ -43,9 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
 import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.profile.domain.parseProfileDate
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 
 @Composable
 fun ProfileEditor(
@@ -151,19 +149,18 @@ private fun ProfileDatePicker(
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // Material calendar timestamps represent dates at UTC midnight, not local midnight.
     val selectable = remember(today) {
         object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean = !Instant.ofEpochMilli(
-                utcTimeMillis,
-            ).atZone(ZoneOffset.UTC).toLocalDate().isAfter(today)
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                isSelectableDate(calendarMillisToDate(utcTimeMillis), today)
             override fun isSelectableYear(year: Int): Boolean = year <= today.year
         }
     }
-    val initial = parseProfileDate(text)
+    val current = parseProfileDate(text)
     val picker = rememberDatePickerState(
-        initialSelectedDateMillis = initial?.takeUnless { it.isAfter(today) }
-            ?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
+        initialSelectedDateMillis = current?.takeIf { isSelectableDate(it, today) }
+            ?.let(::dateToCalendarMillis),
+        initialDisplayedMonthMillis = dateToCalendarMillis(initialCalendarDate(current, today)),
         yearRange = 1..maxOf(2100, today.year),
         selectableDates = selectable,
     )
@@ -173,11 +170,7 @@ private fun ProfileDatePicker(
             TextButton(
                 onClick = {
                     picker.selectedDateMillis?.let {
-                        onSelect(
-                            profileDateText(
-                                Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate(),
-                            ),
-                        )
+                        onSelect(profileDateText(calendarMillisToDate(it)))
                     }
                 },
                 enabled = picker.selectedDateMillis != null,
