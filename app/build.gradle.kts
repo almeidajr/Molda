@@ -12,7 +12,7 @@ plugins {
 android {
     namespace = "com.almeidajr.molda"
     compileSdk {
-        version = release(37)
+        version = release(37) { minorApiLevel = 2 }
     }
 
     defaultConfig {
@@ -125,7 +125,11 @@ dependencies {
     implementation(libs.rive.android)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.adaptive)
+    implementation(libs.androidx.adaptive.layout)
+    implementation(libs.androidx.adaptive.navigation)
     implementation(libs.androidx.adaptive.navigation3)
     // Keeps the app on the same androidx.window as window-testing; adaptive pulls an older one.
     implementation(libs.androidx.window)
