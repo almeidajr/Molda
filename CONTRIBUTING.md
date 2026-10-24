@@ -246,7 +246,9 @@ Submit changes through a PR with conventional messages for every new commit and
 its title. Rebase onto current main when the branch is outdated, rerun local checks,
 and wait for all required checks on the updated PR. Agents require an explicit
 user request before committing or pushing, including `--force-with-lease` after a
-rebase. Passing, up-to-date PRs need no reviewer approval. Use squash merge and
+rebase. Passing, up-to-date PRs need no reviewer approval. Auto-merge is enabled:
+`gh pr merge --squash --auto` merges once every required check passes, and GitHub
+deletes the head branch after merging. Use squash merge and
 retain the validated PR title as the final subject; GitHub still lets a maintainer
 edit that subject, so title validation cannot guarantee the final commit message.
 The default squash body is the PR description.
@@ -261,18 +263,23 @@ documentation as deployment evidence.
 
 1. Inspect authenticated settings and existing rulesets/branch protection first.
    Observe successful **Quality**, **Device tests (API 36)**, **PR title**, and
-   **PR commits** check runs before registering their exact names. Verify the
+   **PR commits** check runs, plus the SonarQube Cloud app's **SonarCloud Code
+   Analysis**, before registering their exact names. Verify the
    trusted metadata workflow's scoped
    [event allowance](https://github.com/almeidajr/Molda/settings/actions/rules/7293)
    permits `pull_request_target`; #3 recorded that allowance active on 2026-10-12.
 2. In Settings → Rules → Rulesets, reconcile protection into one active ruleset
-   targeting `main`. Require a PR with zero approvals, all four checks from the
-   GitHub Actions source, and branches up to date before merging. Block deletion
+   targeting `main`. Require a PR with zero approvals, the four checks from the
+   GitHub Actions source and **SonarCloud Code Analysis** from the SonarQube Cloud
+   app, and branches up to date before merging. Add a code scanning rule for the
+   SonarCloud tool that blocks new alerts at **Errors** and security alerts at
+   **High or higher**; it shows as a rule, not a required check. Block deletion
    and force pushes, and leave the bypass list empty so routine administrator
    actions also require a passing PR. Remove redundant overlapping protection
    and omit a separate commit-metadata ruleset.
 3. In Settings → General → Pull Requests, enable only squash merging. Set the
-   default squash subject to the PR title and body to the PR description.
+   default squash subject to the PR title and body to the PR description. Allow
+   auto-merge and automatically delete head branches.
 4. In Settings → Actions → General, set default workflow permissions to read
    repository contents and packages; disable Actions creating or approving PRs.
    Workflows request only the additional permissions they need. Preserve trusted
