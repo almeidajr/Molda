@@ -29,16 +29,16 @@ internal fun ProfileEditorState.loadedProfile(result: LoadResult<MeasurementProf
         LoadResult.Loading -> copy(load = LoadResult.Loading)
     }
 
-internal fun ProfileEditorState.edited(field: ProfileField, text: String) =
-    if (isSaving || load is LoadResult.Loading) {
-        this
-    } else {
-        copy(
-            form = form.copy(inputs = form.inputs + (field to text)),
-            errors = errors - field,
-            saving = null,
-        )
-    }
+/** Changes one input; refused until the form is ready and while it saves. */
+internal fun ProfileEditorState.edited(field: ProfileField, text: String) = if (!canEdit) {
+    this
+} else {
+    copy(
+        form = form.copy(inputs = form.inputs + (field to text)),
+        errors = errors - field,
+        saving = null,
+    )
+}
 
 /** Shows the field errors of an invalid form, or starts storing a valid one. */
 internal fun ProfileEditorState.submitted(validation: ProfileValidation) = when (validation) {

@@ -105,15 +105,7 @@ private fun OpenEditor(editor: ProfileEditorViewModel, onCancel: () -> Unit, isU
     val state by editor.state.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize()) {
         MoldaTopAppBar(
-            stringResource(
-                if (state.editingId ==
-                    null
-                ) {
-                    R.string.profile_editor_new
-                } else {
-                    R.string.profile_editor_edit
-                },
-            ),
+            stringResource(state.title),
             onUp = onCancel.takeIf { isUpShown },
         )
         ProfilePane {

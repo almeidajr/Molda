@@ -6,6 +6,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithText
@@ -277,6 +278,29 @@ class ProfileFailuresTest {
 
         // Then
         composeRule.onNodeWithText("Existente").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun editorLoad_whenStorageFails_keepsFieldsReadOnlyUntilRetried() {
+        // Given
+        val storage = existingProfiles()
+        profileRepository = storage
+        composeRule.launchProfiles()
+        // The list has loaded; only the editor's own load fails.
+        composeRule.runOnIdle { storage.failsLoad = true }
+        composeRule.click("Existente", useUnmergedTree = true)
+        composeRule.onNodeWithText("Nome ou apelido").assertIsNotEnabled()
+        composeRule.onNodeWithText("Não foi possível carregar os perfis.", substring = true)
+            .performScrollTo().assertIsDisplayed()
+        composeRule.runOnIdle { storage.failsLoad = false }
+
+        // When
+        composeRule.click("Tentar carregar novamente")
+
+        // Then
+        composeRule.onNodeWithText("Nome ou apelido").assertIsEnabled()
+            .assertTextContains("Existente")
+        composeRule.onNodeWithText("Tentar carregar novamente").assertDoesNotExist()
     }
 
     @Test

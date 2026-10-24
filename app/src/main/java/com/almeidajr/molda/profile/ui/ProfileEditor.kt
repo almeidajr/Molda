@@ -41,7 +41,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.R
-import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.profile.domain.parseProfileDate
 import java.time.LocalDate
 
@@ -61,7 +60,7 @@ fun ProfileEditor(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (state.editingId == null) {
+        if (state.showsLocalOnlyNote) {
             Text(stringResource(R.string.profile_local_only))
         }
         ProfileMeasurementFields(state, onEdit) {
@@ -69,7 +68,7 @@ fun ProfileEditor(
             showCalendar = true
         }
         ProfileMutationError(state.error)
-        if (state.load is LoadResult.Error) {
+        if (state.canRetryLoad) {
             ProfileMutationError(R.string.profile_load_failed)
             TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.action_retry_load))
@@ -83,15 +82,7 @@ fun ProfileEditor(
             enabled = state.canSave,
             modifier = Modifier.heightIn(min = 48.dp),
         ) {
-            Text(
-                stringResource(
-                    when {
-                        state.isSaving -> R.string.status_saving
-                        state.editingId != null -> R.string.profile_save_changes
-                        else -> R.string.profile_save_new
-                    },
-                ),
-            )
+            Text(stringResource(state.saveLabel))
         }
         TextButton(
             onClick = {
@@ -194,7 +185,7 @@ private fun ProfileDateField(
     onClick: () -> Unit,
 ) {
     val error = state.errors[ProfileField.Date]?.message
-    val enabled = !state.isSaving
+    val enabled = state.canEdit
     OutlinedTextField(
         value = state.inputs.getValue(ProfileField.Date),
         onValueChange = { onEdit(ProfileField.Date, it) },
@@ -250,7 +241,7 @@ private fun ProfileInput(
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
-        enabled = !state.isSaving,
+        enabled = state.canEdit,
         singleLine = field != ProfileField.Notes,
         keyboardOptions = KeyboardOptions(
             keyboardType = if (field ==

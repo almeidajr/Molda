@@ -21,6 +21,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -45,6 +46,83 @@ class ProfileEditorViewModelTest {
         assertNull(state.editingId)
         assertEquals("", state.inputs[ProfileField.Name])
         assertTrue(state.canSave)
+    }
+
+    @Test
+    fun create_forNewProfile_showsTheNewEditorEditable() = runTest {
+        // When
+        val state = editor(EditedProfile.New).state.value
+
+        // Then
+        assertEquals(R.string.profile_editor_new, state.title)
+        assertEquals(R.string.profile_save_new, state.saveLabel)
+        assertTrue(state.showsLocalOnlyNote)
+        assertFalse(state.canRetryLoad)
+        assertTrue(state.canEdit)
+    }
+
+    @Test
+    fun create_forExistingProfile_showsTheEditingEditorEditable() = runTest {
+        // When
+        val state = editor(EditedProfile.Existing(ana.id)).state.value
+
+        // Then
+        assertEquals(R.string.profile_editor_edit, state.title)
+        assertEquals(R.string.profile_save_changes, state.saveLabel)
+        assertFalse(state.showsLocalOnlyNote)
+        assertFalse(state.canRetryLoad)
+        assertTrue(state.canEdit)
+    }
+
+    @Test
+    fun edit_whileTheProfileLoads_isRefused() = runTest {
+        // Given
+        storage.loadGate = CompletableDeferred()
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Name, "Ana Maria")
+
+        // Then
+        val loading = editor.state.value
+        assertEquals(R.string.profile_editor_edit, loading.title)
+        assertFalse(loading.canEdit)
+        assertFalse(loading.canRetryLoad)
+        assertEquals("", loading.inputs[ProfileField.Name])
+    }
+
+    @Test
+    fun edit_afterLoadFailure_isRefused() = runTest {
+        // Given
+        storage.failsLoad = true
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // When
+        editor.edit(ProfileField.Name, "Ana Maria")
+
+        // Then
+        val failed = editor.state.value
+        assertTrue(failed.canRetryLoad)
+        assertFalse(failed.canEdit)
+        assertEquals("", failed.inputs[ProfileField.Name])
+        assertFalse(failed.isDirty)
+    }
+
+    @Test
+    fun edit_whileSaving_isRefused() = runTest {
+        // Given
+        storage.commandGate = CompletableDeferred()
+        val editor = editor(EditedProfile.Existing(ana.id))
+        editor.save()
+
+        // When
+        editor.edit(ProfileField.Name, "Ana Maria")
+
+        // Then
+        val saving = editor.state.value
+        assertEquals(R.string.status_saving, saving.saveLabel)
+        assertFalse(saving.canEdit)
+        assertEquals("Ana", saving.inputs[ProfileField.Name])
     }
 
     @Test
@@ -82,6 +160,8 @@ class ProfileEditorViewModelTest {
         // Then
         val retried = editor.state.value
         assertTrue(retried.canSave)
+        assertTrue(retried.canEdit)
+        assertFalse(retried.canRetryLoad)
         assertEquals("Ana", retried.inputs[ProfileField.Name])
     }
 

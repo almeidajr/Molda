@@ -125,8 +125,29 @@ data class ProfileEditorState(
     val editingId: ProfileId? get() = form.editingId
     val isSaving: Boolean get() = saving == ProfileSaving.Running
 
-    /** Whether Save is available: ready, not saving, not stored yet (acknowledged or not). */
-    val canSave: Boolean get() = load is LoadResult.Success && !isSaving && form.saved == null
+    /** Whether the fields take edits: once the form is ready, and never while saving. */
+    val canEdit: Boolean get() = load is LoadResult.Success && !isSaving
+
+    /** Whether Save is available: editable and not stored yet (acknowledged or not). */
+    val canSave: Boolean get() = canEdit && form.saved == null
+
+    /** Whether loading the profile failed, so the editor shows the failure and a retry. */
+    val canRetryLoad: Boolean get() = load is LoadResult.Error
+
+    /** Whether the "stored on this device only" note shows: on a new profile only. */
+    val showsLocalOnlyNote: Boolean get() = editingId == null
+
+    @get:StringRes
+    val title: Int
+        get() = if (editingId == null) R.string.profile_editor_new else R.string.profile_editor_edit
+
+    @get:StringRes
+    val saveLabel: Int
+        get() = when {
+            isSaving -> R.string.status_saving
+            editingId != null -> R.string.profile_save_changes
+            else -> R.string.profile_save_new
+        }
 
     /** The editor's failure to store its form. */
     @get:StringRes
