@@ -43,6 +43,7 @@ import dagger.hilt.android.testing.UninstallModules
 import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
@@ -268,6 +269,30 @@ class OpenProjectTest {
         composeRule.onNodeWithText("Este projeto foi excluído.").assertIsDisplayed()
         composeRule.screenTitle("Saia da formatura").assertDoesNotExist()
         composeRule.onNodeWithText("Nenhum projeto salvo").assertIsDisplayed()
+    }
+
+    @Test
+    fun delete_ofOpenedProjectFailedThenCancelled_showsTheProjectAgain() {
+        // Given: its delete is held, then fails.
+        val gate = CompletableDeferred<Unit>()
+        projects.commandGate = gate
+        projects.failsCommands = true
+        launch()
+        openProject()
+        composeRule.click("Ações: Saia da formatura")
+        composeRule.click("Excluir projeto")
+        composeRule.click("Confirmar exclusão")
+        gate.complete(Unit)
+        composeRule.onNodeWithText("Não foi possível excluir o projeto", substring = true)
+            .assertIsDisplayed()
+
+        // When
+        composeRule.click("Cancelar")
+
+        // Then
+        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText("Editar").assertIsDisplayed()
+        composeRule.onNodeWithText("Este projeto foi excluído.").assertDoesNotExist()
     }
 
     @Test

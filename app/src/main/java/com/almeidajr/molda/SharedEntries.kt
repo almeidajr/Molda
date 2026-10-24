@@ -26,6 +26,7 @@ import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.project.navigation.closeDeletedProject
+import com.almeidajr.molda.project.navigation.isDeletingProject
 import com.almeidajr.molda.project.navigation.profileResultKey
 import com.almeidajr.molda.project.ui.OpenedProject
 import com.almeidajr.molda.project.ui.ProjectUpdateEffect
@@ -73,7 +74,7 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         ReportEditorStatus(key, update.report)
         ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
-        OpenedProject(key.id, onDeleted = {
+        OpenedProject(key.id, isDeleting = navigator.isDeletingProject(key.id), onDeleted = {
             if (navigator.closeDeletedProject(key.id)) {
                 onShowSnackbar(R.string.project_deleted_meanwhile)
             }
@@ -101,7 +102,7 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         FabricFoldingPlayer(key.radii, onClose = { navigator.remove(key) })
     }
     entry<ProjectGuideKey> { key ->
-        OpenedProject(key.id, onDeleted = {
+        OpenedProject(key.id, isDeleting = navigator.isDeletingProject(key.id), onDeleted = {
             if (navigator.closeDeletedProject(key.id)) {
                 onShowSnackbar(R.string.project_deleted_meanwhile)
             }

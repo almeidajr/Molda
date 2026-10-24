@@ -28,6 +28,7 @@ import com.almeidajr.molda.project.navigation.RenameProjectKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
 import com.almeidajr.molda.project.navigation.closeDeletedProject
 import com.almeidajr.molda.project.navigation.closeProject
+import com.almeidajr.molda.project.navigation.isDeletingProject
 import com.almeidajr.molda.project.navigation.isShowingProject
 import com.almeidajr.molda.project.navigation.openProject
 import com.almeidajr.molda.project.navigation.showProject
@@ -58,7 +59,7 @@ internal fun EntryProviderScope<NavKey>.projectSection(
         ProjectList(navigator)
     }
     entry<ProjectKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-        OpenedProject(key.id, onDeleted = {
+        OpenedProject(key.id, isDeleting = navigator.isDeletingProject(key.id), onDeleted = {
             if (navigator.closeDeletedProject(key.id)) {
                 onShowSnackbar(R.string.project_deleted_meanwhile)
             }
@@ -231,13 +232,15 @@ private fun ProjectList(navigator: Navigator) {
 
 /**
  * Shows the stored project [id] with [content] once it loads, the load failure with its retry
- * through [failed], or calls [onDeleted] when it is no longer stored. It follows the project in a
- * ViewModel of the entry it is composed in.
+ * through [failed], or calls [onDeleted] when it is no longer stored, once [isDeleting], its open
+ * delete dialog that reports the deletion, is false. It follows the project in a ViewModel of the
+ * entry it is composed in.
  */
 @Composable
 internal fun OpenedProject(
     id: ProjectId,
     onDeleted: () -> Unit,
+    isDeleting: Boolean = false,
     failed: @Composable (onRetry: () -> Unit) -> Unit = {
         ProjectLoadFailure(it, Modifier.padding(16.dp))
     },
@@ -253,7 +256,9 @@ internal fun OpenedProject(
         is LoadResult.Error -> failed(opened::retry)
 
         is LoadResult.Success -> when (val project = load.value) {
-            null -> LaunchedEffect(Unit) { onDeleted() }
+            // A delete dialog that leaves without deleting leaves the deletion to this entry.
+            null -> LaunchedEffect(isDeleting) { if (!isDeleting) onDeleted() }
+
             else -> content(project)
         }
     }
