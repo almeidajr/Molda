@@ -46,6 +46,7 @@ import dagger.hilt.android.testing.UninstallModules
 import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
 
@@ -103,6 +104,28 @@ class EditProjectTest {
         composeRule.onNodeWithText("Projeto atualizado.").assertIsDisplayed()
         composeRule.onNode(hasText("Folga de cintura: 4,00", substring = true))
             .performScrollTo().assertIsDisplayed()
+        assertEquals(Length(4.0), projects.current.single().snapshot.draft.ease)
+    }
+
+    @Test
+    fun recreation_duringTheUpdate_updatesOnceAndShowsTheProject() {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        projects.commandGate = gate
+        launch()
+        openEditor()
+        editEase("4")
+        composeRule.click("Calcular")
+        composeRule.click("Salvar")
+        composeRule.recreate()
+        composeRule.showRoute()
+
+        // When
+        gate.complete(Unit)
+
+        // Then
+        composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
+        composeRule.onNodeWithText("Projeto atualizado.").assertIsDisplayed()
         assertEquals(Length(4.0), projects.current.single().snapshot.draft.ease)
     }
 

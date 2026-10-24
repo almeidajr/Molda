@@ -1,6 +1,5 @@
 package com.almeidajr.molda.project.ui
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -32,6 +31,7 @@ import com.almeidajr.molda.project.navigation.openProject
 import com.almeidajr.molda.project.navigation.showProject
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
+import com.almeidajr.molda.ui.command.OutcomeEffect
 import com.almeidajr.molda.ui.navigation.CatalogSelection
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
@@ -92,7 +92,8 @@ private fun SaveProjectEntry(
         it.create(key)
     }
     val state by dialog.state.collectAsStateWithLifecycle()
-    ClosesWhenDone(state, R.string.project_saved, onShowSnackbar) { savedId ->
+    OutcomeEffect(state.outcome, dialog::acknowledge) { savedId ->
+        onShowSnackbar(R.string.project_saved)
         navigator.remove(key)
         if (key.showsSaved) navigator.showProject(savedId)
     }
@@ -117,19 +118,12 @@ internal fun ProjectUpdateEffect(
     onShowSnackbar: (Int) -> Unit,
 ) {
     val state by update.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.outcome) {
-        when (state.outcome) {
-            ProjectUpdateOutcome.Updated -> {
-                onShowSnackbar(R.string.project_updated)
-                navigator.showProject(id)
-            }
-
-            ProjectUpdateOutcome.Failed -> onShowSnackbar(R.string.project_update_failed)
-
-            null -> return@LaunchedEffect
-        }
-        update.outcomeShown()
+    OutcomeEffect(state.outcome, update::acknowledge) {
+        onShowSnackbar(R.string.project_updated)
+        navigator.showProject(id)
     }
+    // The editor stays open after a failure, so it shows as a snackbar once rather than inline.
+    OutcomeEffect(state.error, update::acknowledge, onShowSnackbar)
 }
 
 @Composable
@@ -142,7 +136,10 @@ private fun RenameProjectEntry(
         it.create(key)
     }
     val state by dialog.state.collectAsStateWithLifecycle()
-    ClosesWhenDone(state, R.string.project_renamed, onShowSnackbar) { navigator.remove(key) }
+    OutcomeEffect(state.outcome, dialog::acknowledge) {
+        onShowSnackbar(R.string.project_renamed)
+        navigator.remove(key)
+    }
     OpenedProject(
         key.id,
         onClose = { navigator.remove(key) },
@@ -168,7 +165,10 @@ private fun DeleteProjectEntry(
         it.create(key)
     }
     val state by dialog.state.collectAsStateWithLifecycle()
-    ClosesWhenDone(state, R.string.project_deleted, onShowSnackbar) { navigator.remove(key) }
+    OutcomeEffect(state.outcome, dialog::acknowledge) {
+        onShowSnackbar(R.string.project_deleted)
+        navigator.remove(key)
+    }
     OpenedProject(
         key.id,
         onClose = { navigator.remove(key) },
@@ -181,25 +181,6 @@ private fun DeleteProjectEntry(
             onDelete = dialog::delete,
             onCancel = { if (!state.isBusy) navigator.remove(key) },
         )
-    }
-}
-
-/**
- * Once the dialog's command in [state] is done, shows [message] and passes its outcome to
- * [onDone], which closes the dialog.
- */
-@Composable
-private fun <T : Any> ClosesWhenDone(
-    state: ProjectCommandState<T>,
-    @StringRes message: Int,
-    onShowSnackbar: (Int) -> Unit,
-    onDone: (T) -> Unit,
-) {
-    val outcome = state.outcome
-    LaunchedEffect(outcome) {
-        if (outcome == null) return@LaunchedEffect
-        onShowSnackbar(message)
-        onDone(outcome)
     }
 }
 

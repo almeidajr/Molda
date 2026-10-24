@@ -88,6 +88,36 @@ class ProjectDialogViewModelsTest {
     }
 
     @Test
+    fun save_afterTheOutcomeIsAcknowledged_storesNoOtherProject() = runTest {
+        // Given
+        val dialog = saveViewModel()
+        dialog.save(ProjectName("Saia"))
+        dialog.acknowledge()
+
+        // When
+        dialog.save(ProjectName("Saia"))
+
+        // Then
+        assertEquals(ProjectCommandState(), dialog.state.value)
+        assertEquals(2, storage.current.size)
+    }
+
+    @Test
+    fun save_afterAFailure_runsAgain() = runTest {
+        // Given
+        storage.failsCommands = true
+        val dialog = saveViewModel()
+        dialog.save(ProjectName("Saia"))
+        storage.failsCommands = false
+
+        // When
+        dialog.save(ProjectName("Saia"))
+
+        // Then
+        assertEquals(2, storage.current.size)
+    }
+
+    @Test
     fun rename_storesTheNameAndIsDone() = runTest {
         // Given
         val dialog = RenameProjectViewModel(storage, October18Clock, RenameProjectKey(saved.id))
