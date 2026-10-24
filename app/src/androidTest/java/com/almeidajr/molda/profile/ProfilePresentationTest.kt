@@ -8,7 +8,6 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -108,43 +107,6 @@ class ProfilePresentationTest {
     }
 
     @Test
-    fun saveNew_withMalformedDate_showsFormatErrorAndKeepsText() {
-        // Given
-        composeRule.launchProfiles()
-        composeRule.click("Novo perfil")
-        composeRule.edit("Nome ou apelido", "Ana")
-        composeRule.edit("Cintura do perfil (cm)", "80")
-        val cases = listOf("32/02/2026", "12/10/0000")
-
-        // When/Then
-        cases.forEach { date ->
-            composeRule.edit("Data da medida (dd/mm/aaaa)", date)
-            composeRule.closeKeyboard()
-            composeRule.click("Salvar perfil")
-            composeRule.onNodeWithText("Informe uma data válida no formato dd/mm/aaaa.")
-                .performScrollTo().assertIsDisplayed()
-            composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains(date)
-        }
-    }
-
-    @Test
-    fun saveNew_withFutureDate_asksForCorrection() {
-        // Given
-        composeRule.launchProfiles()
-        composeRule.click("Novo perfil")
-        composeRule.fillProfile("Ana", date = "14/10/2026")
-        composeRule.closeKeyboard()
-
-        // When
-        composeRule.click("Salvar perfil")
-
-        // Then
-        composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
-            .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("14/10/2026")
-    }
-
-    @Test
     fun profileTexts_useAgreedTypography() {
         // Given
         composeRule.launchProfiles(FakeProfileRepository(listOf(profile(1, "Ana"))))
@@ -156,10 +118,10 @@ class ProfilePresentationTest {
             "Nomes repetidos são permitidos.",
             "Escolha a data em que a medida foi tomada, sem usar uma data futura.",
         ).forEach { assertTypography(it, 14, 20) }
-        composeRule.edit("Data da medida (dd/mm/aaaa)", "32/02/2026")
+        composeRule.edit("Cintura do perfil (cm)", "NaN")
         composeRule.closeKeyboard()
         composeRule.click("Salvar perfil")
-        assertTypography("Informe uma data válida no formato dd/mm/aaaa.", 14, 20)
+        assertTypography("Informe uma cintura positiva e finita, como 80,5.", 14, 20)
         composeRule.click("Cancelar")
         composeRule.click("Descartar")
         composeRule.showSkirtCalculator()

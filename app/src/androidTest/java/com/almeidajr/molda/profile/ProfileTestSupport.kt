@@ -21,6 +21,7 @@ import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MainActivityLauncher
 import com.almeidajr.molda.RouteFrame
 import com.almeidajr.molda.TestBindings
+import com.almeidajr.molda.click
 import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.launchApp
@@ -34,6 +35,8 @@ import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.ui.theme.MoldaTheme
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 /** A stored profile measured on 12/10/2026 unless [date] says otherwise. */
 internal fun profile(
@@ -95,16 +98,29 @@ internal fun SemanticsNodeInteractionsProvider.edit(label: String, value: String
     onNodeWithText(label).performScrollTo().performTextReplacement(value)
 }
 
-/** Fills the open profile editor's name, waist and date. */
-internal fun SemanticsNodeInteractionsProvider.fillProfile(
+/** Fills the open profile editor's name, waist and, through the calendar, date. */
+internal fun AndroidComposeTestRule<*, *>.fillProfile(
     name: String,
     waist: String = "80",
-    date: String = "12/10/2026",
+    date: LocalDate = LocalDate.of(2026, 10, 12),
 ) {
     edit("Nome ou apelido", name)
     edit("Cintura do perfil (cm)", waist)
-    edit("Data da medida (dd/mm/aaaa)", date)
+    pickDate(date)
 }
+
+/** Picks [date] in the calendar, which must open on its month, and confirms it. */
+internal fun AndroidComposeTestRule<*, *>.pickDate(date: LocalDate) {
+    openCalendar()
+    onNodeWithText(calendarDay(date), ignoreCase = true).performClick()
+    click("Confirmar data")
+}
+
+/** The calendar's label for [date]'s day. */
+internal fun AndroidComposeTestRule<*, *>.calendarDay(date: LocalDate): String = date.format(
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
+        .withLocale(activity.resources.configuration.locales[0]),
+)
 
 /**
  * Opens the calendar from the date field, with the keyboard closed: a keyboard still opening from

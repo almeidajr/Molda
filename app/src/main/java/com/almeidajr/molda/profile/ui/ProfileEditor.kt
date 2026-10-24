@@ -1,12 +1,20 @@
 package com.almeidajr.molda.profile.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,16 +39,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.almeidajr.molda.R
 import com.almeidajr.molda.profile.domain.parseProfileDate
 import java.time.LocalDate
@@ -124,7 +137,7 @@ private fun ProfileMeasurementFields(
             )
             ProfileField.entries.forEach { field ->
                 if (field == ProfileField.Date) {
-                    ProfileDateField(state, onEdit, onClick = onCalendar)
+                    ProfileDateField(state, onClick = onCalendar)
                 } else {
                     ProfileInput(state, field, onEdit)
                 }
@@ -175,21 +188,34 @@ private fun ProfileDatePicker(
                 Text(stringResource(R.string.profile_cancel_calendar))
             }
         },
-    ) { DatePicker(state = picker) }
+        // A window that fits the keyboard is moved by the system when it resizes, so the calendar
+        // returning from text mode jumped to the top. Edge to edge, only text mode makes room for
+        // the keyboard, while the calendar ignores the keyboard still closing behind it.
+        modifier = Modifier.windowInsetsPadding(
+            if (picker.displayMode == DisplayMode.Input) {
+                WindowInsets.safeDrawing
+            } else {
+                WindowInsets.safeDrawing.exclude(WindowInsets.ime)
+            },
+        ),
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) { DatePicker(state = picker, modifier = Modifier.verticalScroll(rememberScrollState())) }
 }
 
 @Composable
-private fun ProfileDateField(
-    state: ProfileEditorState,
-    onEdit: (ProfileField, String) -> Unit,
-    onClick: () -> Unit,
-) {
+private fun ProfileDateField(state: ProfileEditorState, onClick: () -> Unit) {
     val error = state.errors[ProfileField.Date]?.message
     val enabled = state.canEdit
+    val openCalendar = stringResource(R.string.profile_open_calendar)
+    // Dates are typed only in the calendar's text mode, so the field opens it on any tap.
     OutlinedTextField(
         value = state.inputs.getValue(ProfileField.Date),
-        onValueChange = { onEdit(ProfileField.Date, it) },
+        onValueChange = {},
         label = { Text(stringResource(ProfileField.Date.label)) },
+        readOnly = true,
         enabled = enabled,
         singleLine = true,
         isError = error != null,
@@ -201,17 +227,31 @@ private fun ProfileDateField(
         },
         trailingIcon = {
             IconButton(onClick = onClick, enabled = enabled) {
-                Icon(
-                    painterResource(R.drawable.ic_calendar),
-                    stringResource(R.string.profile_open_calendar),
-                )
+                Icon(painterResource(R.drawable.ic_calendar), openCalendar)
             }
         },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Ascii,
-            imeAction = ImeAction.Next,
-        ),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                if (enabled) {
+                    onClick(openCalendar) {
+                        onClick()
+                        true
+                    }
+                }
+            }
+            .pointerInput(enabled) {
+                if (enabled) {
+                    awaitEachGesture {
+                        // Modifier.clickable doesn't work for text fields: observe the tap in the
+                        // Initial pass, before the text field consumes it.
+                        awaitFirstDown(pass = PointerEventPass.Initial)
+                        if (waitForUpOrCancellation(pass = PointerEventPass.Initial) != null) {
+                            onClick()
+                        }
+                    }
+                }
+            },
     )
 }
 
