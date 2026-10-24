@@ -161,6 +161,12 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.lifecycle.viewmodel.testing)
+    // Local Compose tests on Robolectric, for effects that need a composition but no device.
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    // Raises the Espresso that ui-test pulls in; 3.5's idling looks up an InputManager API that
+    // Robolectric's newer SDKs no longer have.
+    testImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
