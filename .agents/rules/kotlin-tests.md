@@ -34,7 +34,7 @@ testing APIs for UI. Keep pure business logic testable without an emulator.
 | Domain and ViewModel (local) | Shared fakes | `runTest`, `MainDispatcherRule` |
 | Repository and migration (device) | Real Room | `runTest` |
 | Screen (device) | Shared fakes bound through Hilt | None needed |
-| Journey, end to end (device) | Real Room on idling-aware threads, through Hilt | None needed |
+| Journey, end to end (device) | Production repositories from `RepositoryModule` on idling-aware Room | None needed |
 
 ## Names and structure
 
@@ -113,10 +113,12 @@ ViewModels from the test's bindings exactly as in production
   optional. Keep a reference typed as the fake when the test sets a gate or
   reads `current`. Starting the app freezes the holder, so assigning a fake
   afterwards throws.
-- `launchApp` shows the route in the theme, inside `frame` and at `size` when
-  given; `frame = null` keeps the app's own content, which alone shows the
-  installed version. `showRoute` changes the frame later, and `recreate()` shows
-  the same content again, so a test never shows it again after recreating.
+- `launchApp` shows the route inside `frame` (the theme by default) and at
+  `size` when given; `frame = null` keeps the app's own content, which alone
+  shows the installed version. `showRoute` changes the frame later, and
+  `recreate()` shows the same content again, so a test never shows it again
+  after recreating. Content set with `activity.setContent` directly is not shown
+  again after recreating; use `showRoute`.
 - Journey tests launch on the production repositories built on their
   `IsolatedStorage` (`RepositoryModule.projectRepository(storage.database)`),
   `IdlingDatabaseModule`'s idling-aware Room. Inject the storage
