@@ -150,6 +150,7 @@ class EditProjectTest {
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
         assertEquals(Length(2.0), projects.current.single().snapshot.draft.ease)
         composeRule.recreate()
+        composeRule.showRoute()
         composeRule.onNodeWithText(UPDATE_FAILED).assertDoesNotExist()
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
     }
