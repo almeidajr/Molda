@@ -71,14 +71,19 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
         val update = hiltViewModel<ProjectUpdateViewModel, ProjectUpdateViewModel.Factory> {
             it.create(key, editor.isDirty)
         }
-        ReportEditorStatus(key, update.report)
-        ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
-        ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
-        OpenedProject(key.id, isDeleting = navigator.isDeletingProject(key.id), onDeleted = {
-            if (navigator.closeDeletedProject(key.id)) {
+        val closeDeleted = {
+            if (navigator.closeDeletedProjectEditor(key)) {
                 onShowSnackbar(R.string.project_deleted_meanwhile)
             }
-        }) { project ->
+        }
+        ReportEditorStatus(key, update.report)
+        ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar, onDeleted = closeDeleted)
+        ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
+        OpenedProject(
+            key.id,
+            isDeleting = navigator.isDeletingProject(key.id),
+            onDeleted = closeDeleted,
+        ) { project ->
             CalculatorDestination(
                 editor,
                 title = stringResource(R.string.project_edit_title, project.name.text),
@@ -110,6 +115,21 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
             FabricFoldingPlayer(project.snapshot.radii, onClose = { navigator.remove(key) })
         }
     }
+}
+
+/**
+ * Closes the project [editor] and every entry of its project, found deleted meanwhile, with the
+ * profile picker and the discard dialog opened over the editor; returns whether one was open.
+ */
+internal fun Navigator.closeDeletedProjectEditor(editor: ProjectEditorKey): Boolean {
+    val wasOpen = closeDeletedProject(editor.id)
+    if (wasOpen) {
+        remove(ProfilePickerKey(editor.profileResultKey))
+        removeAll {
+            it is DiscardChangesKey && it.afterDiscard.discardedEditor == EditorKind.Project
+        }
+    }
+    return wasOpen
 }
 
 /**

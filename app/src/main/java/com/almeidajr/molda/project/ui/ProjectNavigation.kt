@@ -115,7 +115,7 @@ private fun SaveProjectEntry(
 
 /**
  * Shows the outcome of the project editor's [update] of the project [id] once: a stored update
- * opens the project in place of the editor.
+ * opens the project in place of the editor, and one that finds it deleted calls [onDeleted].
  */
 @Composable
 internal fun ProjectUpdateEffect(
@@ -123,15 +123,14 @@ internal fun ProjectUpdateEffect(
     id: ProjectId,
     navigator: Navigator,
     onShowSnackbar: (Int) -> Unit,
+    onDeleted: () -> Unit,
 ) {
     val state by update.state.collectAsStateWithLifecycle()
     OutcomeEffect(state.outcome, update::acknowledge) {
         onShowSnackbar(R.string.project_updated)
         navigator.showProject(id)
     }
-    OutcomeEffect(state.deleted, update::acknowledge) {
-        if (navigator.closeDeletedProject(id)) onShowSnackbar(R.string.project_deleted_meanwhile)
-    }
+    OutcomeEffect(state.deleted, update::acknowledge) { onDeleted() }
     // The editor stays open after a failure, so it shows as a snackbar once rather than inline.
     OutcomeEffect(state.error, update::acknowledgeError, onShowSnackbar)
 }
