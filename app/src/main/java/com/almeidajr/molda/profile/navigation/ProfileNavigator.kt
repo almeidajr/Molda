@@ -34,7 +34,9 @@ internal fun Navigator.closePickerEditor(editor: PickerProfileEditorKey) =
 internal fun Navigator.closeEditorOf(id: ProfileId): Boolean {
     val isEditorOf: (NavKey) -> Boolean =
         { it is ProfileEditorKey && it.profile == EditedProfile.Existing(id) }
-    return state.stacks.any { it.any(isEditorOf) }.also { removeAll(isEditorOf) }
+    val wasOpen = state.stacks.any { it.any(isEditorOf) }
+    removeAll(isEditorOf)
+    return wasOpen
 }
 
 /**
