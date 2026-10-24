@@ -123,7 +123,7 @@ internal fun ProjectUpdateEffect(
         navigator.showProject(id)
     }
     // The editor stays open after a failure, so it shows as a snackbar once rather than inline.
-    OutcomeEffect(state.error, update::acknowledge, onShowSnackbar)
+    OutcomeEffect(state.error, update::acknowledgeError, onShowSnackbar)
 }
 
 @Composable

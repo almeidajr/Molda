@@ -31,9 +31,8 @@ internal class ProjectUpdateViewModel @AssistedInject constructor(
     @Assisted private val key: ProjectEditorKey,
     @Assisted isEditorDirty: StateFlow<Boolean>,
 ) : ViewModel() {
-    // Repeatable: the editor stores each further change once the last update is acknowledged.
-    private val command =
-        ProjectCommand<Unit>(viewModelScope, R.string.project_update_failed, isRepeatable = true)
+    // Runs once: a stored update closes the editor.
+    private val command = ProjectCommand<Unit>(viewModelScope, R.string.project_update_failed)
     val state: StateFlow<ProjectCommandState<Unit>> = command.state
 
     /** The project editor's status for the app, which asks before its changes are dropped. */
@@ -45,11 +44,13 @@ internal class ProjectUpdateViewModel @AssistedInject constructor(
         EditorReport(EditorKind.Project, isEditorDirty.value, state.value.isBusy),
     )
 
-    /** Replaces the project's snapshot with [snapshot], unless an update is running. */
+    /** Replaces the project's snapshot with [snapshot], unless an update is running or stored. */
     fun update(snapshot: SkirtSnapshot) =
         command.submit { repository.update(key.id, snapshot, clock.instant()) }
 
     fun acknowledge() = command.acknowledge()
+
+    fun acknowledgeError() = command.acknowledgeError()
 
     @AssistedFactory
     interface Factory {

@@ -11,7 +11,6 @@ import com.almeidajr.molda.project.domain.defaultProjectName
 import com.almeidajr.molda.project.navigation.DeleteProjectKey
 import com.almeidajr.molda.project.navigation.RenameProjectKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
-import com.almeidajr.molda.ui.command.CommandState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -25,53 +24,63 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * A project storage command's state: running, failed with [error], or ended with an [outcome] its
- * entry reacts to.
- */
-data class ProjectCommandState<out T : Any>(
-    override val isBusy: Boolean = false,
-    @param:StringRes val error: Int? = null,
-    override val outcome: T? = null,
-) : CommandState<T>
+/** A project storage command's state; [Done] holds the outcome its entry has yet to react to. */
+sealed interface ProjectCommandState<out T : Any> {
+    /** Ready to run: never run, or failed and acknowledged. */
+    data object Idle : ProjectCommandState<Nothing>
+
+    data object Running : ProjectCommandState<Nothing>
+
+    /** Failed with [message]; it runs again when submitted. */
+    data class Failed(@param:StringRes val message: Int) : ProjectCommandState<Nothing>
+
+    data class Done<out T : Any>(override val outcome: T) : ProjectCommandState<T>
+
+    /** Succeeded and acknowledged; it never runs again. */
+    data object Spent : ProjectCommandState<Nothing>
+
+    val isBusy: Boolean get() = this == Running
+
+    @get:StringRes
+    val error: Int? get() = (this as? Failed)?.message
+
+    /** The outcome awaiting its entry's reaction, held only while [Done]. */
+    val outcome: T? get() = null
+}
 
 /**
- * A project storage command, run in [scope] once at a time; it keeps how it ended until
- * acknowledged, and a failure shows [failure]. Only a repeatable command runs again after a
- * success.
+ * A project storage command, run in [scope] once: it runs again only after a failure, which shows
+ * [failure], and keeps its outcome until acknowledged.
  */
 internal class ProjectCommand<T : Any>(
     private val scope: CoroutineScope,
     @param:StringRes private val failure: Int,
-    private val isRepeatable: Boolean = false,
 ) {
-    private val mutableState = MutableStateFlow(ProjectCommandState<T>())
+    private val mutableState = MutableStateFlow<ProjectCommandState<T>>(ProjectCommandState.Idle)
     val state: StateFlow<ProjectCommandState<T>> = mutableState.asStateFlow()
 
-    // Set by the first success of a command that is not repeatable; it never runs again.
-    private var isDone = false
-
-    /**
-     * Runs [command], unless it is running, its outcome awaits acknowledgement, or it has already
-     * succeeded and is not repeatable.
-     */
+    /** Runs [command], unless it is running, done or spent. */
     fun submit(command: suspend () -> Result<T>) {
         val current = mutableState.value
-        if (current.isBusy || current.outcome != null || isDone) return
-        mutableState.value = ProjectCommandState(isBusy = true)
+        if (current != ProjectCommandState.Idle && current !is ProjectCommandState.Failed) return
+        mutableState.value = ProjectCommandState.Running
         scope.launch {
             mutableState.value = command().fold(
-                onSuccess = {
-                    isDone = !isRepeatable
-                    ProjectCommandState(outcome = it)
-                },
-                onFailure = { ProjectCommandState(error = failure) },
+                onSuccess = { ProjectCommandState.Done(it) },
+                onFailure = { ProjectCommandState.Failed(failure) },
             )
         }
     }
 
-    /** Forgets how the command ended, once its entry has reacted. */
-    fun acknowledge() = mutableState.update { it.copy(error = null, outcome = null) }
+    /** Spends the command once its entry has reacted to the outcome. */
+    fun acknowledge() = mutableState.update {
+        if (it is ProjectCommandState.Done) ProjectCommandState.Spent else it
+    }
+
+    /** Forgets a failure once its entry has shown it; an outcome stays until acknowledged. */
+    fun acknowledgeError() = mutableState.update {
+        if (it is ProjectCommandState.Failed) ProjectCommandState.Idle else it
+    }
 }
 
 /** Saves the snapshot of [key] as a new project; its outcome is the new project's id. */

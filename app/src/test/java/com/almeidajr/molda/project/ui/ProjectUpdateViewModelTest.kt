@@ -40,7 +40,7 @@ class ProjectUpdateViewModelTest {
             listOf(saved.copy(snapshot = fromProfile, updatedAt = October18Clock.instant())),
             storage.current,
         )
-        assertEquals(ProjectCommandState(outcome = Unit), update.state.value)
+        assertEquals(ProjectCommandState.Done(Unit), update.state.value)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -57,7 +57,7 @@ class ProjectUpdateViewModelTest {
         // Then
         assertEquals(listOf(saved), storage.current)
         assertEquals(
-            ProjectCommandState(error = R.string.project_update_failed),
+            ProjectCommandState.Failed(R.string.project_update_failed),
             update.state.value,
         )
     }
@@ -72,12 +72,12 @@ class ProjectUpdateViewModelTest {
         update.update(fromProfile)
 
         // Then
-        assertEquals(ProjectCommandState(isBusy = true), update.state.value)
+        assertEquals(ProjectCommandState.Running, update.state.value)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun acknowledge_afterAnUpdate_forgetsTheOutcome() = runTest {
+    fun acknowledge_afterAnUpdate_spendsTheCommand() = runTest {
         // Given
         val update = updateViewModel()
         update.update(fromProfile)
@@ -87,12 +87,12 @@ class ProjectUpdateViewModelTest {
         update.acknowledge()
 
         // Then
-        assertEquals(ProjectCommandState(), update.state.value)
+        assertEquals(ProjectCommandState.Spent, update.state.value)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun acknowledge_afterAFailure_forgetsTheFailure() = runTest {
+    fun acknowledgeError_afterAFailure_forgetsTheFailure() = runTest {
         // Given
         storage.failsCommands = true
         val update = updateViewModel()
@@ -100,10 +100,25 @@ class ProjectUpdateViewModelTest {
         advanceUntilIdle()
 
         // When
-        update.acknowledge()
+        update.acknowledgeError()
 
         // Then
-        assertEquals(ProjectCommandState(), update.state.value)
+        assertEquals(ProjectCommandState.Idle, update.state.value)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun acknowledgeError_afterAnUpdate_keepsTheOutcome() = runTest {
+        // Given: a retry succeeded before the failure's reaction acknowledged it
+        val update = updateViewModel()
+        update.update(fromProfile)
+        advanceUntilIdle()
+
+        // When
+        update.acknowledgeError()
+
+        // Then
+        assertEquals(ProjectCommandState.Done(Unit), update.state.value)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -120,24 +135,6 @@ class ProjectUpdateViewModelTest {
 
         // Then
         assertEquals(fromProfile, storage.current.single().snapshot)
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun update_afterTheOutcomeIsAcknowledged_runsAgain() = runTest {
-        // Given
-        val update = updateViewModel()
-        update.update(fromProfile)
-        advanceUntilIdle()
-        update.acknowledge()
-
-        // When
-        update.update(saved.snapshot)
-        advanceUntilIdle()
-
-        // Then
-        assertEquals(saved.snapshot, storage.current.single().snapshot)
-        assertEquals(ProjectCommandState(outcome = Unit), update.state.value)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
