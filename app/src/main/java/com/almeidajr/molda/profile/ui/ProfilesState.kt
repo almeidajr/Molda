@@ -114,6 +114,11 @@ data class ProfileEditorState(
     val saving: ProfileSaving? = null,
     /** What the editor's save stored, until its entry has reacted to it and closed the editor. */
     val saved: ProfileSave? = null,
+    /**
+     * The edited profile, once loading or saving found it deleted, until its entry has reacted to
+     * it and closed the editor.
+     */
+    val deleted: ProfileId? = null,
 ) {
     val inputs: Map<ProfileField, String> get() = form.inputs
     val isDirty: Boolean get() = form.isDirty

@@ -31,7 +31,8 @@ import kotlinx.coroutines.launch
 /**
  * One profile editor's form, its validation and its save. It starts blank for a new [profile] or
  * loads an existing one; a form restored after process death wins over both, and one already
- * stored comes back saved, as what its save did, so its entry closes.
+ * stored comes back saved, as what its save did, so its entry closes. An existing profile found
+ * deleted, on load or by the save, is reported as [ProfileEditorState.deleted].
  */
 @HiltViewModel(assistedFactory = ProfileEditorViewModel.Factory::class)
 internal class ProfileEditorViewModel @AssistedInject constructor(
@@ -75,12 +76,7 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
         if (editingId == null || mutableState.value.load is LoadResult.Success) return
         transition { it.copy(load = LoadResult.Loading) }
         viewModelScope.launch {
-            val result = repository.profiles()
-                .map { profiles ->
-                    checkNotNull(profiles.find { it.id == editingId }) {
-                        "Profile no longer exists"
-                    }
-                }
+            val result = repository.profile(editingId)
                 .asLoadResult()
                 .first { it !is LoadResult.Loading }
             transition { it.loadedProfile(result) }
@@ -117,6 +113,9 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
 
     /** Forgets the save, once the editor's entry has reacted to it. */
     fun acknowledge() = transition { it.copy(saved = null) }
+
+    /** Forgets that the profile was deleted, once the editor's entry has reacted to it. */
+    fun acknowledgeDeleted() = transition { it.copy(deleted = null) }
 
     // Main-thread only, so reading back the new value cannot race another transition.
     private fun transition(next: (ProfileEditorState) -> ProfileEditorState) {

@@ -45,7 +45,7 @@ import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.wi
  * it creates to the calculator that opened the picker. Each list and each editor entry has its own
  * ViewModel. [onRequestEditor] opens an editor, asking first when the open one has changes;
  * [onCancelEditor] closes it the same way. [onShowSnackbar] shows the message of a stored or
- * deleted profile.
+ * deleted profile, also when an open editor finds its profile deleted.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.profileSection(
@@ -81,6 +81,11 @@ internal fun EntryProviderScope<NavKey>.profileSection(
             onShowSnackbar(R.string.profile_saved)
             navigator.remove(key)
         }
+        // Its unsaved changes go too: there is no profile left to save them to.
+        OutcomeEffect(state.deleted, editor::acknowledgeDeleted) {
+            onShowSnackbar(R.string.profile_deleted_meanwhile)
+            navigator.remove(key)
+        }
         // Beside the list the editor is a pane, closed by Cancel, choosing from the list or Back.
         OpenEditor(editor, onCancelEditor, isUpShown = !LocalIsTwoPane.current)
     }
@@ -111,8 +116,11 @@ private fun DeleteProfileEntry(
     val profiles = hiltViewModel<ProfileListViewModel>()
     val state by profiles.state.collectAsStateWithLifecycle()
     OutcomeEffect(state.deleted, profiles::acknowledge) { deleted ->
-        onShowSnackbar(R.string.profile_deleted)
-        navigator.closeEditorOf(deleted)
+        // An editor of the profile, beside the list, closes as one whose profile was deleted.
+        val closedEditor = navigator.closeEditorOf(deleted)
+        onShowSnackbar(
+            if (closedEditor) R.string.profile_deleted_meanwhile else R.string.profile_deleted,
+        )
         navigator.remove(key)
     }
     when (val load = state.load) {

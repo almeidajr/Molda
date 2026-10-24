@@ -1,12 +1,13 @@
 package com.almeidajr.molda.profile.ui
 
 import com.almeidajr.molda.data.LoadResult
+import com.almeidajr.molda.data.NoLongerExistsException
 import com.almeidajr.molda.measurement.lengthText
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileValidation
 
-/** Fills the editor with the stored profile once [result] has it. */
+/** Fills the editor with the stored profile once [result] has it, or reports it deleted. */
 internal fun ProfileEditorState.loadedProfile(result: LoadResult<MeasurementProfile>) =
     when (result) {
         is LoadResult.Success -> {
@@ -24,7 +25,12 @@ internal fun ProfileEditorState.loadedProfile(result: LoadResult<MeasurementProf
             )
         }
 
-        is LoadResult.Error -> copy(load = result)
+        is LoadResult.Error ->
+            if (result.failure is NoLongerExistsException) {
+                copy(deleted = editingId)
+            } else {
+                copy(load = result)
+            }
 
         LoadResult.Loading -> copy(load = LoadResult.Loading)
     }
@@ -46,13 +52,22 @@ internal fun ProfileEditorState.submitted(validation: ProfileValidation) = when 
     is ProfileValidation.Valid -> copy(saving = ProfileSaving.Running)
 }
 
-/** Keeps the stored form as the clean one and reports what the save did. */
+/**
+ * Keeps the stored form as the clean one and reports what the save did, or that the profile was
+ * deleted meanwhile.
+ */
 internal fun ProfileEditorState.savedWith(result: Result<ProfileSave>) = result.fold(
     onSuccess = {
         val stored = form.copy(originalInputs = form.inputs, saved = it)
         copy(form = stored, saving = null, saved = it)
     },
-    onFailure = { copy(saving = ProfileSaving.Failed) },
+    onFailure = { failure ->
+        if (failure is NoLongerExistsException) {
+            copy(saving = null, deleted = editingId)
+        } else {
+            copy(saving = ProfileSaving.Failed)
+        }
+    },
 )
 
 internal fun ProfileListState.deletedWith(id: ProfileId, result: Result<Unit>) = result.fold(

@@ -37,6 +37,7 @@ import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
@@ -295,6 +296,52 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
             .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("14/10/2026")
+    }
+
+    @Test
+    fun saveEdit_ofProfileDeletedMeanwhile_closesTheEditorWithTheMessage() {
+        // Given
+        val storage = existingProfiles()
+        profileRepository = storage
+        composeRule.launchProfiles()
+        composeRule.click("Existente", useUnmergedTree = true)
+        composeRule.edit("Nome ou apelido", "Rascunho")
+        composeRule.closeKeyboard()
+        // Deleted elsewhere after the editor loaded it.
+        runTest { storage.delete(ProfileId(1)).getOrThrow() }
+
+        // When
+        composeRule.click("Salvar alterações")
+
+        // Then
+        composeRule.onNodeWithText("Este perfil foi excluído.").assertIsDisplayed()
+        composeRule.onNodeWithText("Editar perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Não foi possível salvar o perfil.", substring = true)
+            .assertDoesNotExist()
+        assertEquals(listOf(ProfileId(2)), storage.current.map { it.id })
+    }
+
+    @Test
+    fun wideWindow_deleteTheEditedProfile_closesItsEditorWithTheMessage() {
+        // Given
+        val storage = existingProfiles()
+        profileRepository = storage
+        composeRule.launchProfileRoute(width = 1200)
+        composeRule.showProfiles()
+        composeRule.click("Existente", useUnmergedTree = true)
+        composeRule.edit("Nome ou apelido", "Rascunho")
+        composeRule.closeKeyboard()
+        composeRule.click("Ações: Existente")
+        composeRule.click("Excluir perfil")
+
+        // When
+        composeRule.click("Confirmar exclusão")
+
+        // Then
+        composeRule.onNodeWithText("Este perfil foi excluído.").assertIsDisplayed()
+        composeRule.onNodeWithText("Editar perfil de medidas").assertDoesNotExist()
+        composeRule.onNodeWithText("Descartar alterações?").assertDoesNotExist()
+        assertEquals(listOf(ProfileId(2)), storage.current.map { it.id })
     }
 
     @Test

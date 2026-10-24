@@ -145,12 +145,28 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
-    fun create_forProfileNoLongerStored_showsLoadFailure() = runTest {
+    fun create_forProfileNoLongerStored_reportsItDeletedWithoutAFailure() = runTest {
         // When
         val editor = editor(EditedProfile.Existing(bia.id))
 
         // Then
-        assertIs<LoadResult.Error>(editor.state.value.load)
+        val deleted = editor.state.value
+        assertEquals(bia.id, deleted.deleted)
+        assertFalse(deleted.canRetryLoad)
+    }
+
+    @Test
+    fun create_whenStorageFailsToLoad_showsTheFailureAndNoDeletion() = runTest {
+        // Given
+        storage.failsLoad = true
+
+        // When
+        val editor = editor(EditedProfile.Existing(ana.id))
+
+        // Then
+        val failed = editor.state.value
+        assertIs<LoadResult.Error>(failed.load)
+        assertNull(failed.deleted)
     }
 
     @Test
@@ -233,7 +249,7 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
-    fun save_profileDeletedMeanwhile_keepsTheFormAndShowsTheFailure() = runTest {
+    fun save_profileDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
         // Given
         val editor = editor(EditedProfile.Existing(ana.id))
         editor.edit(ProfileField.Waist, "82")
@@ -243,10 +259,24 @@ class ProfileEditorViewModelTest {
         editor.save()
 
         // Then
-        val failed = editor.state.value
-        assertEquals(R.string.profile_save_failed, failed.error)
-        assertNull(failed.saved)
-        assertEquals("82", failed.inputs[ProfileField.Waist])
+        val deleted = editor.state.value
+        assertEquals(ana.id, deleted.deleted)
+        assertNull(deleted.error)
+        assertNull(deleted.saved)
+        assertFalse(deleted.isSaving)
+        assertTrue(storage.current.isEmpty())
+    }
+
+    @Test
+    fun acknowledgeDeleted_afterTheProfileWasDeleted_forgetsTheOutcome() = runTest {
+        // Given
+        val editor = editor(EditedProfile.Existing(bia.id))
+
+        // When
+        editor.acknowledgeDeleted()
+
+        // Then
+        assertNull(editor.state.value.deleted)
     }
 
     @Test
