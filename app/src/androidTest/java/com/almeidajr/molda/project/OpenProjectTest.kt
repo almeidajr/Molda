@@ -17,9 +17,8 @@ import androidx.compose.ui.unit.dp
 import com.almeidajr.molda.AnimatorDurationScaleRule
 import com.almeidajr.molda.click
 import com.almeidajr.molda.createLaunchLaterComposeRule
-import com.almeidajr.molda.di.ClockModule
-import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
+import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -28,19 +27,14 @@ import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.domain.ProjectId
-import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
-import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
-import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import dagger.hilt.android.testing.UninstallModules
-import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
@@ -49,7 +43,6 @@ import org.junit.Test
 
 /** Opening a saved project: its stored result read-only, its guide and its source profile. */
 @HiltAndroidTest
-@UninstallModules(RepositoryModule::class, ClockModule::class)
 class OpenProjectTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -60,17 +53,7 @@ class OpenProjectTest {
     @get:Rule(order = 2)
     val animatorScale = AnimatorDurationScaleRule(composeRule)
 
-    // Each test binds its own profiles, then launches the app on them.
-    @BindValue @JvmField
-    var profileRepository: ProfileRepository = FakeProfileRepository()
-
     private val projects = FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
-
-    @BindValue @JvmField
-    val projectRepository: ProjectRepository = projects
-
-    @BindValue @JvmField
-    val clock: Clock = October18Clock
 
     @Test
     fun open_afterItsSourceProfileChanged_showsTheStoredResultWithoutRecalculating() {
@@ -212,7 +195,6 @@ class OpenProjectTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute()
 
         // Then
         composeRule.screenTitle("Saia da formatura").assertIsDisplayed()
@@ -325,15 +307,11 @@ class OpenProjectTest {
         composeRule.click("Guia de dobra do tecido")
     }
 
-    /** Binds [profiles], then launches the app on them at [size] when given. */
+    /** Launches the app on [profiles] and the saved project, at [size] when given. */
     private fun launch(
         size: DpSize? = null,
         profiles: ProfileRepository = FakeProfileRepository(),
-    ) {
-        profileRepository = profiles
-        composeRule.activityRule.launch()
-        composeRule.showRoute(size)
-    }
+    ) = composeRule.launchApp(profiles, projects, October18Clock, size)
 
     private companion object {
         val STORED_RADII = listOf(

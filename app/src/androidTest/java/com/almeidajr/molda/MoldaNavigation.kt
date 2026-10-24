@@ -2,7 +2,6 @@ package com.almeidajr.molda
 
 import android.animation.ValueAnimator
 import android.view.KeyEvent
-import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
@@ -29,26 +28,62 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.DpSize
-import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import java.time.Clock
+
+/** Wraps the app's route, for example in a theme or a configuration override. */
+internal typealias RouteFrame = @Composable (route: @Composable () -> Unit) -> Unit
 
 /**
- * Shows the app on the fakes the test binds, at [size] when given, inside [frame] (the theme by
- * default). Recreation restores the app's own content, so call it again after recreating the
- * activity.
+ * Seeds the app's [profiles], [projects] and [clock], then starts it showing the route inside
+ * [frame] (the theme by default), at [size] when given. A null [frame] keeps the app's own content,
+ * which alone reads the installed version name. Once launched, the bindings cannot change, and
+ * [recreate] shows the same content again.
  */
-internal fun AndroidComposeTestRule<*, MainActivity>.showRoute(
+internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchApp(
+    profiles: ProfileRepository = TestBindings.profiles,
+    projects: ProjectRepository = TestBindings.projects,
+    clock: Clock = TestBindings.clock,
     size: DpSize? = null,
-    frame: @Composable (route: @Composable () -> Unit) -> Unit = { MoldaTheme(content = it) },
-) = runOnUiThread {
-    activity.setContent {
-        val route = @Composable { frame { MoldaRoute() } }
-        if (size == null) {
-            route()
-        } else {
-            DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(size), route)
-        }
+    frame: RouteFrame? = DefaultFrame,
+) {
+    require(frame != null || size == null) { "The app's own content takes no size" }
+    TestBindings.profiles = profiles
+    TestBindings.projects = projects
+    TestBindings.clock = clock
+    activityRule.launch(frame?.let { routeContent(size, it) })
+}
+
+/**
+ * Shows the route inside [frame] (the theme by default), at [size] when given, from now on:
+ * recreated activities show it too.
+ */
+internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.showRoute(
+    size: DpSize? = null,
+    frame: RouteFrame = DefaultFrame,
+) = activityRule.show(routeContent(size, frame))
+
+/**
+ * Recreates the activity once Compose is idle; it shows the content the test launched or last
+ * showed. Recreation bypasses Compose's synchronization: started right after an action, it saves
+ * the state from before that action took effect.
+ */
+internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.recreate() {
+    waitForIdle()
+    activityRule.scenario.recreate()
+}
+
+private val DefaultFrame: RouteFrame = { MoldaTheme(content = it) }
+
+private fun routeContent(size: DpSize?, frame: RouteFrame): @Composable () -> Unit = {
+    val route = @Composable { frame { MoldaRoute() } }
+    if (size == null) {
+        route()
+    } else {
+        DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(size), route)
     }
 }
 
@@ -69,22 +104,6 @@ internal fun ComposeTestRule.pressKey(keyCode: Int, metaState: Int = 0) {
 
 /** Sends a real Back key to the focused window once Compose is idle. */
 internal fun ComposeTestRule.pressBack() = pressKey(KeyEvent.KEYCODE_BACK)
-
-/**
- * Recreates the activity once Compose is idle. Recreation bypasses Compose's synchronization:
- * started right after an action, it saves the state from before that action took effect.
- */
-internal fun AndroidComposeTestRule<ActivityScenarioRule<MainActivity>, MainActivity>.recreate() {
-    waitForIdle()
-    activityRule.scenario.recreate()
-}
-
-/** Recreates the launched activity once Compose is idle, as [recreate] does. */
-@JvmName("recreateLaunched")
-internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.recreate() {
-    waitForIdle()
-    activityRule.scenario.recreate()
-}
 
 /** The navigation suite item labelled [label]: Moldes, Projetos, Guias or Perfis. */
 internal fun SemanticsNodeInteractionsProvider.destination(

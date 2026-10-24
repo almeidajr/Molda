@@ -28,7 +28,6 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -39,10 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.rive.Result
-import com.almeidajr.molda.di.ClockModule
-import com.almeidajr.molda.di.RepositoryModule
-import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.ui.DrawingLoad
 import com.almeidajr.molda.skirt.ui.FoldingStep
@@ -52,15 +47,9 @@ import com.almeidajr.molda.skirt.ui.GuideFrame
 import com.almeidajr.molda.skirt.ui.GuideProgress
 import com.almeidajr.molda.skirt.ui.IndicatorDelay
 import com.almeidajr.molda.skirt.ui.IndicatorMinDuration
-import com.almeidajr.molda.testing.FakeProfileRepository
-import com.almeidajr.molda.testing.FakeProjectRepository
-import com.almeidajr.molda.testing.October13Clock
 import com.almeidajr.molda.ui.theme.MoldaTheme
-import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import dagger.hilt.android.testing.UninstallModules
-import java.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import org.junit.Rule
@@ -75,28 +64,18 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
-@UninstallModules(RepositoryModule::class, ClockModule::class)
 class FabricFoldingGuideTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createLaunchLaterComposeRule()
 
     @get:Rule(order = 2)
     val keyboardMode = KeyboardModeRule(composeRule)
 
     @get:Rule(order = 3)
     val animatorScale = AnimatorDurationScaleRule(composeRule)
-
-    @BindValue @JvmField
-    val profileRepository: ProfileRepository = FakeProfileRepository()
-
-    @BindValue @JvmField
-    val projectRepository: ProjectRepository = FakeProjectRepository()
-
-    @BindValue @JvmField
-    val clock: Clock = October13Clock
 
     @Test
     fun opening_showsFirstStepWithPreviousDisabled() {
@@ -308,7 +287,6 @@ class FabricFoldingGuideTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute()
 
         // Then
         drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo"))
@@ -323,7 +301,6 @@ class FabricFoldingGuideTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute()
 
         // Then
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
@@ -492,6 +469,7 @@ class FabricFoldingGuideTest {
         file: State<Result<Unit>> = mutableStateOf(Result.Success(Unit)),
         load: DrawingLoad = DrawingLoad.Drawn,
     ) {
+        composeRule.launchApp(frame = null)
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 var progress by remember { mutableStateOf(GuideProgress(step)) }
@@ -529,7 +507,7 @@ class FabricFoldingGuideTest {
 
     /** Shows results for an 80 cm waist with 2 cm ease, 60 cm length and 1 and 2 cm allowances. */
     private fun calculate() {
-        composeRule.showRoute()
+        composeRule.launchApp()
         composeRule.openSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
             composeRule.onNodeWithText(field.labelText).performScrollTo()

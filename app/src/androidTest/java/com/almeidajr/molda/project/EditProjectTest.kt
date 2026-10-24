@@ -15,11 +15,10 @@ import com.almeidajr.molda.click
 import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.createLaunchLaterComposeRule
-import com.almeidajr.molda.di.ClockModule
-import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.domain.NoLongerExistsException
 import com.almeidajr.molda.labelText
+import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pressBack
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -30,21 +29,16 @@ import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.fillProfile
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
-import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
-import com.almeidajr.molda.showRoute
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.October18Clock
-import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import dagger.hilt.android.testing.UninstallModules
-import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
@@ -53,7 +47,6 @@ import org.junit.Test
 
 /** Editing a saved project in the calculator: "Salvar", "Salvar como novo" and discarding. */
 @HiltAndroidTest
-@UninstallModules(RepositoryModule::class, ClockModule::class)
 class EditProjectTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -62,16 +55,6 @@ class EditProjectTest {
     val composeRule = createLaunchLaterComposeRule()
 
     private val projects = FakeProjectRepository(listOf(formaturaProject(October18Clock.instant())))
-
-    // Each test binds its own profiles, then launches the app on them.
-    @BindValue @JvmField
-    var profileRepository: ProfileRepository = FakeProfileRepository()
-
-    @BindValue @JvmField
-    var projectRepository: ProjectRepository = projects
-
-    @BindValue @JvmField
-    val clock: Clock = October18Clock
 
     @Test
     fun edit_savedProject_loadsEveryInputAndItsSource() {
@@ -119,7 +102,6 @@ class EditProjectTest {
         composeRule.click("Calcular")
         composeRule.click("Salvar")
         composeRule.recreate()
-        composeRule.showRoute()
 
         // When
         gate.complete(Unit)
@@ -150,7 +132,6 @@ class EditProjectTest {
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
         assertEquals(Length(2.0), projects.current.single().snapshot.draft.ease)
         composeRule.recreate()
-        composeRule.showRoute()
         composeRule.onNodeWithText(UPDATE_FAILED).assertDoesNotExist()
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
     }
@@ -327,8 +308,10 @@ class EditProjectTest {
                 draft = formatura.snapshot.draft.copy(waist = Length(90.0)),
             ),
         )
-        projectRepository = FakeProjectRepository(listOf(formatura, verao))
-        launch()
+        composeRule.launchApp(
+            projects = FakeProjectRepository(listOf(formatura, verao)),
+            clock = October18Clock,
+        )
         openEditor()
         composeRule.pressBack()
         composeRule.pressBack()
@@ -443,7 +426,6 @@ class EditProjectTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute()
         pickBia()
 
         // Then
@@ -462,7 +444,6 @@ class EditProjectTest {
 
         // When
         composeRule.recreate()
-        composeRule.showRoute()
 
         // Then
         composeRule.screenTitle("Editar Saia da formatura").assertIsDisplayed()
@@ -481,7 +462,6 @@ class EditProjectTest {
         editEase("4")
         composeRule.onNodeWithContentDescription("Voltar").performClick()
         composeRule.recreate()
-        composeRule.showRoute()
     }
 
     private fun editEase(text: String) {
@@ -499,12 +479,9 @@ class EditProjectTest {
     private fun pickBia() =
         composeRule.onAllNodes(hasText("Usar perfil: Bia", substring = true))[0].performClick()
 
-    /** Binds [profiles], then launches the app on them. */
-    private fun launch(profiles: ProfileRepository = FakeProfileRepository()) {
-        profileRepository = profiles
-        composeRule.activityRule.launch()
-        composeRule.showRoute()
-    }
+    /** Launches the app on [profiles] and the saved project. */
+    private fun launch(profiles: ProfileRepository = FakeProfileRepository()) =
+        composeRule.launchApp(profiles = profiles, projects = projects, clock = October18Clock)
 
     private companion object {
         const val UPDATE_FAILED = "Não foi possível salvar as alterações. O projeto anterior foi " +
