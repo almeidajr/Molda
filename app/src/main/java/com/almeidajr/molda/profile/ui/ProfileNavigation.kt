@@ -19,14 +19,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.result.LocalResultEventBus
-import androidx.navigation3.runtime.result.ResultEffect
 import com.almeidajr.molda.R
 import com.almeidajr.molda.about.navigation.AboutKey
 import com.almeidajr.molda.data.LoadResult
-import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.navigation.DeleteProfileKey
 import com.almeidajr.molda.profile.navigation.EditedProfile
-import com.almeidajr.molda.profile.navigation.PROFILE_DELETE_RESULT_KEY
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
@@ -65,13 +62,6 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         }),
     ) {
         val profiles = hiltViewModel<ProfileListViewModel>()
-        val list by profiles.state.collectAsStateWithLifecycle()
-        // The confirmation is its own entry, so the list deletes what it sends back.
-        ResultEffect<ProfileId>(PROFILE_DELETE_RESULT_KEY) { id -> profiles.delete(id) }
-        OutcomeEffect(list.deleted, profiles::acknowledge) { deleted ->
-            onShowSnackbar(R.string.profile_deleted)
-            navigator.closeEditorOf(deleted)
-        }
         Column(Modifier.fillMaxSize()) {
             MoldaTopAppBar(
                 stringResource(R.string.profile_manage),
@@ -81,7 +71,7 @@ internal fun EntryProviderScope<NavKey>.profileSection(
         }
     }
     entry<DeleteProfileKey>(metadata = windowOverlay()) { key ->
-        DeleteProfileEntry(key, navigator)
+        DeleteProfileEntry(key, navigator, onShowSnackbar)
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
         val editor = editorViewModel(key.profile)
@@ -108,25 +98,45 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     }
 }
 
-/** Confirms deleting the profile [key] names, then sends it to the list and closes. */
+/**
+ * Confirms deleting the profile [key] names and deletes it through the dialog's own list, so the
+ * delete and its message never depend on Perfis' list being composed; closes once it is deleted.
+ */
 @Composable
-private fun DeleteProfileEntry(key: DeleteProfileKey, navigator: Navigator) {
-    val results = LocalResultEventBus.current
-    // This entry's own list only names the profile; the Perfis entry's list deletes it.
+private fun DeleteProfileEntry(
+    key: DeleteProfileKey,
+    navigator: Navigator,
+    onShowSnackbar: (Int) -> Unit,
+) {
     val profiles = hiltViewModel<ProfileListViewModel>()
     val state by profiles.state.collectAsStateWithLifecycle()
-    val load = state.load
-    if (load is LoadResult.Success) {
-        val profile = load.value.firstOrNull { it.id == key.id }
-        if (profile == null) {
-            LaunchedEffect(Unit) { navigator.remove(key) }
-        } else {
-            ConfirmProfileDeletion(
-                profile.measurements.name.text,
-                onDismiss = { navigator.remove(key) },
-            ) {
-                results.sendResult(PROFILE_DELETE_RESULT_KEY, key.id)
-                navigator.remove(key)
+    OutcomeEffect(state.deleted, profiles::acknowledge) { deleted ->
+        onShowSnackbar(R.string.profile_deleted)
+        navigator.closeEditorOf(deleted)
+        navigator.remove(key)
+    }
+    when (val load = state.load) {
+        LoadResult.Loading -> Unit
+
+        is LoadResult.Error ->
+            ProfileLoadFailureDialog(profiles::load, onDismiss = { navigator.remove(key) })
+
+        is LoadResult.Success -> {
+            val profile = load.value.firstOrNull { it.id == key.id }
+            val isDeleting = state.isDeleting(key.id)
+            when {
+                profile != null -> ConfirmProfileDeletion(
+                    profile.measurements.name.text,
+                    isDeleting = isDeleting,
+                    canConfirm = state.canChangeProfiles,
+                    error = state.deleteError(key.id),
+                    onDismiss = { if (!isDeleting) navigator.remove(key) },
+                ) { profiles.delete(key.id) }
+
+                // Gone by this dialog's own delete: its outcome closes the dialog with the message.
+                isDeleting || state.deleted == key.id -> Unit
+
+                else -> LaunchedEffect(Unit) { navigator.remove(key) }
             }
         }
     }

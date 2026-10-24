@@ -41,9 +41,6 @@ internal data class PickerProfileEditorKey(val resultKey: String, val opening: S
 @Serializable
 internal data class DeleteProfileKey(val id: ProfileId) : NavKey
 
-/** The result key on which Perfis' list hears which profile the sewist confirmed deleting. */
-internal const val PROFILE_DELETE_RESULT_KEY = "profile/delete"
-
 private fun newOpening() = UUID.randomUUID().toString()
 
 /**

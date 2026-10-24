@@ -88,8 +88,6 @@ fun ProfilesContent(
                     canChangeProfiles,
                     onStartEdit,
                     onDelete,
-                    isDeleting = state.isDeleting(profile.id),
-                    deleteError = state.deleteError(profile.id),
                 )
             }
         }
@@ -118,8 +116,6 @@ private fun ProfileManagementRow(
     enabled: Boolean,
     onStartEdit: (ProfileId) -> Unit,
     onDelete: (ProfileId) -> Unit,
-    isDeleting: Boolean,
-    @StringRes deleteError: Int?,
 ) {
     Surface(
         shape = MaterialTheme.shapes.medium,
@@ -156,14 +152,6 @@ private fun ProfileManagementRow(
             ProfileRowActions(profile, enabled, onStartEdit) { onDelete(profile.id) }
         }
     }
-    if (isDeleting) Text(stringResource(R.string.profile_deleting, profile.measurements.name.text))
-    deleteError?.let {
-        Text(
-            stringResource(it),
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-        )
-    }
 }
 
 @Composable
@@ -199,16 +187,64 @@ private fun ProfileRowActions(
     }
 }
 
-/** The confirmation of deleting the profile called [name]. */
+/**
+ * The confirmation of deleting the profile called [name], which stays open while [isDeleting] and
+ * shows the delete's [error]; Delete is available only when [canConfirm].
+ */
 @Composable
-internal fun ConfirmProfileDeletion(name: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+internal fun ConfirmProfileDeletion(
+    name: String,
+    isDeleting: Boolean,
+    canConfirm: Boolean,
+    @StringRes error: Int?,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.profile_delete_title, name)) },
-        text = { Text(stringResource(R.string.profile_delete_body)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.profile_delete_body))
+                error?.let { ProfileErrorText(it) }
+            }
+        },
         confirmButton = {
-            TextButton(onClick = onConfirm, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.action_confirm_delete))
+            TextButton(
+                onClick = onConfirm,
+                enabled = canConfirm,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Text(
+                    if (isDeleting) {
+                        stringResource(R.string.profile_deleting, name)
+                    } else {
+                        stringResource(R.string.action_confirm_delete)
+                    },
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isDeleting,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
+}
+
+/** The profiles a dialog acts on failed to load: says so and offers [onRetry] or [onDismiss]. */
+@Composable
+internal fun ProfileLoadFailureDialog(onRetry: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = { ProfileErrorText(R.string.profile_load_failed) },
+        confirmButton = {
+            TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.action_retry_load))
             }
         },
         dismissButton = {
@@ -216,6 +252,15 @@ internal fun ConfirmProfileDeletion(name: String, onDismiss: () -> Unit, onConfi
                 Text(stringResource(R.string.action_cancel))
             }
         },
+    )
+}
+
+@Composable
+private fun ProfileErrorText(@StringRes error: Int) {
+    Text(
+        stringResource(error),
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
     )
 }
 
