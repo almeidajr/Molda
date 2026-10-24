@@ -52,7 +52,6 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -77,10 +76,6 @@ class FabricFoldingGuideTest {
 
     @get:Rule(order = 3)
     val animatorScale = AnimatorDurationScaleRule(composeRule)
-
-    // Each test shows its own frame or content over the app's, as it did under the eager rule.
-    @Before
-    fun launchOnTheAppsOwnContent() = composeRule.launchApp(frame = null)
 
     @Test
     fun opening_showsFirstStepWithPreviousDisabled() {
@@ -474,6 +469,7 @@ class FabricFoldingGuideTest {
         file: State<Result<Unit>> = mutableStateOf(Result.Success(Unit)),
         load: DrawingLoad = DrawingLoad.Drawn,
     ) {
+        composeRule.launchApp(frame = null)
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 var progress by remember { mutableStateOf(GuideProgress(step)) }
@@ -511,7 +507,7 @@ class FabricFoldingGuideTest {
 
     /** Shows results for an 80 cm waist with 2 cm ease, 60 cm length and 1 and 2 cm allowances. */
     private fun calculate() {
-        composeRule.showRoute()
+        composeRule.launchApp()
         composeRule.openSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("80", "2", "60", "1", "2")).forEach { (field, value) ->
             composeRule.onNodeWithText(field.labelText).performScrollTo()

@@ -441,7 +441,6 @@ class SkirtCalculatorTest {
 
         // When
         composeRule.recreate()
-        composeRule.showSkirtCalculator()
 
         // Then
         SkirtDraftField.entries.zip(values).forEach { (field, value) ->

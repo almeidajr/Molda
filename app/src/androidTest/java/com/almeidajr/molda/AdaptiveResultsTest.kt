@@ -38,7 +38,6 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -67,9 +66,7 @@ class AdaptiveResultsTest {
     // ForcedSize may leave part of the window empty, so folds are placed across the content.
     private var contentBounds = Rect.Zero
 
-    // Each test shows its own frame or content over the app's, as it did under the eager rule.
-    @Before
-    fun launchOnTheAppsOwnContent() = composeRule.launchApp(frame = null)
+    private var isLaunched = false
 
     @Test
     fun forcedSizes_keepCuttingCardAndItsDiagramInReadableResultsPane_andGuideBarWhole() {
@@ -274,9 +271,7 @@ class AdaptiveResultsTest {
     }
 
     private fun showCalculator(size: DpSize?, fontScale: Float) {
-        // The guide's drawings hold still, so Compose goes idle.
-        animatorScale.set(0f)
-        composeRule.showRoute(size) { route ->
+        val frame: RouteFrame = { route ->
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                 pixelsPerDp = LocalDensity.current.density
                 Box(
@@ -285,6 +280,14 @@ class AdaptiveResultsTest {
                 ) { MoldaTheme(content = route) }
             }
         }
+        if (isLaunched) {
+            composeRule.showRoute(size, frame)
+        } else {
+            composeRule.launchApp(size = size, frame = frame)
+        }
+        isLaunched = true
+        // The guide's drawings hold still, so Compose goes idle.
+        animatorScale.set(0f)
         composeRule.showSkirtCalculator()
     }
 

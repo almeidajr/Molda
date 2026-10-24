@@ -28,7 +28,6 @@ import com.almeidajr.molda.ui.theme.MoldaTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlin.test.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,9 +45,7 @@ class FabricFoldingLayoutTest {
     @get:Rule(order = 2)
     val animatorScale = AnimatorDurationScaleRule(composeRule)
 
-    // Each test shows its own frame or content over the app's, as it did under the eager rule.
-    @Before
-    fun launchOnTheAppsOwnContent() = composeRule.launchApp(frame = null)
+    private var isLaunched = false
 
     @Test
     fun guide_atNormalAndDoubleText_keepsLeadAndStepBarInViewOnEveryStep() {
@@ -231,13 +228,19 @@ class FabricFoldingLayoutTest {
     }
 
     private fun openGuide(dark: Boolean, fontScale: Float) {
-        // The guide's drawings hold still, so Compose goes idle.
-        animatorScale.set(0f)
-        composeRule.showRoute { route ->
+        val frame: RouteFrame = { route ->
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
                 MoldaTheme(darkTheme = dark, dynamicColor = false, content = route)
             }
         }
+        if (isLaunched) {
+            composeRule.showRoute(frame = frame)
+        } else {
+            composeRule.launchApp(frame = frame)
+        }
+        isLaunched = true
+        // The guide's drawings hold still, so Compose goes idle.
+        animatorScale.set(0f)
         composeRule.showSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("80", "2", "60", "0", "0"))
             .forEach { (field, value) ->
