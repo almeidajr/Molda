@@ -1,0 +1,47 @@
+name: Bug
+description: Molda did the wrong thing, crashed, or lost data.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If the problem stops someone using Molda with assistive technology or an accessibility setting, use the **Accessibility barrier** form instead.
+  - type: input
+    id: version
+    attributes:
+      label: Molda version
+      description: From Sobre o Molda → Versão in the app, or the release you installed, e.g. `1.0.0-beta.5`. Give the commit if you built it yourself.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      description: e.g. Pixel 8, Android 16. Say if it's a tablet, foldable or emulator.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you did, step by step, including the measurements you entered if they matter.
+      placeholder: |
+        1. Open Moldes → Saia godê inteira
+        2. Enter circunferência da cintura 70 cm, comprimento acabado 60 cm
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: What Molda did. Screenshots or a recording help.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What Molda should have done instead.
+    validations:
+      required: true

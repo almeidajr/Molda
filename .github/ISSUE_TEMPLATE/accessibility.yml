@@ -1,0 +1,47 @@
+name: Accessibility barrier
+description: Something stops or slows you down when using Molda with assistive technology or an accessibility setting.
+labels: ["accessibility", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting this. You don't need to tell us about any disability, and screenshots are optional. See [ACCESSIBILITY.md](https://github.com/almeidajr/Molda/blob/main/ACCESSIBILITY.md) for what happens next.
+  - type: textarea
+    id: task
+    attributes:
+      label: What you were trying to do
+      description: e.g. calculate a skirt, save a profile, follow the folding guide.
+    validations:
+      required: true
+  - type: textarea
+    id: barrier
+    attributes:
+      label: What went wrong
+      description: What you experienced, and the steps that lead to it if you know them.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device, Android version and Molda version
+      description: e.g. Pixel 8, Android 16, Molda 1.0.0-beta.5.
+  - type: textarea
+    id: setup
+    attributes:
+      label: Assistive technology and settings
+      description: e.g. TalkBack, Switch Access, a keyboard or mouse, font size, display size, colour correction, remove animations.
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How much does it affect you?
+      description: Optional; we'll confirm it during triage.
+      options:
+        - "Critical: I can't complete the task"
+        - "Serious: I can complete it only with a lot of difficulty or a workaround"
+        - "Moderate: it's annoying or inconsistent"
+        - "Minor: small impact"
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or recording
+      description: Optional, only if you're comfortable sharing one.

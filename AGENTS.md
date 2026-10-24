@@ -20,7 +20,7 @@ On macOS/Linux, use `./gradlew`. Configure Android SDK 37; devices require API 3
 
 ## Coding Style & Naming Conventions
 
-Use Spotless + ktlint with `.editorconfig`. Run `.\gradlew.bat spotlessApply` before validation. Use PascalCase for classes, files, and UI composables (`GreetingPreview`); use camelCase for ordinary functions and properties. Keep packages under `com.almeidajr.molda` and use lowercase underscore names for Android resources. See `README.md` for quality checks, CI, and dependency-update conventions.
+Use Spotless + ktlint with `.editorconfig`. Run `.\gradlew.bat spotlessApply` before validation. Use PascalCase for classes, files, and UI composables (`GreetingPreview`); use camelCase for ordinary functions and properties. Keep packages under `com.almeidajr.molda` and use lowercase underscore names for Android resources. See `CONTRIBUTING.md` for quality checks, CI, and dependency-update conventions.
 
 Target zero warnings from every tool, Android Studio inspections included; Kotlin specifics live in [Kotlin style](.agents/rules/kotlin-style.md).
 
