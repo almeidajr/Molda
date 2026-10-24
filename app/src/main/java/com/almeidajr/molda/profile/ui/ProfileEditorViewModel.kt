@@ -11,6 +11,8 @@ import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.profile.domain.ProfileValidation
 import com.almeidajr.molda.profile.domain.validateProfile
 import com.almeidajr.molda.profile.navigation.EditedProfile
+import com.almeidajr.molda.ui.navigation.EditorKind
+import com.almeidajr.molda.ui.navigation.EditorReport
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -18,10 +20,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -55,6 +59,10 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
             ?: ProfileEditorState(form = ProfileForm(editingId = editingId)),
     )
     val state: StateFlow<ProfileEditorState> = mutableState.asStateFlow()
+
+    /** This editor's status for the app, which asks before its changes are dropped. */
+    val report: StateFlow<EditorReport> = state.map { it.report }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, state.value.report)
 
     val today: LocalDate get() = LocalDate.now(clock)
 
@@ -119,3 +127,5 @@ internal class ProfileEditorViewModel @AssistedInject constructor(
         fun create(profile: EditedProfile): ProfileEditorViewModel
     }
 }
+
+private val ProfileEditorState.report get() = EditorReport(EditorKind.Profile, isDirty, isSaving)

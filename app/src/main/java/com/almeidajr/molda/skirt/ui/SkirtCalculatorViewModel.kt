@@ -3,6 +3,7 @@ package com.almeidajr.molda.skirt.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.serialization.saved
+import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.measurement.isSameLength
@@ -17,8 +18,11 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 
 /** The calculator state that survives process death. */
@@ -82,6 +86,10 @@ class SkirtCalculatorViewModel @AssistedInject constructor(
     }
     private val mutableState = MutableStateFlow(CalculatorState(form = savedForm).restored())
     val state: StateFlow<CalculatorState> = mutableState.asStateFlow()
+
+    /** Whether the draft has unsaved changes: [CalculatorState.isDirty] as its own state. */
+    val isDirty: StateFlow<Boolean> = state.map { it.isDirty }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, state.value.isDirty)
 
     /** Uses the [waist] taken from the profile [source]. */
     fun selectProfile(waist: Length, source: MeasurementSource) =

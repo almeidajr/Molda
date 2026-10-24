@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MainActivityLauncher
+import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -113,8 +114,12 @@ internal fun SemanticsNodeInteractionsProvider.fillProfile(
     edit("Data da medida (dd/mm/aaaa)", date)
 }
 
-/** Opens the calendar from the date field. */
-internal fun SemanticsNodeInteractionsProvider.openCalendar() {
+/**
+ * Opens the calendar from the date field, with the keyboard closed: a keyboard still opening from
+ * typing in the editor can take the tap on the calendar button.
+ */
+internal fun AndroidComposeTestRule<*, *>.openCalendar() {
+    closeKeyboard()
     onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
     onNodeWithContentDescription("Escolher data no calendário").performClick()
 }
@@ -124,7 +129,7 @@ internal fun SemanticsNodeInteractionsProvider.openCalendar() {
  */
 // Material 3 exposes the localized mode toggle label only as a private resource.
 @Suppress("PrivateResource")
-internal fun SemanticsNodeInteractionsProvider.typeInCalendar(value: String) {
+internal fun AndroidComposeTestRule<*, *>.typeInCalendar(value: String) {
     openCalendar()
     val context = InstrumentationRegistry.getInstrumentation().targetContext
     onNodeWithContentDescription(context.getString(R.string.m3c_date_picker_switch_to_input_mode))

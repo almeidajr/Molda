@@ -26,16 +26,16 @@ import com.almeidajr.molda.profile.navigation.EditedProfile
 import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
-import com.almeidajr.molda.profile.navigation.ProfilePickerKey
+import com.almeidajr.molda.profile.navigation.closeEditorOf
+import com.almeidajr.molda.profile.navigation.closePickerEditor
+import com.almeidajr.molda.profile.navigation.showsProfileCreateAction
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
-import com.almeidajr.molda.ui.navigation.EditorReport
+import com.almeidajr.molda.ui.navigation.LocalEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.MoldaTopAppBar
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
-
-private val ProfileEditorState.editorReport: EditorReport
-    get() = EditorReport(isDirty, isSaving)
+import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
 
 /**
  * Perfis: the profiles beside the open editor, and the picker's editor, which returns the profile
@@ -50,7 +50,6 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     onRequestEditor: (EditedProfile) -> Unit,
     onCancelEditor: () -> Unit,
     onShowSnackbar: (Int) -> Unit,
-    isEditorSaving: () -> Boolean,
 ) {
     entry<ProfileManagementKey>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
@@ -66,12 +65,12 @@ internal fun EntryProviderScope<NavKey>.profileSection(
                 stringResource(R.string.profile_manage),
                 onAbout = { navigator.push(AboutKey) },
             )
-            ProfilePane { ProfileList(profiles, onRequestEditor, enabled = !isEditorSaving()) }
+            ProfilePane { ProfileList(profiles, navigator.state, onRequestEditor) }
         }
     }
     entry<ProfileEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
         val editor = editorViewModel(key.profile)
-        ReportEditorStatus(key, editor.collectedReport()) { editor.state.value.editorReport }
+        ReportEditorStatus(key, editor.report)
         ProfileSavedEffect(editor) {
             onShowSnackbar(R.string.profile_saved)
             navigator.remove(key)
@@ -81,20 +80,16 @@ internal fun EntryProviderScope<NavKey>.profileSection(
     }
     entry<PickerProfileEditorKey> { key ->
         val editor = editorViewModel(EditedProfile.New)
-        ReportEditorStatus(key, editor.collectedReport()) { editor.state.value.editorReport }
+        ReportEditorStatus(key, editor.report)
         val results = LocalResultEventBus.current
         ProfileSavedEffect(editor) { save ->
             onShowSnackbar(R.string.profile_saved)
             if (save is ProfileSave.Created) results.sendResult(key.resultKey, save.profile)
-            navigator.removeAll { it == key || it == ProfilePickerKey(key.resultKey) }
+            navigator.closePickerEditor(key)
         }
         OpenEditor(editor, onCancelEditor, isUpShown = true)
     }
 }
-
-@Composable
-private fun ProfileEditorViewModel.collectedReport() =
-    state.collectAsStateWithLifecycle().value.editorReport
 
 @Composable
 private fun editorViewModel(profile: EditedProfile) =
@@ -120,8 +115,7 @@ private fun ProfileDeletedEffect(
     LaunchedEffect(deleted) {
         if (deleted == null) return@LaunchedEffect
         currentOnShowSnackbar(R.string.profile_deleted)
-        val editor = EditedProfile.Existing(deleted)
-        navigator.removeAll { it is ProfileEditorKey && it.profile == editor }
+        navigator.closeEditorOf(deleted)
         profiles.deletionShown()
     }
 }
@@ -159,8 +153,8 @@ private fun OpenEditor(editor: ProfileEditorViewModel, onCancel: () -> Unit, isU
 @Composable
 private fun ProfileList(
     profiles: ProfileListViewModel,
+    stacks: TopLevelBackStacks,
     onRequestEditor: (EditedProfile) -> Unit,
-    enabled: Boolean,
 ) {
     val state by profiles.state.collectAsStateWithLifecycle()
     ProfilesContent(
@@ -168,10 +162,35 @@ private fun ProfileList(
         profiles::load,
         { onRequestEditor(EditedProfile.Existing(it)) },
         profiles::delete,
+        canChangeProfiles = state.canChangeProfiles && !isPerfisEditorSaving(stacks),
         Modifier.padding(16.dp),
-        enabled,
     )
 }
+
+/**
+ * The shell's floating action over Perfis: new profile, which [onCreate] opens an editor for. It
+ * shows only where [showsProfileCreateAction] says, for whether panes sit side by side
+ * ([isTwoPane]).
+ */
+@Composable
+internal fun ProfileFloatingAction(
+    stacks: TopLevelBackStacks,
+    isTwoPane: Boolean,
+    onCreate: () -> Unit,
+) {
+    if (stacks.showsProfileCreateAction(isTwoPane)) {
+        ProfileCreateAction(onCreate, enabled = !isPerfisEditorSaving(stacks))
+    }
+}
+
+/**
+ * Whether the Perfis editor beside the list saves, so no other editor may open; observable, for
+ * the controls that would open one.
+ */
+@Composable
+private fun isPerfisEditorSaving(stacks: TopLevelBackStacks): Boolean =
+    LocalEditorStatusHolder.current.collectStatusOn(stacks.stackOf(ProfileManagementKey))
+        ?.isSaving == true
 
 @Composable
 private fun ProfilePane(content: @Composable () -> Unit) {

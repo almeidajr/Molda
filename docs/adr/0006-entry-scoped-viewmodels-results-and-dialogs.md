@@ -20,7 +20,7 @@ Three changes make that true, in this order, because each removes cross-entry ca
    - Keys carry what their ViewModels need, so none needs a pre-load call: guides carry their radii, the project editor key carries the project id and its snapshot, and the calculator's factory takes an optional starting draft. The second calculator, the "load" command and the fixed key go away. The skirt ViewModel still depends on nothing in the project feature.
    - Profiles split into a list ViewModel and one editor ViewModel per editor entry, so the Perfis editor and the picker's editor are independent. Projects split into a list, one opened project, an update command for the project editor, and one small ViewModel per dialog entry.
    - A successful save or delete closes its editor by removing its key, so the back stack is the only record of an open editor and the effect that reconciled the two is deleted.
-   - Each editor entry reports its unsaved, saving and unavailable state into an editor-status holder owned by the app, from when it is first composed until its key leaves the back stacks. The holder survives configuration changes; after process death it restores only unsaved changes. The route reads the holder when the sewist acts, taking only the report of the editor the action concerns (the topmost editor on that stack), so the pure transitions and their `EditorStatus` are unchanged.
+   - Each editor entry reports its kind, unsaved and saving state once, as a read-only state flow from its ViewModel, into an editor-status holder owned by the app, from when it is first composed until its key leaves the back stacks. The holder survives configuration changes; after process death it restores only unsaved changes. The holder answers which editor an action on a stack concerns (the topmost reporting editor there, composed or not), and the route reads that answer when the sewist acts.
    - **Each ViewModel blocks only its own actions:** an editor during its own save, a list's rows during its own delete, a dialog's buttons during its own command. Room serializes writes, and conflicts surface through existing failures: saving a just-deleted profile fails with "no longer exists", and deleting the profile being edited closes its editor.
 
 Two rules hold across all three steps:
@@ -41,7 +41,7 @@ Two rules hold across all three steps:
 ## Consequences
 
 - No entry calls another entry's ViewModel. A new hand-off adds a result key to a key, never a route callback or a shared state field.
-- Whatever a ViewModel needs at creation goes into its entry's key, which stays serializable.
+- Whatever a ViewModel needs at creation goes into its entry's key, which stays serializable, or is a sibling ViewModel's state on the same entry: the project editor's update ViewModel reads its calculator's unsaved changes to report the editor's status.
 - The route wires navigation, results and transitions only. Splitting `ProjectsViewModel` also dropped its `TooManyFunctions` suppression.
 - Screen tests keep ADR-0004's fakes and receive them through Hilt bindings; journey tests still run real Room on idling-aware threads.
 - Because a ViewModel blocks only its own actions, two panes can each have work in flight at once.

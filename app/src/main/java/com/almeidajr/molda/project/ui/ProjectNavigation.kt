@@ -22,13 +22,14 @@ import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.navigation.DeleteProjectKey
-import com.almeidajr.molda.project.navigation.ProjectEditorGuideKey
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
-import com.almeidajr.molda.project.navigation.ProjectGuideKey
 import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
 import com.almeidajr.molda.project.navigation.RenameProjectKey
 import com.almeidajr.molda.project.navigation.SaveProjectKey
+import com.almeidajr.molda.project.navigation.isShowingProject
+import com.almeidajr.molda.project.navigation.openProject
+import com.almeidajr.molda.project.navigation.showProject
 import com.almeidajr.molda.ui.adaptive.LocalIsTwoPane
 import com.almeidajr.molda.ui.adaptive.ReadablePane
 import com.almeidajr.molda.ui.navigation.CatalogSelection
@@ -102,15 +103,6 @@ private fun SaveProjectEntry(
         onSave = dialog::save,
         onCancel = { if (!state.isBusy) navigator.remove(key) },
     )
-}
-
-/** Opens the stored project [id] on Projetos, in place of the editor and any project open. */
-internal fun Navigator.showProject(id: ProjectId) {
-    removeAll {
-        it is ProjectEditorKey || it is ProjectEditorGuideKey || it is ProjectKey ||
-            it is ProjectGuideKey
-    }
-    push(ProjectKey(id), root = ProjectsKey)
 }
 
 /**
@@ -215,23 +207,17 @@ private fun <T : Any> ClosesWhenDone(
 private fun ProjectList(navigator: Navigator) {
     val list = hiltViewModel<ProjectListViewModel>()
     val state by list.state.collectAsStateWithLifecycle()
-    val projetos = navigator.state.stackOf(ProjectsKey)
     val isTwoPane = LocalIsTwoPane.current
     ProjectsScreen(
         state,
         list::load,
         onSeePatterns = { navigator.select(PatternCatalogKey) },
         onAbout = { navigator.push(AboutKey) },
-        onOpen = { id ->
-            if (projetos.last() != ProjectKey(id)) {
-                navigator.removeAll { it is ProjectKey || it is ProjectGuideKey }
-                navigator.push(ProjectKey(id))
-            }
-        },
+        onOpen = navigator::openProject,
         selection = { id ->
             when {
                 !isTwoPane -> CatalogSelection.None
-                projetos.last() == ProjectKey(id) -> CatalogSelection.Selected
+                navigator.isShowingProject(id) -> CatalogSelection.Selected
                 else -> CatalogSelection.Unselected
             }
         },

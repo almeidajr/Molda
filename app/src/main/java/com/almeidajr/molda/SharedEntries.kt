@@ -34,7 +34,7 @@ import com.almeidajr.molda.skirt.ui.CalculatorState
 import com.almeidajr.molda.skirt.ui.FabricFoldingPlayer
 import com.almeidajr.molda.skirt.ui.SkirtCalculatorViewModel
 import com.almeidajr.molda.skirt.ui.useProfile
-import com.almeidajr.molda.ui.navigation.EditorReport
+import com.almeidajr.molda.ui.navigation.EditorKind
 import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.ReportEditorStatus
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
@@ -67,15 +67,9 @@ internal fun EntryProviderScope<NavKey>.projectDraftSection(
             it.create(key.snapshot.draft, key.snapshot.source)
         }
         val update = hiltViewModel<ProjectUpdateViewModel, ProjectUpdateViewModel.Factory> {
-            it.create(key)
+            it.create(key, editor.isDirty)
         }
-        val report = EditorReport(
-            editor.state.collectAsStateWithLifecycle().value.isDirty,
-            update.state.collectAsStateWithLifecycle().value.isUpdating,
-        )
-        ReportEditorStatus(key, report) {
-            EditorReport(editor.state.value.isDirty, update.state.value.isUpdating)
-        }
+        ReportEditorStatus(key, update.report)
         ProjectUpdateEffect(update, key.id, navigator, onShowSnackbar)
         ResultEffect<MeasurementProfile>(key.profileResultKey) { editor.useProfile(it) }
         OpenedProject(key.id, onClose = { navigator.remove(key) }) { project ->
@@ -129,11 +123,9 @@ internal fun EntryProviderScope<NavKey>.overlaySection(
         )
     }
     entry<DiscardChangesKey>(metadata = windowOverlay()) { key ->
-        val body = when (key.afterDiscard) {
-            AfterDiscard.CloseProjectEditor, AfterDiscard.ShowProjects ->
-                R.string.project_discard_body
-
-            else -> R.string.profile_discard_body
+        val body = when (key.afterDiscard.discardedEditor) {
+            EditorKind.Profile -> R.string.profile_discard_body
+            EditorKind.Project -> R.string.project_discard_body
         }
         val results = LocalResultEventBus.current
         DiscardDialog(body, onDismiss = { navigator.remove(key) }, onDiscard = {
