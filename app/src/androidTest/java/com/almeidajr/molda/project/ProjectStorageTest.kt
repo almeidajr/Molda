@@ -3,6 +3,7 @@ package com.almeidajr.molda.project
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.data.LoadResult
+import com.almeidajr.molda.data.NoLongerExistsException
 import com.almeidajr.molda.data.asLoadResult
 import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.measurement.Length
@@ -19,6 +20,7 @@ import com.almeidajr.molda.withProjects
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
@@ -148,16 +150,34 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun commands_onAMissingProject_reportFailure() = runTest {
+    fun commands_onAMissingProject_failAsNoLongerExisting() = runTest {
         withProjects(context, databaseName) { storage ->
             // Given
             val gone = storage.create(ProjectName("Saia"), typedByHand, january).getOrThrow()
             storage.delete(gone.id).getOrThrow()
 
             // When/Then
-            assertTrue(storage.rename(gone.id, ProjectName("Outra"), march).isFailure)
-            assertTrue(storage.update(gone.id, fromProfile, march).isFailure)
-            assertTrue(storage.delete(gone.id).isFailure)
+            assertIs<NoLongerExistsException>(
+                storage.rename(gone.id, ProjectName("Outra"), march).exceptionOrNull(),
+            )
+            assertIs<NoLongerExistsException>(
+                storage.update(gone.id, fromProfile, march).exceptionOrNull(),
+            )
+            assertIs<NoLongerExistsException>(storage.delete(gone.id).exceptionOrNull())
+        }
+    }
+
+    @Test
+    fun project_storedOrMissing_loadsItOrFailsAsNoLongerExisting() = runTest {
+        withProjects(context, databaseName) { storage ->
+            // Given
+            val kept = storage.create(ProjectName("Saia"), typedByHand, january).getOrThrow()
+            val gone = storage.create(ProjectName("Outra"), fromProfile, march).getOrThrow()
+            storage.delete(gone.id).getOrThrow()
+
+            // When/Then
+            assertEquals(kept, storage.project(kept.id).first())
+            assertFailsWith<NoLongerExistsException> { storage.project(gone.id).first() }
         }
     }
 

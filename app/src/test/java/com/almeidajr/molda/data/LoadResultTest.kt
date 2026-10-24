@@ -43,9 +43,18 @@ class LoadResultTest {
     }
 
     @Test
+    fun asLoadResult_whenRowNoLongerExists_endsWithTheError() = runTest {
+        // Given
+        val failure = NoLongerExistsException("Profile no longer exists")
+
+        // When/Then
+        assertEquals(listOf(LoadResult.Loading, LoadResult.Error(failure)), failing(failure))
+    }
+
+    @Test
     fun asLoadResult_whenStateIsInvalid_endsWithTheError() = runTest {
         // Given
-        val failure = IllegalStateException("Profile no longer exists")
+        val failure = IllegalStateException("Stored pattern draft kind is not the snapshot's")
 
         // When/Then
         assertEquals(listOf(LoadResult.Loading, LoadResult.Error(failure)), failing(failure))

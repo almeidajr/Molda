@@ -1,5 +1,6 @@
 package com.almeidajr.molda.testing
 
+import com.almeidajr.molda.data.NoLongerExistsException
 import com.almeidajr.molda.data.resultOf
 import com.almeidajr.molda.project.domain.Project
 import com.almeidajr.molda.project.domain.ProjectId
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /**
@@ -41,6 +43,10 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
         emitAll(stored)
     }
 
+    override fun project(id: ProjectId): Flow<Project> = projects().map { projects ->
+        projects.find { it.id == id } ?: throw NoLongerExistsException("No project $id")
+    }
+
     override suspend fun create(name: ProjectName, snapshot: SkirtSnapshot, savedAt: Instant) =
         command {
             val id = ProjectId((current.maxOfOrNull { it.id.value } ?: 0) + 1)
@@ -55,15 +61,19 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
         command { change(id) { it.copy(name = name, updatedAt = renamedAt) } }
 
     override suspend fun delete(id: ProjectId) = command {
-        check(current.any { it.id == id }) { "No project $id" }
+        requireStored(id)
         stored.update { projects -> projects.filterNot { it.id == id } }
     }
 
     private fun change(id: ProjectId, change: (Project) -> Project) {
-        check(current.any { it.id == id }) { "No project $id" }
+        requireStored(id)
         stored.update { projects ->
             projects.map { if (it.id == id) change(it) else it }.newestFirst()
         }
+    }
+
+    private fun requireStored(id: ProjectId) {
+        if (current.none { it.id == id }) throw NoLongerExistsException("No project $id")
     }
 
     private suspend fun <T> command(block: () -> T): Result<T> {

@@ -52,6 +52,9 @@ internal interface ProjectDao {
     @Query("SELECT * FROM projects ORDER BY updated_at DESC, id DESC")
     fun projects(): Flow<List<ProjectEntity>>
 
+    @Query("SELECT * FROM projects WHERE id = :id")
+    fun project(id: Long): Flow<ProjectEntity?>
+
     @Insert
     suspend fun insert(project: ProjectEntity): Long
 

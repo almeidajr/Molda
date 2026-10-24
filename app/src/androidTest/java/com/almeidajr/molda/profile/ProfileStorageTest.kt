@@ -2,6 +2,7 @@ package com.almeidajr.molda.profile
 
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.platform.app.InstrumentationRegistry
+import com.almeidajr.molda.data.NoLongerExistsException
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
@@ -10,6 +11,8 @@ import com.almeidajr.molda.withProfiles
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
@@ -86,15 +89,28 @@ class ProfileStorageTest {
     }
 
     @Test
-    fun updateAndDelete_ofMissingProfile_fail() = runTest {
+    fun updateAndDelete_ofMissingProfile_failAsNoLongerExisting() = runTest {
         // Given
         val (first) = createTwoAnas()
         withProfiles(context, databaseName) { it.delete(first.id).getOrThrow() }
 
         // When/Then
         withProfiles(context, databaseName) { storage ->
-            assertTrue(storage.update(first).isFailure, "update")
-            assertTrue(storage.delete(first.id).isFailure, "delete")
+            assertIs<NoLongerExistsException>(storage.update(first).exceptionOrNull(), "update")
+            assertIs<NoLongerExistsException>(storage.delete(first.id).exceptionOrNull(), "delete")
+        }
+    }
+
+    @Test
+    fun profile_storedOrMissing_loadsItOrFailsAsNoLongerExisting() = runTest {
+        // Given
+        val (first, second) = createTwoAnas()
+        withProfiles(context, databaseName) { it.delete(first.id).getOrThrow() }
+
+        // When/Then
+        withProfiles(context, databaseName) { storage ->
+            assertEquals(second, storage.profile(second.id).first())
+            assertFailsWith<NoLongerExistsException> { storage.profile(first.id).first() }
         }
     }
 

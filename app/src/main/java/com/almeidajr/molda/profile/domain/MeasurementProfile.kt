@@ -45,10 +45,19 @@ data class ProfileMeasurements(
 @Serializable
 data class MeasurementProfile(val id: ProfileId, val measurements: ProfileMeasurements)
 
-/** Stored measurement profiles; commands report storage failures as [Result.failure]. */
+/**
+ * Stored measurement profiles; commands report storage failures as [Result.failure], and a profile
+ * that is no longer stored as the data layer's `NoLongerExistsException`.
+ */
 interface ProfileRepository {
     /** Every stored profile in creation order, emitted again after each change. */
     fun profiles(): Flow<List<MeasurementProfile>>
+
+    /**
+     * The stored profile [id], emitted again after each change; fails with
+     * `NoLongerExistsException` once it is no longer stored.
+     */
+    fun profile(id: ProfileId): Flow<MeasurementProfile>
     suspend fun create(measurements: ProfileMeasurements): Result<MeasurementProfile>
     suspend fun update(profile: MeasurementProfile): Result<Unit>
     suspend fun delete(id: ProfileId): Result<Unit>
