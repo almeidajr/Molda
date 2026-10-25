@@ -154,8 +154,10 @@ class AnimatorDurationScaleRule internal constructor(
 
     override fun after() {
         if (original == "null") {
+            // The window manager keeps the last scale when the setting is deleted, so restore the
+            // default first.
+            set(1f)
             shell("settings delete global animator_duration_scale")
-            awaitScale(1f)
         } else {
             set(original.toFloat())
         }
