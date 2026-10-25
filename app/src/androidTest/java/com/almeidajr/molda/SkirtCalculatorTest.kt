@@ -110,16 +110,11 @@ class SkirtCalculatorTest {
 
     @Test
     fun results_everySchemeAtDoubleText_keepRadiiLargeAndReadable() {
-        listOf(
-            false to false,
-            true to false,
-            false to true,
-            true to true,
-        ).forEach { (dark, dynamic) ->
+        listOf(false, true).forEach { isDarkTheme ->
             // Given
             showCalculator { route ->
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
-                    MoldaTheme(darkTheme = dark, dynamicColor = dynamic, content = route)
+                    MoldaTheme(isDarkTheme = isDarkTheme, content = route)
                 }
             }
             fillInputs(REFERENCE_INPUTS)
@@ -140,14 +135,14 @@ class SkirtCalculatorTest {
                 val style = layouts.single().layoutInput.style
                 assertEquals(24.sp, style.fontSize)
                 assertEquals(32.sp, style.lineHeight)
-                node.assertReadableTextContrast("$radius dark=$dark dynamic=$dynamic")
+                node.assertReadableTextContrast("$radius dark=$isDarkTheme")
                 // A single match: the card's rows are the diagram's only key.
                 composeRule.onNodeWithText(
                     radius.substringAfter(". ").substringBefore(":"),
                     useUnmergedTree = true,
-                ).assertReadableTextContrast("label $radius dark=$dark dynamic=$dynamic")
+                ).assertReadableTextContrast("label $radius dark=$isDarkTheme")
             }
-            assertResultsAreaContrast("dark=$dark dynamic=$dynamic")
+            assertResultsAreaContrast("dark=$isDarkTheme")
         }
     }
 

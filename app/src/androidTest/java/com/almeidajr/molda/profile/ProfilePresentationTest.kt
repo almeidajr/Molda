@@ -133,18 +133,18 @@ class ProfilePresentationTest {
     fun pickerRows_inEveryScheme_standOutFromTheSheet() {
         // Given
         val storage = FakeProfileRepository(listOf(profile(1, "Ana"), profile(2, "Bia", 72.0)))
-        val schemes = listOf(false to false, true to false, false to true, true to true)
+        val schemes = listOf(false, true)
 
         composeRule.launchApp(profiles = storage, frame = null)
 
         // When/Then
-        schemes.forEach { (dark, dynamic) ->
-            composeRule.showRoute(frame = profileFrame(dark = dark, dynamic = dynamic))
+        schemes.forEach { isDarkTheme ->
+            composeRule.showRoute(frame = profileFrame(isDarkTheme = isDarkTheme))
             composeRule.showSkirtCalculator()
             composeRule.click("Usar perfil")
             listOf("Ana — 80", "Bia — 72").forEach {
                 val label = "Usar perfil: $it cm — 12/10/2026"
-                val context = "$label dark=$dark dynamic=$dynamic"
+                val context = "$label dark=$isDarkTheme"
                 composeRule.onNodeWithText(label).performScrollTo()
                     .assertSurfaceStandsOut("$context row")
                 composeRule.onNodeWithText(label, useUnmergedTree = true)
@@ -197,14 +197,14 @@ class ProfilePresentationTest {
         val name = "Ana Maria da Silva — medidas conferidas para a saia"
         val notes = "Conferida antes do corte"
         val storage = FakeProfileRepository(listOf(profile(1, name, notes = notes)))
-        val schemes = listOf(false to false, true to false, false to true, true to true)
+        val schemes = listOf(false, true)
 
         composeRule.launchApp(profiles = storage, frame = null)
 
         // When/Then
-        schemes.forEach { (dark, dynamic) ->
+        schemes.forEach { isDarkTheme ->
             composeRule.showRoute(
-                frame = profileFrame(fontScale = 2f, dark = dark, dynamic = dynamic),
+                frame = profileFrame(fontScale = 2f, isDarkTheme = isDarkTheme),
             )
             composeRule.showProfiles()
             composeRule.onNodeWithText(name).performScrollTo().assertIsDisplayed()
@@ -212,7 +212,7 @@ class ProfilePresentationTest {
             composeRule.onNodeWithText(notes).assertIsDisplayed()
             listOf(name, notes).forEach { label ->
                 composeRule.onNodeWithText(label, useUnmergedTree = true)
-                    .assertReadableTextContrast("$label dark=$dark dynamic=$dynamic")
+                    .assertReadableTextContrast("$label dark=$isDarkTheme")
             }
             composeRule.onNodeWithText("Ações: $name").performScrollTo().assertIsDisplayed()
                 .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
