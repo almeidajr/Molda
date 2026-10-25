@@ -2,11 +2,14 @@ package com.almeidajr.molda.update.data
 
 import com.almeidajr.molda.update.domain.Release
 import com.almeidajr.molda.update.domain.ReleaseAsset
+import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
+import com.almeidajr.molda.update.domain.UpdateDownload
 import com.almeidajr.molda.update.domain.UpdateRepository
 import com.almeidajr.molda.update.domain.checksForUpdates
 import com.almeidajr.molda.update.domain.chooseUpdate
 import java.io.IOException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -57,11 +60,18 @@ internal fun gitHubReleasesApi(baseUrl: String, callFactory: Call.Factory): GitH
         .build()
         .create(GitHubReleasesApi::class.java)
 
-/** Updates for [installedVersionName] from the repository's GitHub Releases. */
+/** Updates for [installedVersionName] from the GitHub Releases, their APKs from [apks]. */
 internal class GitHubUpdateRepository(
     private val api: GitHubReleasesApi,
     private val installedVersionName: String,
+    private val apks: UpdateApks,
 ) : UpdateRepository {
+    override fun download(update: Update): Flow<UpdateDownload> = apks.download(update)
+
+    override suspend fun startDownload(update: Update) = apks.startDownload(update)
+
+    override suspend fun install(update: Update) = apks.install(update)
+
     override suspend fun check(): UpdateCheck {
         if (!checksForUpdates(installedVersionName)) return UpdateCheck.NotChecked
         return try {

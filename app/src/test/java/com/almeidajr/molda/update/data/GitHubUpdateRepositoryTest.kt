@@ -3,7 +3,9 @@ package com.almeidajr.molda.update.data
 import com.almeidajr.molda.update.domain.ReleaseAsset
 import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
+import com.almeidajr.molda.update.domain.UpdateDownload
 import kotlin.test.assertEquals
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.junit4.MockWebServerRule
@@ -78,7 +80,17 @@ class GitHubUpdateRepositoryTest {
     private fun repository(installedVersionName: String) = GitHubUpdateRepository(
         gitHubReleasesApi(server.url("/").toString(), OkHttpClient()),
         installedVersionName,
+        UnusedApks,
     )
+
+    /** The check never touches the APK. */
+    private object UnusedApks : UpdateApks {
+        override fun download(update: Update): Flow<UpdateDownload> = error("Not checked here")
+
+        override suspend fun startDownload(update: Update) = error("Not checked here")
+
+        override suspend fun install(update: Update) = error("Not checked here")
+    }
 
     private companion object {
         // Trimmed from GitHub's GET /repos/{owner}/{repo}/releases, unread fields included.

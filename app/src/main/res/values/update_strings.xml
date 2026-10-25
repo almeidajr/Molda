@@ -8,4 +8,10 @@
     <string name="update_failed_hint">Confira a conexão e tente de novo.</string>
     <string name="update_release_page">Ver a página da versão</string>
     <string name="update_check">Verificar atualizações</string>
+    <string name="update_download">Atualizar</string>
+    <string name="update_downloading">Baixando a atualização…</string>
+    <string name="update_install">Instalar</string>
+    <string name="update_download_failed">O download falhou</string>
+    <string name="update_download_failed_hint">O arquivo não chegou inteiro ou não confere com o publicado.</string>
+    <string name="update_retry">Tentar novamente</string>
 </resources>

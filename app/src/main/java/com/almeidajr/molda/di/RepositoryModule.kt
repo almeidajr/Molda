@@ -8,6 +8,7 @@ import com.almeidajr.molda.project.data.LocalProjectRepository
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.update.data.GITHUB_API_URL
 import com.almeidajr.molda.update.data.GitHubUpdateRepository
+import com.almeidajr.molda.update.data.SystemUpdateApks
 import com.almeidajr.molda.update.data.gitHubReleasesApi
 import com.almeidajr.molda.update.domain.UpdateRepository
 import dagger.Lazy
@@ -42,5 +43,6 @@ object RepositoryModule {
         // Lazy, so OkHttp is built only once a check runs, never for a local build.
         gitHubReleasesApi(GITHUB_API_URL) { callFactory.get().newCall(it) },
         context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty(),
+        SystemUpdateApks(context),
     )
 }
