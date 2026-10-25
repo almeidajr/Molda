@@ -26,7 +26,9 @@ internal suspend fun UpdateRepository.startupNotice(): StartupNotice? {
     val update = (check() as? UpdateCheck.Available)?.update ?: return null
     return when (download(update).first()) {
         UpdateDownload.Downloaded -> StartupNotice.Install(update)
+
         is UpdateDownload.Downloading -> null
+
         UpdateDownload.NotStarted, UpdateDownload.Failed, UpdateDownload.VerificationFailed ->
             StartupNotice.Download(update)
     }

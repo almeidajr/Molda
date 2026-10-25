@@ -165,13 +165,12 @@ internal fun SemanticsNodeInteractionsProvider.dismissSnackbar() {
 }
 
 /** The root top app bar's About action. */
-internal fun SemanticsNodeInteractionsProvider.aboutAction(): SemanticsNodeInteraction =
-    onNode(
-        SemanticsMatcher.expectValue(
-            SemanticsProperties.ContentDescription,
-            listOf("Sobre o Molda"),
-        ),
-    )
+internal fun SemanticsNodeInteractionsProvider.aboutAction(): SemanticsNodeInteraction = onNode(
+    SemanticsMatcher.expectValue(
+        SemanticsProperties.ContentDescription,
+        listOf("Sobre o Molda"),
+    ),
+)
 
 /** Opens About from a root screen. */
 internal fun SemanticsNodeInteractionsProvider.openAbout() {

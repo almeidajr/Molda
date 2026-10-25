@@ -39,9 +39,9 @@ import com.almeidajr.molda.ui.navigation.rememberEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
 import com.almeidajr.molda.update.domain.Update
+import com.almeidajr.molda.update.navigation.INSTALL_UPDATE_RESULT_KEY
 import com.almeidajr.molda.update.ui.InstallWhenDownloaded
 import com.almeidajr.molda.update.ui.StartupUpdateNotice
-import com.almeidajr.molda.update.navigation.INSTALL_UPDATE_RESULT_KEY
 import com.almeidajr.molda.update.ui.UpdateStatus
 import com.almeidajr.molda.update.ui.updateSection
 import kotlinx.coroutines.launch
