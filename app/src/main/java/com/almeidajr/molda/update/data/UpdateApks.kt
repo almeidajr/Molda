@@ -11,6 +11,7 @@ import android.os.Environment
 import androidx.core.net.toUri
 import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateDownload
+import com.almeidajr.molda.update.domain.UpdateInstall
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
@@ -31,7 +32,7 @@ internal interface UpdateApks {
 
     suspend fun startDownload(update: Update)
 
-    suspend fun install(update: Update)
+    suspend fun install(update: Update): UpdateInstall
 }
 
 /**
@@ -94,7 +95,13 @@ internal class SystemUpdateApks(
         Unit
     }
 
-    override suspend fun install(update: Update) = withContext(ioDispatcher) {
+    override suspend fun install(update: Update): UpdateInstall {
+        if (!context.packageManager.canRequestPackageInstalls()) return UpdateInstall.NotAllowed
+        withContext(ioDispatcher) { commitSession(update) }
+        return UpdateInstall.Started
+    }
+
+    private fun commitSession(update: Update) {
         val apk = apkFile(update)
         val installer = context.packageManager.packageInstaller
         val sessionId = installer.createSession(

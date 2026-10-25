@@ -3,6 +3,7 @@ package com.almeidajr.molda.testing
 import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
 import com.almeidajr.molda.update.domain.UpdateDownload
+import com.almeidajr.molda.update.domain.UpdateInstall
 import com.almeidajr.molda.update.domain.UpdateRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -11,11 +12,13 @@ import kotlinx.coroutines.flow.update
 
 /**
  * Updates without GitHub or the system services: every check answers [result], and the offered
- * update's download is in [download]; a test may change either later.
+ * update's download is in [download]; a test may change any of them later.
  */
 class FakeUpdateRepository(
     @Volatile var result: UpdateCheck = UpdateCheck.UpToDate,
     download: UpdateDownload = UpdateDownload.NotStarted,
+    /** Whether Molda may install apps; while false, installs are refused as not allowed. */
+    @Volatile var canInstall: Boolean = true,
 ) : UpdateRepository {
     private val downloadState = MutableStateFlow(download)
     private val installs = MutableStateFlow(emptyList<Update>())
@@ -44,5 +47,9 @@ class FakeUpdateRepository(
         download = UpdateDownload.Downloading(progress = null)
     }
 
-    override suspend fun install(update: Update) = installs.update { it + update }
+    override suspend fun install(update: Update): UpdateInstall {
+        if (!canInstall) return UpdateInstall.NotAllowed
+        installs.update { it + update }
+        return UpdateInstall.Started
+    }
 }

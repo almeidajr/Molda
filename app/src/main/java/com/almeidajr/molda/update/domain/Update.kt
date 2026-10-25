@@ -74,9 +74,18 @@ interface UpdateRepository {
 
     /**
      * Installs [update]'s downloaded APK through the system installer, which asks the person to
-     * confirm and restarts Molda.
+     * confirm and restarts Molda; [UpdateInstall.NotAllowed] until Molda may install apps.
      */
-    suspend fun install(update: Update)
+    suspend fun install(update: Update): UpdateInstall
+}
+
+/** The outcome of installing an [Update]. */
+enum class UpdateInstall {
+    /** The system installer took the APK and asks the person to confirm. */
+    Started,
+
+    /** The person hasn't allowed Molda to install unknown apps: nothing was installed. */
+    NotAllowed,
 }
 
 /** The `versionName` of local builds (app/build.gradle.kts). */

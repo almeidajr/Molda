@@ -39,6 +39,7 @@ import com.almeidajr.molda.ui.navigation.rememberEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
 import com.almeidajr.molda.update.domain.Update
+import com.almeidajr.molda.update.ui.UpdateInstallPermission
 import com.almeidajr.molda.update.ui.UpdateInstallViewModel
 import com.almeidajr.molda.update.ui.UpdateStatus
 import kotlinx.coroutines.launch
@@ -77,6 +78,7 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
     CompositionLocalProvider(LocalEditorStatusHolder provides editors) {
+        UpdateInstallPermission()
         MoldaShell(
             navigator,
             titleFocus,

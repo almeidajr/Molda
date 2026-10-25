@@ -5,6 +5,7 @@ import com.almeidajr.molda.update.domain.ReleaseAsset
 import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
 import com.almeidajr.molda.update.domain.UpdateDownload
+import com.almeidajr.molda.update.domain.UpdateInstall
 import com.almeidajr.molda.update.domain.UpdateRepository
 import com.almeidajr.molda.update.domain.checksForUpdates
 import com.almeidajr.molda.update.domain.chooseUpdate
@@ -70,7 +71,7 @@ internal class GitHubUpdateRepository(
 
     override suspend fun startDownload(update: Update) = apks.startDownload(update)
 
-    override suspend fun install(update: Update) = apks.install(update)
+    override suspend fun install(update: Update): UpdateInstall = apks.install(update)
 
     override suspend fun check(): UpdateCheck {
         if (!checksForUpdates(installedVersionName)) return UpdateCheck.NotChecked
