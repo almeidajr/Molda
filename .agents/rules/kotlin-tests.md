@@ -107,10 +107,10 @@ ViewModels from the test's bindings exactly as in production
   rule, `@get:Rule(order = 0)`, and `createLaunchLaterComposeRule()` the second,
   with every other rule ordered after them: the activity injects in `onCreate`.
 - No class binds or uninstalls modules. `TestBindingsModule` gives every device
-  test's app the repositories and clock held by `TestBindings`: empty fakes and
-  13/10/2026 unless the test seeds others. One call seeds them and starts the
-  app: `launchApp(profiles, projects, clock, size, frame)`, every argument
-  optional. Keep a reference typed as the fake when the test sets a gate or
+  test's app the repositories and clock held by `TestBindings`: empty fakes, Molda up to date
+  and 13/10/2026 unless the test seeds others. One call seeds them and starts
+  the app: `launchApp(profiles, projects, clock, size, frame, updates)`, every
+  argument optional. Keep a reference typed as the fake when the test sets a gate or
   reads `current`. Starting the app freezes the holder, so assigning a fake
   afterwards throws.
 - `launchApp` shows the route inside `frame` (the theme by default) and at

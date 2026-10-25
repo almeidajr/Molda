@@ -30,8 +30,8 @@ import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 
 /**
- * About Molda: what it does, the installed [versionName] and the open-source licences row. The
- * space below the rows is reserved for the GitHub Releases update check.
+ * About Molda: what it does, the installed [versionName] with [content] below it (the update
+ * status), and the open-source licences row.
  */
 @Composable
 fun AboutScreen(
@@ -39,6 +39,7 @@ fun AboutScreen(
     onUp: () -> Unit,
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
+    content: @Composable () -> Unit = {},
 ) {
     Column(modifier.fillMaxSize()) {
         MoldaTopAppBar(stringResource(R.string.about_title), onUp = onUp)
@@ -67,6 +68,7 @@ fun AboutScreen(
                     modifier = Modifier.semantics(mergeDescendants = true) {},
                     supportingContent = { Text(versionName) },
                 ) { Text(stringResource(R.string.about_version)) }
+                content()
                 ListItem(
                     onClick = onOpenLicences,
                     modifier = Modifier.heightIn(min = 56.dp),

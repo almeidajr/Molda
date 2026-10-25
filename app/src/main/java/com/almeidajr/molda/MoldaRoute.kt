@@ -37,6 +37,7 @@ import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
 import com.almeidajr.molda.ui.navigation.rememberEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
+import com.almeidajr.molda.update.ui.UpdateStatus
 import kotlinx.coroutines.launch
 
 /**
@@ -152,7 +153,7 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
             onCancelEditor = { perform(cancelProfileEditor(status(stacks.current))) },
             onShowSnackbar = onShowSnackbar,
         )
-        aboutSection(navigator, versionName)
+        aboutSection(navigator, versionName, updateStatus = { UpdateStatus() })
         overlaySection(
             navigator,
             onCreateProfile = { perform(requestPickerEditor(it, status(stacks.current))) },
