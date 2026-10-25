@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.view.KeyEvent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsMatcher
@@ -161,6 +162,20 @@ internal fun SemanticsNodeInteractionsProvider.snackbar(): SemanticsNodeInteract
 /** Dismisses the snackbar shown, as a screen reader does. */
 internal fun SemanticsNodeInteractionsProvider.dismissSnackbar() {
     snackbar().performSemanticsAction(SemanticsActions.Dismiss)
+}
+
+/** The root top app bar's About action. */
+internal fun SemanticsNodeInteractionsProvider.aboutAction(): SemanticsNodeInteraction =
+    onNode(
+        SemanticsMatcher.expectValue(
+            SemanticsProperties.ContentDescription,
+            listOf("Sobre o Molda"),
+        ),
+    )
+
+/** Opens About from a root screen. */
+internal fun SemanticsNodeInteractionsProvider.openAbout() {
+    aboutAction().performClick()
 }
 
 /** The top app bar heading reading [title]. */

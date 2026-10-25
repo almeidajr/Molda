@@ -4,19 +4,15 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.almeidajr.molda.click
-import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.dismissSnackbar
 import com.almeidajr.molda.launchApp
-import com.almeidajr.molda.profile.edit
+import com.almeidajr.molda.profile.leaveUnsavedNewProfile
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
-import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.snackbar
+import com.almeidajr.molda.testing.Beta2
 import com.almeidajr.molda.testing.FakeUpdateRepository
-import com.almeidajr.molda.update.domain.ReleaseAsset
-import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
 import com.almeidajr.molda.update.domain.UpdateDownload
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -97,10 +93,7 @@ class StartupUpdateTest {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
         composeRule.launchApp(updates = updates)
-        composeRule.selectDestination("Perfis")
-        composeRule.click("Novo perfil")
-        composeRule.edit("Nome ou apelido", "Rascunho")
-        composeRule.closeKeyboard()
+        composeRule.leaveUnsavedNewProfile()
 
         // When
         composeRule.onNodeWithText("Instalar").performClick()
@@ -155,18 +148,5 @@ class StartupUpdateTest {
         // Then
         composeRule.screenTitle("Moldes").assertIsDisplayed()
         composeRule.snackbar().assertDoesNotExist()
-    }
-
-    private companion object {
-        val Beta2 = Update(
-            version = "0.3.0-beta.2",
-            page = "https://github.com/almeidajr/Molda/releases/tag/v0.3.0-beta.2",
-            apk = ReleaseAsset(
-                name = "molda-v0.3.0-beta.2.apk",
-                downloadUrl = "https://github.com/almeidajr/Molda/releases/download/" +
-                    "v0.3.0-beta.2/molda-v0.3.0-beta.2.apk",
-                digest = "sha256:0123",
-            ),
-        )
     }
 }

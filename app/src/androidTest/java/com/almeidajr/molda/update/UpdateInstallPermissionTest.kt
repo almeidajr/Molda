@@ -3,8 +3,6 @@ package com.almeidajr.molda.update
 import android.app.Activity
 import android.app.Instrumentation.ActivityResult
 import android.provider.Settings
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -18,9 +16,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.dismissSnackbar
 import com.almeidajr.molda.launchApp
+import com.almeidajr.molda.openAbout
+import com.almeidajr.molda.testing.Beta2
 import com.almeidajr.molda.testing.FakeUpdateRepository
-import com.almeidajr.molda.update.domain.ReleaseAsset
-import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
 import com.almeidajr.molda.update.domain.UpdateDownload
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -59,7 +57,7 @@ class UpdateInstallPermissionTest {
         returnFromSetting { }
         composeRule.launchApp(updates = updates)
         composeRule.dismissSnackbar()
-        openAbout()
+        composeRule.openAbout()
 
         // When
         composeRule.onNodeWithText("Instalar").performClick()
@@ -75,7 +73,7 @@ class UpdateInstallPermissionTest {
         returnFromSetting { updates.canInstall = true }
         composeRule.launchApp(updates = updates)
         composeRule.dismissSnackbar()
-        openAbout()
+        composeRule.openAbout()
 
         // When
         composeRule.onNodeWithText("Instalar").performClick()
@@ -95,7 +93,7 @@ class UpdateInstallPermissionTest {
         returnFromSetting { }
         composeRule.launchApp(updates = updates)
         composeRule.dismissSnackbar()
-        openAbout()
+        composeRule.openAbout()
         composeRule.onNodeWithText("Instalar").performClick()
         composeRule.onNodeWithText(EXPLANATION).assertIsDisplayed()
         updates.canInstall = true
@@ -116,26 +114,8 @@ class UpdateInstallPermissionTest {
         }
     }
 
-    private fun openAbout() = composeRule.onNode(
-        SemanticsMatcher.expectValue(
-            SemanticsProperties.ContentDescription,
-            listOf("Sobre o Molda"),
-        ),
-    ).performClick()
-
     private companion object {
         const val EXPLANATION =
             "Para instalar a atualização, permita que o Molda instale apps nas configurações."
-
-        val Beta2 = Update(
-            version = "0.3.0-beta.2",
-            page = "https://github.com/almeidajr/Molda/releases/tag/v0.3.0-beta.2",
-            apk = ReleaseAsset(
-                name = "molda-v0.3.0-beta.2.apk",
-                downloadUrl = "https://github.com/almeidajr/Molda/releases/download/" +
-                    "v0.3.0-beta.2/molda-v0.3.0-beta.2.apk",
-                digest = "sha256:0123",
-            ),
-        )
     }
 }

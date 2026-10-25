@@ -1,8 +1,6 @@
 package com.almeidajr.molda.update
 
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -11,19 +9,17 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.almeidajr.molda.click
 import com.almeidajr.molda.clickInDialog
-import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.dismissSnackbar
 import com.almeidajr.molda.launchApp
-import com.almeidajr.molda.profile.edit
+import com.almeidajr.molda.openAbout
+import com.almeidajr.molda.profile.leaveUnsavedNewProfile
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showProfiles
+import com.almeidajr.molda.testing.Beta2
 import com.almeidajr.molda.testing.FakeUpdateRepository
-import com.almeidajr.molda.update.domain.ReleaseAsset
-import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
 import com.almeidajr.molda.update.domain.UpdateDownload
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -64,7 +60,7 @@ class AboutUpdateTest {
         composeRule.launchApp(updates = FakeUpdateRepository(UpdateCheck.UpToDate))
 
         // When
-        openAbout()
+        composeRule.openAbout()
 
         // Then
         composeRule.onNodeWithText("O Molda está atualizado").assertIsDisplayed()
@@ -76,7 +72,7 @@ class AboutUpdateTest {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Failed)
         composeRule.launchApp(updates = updates)
-        openAbout()
+        composeRule.openAbout()
         composeRule.onNodeWithText("Não foi possível verificar atualizações").assertIsDisplayed()
         updates.result = UpdateCheck.Available(Beta2)
 
@@ -95,7 +91,7 @@ class AboutUpdateTest {
         )
 
         // When
-        openAbout()
+        composeRule.openAbout()
 
         // Then
         composeRule.onNodeWithText("Verificando atualizações…").assertIsDisplayed()
@@ -108,7 +104,7 @@ class AboutUpdateTest {
         composeRule.launchApp(updates = FakeUpdateRepository(UpdateCheck.NotChecked))
 
         // When
-        openAbout()
+        composeRule.openAbout()
 
         // Then
         composeRule.screenTitle("Sobre o Molda").assertIsDisplayed()
@@ -251,37 +247,14 @@ class AboutUpdateTest {
     private fun launchWithUnsavedProfileThenOpenAbout(updates: FakeUpdateRepository) {
         composeRule.launchApp(updates = updates)
         composeRule.dismissSnackbar()
-        composeRule.selectDestination("Perfis")
-        composeRule.click("Novo perfil")
-        composeRule.edit("Nome ou apelido", "Rascunho")
-        composeRule.closeKeyboard()
+        composeRule.leaveUnsavedNewProfile()
         composeRule.selectDestination("Moldes")
-        openAbout()
+        composeRule.openAbout()
     }
 
     /** Opens About once the startup notice of the same update is gone, so its texts are About's. */
     private fun openAboutPastTheStartupNotice() {
         composeRule.dismissSnackbar()
-        openAbout()
-    }
-
-    private fun openAbout() = composeRule.onNode(
-        SemanticsMatcher.expectValue(
-            SemanticsProperties.ContentDescription,
-            listOf("Sobre o Molda"),
-        ),
-    ).performClick()
-
-    private companion object {
-        val Beta2 = Update(
-            version = "0.3.0-beta.2",
-            page = "https://github.com/almeidajr/Molda/releases/tag/v0.3.0-beta.2",
-            apk = ReleaseAsset(
-                name = "molda-v0.3.0-beta.2.apk",
-                downloadUrl = "https://github.com/almeidajr/Molda/releases/download/" +
-                    "v0.3.0-beta.2/molda-v0.3.0-beta.2.apk",
-                digest = "sha256:0123",
-            ),
-        )
+        composeRule.openAbout()
     }
 }

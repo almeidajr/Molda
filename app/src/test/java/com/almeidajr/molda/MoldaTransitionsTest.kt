@@ -20,9 +20,8 @@ import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.navigation.MOLDES_PROFILE_RESULT_KEY
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
+import com.almeidajr.molda.testing.Beta2
 import com.almeidajr.molda.ui.navigation.EditorKind
-import com.almeidajr.molda.update.domain.ReleaseAsset
-import com.almeidajr.molda.update.domain.Update
 import kotlin.test.assertEquals
 import org.junit.Test
 
@@ -33,11 +32,7 @@ class MoldaTransitionsTest {
         SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
         source = null,
     )
-    private val update = Update(
-        version = "0.3.0-beta.2",
-        page = "https://github.com/almeidajr/Molda/releases/tag/v0.3.0-beta.2",
-        apk = ReleaseAsset("molda-v0.3.0-beta.2.apk", "https://example.com/molda.apk", null),
-    )
+    private val update = Beta2
     private val projectEditor =
         listOf(ProjectsKey, ProjectKey(project), ProjectEditorKey(project, snapshot))
     private val profileEditor = listOf(ProfileManagementKey, ProfileEditorKey(EditedProfile.New))

@@ -63,7 +63,7 @@ class ChooseUpdateTest {
     }
 
     @Test
-    fun chooseUpdate_ignoresDraftsAndReleasesWithoutAnApk() {
+    fun chooseUpdate_withDraftsAndReleasesWithoutAnApk_ignoresThem() {
         // When
         val update = chooseUpdate(
             "0.1.0",
@@ -80,13 +80,13 @@ class ChooseUpdateTest {
     }
 
     @Test
-    fun chooseUpdate_ignoresTagsThatAreNotSemVer() {
+    fun chooseUpdate_withATagThatIsNotSemVer_offersNothing() {
         // When/Then
         assertNull(chooseUpdate("0.1.0", listOf(release("nightly"))))
     }
 
     @Test
-    fun chooseUpdate_offersTheReleasePageAndApk() {
+    fun chooseUpdate_withANewerRelease_offersItsPageAndApk() {
         // When
         val update = chooseUpdate("0.1.0", listOf(release("v0.2.0")))
 
@@ -105,9 +105,15 @@ class ChooseUpdateTest {
     fun checksForUpdates_onLocalAndNonSemVerBuilds_isFalse() {
         // When/Then
         assertEquals(
-            listOf(false, false, false, true, true),
-            listOf("0.0.0-dev", "", "1.0", "0.3.0-beta.1", "1.2.3").map(::checksForUpdates),
+            listOf(false, false, false),
+            listOf("0.0.0-dev", "", "1.0").map(::checksForUpdates),
         )
+    }
+
+    @Test
+    fun checksForUpdates_onBetaBuildsAndReleases_isTrue() {
+        // When/Then
+        assertEquals(listOf(true, true), listOf("0.3.0-beta.1", "1.2.3").map(::checksForUpdates))
     }
 
     private fun release(tag: String) = Release(
