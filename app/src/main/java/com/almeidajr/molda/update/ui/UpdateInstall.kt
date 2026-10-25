@@ -11,42 +11,52 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.almeidajr.molda.R
 
 /**
- * Asks for the "install unknown apps" permission an install of the activity's
- * [UpdateInstallViewModel] waits on: opens Molda's own setting, and explains once, with a retry,
- * when the person returns without allowing it. Placed once, outside the entries.
+ * The install [viewModel] runs: opens Molda's own "install unknown apps" setting when it needs the
+ * permission, explains once, with a retry, when the person returns without allowing it, and
+ * [onClose]s once the install started or the explanation is dismissed. Shows nothing otherwise.
  */
 @Composable
-fun UpdateInstallPermission() {
-    val viewModel = hiltViewModel<UpdateInstallViewModel>()
-    val permission by viewModel.permission.collectAsStateWithLifecycle()
+internal fun UpdateInstall(viewModel: UpdateInstallViewModel, onClose: () -> Unit) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val currentOnClose by rememberUpdatedState(onClose)
     val packageName = LocalContext.current.packageName
     // The setting answers no result; returning from it is the cue to try again.
     val setting = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { viewModel.onSettingClosed() }
-    LaunchedEffect(permission) {
-        if (permission is InstallPermission.Needed) {
-            setting.launch(
-                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "package:$packageName".toUri()),
-            )
-            viewModel.onSettingOpened()
+    LaunchedEffect(state) {
+        when (state) {
+            UpdateInstallState.Started -> currentOnClose()
+
+            UpdateInstallState.NeedsPermission -> {
+                setting.launch(
+                    Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        "package:$packageName".toUri(),
+                    ),
+                )
+                viewModel.onSettingOpened()
+            }
+
+            UpdateInstallState.Installing,
+            UpdateInstallState.WaitingForPermission,
+            UpdateInstallState.Refused,
+            -> Unit
         }
     }
-    val refused = permission as? InstallPermission.Refused ?: return
-    UpdatePermissionExplanation(
-        onRetry = { viewModel.install(refused.update) },
-        onDismiss = viewModel::dismiss,
-    )
+    if (state == UpdateInstallState.Refused) {
+        UpdatePermissionExplanation(onRetry = viewModel::retry, onDismiss = onClose)
+    }
 }
 
 @Composable

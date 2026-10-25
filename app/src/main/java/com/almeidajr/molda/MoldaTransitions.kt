@@ -96,7 +96,7 @@ internal sealed interface Transition {
      */
     data class OpenPickerEditor(val resultKey: String) : Transition
 
-    /** Installs [update], leaving the back stacks as they are. */
+    /** Installs [update] through its install entry, which asks for the permission if needed. */
     data class InstallUpdate(val update: Update) : Transition
 }
 

@@ -1,71 +1,94 @@
 package com.almeidajr.molda.update.ui
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
 import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateInstall
 import com.almeidajr.molda.update.domain.UpdateRepository
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** An install of [update] waiting on the "install unknown apps" permission. */
-internal sealed interface InstallPermission {
-    val update: Update
+/** Where one install of a downloaded update stands. */
+internal enum class UpdateInstallState {
+    Installing,
 
-    /** Molda's setting should open, so the person can allow the install. */
-    data class Needed(override val update: Update) : InstallPermission
+    /** The system installer took the APK and asks the person to confirm: the entry closes. */
+    Started,
+
+    /** Molda may not install apps: Molda's setting should open. */
+    NeedsPermission,
 
     /** Molda's setting is open; the install continues when the person returns. */
-    data class Asked(override val update: Update) : InstallPermission
+    WaitingForPermission,
 
     /** The person returned without allowing it: explained, with a retry. */
-    data class Refused(override val update: Update) : InstallPermission
+    Refused,
 }
 
 /**
- * The app's one way to install a downloaded update, owned by the activity so that every place
- * offering the install (About, the startup notice) goes through the same checks first, and so
- * that the wait on the permission survives the trip to Settings.
+ * Installs [update] as soon as its entry opens, waiting on the "install unknown apps" permission
+ * when Molda lacks it. That the setting was opened is saved, so returning from it continues the
+ * install even after process death, and explains instead of opening it again.
  */
-@HiltViewModel
-internal class UpdateInstallViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = UpdateInstallViewModel.Factory::class)
+internal class UpdateInstallViewModel @AssistedInject constructor(
     private val repository: UpdateRepository,
+    savedState: SavedStateHandle,
+    @Assisted private val update: Update,
 ) : ViewModel() {
-    private val mutablePermission = MutableStateFlow<InstallPermission?>(null)
+    private var hasOpenedSetting by savedState.saved { false }
+    private val mutableState = MutableStateFlow(UpdateInstallState.Installing)
+    val state: StateFlow<UpdateInstallState> = mutableState.asStateFlow()
 
-    /** The install waiting on the permission; null when none is. */
-    val permission: StateFlow<InstallPermission?> = mutablePermission.asStateFlow()
+    init {
+        install(
+            whenNotAllowed = if (hasOpenedSetting) {
+                UpdateInstallState.Refused
+            } else {
+                UpdateInstallState.NeedsPermission
+            },
+        )
+    }
 
-    /** Installs [update], which the system installer asks the person to confirm. */
-    fun install(update: Update) = install(update, whenNotAllowed = InstallPermission::Needed)
-
-    /** Molda's setting opened for [InstallPermission.Needed]. */
+    /** Molda's setting opened for [UpdateInstallState.NeedsPermission]. */
     fun onSettingOpened() {
-        val needed = mutablePermission.value as? InstallPermission.Needed ?: return
-        mutablePermission.value = InstallPermission.Asked(needed.update)
+        if (mutableState.value != UpdateInstallState.NeedsPermission) return
+        hasOpenedSetting = true
+        mutableState.value = UpdateInstallState.WaitingForPermission
     }
 
     /** The person returned from Molda's setting: continues the install, or explains once. */
     fun onSettingClosed() {
-        val asked = mutablePermission.value as? InstallPermission.Asked ?: return
-        install(asked.update, whenNotAllowed = InstallPermission::Refused)
+        if (mutableState.value != UpdateInstallState.WaitingForPermission) return
+        install(whenNotAllowed = UpdateInstallState.Refused)
     }
 
-    /** Dismisses the explanation without installing. */
-    fun dismiss() {
-        mutablePermission.value = null
+    /** Tries again after the explanation, opening the setting again while still not allowed. */
+    fun retry() {
+        if (mutableState.value != UpdateInstallState.Refused) return
+        install(whenNotAllowed = UpdateInstallState.NeedsPermission)
     }
 
-    private fun install(update: Update, whenNotAllowed: (Update) -> InstallPermission) {
+    private fun install(whenNotAllowed: UpdateInstallState) {
+        mutableState.value = UpdateInstallState.Installing
         viewModelScope.launch {
-            mutablePermission.value = when (repository.install(update)) {
-                UpdateInstall.Started -> null
-                UpdateInstall.NotAllowed -> whenNotAllowed(update)
+            mutableState.value = when (repository.install(update)) {
+                UpdateInstall.Started -> UpdateInstallState.Started
+                UpdateInstall.NotAllowed -> whenNotAllowed
             }
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(update: Update): UpdateInstallViewModel
     }
 }

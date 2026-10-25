@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -22,27 +21,30 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.result.LocalResultEventBus
 import com.almeidajr.molda.R
 import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
 import com.almeidajr.molda.update.domain.UpdateDownload
+import com.almeidajr.molda.update.navigation.INSTALL_UPDATE_RESULT_KEY
 
 /**
  * The update on offer and its download, both followed by the hosting entry's own
- * [UpdateCheckViewModel]. Installing, chosen or because the download finished while shown, goes
- * through [onInstall].
+ * [UpdateCheckViewModel]. Installing, chosen or because the download finished while shown, is
+ * requested from the app on [INSTALL_UPDATE_RESULT_KEY].
  */
 @Composable
-fun UpdateStatus(onInstall: (Update) -> Unit, modifier: Modifier = Modifier) {
+fun UpdateStatus(modifier: Modifier = Modifier) {
     val viewModel = hiltViewModel<UpdateCheckViewModel>()
     val check by viewModel.state.collectAsStateWithLifecycle()
     val watched by viewModel.download.collectAsStateWithLifecycle()
     val uriHandler = LocalUriHandler.current
+    val results = LocalResultEventBus.current
     val update = (check as? UpdateCheck.Available)?.update
-    val currentOnInstall by rememberUpdatedState(onInstall)
+    val onInstall = { installed: Update -> results.sendResult(INSTALL_UPDATE_RESULT_KEY, installed) }
     val hasFinishedWhileWatched = watched?.hasFinishedWhileWatched == true
     LaunchedEffect(update, hasFinishedWhileWatched) {
-        if (update != null && hasFinishedWhileWatched) currentOnInstall(update)
+        if (update != null && hasFinishedWhileWatched) onInstall(update)
     }
     UpdateStatus(
         check = check,

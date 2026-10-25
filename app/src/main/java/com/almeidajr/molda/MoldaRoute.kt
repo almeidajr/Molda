@@ -10,7 +10,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -41,9 +40,9 @@ import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
 import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.ui.StartupUpdateNotice
-import com.almeidajr.molda.update.ui.UpdateInstallPermission
-import com.almeidajr.molda.update.ui.UpdateInstallViewModel
+import com.almeidajr.molda.update.navigation.INSTALL_UPDATE_RESULT_KEY
 import com.almeidajr.molda.update.ui.UpdateStatus
+import com.almeidajr.molda.update.ui.updateSection
 import kotlinx.coroutines.launch
 
 /**
@@ -80,12 +79,12 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
     LaunchedEffect(navigator, editors) {
         snapshotFlow { navigator.state.allKeys }.collect { editors.retainOnly(it) }
     }
-    val app = MoldaApp(navigator, editors, hiltViewModel())
+    val app = MoldaApp(navigator, editors)
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
-    StartupUpdateNotice(onShowNotice = showMessage, onInstall = app::installUpdate)
+    ResultEffect<Update>(INSTALL_UPDATE_RESULT_KEY, resultBus) { app.installUpdate(it) }
+    StartupUpdateNotice(resultBus, onShowNotice = showMessage)
     CompositionLocalProvider(LocalEditorStatusHolder provides editors) {
-        UpdateInstallPermission()
         MoldaShell(
             navigator,
             titleFocus,
@@ -115,18 +114,14 @@ private fun EditorReport?.editorStatus(): EditorStatus = when (this) {
 /**
  * The app's [navigator], which wires the features' entries together and has [carryOut] perform the
  * transitions decided from the status of the editor an action on a stack concerns, which
- * [editors] answer; and the activity's [updateInstall].
+ * [editors] answer.
  */
-private class MoldaApp(
-    private val navigator: Navigator,
-    private val editors: EditorStatusHolder,
-    private val updateInstall: UpdateInstallViewModel,
-) {
+private class MoldaApp(private val navigator: Navigator, private val editors: EditorStatusHolder) {
     private val stacks get() = navigator.state
 
     /**
      * Installs the downloaded [update], asking first when any editor has unsaved changes: every
-     * place offering the install comes here.
+     * request on [INSTALL_UPDATE_RESULT_KEY] comes here.
      */
     fun installUpdate(update: Update) =
         perform(installUpdate(update, editors.dirtyEditors().values))
@@ -176,9 +171,8 @@ private class MoldaApp(
             onCancelEditor = { perform(cancelProfileEditor(status(stacks.current))) },
             onShowSnackbar = onShowSnackbar,
         )
-        aboutSection(navigator, versionName, updateStatus = {
-            UpdateStatus(onInstall = ::installUpdate)
-        })
+        aboutSection(navigator, versionName, updateStatus = { UpdateStatus() })
+        updateSection(navigator)
         overlaySection(
             navigator,
             onCreateProfile = { perform(requestPickerEditor(it, status(stacks.current))) },
@@ -190,8 +184,5 @@ private class MoldaApp(
     /** The status of the editor an action on [stack] concerns, read when the sewist acts. */
     private fun status(stack: List<NavKey>) = editors.editorOn(stack)?.report.editorStatus()
 
-    private fun perform(transition: Transition) = when (transition) {
-        is Transition.InstallUpdate -> updateInstall.install(transition.update)
-        else -> navigator.carryOut(transition)
-    }
+    private fun perform(transition: Transition) = navigator.carryOut(transition)
 }
