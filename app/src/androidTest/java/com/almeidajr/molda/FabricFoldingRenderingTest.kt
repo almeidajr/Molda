@@ -232,15 +232,15 @@ class FabricFoldingRenderingTest {
             // Given
             val radii = (calculateSkirtRadii(draft) as SkirtCalculation.Success).radii
             // The drawing paints no sheet of its own, so the dark theme needs its own check.
-            (if (index == 0) listOf(false, true) else listOf(false)).forEach { darkTheme ->
-                val colors = drawingColors(darkTheme)
+            (if (index == 0) listOf(false, true) else listOf(false)).forEach { isDarkTheme ->
+                val colors = drawingColors(isDarkTheme)
 
                 // When/Then
-                showDrawing(radii, FoldingStep.Cutting, darkTheme)
+                showDrawing(radii, FoldingStep.Cutting, isDarkTheme)
                 composeRule.awaitRiveFrame("Corte proporcional em Rive") {
                     isCircularDrawing(it, ratios, unfolded = false, colors)
                 }
-                showDrawing(radii, FoldingStep.Unfolding, darkTheme)
+                showDrawing(radii, FoldingStep.Unfolding, isDarkTheme)
                 composeRule.awaitRiveFrame("Círculo desdobrado proporcional em Rive") {
                     isCircularDrawing(it, ratios, unfolded = true, colors)
                 }
@@ -252,11 +252,11 @@ class FabricFoldingRenderingTest {
      * Shows one step's still drawing at a fixed size. The player sizes it by window height, which
      * on a short low-density screen leaves the unfolded waist lines closer than one pixel apart.
      */
-    private fun showDrawing(radii: SkirtRadii, step: FoldingStep, darkTheme: Boolean) {
+    private fun showDrawing(radii: SkirtRadii, step: FoldingStep, isDarkTheme: Boolean) {
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
                 // The full width of the narrowest phone; the still frame ignores motion.
-                MoldaTheme(darkTheme = darkTheme) {
+                MoldaTheme(isDarkTheme = isDarkTheme) {
                     GuideAnimation(
                         rememberGuideFile(),
                         radii,
@@ -368,10 +368,10 @@ class FabricFoldingRenderingTest {
 
     private fun ImageBitmap.pixels(): IntArray = IntArray(width * height).also { readPixels(it) }
 
-    /** The colours the drawing binds under [darkTheme], as [MoldaTheme] resolves them. */
+    /** The colours the drawing binds under [isDarkTheme], as [MoldaTheme] resolves them. */
     private fun drawingColors(
-        darkTheme: Boolean = composeRule.activity.resources.configuration.isNightModeActive,
-    ): DrawingColors = DrawingColors(moldaColorScheme(composeRule.activity, darkTheme, true))
+        isDarkTheme: Boolean = composeRule.activity.resources.configuration.isNightModeActive,
+    ): DrawingColors = DrawingColors(moldaColorScheme(composeRule.activity, isDarkTheme))
 
     /** Classifies captured pixels as the drawing's ink, fabric or the frame behind it. */
     private class DrawingColors(scheme: ColorScheme) {

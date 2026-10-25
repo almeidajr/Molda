@@ -49,9 +49,9 @@ class FabricFoldingLayoutTest {
 
     @Test
     fun guide_atNormalAndDoubleText_keepsLeadAndStepBarInViewOnEveryStep() {
-        listOf(false to 1f, true to 2f).forEach { (dark, fontScale) ->
+        listOf(false to 1f, true to 2f).forEach { (isDarkTheme, fontScale) ->
             // Given
-            openGuide(dark, fontScale)
+            openGuide(isDarkTheme, fontScale)
 
             // When/Then: each step is checked, then left through its forward action.
             listOf(
@@ -62,7 +62,7 @@ class FabricFoldingLayoutTest {
                 "Cortar os arcos",
                 "Desdobrar o círculo",
             ).forEachIndexed { index, title ->
-                val context = "$title dark=$dark fontScale=$fontScale"
+                val context = "$title dark=$isDarkTheme fontScale=$fontScale"
                 val heading = composeRule.onNodeWithText(title).assertIsDisplayed().assert(
                     SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading),
                 )
@@ -106,7 +106,7 @@ class FabricFoldingLayoutTest {
     @Test
     fun closeAction_atDoubleText_isTallEnough_andReturnsToResults() {
         // Given
-        openGuide(dark = false, fontScale = 2f)
+        openGuide(isDarkTheme = false, fontScale = 2f)
 
         // When
         composeRule.onNodeWithContentDescription("Fechar guia")
@@ -120,7 +120,7 @@ class FabricFoldingLayoutTest {
     @Test
     fun predictiveBack_onGuide_previewsResultsBeneath_andCancelKeepsGuide() {
         // Given
-        openGuide(dark = false, fontScale = 1f)
+        openGuide(isDarkTheme = false, fontScale = 1f)
         val dispatcher = composeRule.activity.onBackPressedDispatcher
         // Dispatching on the UI thread bypasses Compose's synchronization.
         composeRule.waitForIdle()
@@ -227,10 +227,10 @@ class FabricFoldingLayoutTest {
             .performScrollTo().assertIsDisplayed()
     }
 
-    private fun openGuide(dark: Boolean, fontScale: Float) {
+    private fun openGuide(isDarkTheme: Boolean, fontScale: Float) {
         val frame: RouteFrame = { route ->
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {
-                MoldaTheme(darkTheme = dark, dynamicColor = false, content = route)
+                MoldaTheme(isDarkTheme = isDarkTheme, content = route)
             }
         }
         if (isLaunched) {

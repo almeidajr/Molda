@@ -56,11 +56,10 @@ internal fun profile(
 internal fun profileFrame(
     fontScale: Float = 1f,
     width: Int? = null,
-    dark: Boolean = false,
-    dynamic: Boolean = true,
+    isDarkTheme: Boolean = false,
 ): RouteFrame = { route ->
     val theme = @Composable {
-        MoldaTheme(darkTheme = dark, dynamicColor = dynamic, content = route)
+        MoldaTheme(isDarkTheme = isDarkTheme, content = route)
     }
     val window = LocalWindowInfo.current.containerSize
     DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(fontScale)) {

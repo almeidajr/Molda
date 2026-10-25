@@ -15,20 +15,21 @@ bar; this document describes what shipped.
 
 - Prioritize working seamstresses calculating dimensions at the cutting table.
   Keep concise contextual explanations available for occasional users.
-- Use a calm, warm sewing-studio character. Material 3 Expressive shapes,
+- Use a calm, warm sewing-studio character. Material 3's default shapes,
   typography and motion emphasize primary actions and results.
 - Define the system and component/state specifications in documentation before
   implementing screens.
 - Preserve calculator-on-launch, optional measurement profiles, Brazilian
   Portuguese, centimetres, offline storage and hierarchical navigation.
-- Replace the previous restriction against custom visual branding with the
-  fallback palette below, retaining system light/dark mode and dynamic color.
+- Keep Material 3's standard visual system without custom branding: dynamic
+  color with system light/dark mode.
 
 ## Design tree
 
 - Accepted: audience, visual character, documentation scope, existing flows.
 - Accepted: typography and equal numerical hierarchy.
-- Accepted: warm plum fallback and dynamic-color precedence.
+- Accepted: dynamic color only. The warm plum fallback was dropped, since
+  minSdk 36 always has dynamic color.
 - Accepted: restrained expression, spacing and existing adaptive layouts.
 - Accepted: existing component inventory, states and accessibility acceptance.
 - Accepted: final shared understanding, including palette validation before implementation.
@@ -47,7 +48,7 @@ line heights are in sp and scale with system preferences.
 | Field text / explanatory body | bodyLarge | 16 / 24 | Regular |
 | Supporting text / field errors | bodyMedium | 14 / 20 | Regular |
 | Action label, line number, guide step position | labelLarge | 14 / 20 | Medium |
-| Each calculated radius value | headlineSmall | 24 / 32 | Medium emphasis |
+| Each calculated radius value | headlineSmall | 24 / 32 | Regular |
 
 Display all four radii with equal size and weight; labels identify their meaning.
 On the cutting card each label sits above its value in bodyLarge and
@@ -59,15 +60,10 @@ text containers.
 
 ## Color system
 
-Dynamic color is the runtime default. Follow system light/dark appearance without
-adding appearance settings. The warm studio identity must also come from shape,
-spacing and hierarchy because wallpaper colors can replace the branded palette.
-
-For fallback and design previews, use warm plum seed `#67506B`, linen-like neutral
-surfaces and muted sage tertiary tones. Generate complete light/dark Material
-schemes with Material Theme Builder before implementing theme tokens. The seed
-is an input to palette generation, not an approved button fill. Final generated
-hex values and contrast measurements belong in this document before implementation.
+The app uses the system's dynamic color scheme, light or dark, and has no
+palette of its own. Follow system light/dark appearance without adding
+appearance settings. The warm studio identity comes from shape, spacing and
+hierarchy because wallpaper colors decide the palette.
 
 | Semantic role | Use |
 | --- | --- |
@@ -84,8 +80,7 @@ hex values and contrast measurements belong in this document before implementati
 | error / onErrorContainer / errorContainer | Validation and failure feedback |
 | tertiary / onSurface | Diagram accents / textual labels |
 
-Use role-matched foreground/background pairs from the generated or dynamic
-scheme. Target at least 4.5:1 for ordinary text, 3:1 for large text and meaningful
+Use role-matched foreground/background pairs from the dynamic scheme. Target at least 4.5:1 for ordinary text, 3:1 for large text and meaningful
 graphical boundaries. Verify actual rendered pairs; do not assume pastel fills
 or generated schemes make every combination accessible. Diagram meaning always
 uses labels and distinct line styles as well as color.
@@ -105,12 +100,14 @@ Interactive targets are at least 48dp in both dimensions, with separate hit
 areas. Forms and buttons grow with text instead of fitting content to fixed heights.
 
 Use Material shape roles: small 8dp, medium 12dp, large 16dp and extraLarge 28dp.
-Grouped surfaces use 16dp corners; the cutting card and modal surfaces use
+Grouped surfaces use 12dp corners; the cutting card and modal surfaces use
 28dp. Primary actions use full rounded ends. Keep standard outlined field
 shapes. Use tonal grouping rather than nested cards or decorative shadows.
 
-The app theme is the Expressive Material theme with the expressive motion
-scheme, so Material components take their timing from that one scheme. Screen
+The app theme is the Material theme with its default shapes, typography and
+standard motion scheme, so Material components take their timing from that one
+scheme. The expressive scheme's spatial springs made text field labels overshoot
+when a field lost focus. Screen
 navigation uses Navigation 3's built-in transitions for now. Motion communicates
 pressed state, disclosure and navigation continuity; it never delays calculation
 or makes dimensions move while being read. Respect system animation settings and
@@ -195,7 +192,7 @@ profiles belong to the people someone sews for, not to an account.
 | Navigation suite | `NavigationSuiteScaffold` around the Navigation 3 `NavDisplay`. Compact (<600dp): short navigation bar, 64dp, `surfaceContainer`. Medium and expanded: collapsed wide navigation rail, 96dp, `surface`, items top-aligned, no FAB or menu in the rail. Labels always shown, auto-sizing down to 14sp to fit the item width. | Selected item: `secondaryContainer` pill with the filled glyph in `onSecondaryContainer`, label in `secondary`; unselected in `onSurfaceVariant`. Selection is never colour alone (the pill measures 1.11–1.97:1 against its container): filled glyph, label colour and selected semantics carry it. Icons are decorative; the label is the accessible name. Keyboard: one focus group, arrow keys move, Enter or Space selects. Re-selecting pops to the root. Items ≥90 × 64dp. |
 | Top app bar (root screens) | 64dp, Title Large heading with the destination's name ("Moldes", "Projetos", "Guias", "Perfis de medidas"), then the About action: `info` icon button, 48dp, "Sobre o Molda". | Title wraps at large text and keeps 16dp from the action. After switching destination, focus lands on the title. |
 | Top app bar (pushed screens) | Up arrow (`arrow_back`, "Voltar") and the screen title; no About action. The skirt calculator no longer carries "Perfis de medidas". | Up and system Back pop the current destination's stack. |
-| Catalog / library entry | Whole-row target on `surfaceContainerLow`, 16dp corners, 16dp padding, ≥88dp tall: a 56dp `secondaryContainer` thumbnail (a 24dp icon, a skirt for the skirt and folded fabric for fabric folding, decorative), the name in Title Medium, one Body Medium sentence in `onSurfaceVariant`, and a decorative `chevron_right`. A one-sentence Body Medium intro sits above the entries. | One merged TalkBack node announced as a button. Only existing moldes and guides are listed; no "em breve" entries. Wide windows: an adaptive grid with a 320dp minimum column, at most 1040dp wide. In a list-detail pane, the selected entry fills with `secondaryContainer`, drops the chevron and is exposed as selected. |
+| Catalog / library entry | Whole-row target on `surfaceContainerLow`, 12dp corners, 16dp padding, ≥88dp tall: a 56dp `secondaryContainer` thumbnail (a 24dp icon, a skirt for the skirt and folded fabric for fabric folding, decorative), the name in Title Medium, one Body Medium sentence in `onSurfaceVariant`, and a decorative `chevron_right`. A one-sentence Body Medium intro sits above the entries. | One merged TalkBack node announced as a button. Only existing moldes and guides are listed; no "em breve" entries. Wide windows: an adaptive grid with a 320dp minimum column, at most 1040dp wide. In a list-detail pane, the selected entry fills with `secondaryContainer`, drops the chevron and is exposed as selected. |
 | Example label (guide) | Pinned with the drawing at the top of a guide opened from Guias: `surfaceContainerHighest`, 16dp corners, decorative `info` glyph, "Exemplo — não são as suas medidas" in Label Large, the example inputs ("Cintura 80, folga 2, comprimento 60, margens 1 e 2 (cm)") in Body Small, and the "Calcular a minha saia" text button. | Never scrolls away and never appears when the guide carries a calculation's radii. A neutral surface on purpose: `secondaryContainer` means "your result" and the tertiary roles belong to the drawing. "Calcular a minha saia" switches to Moldes and opens the calculator, keeping any draft. The guide keeps one filled action ("Próximo"). |
 | Guide player in the shell | The existing full-screen player, renamed "Guia de dobra do tecido" (entry button) and "Fechar guia" (close). From a result it opens on the Moldes stack with the calculated radii; from Guias it opens on the Guias stack with the example radii. | Compact: the navigation bar is hidden while the player is open (`NavigationSuiteScaffoldState.hide()`); the fixed step bar stays the only bottom control. Wide: the rail stays; from Guias the guide is the list-detail detail pane with no close button, and the placeholder reads "Escolha um guia na lista.". |
 | Projetos empty state | Start-aligned in the content column: 48dp `folder` glyph (decorative, `onSurfaceVariant`), Title Large "Nenhum projeto salvo", Body Large definition "Um projeto guarda, com um nome, as medidas, as escolhas e o resultado de um molde, mesmo que o perfil usado mude depois.", and the filled "Ver moldes". | No dates, promises or statement about when saving arrives. "Ver moldes" switches to Moldes. Wide: one pane, at most 640dp, centred. |
@@ -218,13 +215,8 @@ profiles belong to the people someone sews for, not to an account.
 
 ### Accessibility checks for the shell
 
-Measured contrast in the fallback scheme (light / dark): bar labels
-`onSurfaceVariant` on `surfaceContainer` 8.08 / 9.65:1; selected label
-`secondary` on `surfaceContainer` 5.54 / 9.64:1; rail labels on `surface`
-8.94 / 10.92:1 and 6.13 / 10.90:1; selected glyph `onSecondaryContainer` on
-`secondaryContainer` 7.25:1; example label text on `surfaceContainerHighest`
-13.27 / 9.55:1 and supporting text 7.29 / 7.26:1; its `primary` action 5.03 /
-7.24:1. At 200% text the 12sp label becomes about 24sp, and "Projetos" is about
+Verify bar, rail and example-label contrast in light and dark dynamic schemes.
+At 200% text the 12sp label becomes about 24sp, and "Projetos" is about
 90dp, the width of one bar item on a 360dp phone: labels never ellipsize or
 wrap and auto-size down to a 14sp floor when the scaled size would overflow the
 item width; the bar grows in height with the text. Verify on a device at 200%

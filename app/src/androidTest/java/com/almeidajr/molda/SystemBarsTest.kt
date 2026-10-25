@@ -35,13 +35,13 @@ class SystemBarsTest {
     @Test
     fun moldaTheme_followsLightAndDark_withContrastingBarIcons() {
         // When
-        composeRule.activityRule.launch { MoldaTheme(darkTheme = false) {} }
+        composeRule.activityRule.launch { MoldaTheme(isDarkTheme = false) {} }
 
         // Then
         assertBarIconsAreDark(true)
 
         // When
-        composeRule.activityRule.show { MoldaTheme(darkTheme = true) {} }
+        composeRule.activityRule.show { MoldaTheme(isDarkTheme = true) {} }
 
         // Then
         assertBarIconsAreDark(false)
