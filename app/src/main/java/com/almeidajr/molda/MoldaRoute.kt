@@ -115,8 +115,12 @@ private class MoldaApp(
 ) {
     private val stacks get() = navigator.state
 
-    /** Installs the downloaded [update]: every place offering the install comes here. */
-    fun installUpdate(update: Update) = updateInstall.install(update)
+    /**
+     * Installs the downloaded [update], asking first when any editor has unsaved changes: every
+     * place offering the install comes here.
+     */
+    fun installUpdate(update: Update) =
+        perform(installUpdate(update, editors.dirtyEditors().values))
 
     fun select(destination: Destination) = perform(
         selectDestination(
@@ -177,5 +181,8 @@ private class MoldaApp(
     /** The status of the editor an action on [stack] concerns, read when the sewist acts. */
     private fun status(stack: List<NavKey>) = editors.editorOn(stack)?.report.editorStatus()
 
-    private fun perform(transition: Transition) = navigator.carryOut(transition)
+    private fun perform(transition: Transition) = when (transition) {
+        is Transition.InstallUpdate -> updateInstall.install(transition.update)
+        else -> navigator.carryOut(transition)
+    }
 }

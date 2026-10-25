@@ -35,5 +35,8 @@ internal fun Navigator.carryOut(transition: Transition) {
             openProfileEditor(transition.profile, transition.discardsDraft)
 
         is Transition.OpenPickerEditor -> openPickerEditor(transition.resultKey)
+
+        // The app's install path carries it out; the back stacks stay as they are.
+        is Transition.InstallUpdate -> Unit
     }
 }
