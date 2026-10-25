@@ -3,9 +3,7 @@ package com.almeidajr.molda.update.data
 import com.almeidajr.molda.update.domain.ReleaseAsset
 import com.almeidajr.molda.update.domain.Update
 import com.almeidajr.molda.update.domain.UpdateCheck
-import com.almeidajr.molda.update.domain.UpdateDownload
 import kotlin.test.assertEquals
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.junit4.MockWebServerRule
@@ -14,7 +12,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /** The update check against a stand-in for GitHub's REST API. */
-class GitHubUpdateRepositoryTest {
+class GitHubReleasesTest {
     @get:Rule
     val serverRule = MockWebServerRule()
 
@@ -26,7 +24,7 @@ class GitHubUpdateRepositoryTest {
         server.enqueue(MockResponse(body = RELEASES))
 
         // When
-        val check = repository("0.3.0-beta.1").check()
+        val check = releases("0.3.0-beta.1").check()
 
         // Then
         assertEquals(
@@ -55,7 +53,7 @@ class GitHubUpdateRepositoryTest {
         server.enqueue(MockResponse(code = 503))
 
         // When/Then
-        assertEquals(UpdateCheck.Failed, repository("0.3.0-beta.1").check())
+        assertEquals(UpdateCheck.Failed, releases("0.3.0-beta.1").check())
     }
 
     @Test
@@ -64,33 +62,23 @@ class GitHubUpdateRepositoryTest {
         server.enqueue(MockResponse(body = """[{"tag_name": "v0.3.0", "assets": """))
 
         // When/Then
-        assertEquals(UpdateCheck.Failed, repository("0.3.0-beta.1").check())
+        assertEquals(UpdateCheck.Failed, releases("0.3.0-beta.1").check())
     }
 
     @Test
     fun check_onALocalBuild_makesNoRequest() = runTest {
         // When
-        val check = repository("0.0.0-dev").check()
+        val check = releases("0.0.0-dev").check()
 
         // Then
         assertEquals(UpdateCheck.NotChecked, check)
         assertEquals(0, server.requestCount)
     }
 
-    private fun repository(installedVersionName: String) = GitHubUpdateRepository(
+    private fun releases(installedVersionName: String) = GitHubReleases(
         gitHubReleasesApi(server.url("/").toString(), OkHttpClient()),
         installedVersionName,
-        UnusedApks,
     )
-
-    /** The check never touches the APK. */
-    private object UnusedApks : UpdateApks {
-        override fun download(update: Update): Flow<UpdateDownload> = error("Not checked here")
-
-        override suspend fun startDownload(update: Update) = error("Not checked here")
-
-        override suspend fun install(update: Update) = error("Not checked here")
-    }
 
     private companion object {
         // Trimmed from GitHub's GET /repos/{owner}/{repo}/releases, unread fields included.

@@ -10,8 +10,10 @@ import android.content.pm.PackageInstaller
 import android.os.Environment
 import androidx.core.net.toUri
 import com.almeidajr.molda.update.domain.Update
+import com.almeidajr.molda.update.domain.UpdateCheck
 import com.almeidajr.molda.update.domain.UpdateDownload
 import com.almeidajr.molda.update.domain.UpdateInstall
+import com.almeidajr.molda.update.domain.UpdateRepository
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
@@ -25,15 +27,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-
-/** An update's APK on the device: its download and its install. */
-internal interface UpdateApks {
-    fun download(update: Update): Flow<UpdateDownload>
-
-    suspend fun startDownload(update: Update)
-
-    suspend fun install(update: Update): UpdateInstall
-}
 
 /**
  * True when [apk]'s SHA-256 matches [digest] (GitHub's `sha256:…`); otherwise deletes [apk], so
@@ -59,14 +52,18 @@ private fun File.sha256(): String {
 private val PollInterval = 500.milliseconds
 
 /**
- * Downloads through the system `DownloadManager` into the app's external files, the APK's file name
- * identifying the download, and installs through a `PackageInstaller` session.
+ * Updates from [releases], downloaded through the system `DownloadManager` into the app's external
+ * files, the APK's file name identifying the download, and installed through a `PackageInstaller`
+ * session.
  */
-internal class SystemUpdateApks(
+internal class SystemUpdateRepository(
     private val context: Context,
+    private val releases: GitHubReleases,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) : UpdateApks {
+) : UpdateRepository {
     private val downloads = checkNotNull(context.getSystemService(DownloadManager::class.java))
+
+    override suspend fun check(): UpdateCheck = releases.check()
 
     // DownloadManager has no change callback; polling while About shows the download is enough.
     override fun download(update: Update): Flow<UpdateDownload> = flow {
@@ -180,7 +177,7 @@ internal class SystemUpdateApks(
     }
 }
 
-/** Shows the system installer's confirmation for a session [SystemUpdateApks] committed. */
+/** Shows the system installer's confirmation for a session [SystemUpdateRepository] committed. */
 internal class UpdateInstallReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val status =
