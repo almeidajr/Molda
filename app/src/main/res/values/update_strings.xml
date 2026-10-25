@@ -12,7 +12,7 @@
     <string name="update_downloading">Baixando a atualização…</string>
     <string name="update_install">Instalar</string>
     <string name="update_download_failed">O download falhou</string>
-    <string name="update_download_failed_hint">O arquivo não chegou inteiro ou não confere com o publicado.</string>
+    <string name="update_verification_failed_hint">O arquivo baixado não confere com o publicado.</string>
     <string name="update_retry">Tentar novamente</string>
     <string name="update_permission_title">Permita instalar a atualização</string>
     <string name="update_permission_body">Para instalar a atualização, permita que o Molda instale apps nas configurações.</string>

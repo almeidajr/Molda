@@ -128,14 +128,22 @@ private fun UpdateDownloadStatus(
             onInstall,
         )
 
-        UpdateDownload.VerificationFailed -> {
-            ListItem(
-                modifier = Modifier.semantics(mergeDescendants = true) {},
-                supportingContent = { Text(stringResource(R.string.update_download_failed_hint)) },
-            ) { Text(stringResource(R.string.update_download_failed)) }
-            UpdateAction(R.string.update_retry, R.drawable.ic_refresh, onStartDownload)
-        }
+        UpdateDownload.Failed ->
+            UpdateDownloadFailure(R.string.update_failed_hint, onStartDownload)
+
+        UpdateDownload.VerificationFailed ->
+            UpdateDownloadFailure(R.string.update_verification_failed_hint, onStartDownload)
     }
+}
+
+/** A failed download, why it failed ([hint]) and the retry. */
+@Composable
+private fun UpdateDownloadFailure(@StringRes hint: Int, onRetry: () -> Unit) {
+    ListItem(
+        modifier = Modifier.semantics(mergeDescendants = true) {},
+        supportingContent = { Text(stringResource(hint)) },
+    ) { Text(stringResource(R.string.update_download_failed)) }
+    UpdateAction(R.string.update_retry, R.drawable.ic_refresh, onRetry)
 }
 
 @Composable

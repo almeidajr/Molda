@@ -189,7 +189,7 @@ internal class SystemUpdateRepository(
                     UpdateDownload.VerificationFailed
                 }
 
-            DownloadManager.STATUS_FAILED -> UpdateDownload.VerificationFailed
+            DownloadManager.STATUS_FAILED -> UpdateDownload.Failed
 
             else -> UpdateDownload.Downloading(if (size > 0) done.toFloat() / size else null)
         }

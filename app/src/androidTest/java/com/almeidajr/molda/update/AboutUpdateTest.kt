@@ -182,6 +182,22 @@ class AboutUpdateTest {
     }
 
     @Test
+    fun about_whenTheDownloadFails_pointsToTheConnection_andOffersARetry() {
+        // Given
+        val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Failed)
+        composeRule.launchApp(updates = updates)
+        openAboutPastTheStartupNotice()
+        composeRule.onNodeWithText("O download falhou").assertIsDisplayed()
+        composeRule.onNodeWithText("Confira a conexão e tente de novo.").assertIsDisplayed()
+
+        // When
+        composeRule.onNodeWithText("Tentar novamente").performClick()
+
+        // Then
+        composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
+    }
+
+    @Test
     fun about_whenVerificationFails_saysSo_andOffersARetry() {
         // Given
         val updates = FakeUpdateRepository(
@@ -190,7 +206,8 @@ class AboutUpdateTest {
         )
         composeRule.launchApp(updates = updates)
         openAboutPastTheStartupNotice()
-        composeRule.onNodeWithText("O download falhou").assertIsDisplayed()
+        composeRule.onNodeWithText("O arquivo baixado não confere com o publicado.")
+            .assertIsDisplayed()
 
         // When
         composeRule.onNodeWithText("Tentar novamente").performClick()

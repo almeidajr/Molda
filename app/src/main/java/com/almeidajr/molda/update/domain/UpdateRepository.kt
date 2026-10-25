@@ -31,9 +31,12 @@ sealed interface UpdateDownload {
     /** Downloaded, its APK matching the digest GitHub publishes: ready to install. */
     data object Downloaded : UpdateDownload
 
+    /** The download failed, for example offline; it can start again. */
+    data object Failed : UpdateDownload
+
     /**
-     * The download failed, or its APK had no digest or didn't match it; the file is gone and the
-     * download can start again.
+     * Downloaded, but its APK had no digest or didn't match it; the file is gone and the download
+     * can start again.
      */
     data object VerificationFailed : UpdateDownload
 }
