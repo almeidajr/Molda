@@ -136,8 +136,8 @@ class AboutUpdateTest {
             ),
         )
 
-        // When
-        openAboutPastTheStartupNotice()
+        // When: no startup notice announces an update already downloading.
+        composeRule.openAbout()
 
         // Then
         composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
@@ -154,7 +154,8 @@ class AboutUpdateTest {
             UpdateDownload.Downloading(progress = 0.9f),
         )
         composeRule.launchApp(updates = updates)
-        openAboutPastTheStartupNotice()
+        // No startup notice announces an update already downloading.
+        composeRule.openAbout()
         composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
 
         // When
