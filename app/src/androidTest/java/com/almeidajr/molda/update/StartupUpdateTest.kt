@@ -118,6 +118,21 @@ class StartupUpdateTest {
     @Test
     fun start_onALocalBuild_showsNoNotice() = assertNoNoticeOn(UpdateCheck.NotChecked)
 
+    @Test
+    fun start_duringTheUpdatesDownload_showsNoNotice() {
+        // When
+        composeRule.launchApp(
+            updates = FakeUpdateRepository(
+                UpdateCheck.Available(Beta2),
+                UpdateDownload.Downloading(progress = 0.4f),
+            ),
+        )
+
+        // Then
+        composeRule.screenTitle("Moldes").assertIsDisplayed()
+        composeRule.snackbar().assertDoesNotExist()
+    }
+
     private fun assertNoNoticeOn(check: UpdateCheck) {
         // When
         composeRule.launchApp(updates = FakeUpdateRepository(check))

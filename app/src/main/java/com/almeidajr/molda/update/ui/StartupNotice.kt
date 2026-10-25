@@ -19,13 +19,15 @@ internal sealed interface StartupNotice {
 
 /**
  * Checks for an update and reads its download once, rather than following it, so no download is
- * polled while drafting; null when there is nothing to announce: no update, a failed check, or a
- * local build.
+ * polled while drafting; null when there is nothing to announce: no update, a failed check, a
+ * local build, or the update already downloading, which installs once it finishes.
  */
 internal suspend fun UpdateRepository.startupNotice(): StartupNotice? {
     val update = (check() as? UpdateCheck.Available)?.update ?: return null
     return when (download(update).first()) {
         UpdateDownload.Downloaded -> StartupNotice.Install(update)
-        else -> StartupNotice.Download(update)
+        is UpdateDownload.Downloading -> null
+        UpdateDownload.NotStarted, UpdateDownload.VerificationFailed ->
+            StartupNotice.Download(update)
     }
 }
