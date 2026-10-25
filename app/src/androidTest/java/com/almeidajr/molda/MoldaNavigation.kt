@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.assertCountEquals
@@ -151,6 +152,15 @@ internal fun SemanticsNodeInteractionsProvider.dialogTextField(): SemanticsNodeI
  */
 internal fun SemanticsNodeInteractionsProvider.assertNoTextFieldFocused() {
     onAllNodes(hasSetTextAction() and isFocused()).assertCountEquals(0)
+}
+
+/** The snackbar shown, the only node a screen reader can dismiss. */
+internal fun SemanticsNodeInteractionsProvider.snackbar(): SemanticsNodeInteraction =
+    onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.Dismiss))
+
+/** Dismisses the snackbar shown, as a screen reader does. */
+internal fun SemanticsNodeInteractionsProvider.dismissSnackbar() {
+    snackbar().performSemanticsAction(SemanticsActions.Dismiss)
 }
 
 /** The top app bar heading reading [title]. */

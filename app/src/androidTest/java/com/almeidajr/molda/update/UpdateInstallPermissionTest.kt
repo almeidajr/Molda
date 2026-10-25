@@ -16,6 +16,7 @@ import androidx.test.espresso.intent.rule.IntentsRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.dismissSnackbar
 import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.testing.FakeUpdateRepository
 import com.almeidajr.molda.update.domain.ReleaseAsset
@@ -57,6 +58,7 @@ class UpdateInstallPermissionTest {
         // Given
         returnFromSetting { }
         composeRule.launchApp(updates = updates)
+        composeRule.dismissSnackbar()
         openAbout()
 
         // When
@@ -72,6 +74,7 @@ class UpdateInstallPermissionTest {
         // Given
         returnFromSetting { updates.canInstall = true }
         composeRule.launchApp(updates = updates)
+        composeRule.dismissSnackbar()
         openAbout()
 
         // When
@@ -91,6 +94,7 @@ class UpdateInstallPermissionTest {
         // Given
         returnFromSetting { }
         composeRule.launchApp(updates = updates)
+        composeRule.dismissSnackbar()
         openAbout()
         composeRule.onNodeWithText("Instalar").performClick()
         composeRule.onNodeWithText(EXPLANATION).assertIsDisplayed()

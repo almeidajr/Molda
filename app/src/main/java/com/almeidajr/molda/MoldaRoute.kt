@@ -1,6 +1,7 @@
 package com.almeidajr.molda
 
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +40,7 @@ import com.almeidajr.molda.ui.navigation.rememberEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
 import com.almeidajr.molda.update.domain.Update
+import com.almeidajr.molda.update.ui.StartupUpdateNotice
 import com.almeidajr.molda.update.ui.UpdateInstallPermission
 import com.almeidajr.molda.update.ui.UpdateInstallViewModel
 import com.almeidajr.molda.update.ui.UpdateStatus
@@ -62,14 +64,18 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
-    // One callback for every section; launched here, so it outlives the entry that asked.
-    val showSnackbar: (Int) -> Unit = { message ->
+    // One host for every message; launched here, so it outlives the entry that asked.
+    val showMessage: (String, String?, () -> Unit) -> Unit = { message, action, onAction ->
         scope.launch {
             // The latest outcome replaces the shown one instead of queuing behind it.
             snackbar.currentSnackbarData?.dismiss()
-            snackbar.showSnackbar(resources.getString(message))
+            val result = snackbar.showSnackbar(message, action, withDismissAction = action != null)
+            if (result == SnackbarResult.ActionPerformed) onAction()
         }
     }
+    val showSnackbar: (
+        Int,
+    ) -> Unit = { message -> showMessage(resources.getString(message), null) {} }
     // The holder forgets an editor's report once its key leaves the back stacks.
     LaunchedEffect(navigator, editors) {
         snapshotFlow { navigator.state.allKeys }.collect { editors.retainOnly(it) }
@@ -77,6 +83,7 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
     val app = MoldaApp(navigator, editors, hiltViewModel())
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
+    StartupUpdateNotice(onShowNotice = showMessage, onInstall = app::installUpdate)
     CompositionLocalProvider(LocalEditorStatusHolder provides editors) {
         UpdateInstallPermission()
         MoldaShell(

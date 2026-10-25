@@ -15,6 +15,7 @@ import com.almeidajr.molda.click
 import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.createLaunchLaterComposeRule
+import com.almeidajr.molda.dismissSnackbar
 import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.profile.edit
 import com.almeidajr.molda.screenTitle
@@ -49,7 +50,7 @@ class AboutUpdateTest {
         composeRule.launchApp(updates = FakeUpdateRepository(UpdateCheck.Available(Beta2)))
 
         // When
-        openAbout()
+        openAboutPastTheStartupNotice()
 
         // Then
         composeRule.onNodeWithText("Versão 0.3.0-beta.2 disponível").assertIsDisplayed()
@@ -119,7 +120,7 @@ class AboutUpdateTest {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2))
         composeRule.launchApp(updates = updates)
-        openAbout()
+        openAboutPastTheStartupNotice()
 
         // When
         composeRule.onNodeWithText("Atualizar").performClick()
@@ -140,7 +141,7 @@ class AboutUpdateTest {
         )
 
         // When
-        openAbout()
+        openAboutPastTheStartupNotice()
 
         // Then
         composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
@@ -157,7 +158,7 @@ class AboutUpdateTest {
             UpdateDownload.Downloading(progress = 0.9f),
         )
         composeRule.launchApp(updates = updates)
-        openAbout()
+        openAboutPastTheStartupNotice()
         composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
 
         // When
@@ -173,7 +174,7 @@ class AboutUpdateTest {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
         composeRule.launchApp(updates = updates)
-        openAbout()
+        openAboutPastTheStartupNotice()
         composeRule.onNodeWithText("Instalar").assertIsDisplayed()
         composeRule.runOnIdle { assertEquals(emptyList(), updates.installed) }
 
@@ -192,7 +193,7 @@ class AboutUpdateTest {
             UpdateDownload.VerificationFailed,
         )
         composeRule.launchApp(updates = updates)
-        openAbout()
+        openAboutPastTheStartupNotice()
         composeRule.onNodeWithText("O download falhou").assertIsDisplayed()
 
         // When
@@ -249,11 +250,18 @@ class AboutUpdateTest {
     /** Leaves a new profile's editor with unsaved changes in Perfis and opens About from Moldes. */
     private fun launchWithUnsavedProfileThenOpenAbout(updates: FakeUpdateRepository) {
         composeRule.launchApp(updates = updates)
+        composeRule.dismissSnackbar()
         composeRule.selectDestination("Perfis")
         composeRule.click("Novo perfil")
         composeRule.edit("Nome ou apelido", "Rascunho")
         composeRule.closeKeyboard()
         composeRule.selectDestination("Moldes")
+        openAbout()
+    }
+
+    /** Opens About once the startup notice of the same update is gone, so its texts are About's. */
+    private fun openAboutPastTheStartupNotice() {
+        composeRule.dismissSnackbar()
         openAbout()
     }
 
