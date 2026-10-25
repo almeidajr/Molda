@@ -63,6 +63,21 @@ class StartupUpdateTest {
     }
 
     @Test
+    fun atualizarOnTheNotice_whenTheDownloadFinishesOutsideAbout_startsTheInstall() {
+        // Given
+        val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2))
+        composeRule.launchApp(updates = updates)
+        composeRule.onNodeWithText("Atualizar").performClick()
+        composeRule.runOnIdle { assertEquals(emptyList(), updates.installed) }
+
+        // When
+        composeRule.runOnIdle { updates.download = UpdateDownload.Downloaded }
+
+        // Then
+        composeRule.runOnIdle { assertEquals(listOf(Beta2), updates.installed) }
+    }
+
+    @Test
     fun start_withTheUpdateDownloaded_installsItFromInstalar() {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)

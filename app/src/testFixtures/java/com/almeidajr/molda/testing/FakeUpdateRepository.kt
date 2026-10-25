@@ -8,6 +8,8 @@ import com.almeidajr.molda.update.domain.UpdateRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
@@ -36,9 +38,13 @@ class FakeUpdateRepository(
     /** The updates whose install started, oldest first. */
     val installed: List<Update> get() = installs.value
 
+    private val offeredUpdate = MutableStateFlow<Update?>(null)
+
+    override val offered: StateFlow<Update?> = offeredUpdate.asStateFlow()
+
     override suspend fun check(): UpdateCheck {
         checkGate?.await()
-        return result
+        return result.also { if (it is UpdateCheck.Available) offeredUpdate.value = it.update }
     }
 
     override fun download(update: Update): Flow<UpdateDownload> = downloadState

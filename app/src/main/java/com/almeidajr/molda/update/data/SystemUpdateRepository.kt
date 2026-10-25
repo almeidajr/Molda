@@ -20,12 +20,21 @@ import java.security.MessageDigest
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 
 /**
@@ -62,19 +71,35 @@ internal class SystemUpdateRepository(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : UpdateRepository {
     private val downloads = checkNotNull(context.getSystemService(DownloadManager::class.java))
+    private val offeredUpdate = MutableStateFlow<Update?>(null)
 
-    override suspend fun check(): UpdateCheck = releases.check()
+    // The APK names of downloads started since, so a followed download is polled again.
+    private val started =
+        MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
-    // DownloadManager has no change callback; polling while About shows the download is enough.
-    override fun download(update: Update): Flow<UpdateDownload> = flow {
-        while (true) {
-            emit(rows(update).lastOrNull())
-            delay(PollInterval)
-        }
-    }
+    override val offered: StateFlow<Update?> = offeredUpdate.asStateFlow()
+
+    override suspend fun check(): UpdateCheck =
+        releases.check().also { if (it is UpdateCheck.Available) offeredUpdate.value = it.update }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun download(update: Update): Flow<UpdateDownload> = started
+        .filter { it == update.apk.name }
+        .onStart { emit(update.apk.name) }
+        .flatMapLatest { rowsWhileRunning(update) }
         .distinctUntilChanged()
         .map { it.toUpdateDownload(update) }
         .flowOn(ioDispatcher)
+
+    // DownloadManager has no change callback; polling only while the download runs is enough.
+    private fun rowsWhileRunning(update: Update): Flow<DownloadRow?> = flow {
+        do {
+            val row = rows(update).lastOrNull()
+            emit(row)
+            val isRunning = row != null && row.status in RUNNING_STATUSES
+            if (isRunning) delay(PollInterval)
+        } while (isRunning)
+    }
 
     override suspend fun startDownload(update: Update) = withContext(ioDispatcher) {
         rows(update).forEach { downloads.remove(it.id) }
@@ -89,7 +114,7 @@ internal class SystemUpdateRepository(
                     update.apk.name,
                 ),
         )
-        Unit
+        started.emit(update.apk.name)
     }
 
     override suspend fun install(update: Update): UpdateInstall {
@@ -174,6 +199,12 @@ internal class SystemUpdateRepository(
 
     private companion object {
         const val APK_MIME_TYPE = "application/vnd.android.package-archive"
+
+        val RUNNING_STATUSES = setOf(
+            DownloadManager.STATUS_PENDING,
+            DownloadManager.STATUS_RUNNING,
+            DownloadManager.STATUS_PAUSED,
+        )
     }
 }
 

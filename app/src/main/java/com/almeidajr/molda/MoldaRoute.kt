@@ -39,6 +39,7 @@ import com.almeidajr.molda.ui.navigation.rememberEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
 import com.almeidajr.molda.update.domain.Update
+import com.almeidajr.molda.update.ui.InstallWhenDownloaded
 import com.almeidajr.molda.update.ui.StartupUpdateNotice
 import com.almeidajr.molda.update.navigation.INSTALL_UPDATE_RESULT_KEY
 import com.almeidajr.molda.update.ui.UpdateStatus
@@ -84,6 +85,7 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
     ResultEffect<Update>(INSTALL_UPDATE_RESULT_KEY, resultBus) { app.installUpdate(it) }
     StartupUpdateNotice(resultBus, onShowNotice = showMessage)
+    InstallWhenDownloaded(resultBus)
     CompositionLocalProvider(LocalEditorStatusHolder provides editors) {
         MoldaShell(
             navigator,
