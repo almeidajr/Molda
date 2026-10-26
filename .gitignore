@@ -26,3 +26,6 @@
 .claude/skills/impeccable/scripts/bin/
 # Personal tool settings (Claude Code, Impeccable); shared ones are committed.
 **/*.local.json
+
+# Python bytecode from skill scripts
+__pycache__/
