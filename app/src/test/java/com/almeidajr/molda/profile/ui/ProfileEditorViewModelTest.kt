@@ -28,7 +28,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-// Robolectric supplies the real Bundle that saved state is parcelled through.
+// Robolectric supplies the real Bundle that saved state is parceled through.
 @RunWith(RobolectricTestRunner::class)
 class ProfileEditorViewModelTest {
     private val storage = FakeProfileRepository(listOf(ana))

@@ -11,9 +11,9 @@ private const val MARKING_DIAMETER = 800.0
  * [MARKING_DIAMETER] and the other three keep their proportion to it.
  */
 internal fun markingDiameters(radii: SkirtRadii): Map<String, Float> {
-    // Normalize before converting to Float; large valid centimetre values stay finite.
+    // Normalize before converting to Float; large valid centimeter values stay finite.
     fun diameter(radius: Length) =
-        (MARKING_DIAMETER * (radius.centimetres / radii.hemCutting.centimetres)).toFloat()
+        (MARKING_DIAMETER * (radius.centimeters / radii.hemCutting.centimeters)).toFloat()
     return mapOf(
         "waistStitching" to diameter(radii.waistStitching),
         "waistCutting" to diameter(radii.waistCutting),

@@ -13,8 +13,8 @@ class LengthParsingTest {
         val cases = mapOf(" 80,5 " to 80.5, "80.5" to 80.5, "0" to 0.0)
 
         // When/Then
-        cases.forEach { (text, centimetres) ->
-            assertEquals(ParsedLength.Valid(Length(centimetres)), parseLength(text), text)
+        cases.forEach { (text, centimeters) ->
+            assertEquals(ParsedLength.Valid(Length(centimeters)), parseLength(text), text)
         }
     }
 
@@ -37,13 +37,13 @@ class LengthParsingTest {
     }
 
     @Test
-    fun length_withNegativeOrNonfiniteCentimetres_throws() {
+    fun length_withNegativeOrNonfiniteCentimeters_throws() {
         // Given
         val cases = listOf(-0.5, Double.NaN, Double.POSITIVE_INFINITY)
 
         // When/Then
-        cases.forEach { centimetres ->
-            assertFailsWith<IllegalArgumentException>("$centimetres") { Length(centimetres) }
+        cases.forEach { centimeters ->
+            assertFailsWith<IllegalArgumentException>("$centimeters") { Length(centimeters) }
         }
     }
 

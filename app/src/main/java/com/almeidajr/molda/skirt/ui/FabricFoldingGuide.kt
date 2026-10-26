@@ -246,7 +246,7 @@ private fun drawingDescription(step: FoldingStep): String = when (step) {
 }
 
 /**
- * The drawing's colour properties by view-model name. The cutting card's roles: fabric is its
+ * The drawing's color properties by view-model name. The cutting card's roles: fabric is its
  * paper and lines its ink, so the drawing reads on the light, dark and dynamic schemes alike.
  */
 internal fun guidePalette(colors: ColorScheme): Map<String, Color> = mapOf(

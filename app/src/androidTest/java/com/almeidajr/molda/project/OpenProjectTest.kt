@@ -254,7 +254,7 @@ class OpenProjectTest {
     }
 
     @Test
-    fun delete_ofOpenedProjectFailedThenCancelled_showsTheProjectAgain() {
+    fun delete_ofOpenedProjectFailedThenCanceled_showsTheProjectAgain() {
         // Given: its delete is held, then fails.
         val gate = CompletableDeferred<Unit>()
         projects.commandGate = gate

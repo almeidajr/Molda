@@ -159,7 +159,7 @@ data class PickerRow(val profile: MeasurementProfile, val showNotes: Boolean)
 
 /**
  * Each of [profiles] as a picker row, shown with notes when another profile has the same name,
- * waist and measurement date; the notes themselves do not count towards being alike.
+ * waist and measurement date; the notes themselves do not count toward being alike.
  */
 fun pickerRows(profiles: List<MeasurementProfile>): List<PickerRow> {
     val sizes = profiles.groupingBy { it.measurements.lookalikeKey() }.eachCount()

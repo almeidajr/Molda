@@ -65,11 +65,11 @@ class CuttingCardTest {
     }
 
     @Test
-    fun formatCentimetres_anyLength_roundsToTwoCommaDecimalsWithoutGrouping() {
+    fun formatCentimeters_anyLength_roundsToTwoCommaDecimalsWithoutGrouping() {
         // When/Then
-        assertEquals("12,39 cm", formatCentimetres(Length(12.3859165977624)))
-        assertEquals("0,50 cm", formatCentimetres(Length(0.499)))
-        assertEquals("1234567,89 cm", formatCentimetres(Length(1_234_567.891)))
+        assertEquals("12,39 cm", formatCentimeters(Length(12.3859165977624)))
+        assertEquals("0,50 cm", formatCentimeters(Length(0.499)))
+        assertEquals("1234567,89 cm", formatCentimeters(Length(1_234_567.891)))
     }
 
     @Test

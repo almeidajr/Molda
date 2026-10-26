@@ -3,13 +3,13 @@ package com.almeidajr.molda.measurement
 import java.math.BigDecimal
 import kotlinx.serialization.Serializable
 
-/** A finite, non-negative distance in centimetres. */
+/** A finite, non-negative distance in centimeters. */
 @Serializable
 @JvmInline
-value class Length(val centimetres: Double) {
+value class Length(val centimeters: Double) {
     init {
-        require(centimetres.isFinite() && centimetres >= 0.0) {
-            "A length must be finite and non-negative: $centimetres"
+        require(centimeters.isFinite() && centimeters >= 0.0) {
+            "A length must be finite and non-negative: $centimeters"
         }
     }
 }
@@ -49,4 +49,4 @@ private val DecimalNumber = Regex("[+-]?[0-9]+([,.][0-9]+)?")
 
 /** [length] as a user would type it: a decimal comma and no trailing zeros, e.g. "80,5". */
 fun lengthText(length: Length): String =
-    BigDecimal.valueOf(length.centimetres).stripTrailingZeros().toPlainString().replace('.', ',')
+    BigDecimal.valueOf(length.centimeters).stripTrailingZeros().toPlainString().replace('.', ',')

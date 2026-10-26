@@ -19,7 +19,7 @@ data class SkirtDraft(
     val hemAllowance: Length,
 ) {
     init {
-        require(waist.centimetres > 0.0 && finishedLength.centimetres > 0.0) {
+        require(waist.centimeters > 0.0 && finishedLength.centimeters > 0.0) {
             "A skirt draft needs a positive waist and finished length"
         }
     }
@@ -97,7 +97,7 @@ private fun skirtFieldError(field: SkirtDraftField, text: String): SkirtFieldErr
         parsed is ParsedLength.Malformed -> SkirtFieldError.NotANumber
 
         field.mustBePositive &&
-            (parsed !is ParsedLength.Valid || parsed.length.centimetres <= 0.0) ->
+            (parsed !is ParsedLength.Valid || parsed.length.centimeters <= 0.0) ->
             SkirtFieldError.NotPositive
 
         parsed is ParsedLength.Negative -> SkirtFieldError.Negative
@@ -106,12 +106,12 @@ private fun skirtFieldError(field: SkirtDraftField, text: String): SkirtFieldErr
     }
 }
 
-/** Calculates radii in centimetres without rounding intermediate values. */
+/** Calculates radii in centimeters without rounding intermediate values. */
 fun calculateSkirtRadii(draft: SkirtDraft): SkirtCalculation {
-    val waistStitching = (draft.waist.centimetres + draft.ease.centimetres) / (2 * PI)
-    val finishedHem = waistStitching + draft.finishedLength.centimetres
-    val waistCutting = waistStitching - draft.waistSeamAllowance.centimetres
-    val hemCutting = finishedHem + draft.hemAllowance.centimetres
+    val waistStitching = (draft.waist.centimeters + draft.ease.centimeters) / (2 * PI)
+    val finishedHem = waistStitching + draft.finishedLength.centimeters
+    val waistCutting = waistStitching - draft.waistSeamAllowance.centimeters
+    val hemCutting = finishedHem + draft.hemAllowance.centimeters
     return when {
         listOf(waistStitching, finishedHem, waistCutting, hemCutting).any { !it.isFinite() } ->
             SkirtCalculation.NonfiniteResult

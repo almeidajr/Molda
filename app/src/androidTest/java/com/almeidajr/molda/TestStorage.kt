@@ -5,7 +5,7 @@ import com.almeidajr.molda.data.room.openMoldaDatabase
 import com.almeidajr.molda.profile.data.LocalProfileRepository
 import com.almeidajr.molda.project.data.LocalProjectRepository
 
-/** Runs [block] on profiles in the database file [name], on a connection closed afterwards. */
+/** Runs [block] on profiles in the database file [name], on a connection closed afterward. */
 internal inline fun <T> withProfiles(
     context: Context,
     name: String,
@@ -19,7 +19,7 @@ internal inline fun <T> withProfiles(
     }
 }
 
-/** Runs [block] on projects in the database file [name], on a connection closed afterwards. */
+/** Runs [block] on projects in the database file [name], on a connection closed afterward. */
 internal inline fun <T> withProjects(
     context: Context,
     name: String,

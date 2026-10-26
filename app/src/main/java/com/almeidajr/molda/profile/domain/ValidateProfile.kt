@@ -36,7 +36,7 @@ fun validateProfile(
 ): ProfileValidation {
     val trimmedName = name.trim()
     val length = (parseLength(waist) as? ParsedLength.Valid)?.length
-        ?.takeIf { it.centimetres > 0.0 }
+        ?.takeIf { it.centimeters > 0.0 }
     val date = parseProfileDate(measurementDate)
     val errors = buildSet {
         if (trimmedName.isEmpty()) add(ProfileError.BlankName)

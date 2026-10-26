@@ -4,12 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.about.navigation.AboutKey
-import com.almeidajr.molda.about.navigation.LicencesKey
+import com.almeidajr.molda.about.navigation.LicensesKey
 import com.almeidajr.molda.ui.navigation.Navigator
 
 /**
  * About Molda, showing [versionName] and the app's [updateStatus], which composes within the About
- * entry; and its licences.
+ * entry; and its licenses.
  */
 internal fun EntryProviderScope<NavKey>.aboutSection(
     navigator: Navigator,
@@ -20,9 +20,9 @@ internal fun EntryProviderScope<NavKey>.aboutSection(
         AboutScreen(
             versionName = versionName,
             onUp = navigator::back,
-            onOpenLicences = { navigator.push(LicencesKey) },
+            onOpenLicenses = { navigator.push(LicensesKey) },
             content = updateStatus,
         )
     }
-    entry<LicencesKey> { LicencesScreen(onUp = navigator::back) }
+    entry<LicensesKey> { LicensesScreen(onUp = navigator::back) }
 }

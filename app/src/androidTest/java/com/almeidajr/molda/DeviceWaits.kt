@@ -144,10 +144,10 @@ internal fun AndroidComposeTestRule<*, *>.awaitActivityFinishing() =
     waitUntil("activity finishing", DeviceWaitTimeout.inWholeMilliseconds) { activity.isFinishing }
 
 /**
- * Waits until the licences list has rows. AboutLibraries parses its metadata on
+ * Waits until the licenses list has rows. AboutLibraries parses its metadata on
  * `Dispatchers.IO`, which Compose cannot see, so the list can still be empty once Compose is idle.
  */
-internal fun AndroidComposeTestRule<*, *>.awaitLicencesLoaded() = waitUntilAtLeastOneExists(
+internal fun AndroidComposeTestRule<*, *>.awaitLicensesLoaded() = waitUntilAtLeastOneExists(
     hasScrollAction() and SemanticsMatcher("has rows") {
         val rows = it.config.getOrNull(SemanticsProperties.CollectionInfo)?.rowCount ?: 0
         rows > 0
@@ -159,7 +159,7 @@ internal fun AndroidComposeTestRule<*, *>.awaitLicencesLoaded() = waitUntilAtLea
 internal val isLoadingIndicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
 
 /**
- * Waits until the Rive drawing labelled [description] shows a frame that [isExpected] accepts, by
+ * Waits until the Rive drawing labeled [description] shows a frame that [isExpected] accepts, by
  * default any frame that is not blank, and returns that frame, never one covered by the frame's
  * loading indicator. Rive loads and draws on its own threads, which Compose cannot see. It reads
  * the unmerged tree: a playing drawing's frame is a button that merges the drawing, its badge and
@@ -190,7 +190,7 @@ internal fun AndroidComposeTestRule<*, *>.awaitRiveFrame(
     return checkNotNull(frame)
 }
 
-/** Whether the image holds more than one colour, as a drawn frame does and an empty one not. */
+/** Whether the image holds more than one color, as a drawn frame does and an empty one not. */
 private fun ImageBitmap.isNotBlank(): Boolean {
     val pixels = IntArray(width * height).also { readPixels(it) }
     return pixels.any { it != pixels.first() }

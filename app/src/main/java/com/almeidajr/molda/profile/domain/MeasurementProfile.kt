@@ -36,7 +36,7 @@ data class ProfileMeasurements(
     val notes: String = "",
 ) {
     init {
-        require(waist.centimetres > 0.0) { "Profile waist must be positive" }
+        require(waist.centimeters > 0.0) { "Profile waist must be positive" }
     }
 
     /** This profile as the source of a measurement copied from it. */

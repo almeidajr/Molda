@@ -2,7 +2,7 @@ package com.almeidajr.molda.profile.navigation
 
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.about.navigation.AboutKey
-import com.almeidajr.molda.about.navigation.LicencesKey
+import com.almeidajr.molda.about.navigation.LicensesKey
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.ui.navigation.navigatorOf
@@ -228,12 +228,12 @@ class ProfileNavigatorTest {
     }
 
     @Test
-    fun showsProfileCreateAction_overAboutOrTheLicences_isHidden() {
+    fun showsProfileCreateAction_overAboutOrTheLicenses_isHidden() {
         // When/Then
         assertFalse(showsCreateAction(listOf(ProfileManagementKey, AboutKey), isTwoPane = true))
         assertFalse(
             showsCreateAction(
-                listOf(ProfileManagementKey, AboutKey, LicencesKey),
+                listOf(ProfileManagementKey, AboutKey, LicensesKey),
                 isTwoPane = false,
             ),
         )

@@ -112,7 +112,7 @@ ViewModels from the test's bindings exactly as in production
   the app: `launchApp(profiles, projects, clock, size, frame, updates)`, every
   argument optional. Keep a reference typed as the fake when the test sets a gate or
   reads `current`. Starting the app freezes the holder, so assigning a fake
-  afterwards throws.
+  afterward throws.
 - `launchApp` shows the route inside `frame` (the theme by default) and at
   `size` when given; `frame = null` keeps the app's own content, which alone
   shows the installed version. `showRoute` changes the frame later, and

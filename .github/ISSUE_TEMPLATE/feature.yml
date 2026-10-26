@@ -17,7 +17,7 @@ body:
     id: proposal
     attributes:
       label: What you'd like Molda to do
-      description: The behaviour you have in mind, as concretely as you can.
+      description: The behavior you have in mind, as concretely as you can.
     validations:
       required: true
   - type: textarea

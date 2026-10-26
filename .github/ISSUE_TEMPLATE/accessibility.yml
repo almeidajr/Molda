@@ -29,7 +29,7 @@ body:
     id: setup
     attributes:
       label: Assistive technology and settings
-      description: e.g. TalkBack, Switch Access, a keyboard or mouse, font size, display size, colour correction, remove animations.
+      description: e.g. TalkBack, Switch Access, a keyboard or mouse, font size, display size, color correction, remove animations.
   - type: dropdown
     id: severity
     attributes:

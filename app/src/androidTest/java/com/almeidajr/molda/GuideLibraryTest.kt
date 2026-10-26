@@ -54,7 +54,7 @@ class GuideLibraryTest {
     }
 
     @Test
-    fun guias_listsFabricFoldingGuide_whichOpensOnExampleDimensionsLabelledOnEveryStep() {
+    fun guias_listsFabricFoldingGuide_whichOpensOnExampleDimensionsLabeledOnEveryStep() {
         // Given
         composeRule.selectDestination("Guias")
         guideEntry().assertTextContains("Dobre", substring = true)
@@ -109,7 +109,7 @@ class GuideLibraryTest {
     }
 
     @Test
-    fun resultGuide_opensOnMoldesWithCalculatedRadiiUnlabelled_andBackReturnsToResults() {
+    fun resultGuide_opensOnMoldesWithCalculatedRadiiUnlabeled_andBackReturnsToResults() {
         // Given
         composeRule.openSkirtCalculator()
         SkirtDraftField.entries.zip(listOf("100", "0", "50", "1", "1")).forEach { (field, value) ->

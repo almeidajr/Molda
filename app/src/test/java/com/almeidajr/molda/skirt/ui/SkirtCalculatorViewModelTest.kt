@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 // The calculator sets its state synchronously and launches no coroutines, so tests read
-// `state.value` directly. Robolectric supplies the real Bundle that saved state is parcelled
+// `state.value` directly. Robolectric supplies the real Bundle that saved state is parceled
 // through.
 @RunWith(RobolectricTestRunner::class)
 class SkirtCalculatorViewModelTest {
@@ -35,10 +35,10 @@ class SkirtCalculatorViewModelTest {
         val radii = calculator.state.value.result?.radii
         assertEquals(
             11.4591559,
-            radii?.waistStitching?.centimetres ?: 0.0,
+            radii?.waistStitching?.centimeters ?: 0.0,
             absoluteTolerance = 1e-6,
         )
-        assertEquals(63.4591559, radii?.hemCutting?.centimetres ?: 0.0, absoluteTolerance = 1e-6)
+        assertEquals(63.4591559, radii?.hemCutting?.centimeters ?: 0.0, absoluteTolerance = 1e-6)
     }
 
     @Test
@@ -355,7 +355,7 @@ class SkirtCalculatorViewModelTest {
             assertEquals(savedDraft.copy(ease = Length(3.0)), state.result?.draft)
             assertEquals(
                 11.6382052,
-                state.result?.radii?.waistStitching?.centimetres ?: 0.0,
+                state.result?.radii?.waistStitching?.centimeters ?: 0.0,
                 absoluteTolerance = 1e-6,
             )
             assertEquals(ana, state.form.source)

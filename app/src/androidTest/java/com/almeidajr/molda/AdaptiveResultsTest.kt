@@ -181,9 +181,9 @@ class AdaptiveResultsTest {
 
     @Test
     fun halfOpenedVerticalHinge_splitsPanesAtFold_andKeepsGuidePlayerOnOneSide() {
-        // Given: wide enough on any device for both sides of an off-centre fold to hold a pane.
+        // Given: wide enough on any device for both sides of an off-center fold to hold a pane.
         showCalculator(DpSize(1000.dp, 800.dp), fontScale = 1f)
-        // Off centre, so panes that ignored the fold would put the card across it.
+        // Off center, so panes that ignored the fold would put the card across it.
         val hinge = publishHinge(FoldingFeature.Orientation.VERTICAL, centerFraction = 0.55f)
 
         // When
@@ -385,7 +385,7 @@ class AdaptiveResultsTest {
         val layout = layouts.single()
         // Text bounds can differ from rounded pixel size by a fraction of a pixel.
         assertTrue(
-            // Line width, not line right: centred text is laid out wider than it measures.
+            // Line width, not line right: centered text is laid out wider than it measures.
             (0 until layout.lineCount).all {
                 layout.getLineRight(it) - layout.getLineLeft(it) <= layout.size.width + 1f &&
                     layout.getLineBottom(it) <= layout.size.height + 1f

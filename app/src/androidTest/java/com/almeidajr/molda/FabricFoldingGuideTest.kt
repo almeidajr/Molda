@@ -491,7 +491,7 @@ class FabricFoldingGuideTest {
     /** The stand-in drawing's frame, the only clickable node once it pauses. */
     private fun pauseButton() = composeRule.onNode(hasClickAction())
 
-    /** The step's drawing frame labelled [description], once Rive has drawn it and it pauses. */
+    /** The step's drawing frame labeled [description], once Rive has drawn it and it pauses. */
     private fun drawing(description: String): SemanticsNodeInteraction {
         composeRule.awaitRiveFrame(description)
         return composeRule.onNode(hasClickAction() and hasContentDescription(description))

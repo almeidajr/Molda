@@ -5,5 +5,5 @@
     <string name="about_description">Calcula moldes de costura a partir das suas medidas e mostra as fórmulas usadas. O resultado é um ponto de partida: confira as medidas e faça uma prova antes de cortar o tecido.</string>
     <string name="about_on_device">Funciona sem internet. As medidas e os perfis ficam só neste aparelho.</string>
     <string name="about_version">Versão</string>
-    <string name="about_licences">Licenças de código aberto</string>
+    <string name="about_licenses">Licenças de código aberto</string>
 </resources>

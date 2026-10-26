@@ -26,7 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * The About screen, opened from every root top app bar, and its open-source licences. It runs on
+ * The About screen, opened from every root top app bar, and its open-source licenses. It runs on
  * the app's own content, since only [MainActivity] reads the installed version name, on empty
  * fakes.
  */
@@ -97,7 +97,7 @@ class AboutTest {
     }
 
     @Test
-    fun licencesRow_opensOpenSourceLicences_andUpReturnsToAbout() {
+    fun licensesRow_opensOpenSourceLicenses_andUpReturnsToAbout() {
         // Given
         composeRule.openAbout()
 
@@ -107,7 +107,7 @@ class AboutTest {
         // Then
         composeRule.screenTitle("Licenças de código aberto").assertIsDisplayed()
         // A dependency the app ships with, listed from its build-time metadata.
-        composeRule.awaitLicencesLoaded()
+        composeRule.awaitLicensesLoaded()
         composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Hilt Android"))
         composeRule.onNodeWithText("Hilt Android").assertIsDisplayed()
         composeRule.onNode(

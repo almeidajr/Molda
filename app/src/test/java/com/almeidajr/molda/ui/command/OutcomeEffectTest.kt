@@ -19,10 +19,10 @@ class OutcomeEffectTest {
     // The outcome a ViewModel holds until acknowledged, and what the effect did with it.
     private var outcome by mutableStateOf<Int?>(null)
     private val reactions = mutableListOf<Int>()
-    private var acknowledgements = 0
+    private var acknowledgments = 0
 
     private fun acknowledge() {
-        acknowledgements++
+        acknowledgments++
         outcome = null
     }
 
@@ -37,7 +37,7 @@ class OutcomeEffectTest {
         // Then
         composeRule.runOnIdle {
             assertEquals(listOf(1), reactions)
-            assertEquals(1, acknowledgements)
+            assertEquals(1, acknowledgments)
             assertNull(outcome)
         }
     }
@@ -69,7 +69,7 @@ class OutcomeEffectTest {
         // Then
         composeRule.runOnIdle {
             assertEquals(listOf(1, 1), reactions)
-            assertEquals(2, acknowledgements)
+            assertEquals(2, acknowledgments)
         }
     }
 
@@ -89,7 +89,7 @@ class OutcomeEffectTest {
         // Then
         composeRule.runOnIdle {
             assertEquals(listOf(1), reactions)
-            assertEquals(1, acknowledgements)
+            assertEquals(1, acknowledgments)
         }
     }
 }
