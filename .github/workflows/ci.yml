@@ -74,6 +74,9 @@ jobs:
           api-level: 36
           arch: x86_64
           target: google_apis
+          # The same device as the local Molda_API_36 emulator, not avdmanager's 320x640 default.
+          profile: pixel_9
+          ram-size: 4096M
           disable-animations: true
           script: bash ./gradlew :app:connectedDebugAndroidTest
       - name: Upload device test reports
