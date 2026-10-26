@@ -7,7 +7,9 @@ import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.WindowOverlaySceneStrategy.Companion.windowOverlay
 import com.almeidajr.molda.update.navigation.InstallUpdateKey
 
-/** The install of a downloaded update, which leaves the back stack once started or dismissed. */
+/**
+ * The installation of a downloaded update, which leaves the back stack once started or dismissed.
+ */
 internal fun EntryProviderScope<NavKey>.updateSection(navigator: Navigator) {
     entry<InstallUpdateKey>(metadata = windowOverlay()) { key ->
         val viewModel = hiltViewModel<UpdateInstallViewModel, UpdateInstallViewModel.Factory> {

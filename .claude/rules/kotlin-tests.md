@@ -29,12 +29,12 @@ to JUnit 5. Use `app/src/test` for isolated JVM logic and AndroidJUnit4 in
 `app/src/androidTest` when Android runtime behavior matters, with the Compose
 testing APIs for UI. Keep pure business logic testable without an emulator.
 
-| Test kind | Data layer | Coroutines |
-|---|---|---|
-| Domain and ViewModel (local) | Shared fakes | `runTest`, `MainDispatcherRule` |
-| Repository and migration (device) | Real Room | `runTest` |
-| Screen (device) | Shared fakes bound through Hilt | None needed |
-| Journey, end to end (device) | Production repositories from `RepositoryModule` on idling-aware Room | None needed |
+| Test kind                         | Data layer                                                           | Coroutines                      |
+|-----------------------------------|----------------------------------------------------------------------|---------------------------------|
+| Domain and ViewModel (local)      | Shared fakes                                                         | `runTest`, `MainDispatcherRule` |
+| Repository and migration (device) | Real Room                                                            | `runTest`                       |
+| Screen (device)                   | Shared fakes bound through Hilt                                      | None needed                     |
+| Journey, end to end (device)      | Production repositories from `RepositoryModule` on idling-aware Room | None needed                     |
 
 ## Names and structure
 
@@ -133,7 +133,7 @@ and [Testing flows](https://developer.android.com/kotlin/flow/test).
 - Run coroutine tests with `runTest`, which skips delays on virtual time. Detekt
   rejects `runBlocking` in test sources.
 - ViewModel tests replace the main dispatcher with the shared `MainDispatcherRule`
-  (after Now in Android), never with hand-written `setMain`/`resetMain`. It takes
+  (after Now in Android), never with handwritten `setMain`/`resetMain`. It takes
   a `TestDispatcher` and defaults to `UnconfinedTestDispatcher`, so simple state
   assertions need no manual scheduling.
 - Pass a `StandardTestDispatcher` when the test checks ordering or an

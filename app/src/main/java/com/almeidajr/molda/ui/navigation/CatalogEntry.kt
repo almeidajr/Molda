@@ -74,10 +74,10 @@ fun CatalogScreen(
 }
 
 /**
- * One whole-row entry of the Moldes catalog or the Guias library: a decorative thumbnail drawn by
- * [content], the [name], a one-sentence [description] and a decorative chevron, announced as one
- * button. Beside its detail ([selection] other than [CatalogSelection.None]) the selected entry
- * fills with the secondary container, drops the chevron and is exposed as selected.
+ * One whole-row entry of the `Moldes` catalog or the `Guias` library: a decorative thumbnail
+ * drawn by [content], the [name], a one-sentence [description] and a decorative chevron, announced
+ * as one button. Beside its detail ([selection] other than [CatalogSelection.None]) the selected
+ * entry fills with the secondary container, drops the chevron and is exposed as selected.
  */
 @Composable
 fun CatalogEntry(

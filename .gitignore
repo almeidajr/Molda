@@ -13,7 +13,11 @@
 /captures
 .externalNativeBuild
 .cxx
-/.idea/
+# IDE state stays local; the inspection profile, scopes and dictionary are shared.
+/.idea/*
+!/.idea/inspectionProfiles/
+!/.idea/scopes/
+!/.idea/dictionaries/
 .kotlin/
 **/build/
 *.jks

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Owned" pattern="file:*//*&amp;&amp;!file:.agents/skills//*&amp;&amp;!file:.claude/skills//*&amp;&amp;!file:.claude/agents/impeccable-*&amp;&amp;!file:.impeccable//*&amp;&amp;!file:gradlew&amp;&amp;!file:gradlew.bat&amp;&amp;!file:gradle/wrapper//*&amp;&amp;!file:gradle/gradle-daemon-jvm.properties" />
+</component>

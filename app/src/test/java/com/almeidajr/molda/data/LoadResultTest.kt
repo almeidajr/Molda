@@ -65,7 +65,7 @@ class LoadResultTest {
     fun asLoadResult_whenFlowHasABug_propagatesIt() = runTest {
         // When/Then
         assertFailsWith<IndexOutOfBoundsException> {
-            flow { emit(emptyList<Int>()[0]) }.asLoadResult().toList()
+            flow<Int> { throw IndexOutOfBoundsException("A bug") }.asLoadResult().toList()
         }
     }
 

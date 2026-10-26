@@ -9,7 +9,10 @@ indent_size = 4
 trim_trailing_whitespace = true
 
 [*.{kt,kts}]
+# ktlint's own keys, which the IDE's EditorConfig support does not know.
+# noinspection EditorConfigKeyCorrectness
 ktlint_code_style = android_studio
+# noinspection EditorConfigKeyCorrectness
 ktlint_function_naming_ignore_when_annotated_with = Composable
 ij_kotlin_allow_trailing_comma = true
 ij_kotlin_allow_trailing_comma_on_call_site = true

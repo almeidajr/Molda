@@ -54,7 +54,7 @@ fun ProfilesContent(
     onStartEdit: (ProfileId) -> Unit,
     /** Asks to delete the profile; the app confirms first. */
     onDelete: (ProfileId) -> Unit,
-    /** False while a profile operation or the open editor's save is in flight. */
+    /** False while a profile operation or saving the open editor is in flight. */
     canChangeProfiles: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -189,7 +189,7 @@ private fun ProfileRowActions(
 
 /**
  * The confirmation of deleting the profile called [name], which stays open while [isDeleting] and
- * shows the delete's [error]; Delete is available only when [canConfirm].
+ * shows the deletion's [error]; Delete is available only when [canConfirm].
  */
 @Composable
 internal fun ConfirmProfileDeletion(

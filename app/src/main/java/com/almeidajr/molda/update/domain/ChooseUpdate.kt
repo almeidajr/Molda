@@ -26,7 +26,7 @@ fun chooseUpdate(installedVersionName: String, releases: List<Release>): Update?
 
 private class Offer(val version: Version, val isPreRelease: Boolean, val update: Update)
 
-/** The published [Release] as an offer, or null when its tag isn't SemVer or it has no APK. */
+/** The published [Release] as an offer, or null when its tag isn't SemVer, or it has no APK. */
 private fun Release.offer(): Offer? {
     val version = tag.removePrefix("v").toVersionOrNull()
     val apk = assets.find { it.name.startsWith("molda-") && it.name.endsWith(".apk") }

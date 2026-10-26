@@ -70,7 +70,7 @@ class FakeProjectRepository(projects: List<Project> = emptyList()) : ProjectRepo
 
     override suspend fun delete(id: ProjectId) = command { remove(id) }
 
-    /** Removes the project [id] at once, as a delete elsewhere does, bypassing every gate. */
+    /** Removes the project [id] at once, as a deletion elsewhere does, bypassing every gate. */
     fun forget(id: ProjectId) = remove(id)
 
     private fun remove(id: ProjectId) {

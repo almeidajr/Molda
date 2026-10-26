@@ -22,7 +22,7 @@ The left-to-right then top-to-bottom directions are our geometric orientation
 of the referenced method, not a quotation from a source. Start with selvages
 left/right and cut ends top/bottom. After folding the left selvage onto the
 right, the closed fold is left and aligned selvages are right. After folding
-the top raw end onto the bottom, closed folds meet at the upper-left corner
+the top raw end onto the bottom, closed folds meet in the upper-left corner
 of the retained bottom-right quarter; raw ends are below and selvages right.
 The marking artboard uniformly enlarges this quarter without rotating it.
 

@@ -71,7 +71,7 @@ class ResultOfTest {
     fun resultOf_whenBlockHasABug_propagatesIt() = runTest {
         // When/Then
         assertFailsWith<IndexOutOfBoundsException> {
-            resultOf { emptyList<Int>()[0] }
+            resultOf { throw IndexOutOfBoundsException("A bug") }
         }
     }
 

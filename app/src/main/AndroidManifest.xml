@@ -4,8 +4,11 @@
 
     <!-- Checks GitHub Releases for an update (docs/adr/0007). -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Installs the downloaded update through the system installer (docs/adr/0007). -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Installs the downloaded update through the system installer (docs/adr/0007); Molda
+         updates itself from GitHub Releases, outside Google Play and its policy. -->
+    <uses-permission
+        android:name="android.permission.REQUEST_INSTALL_PACKAGES"
+        tools:ignore="RequestInstallPackagesPolicy" />
 
     <application
         android:name=".MoldaApplication"
@@ -29,7 +32,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- Receives the update install's status from the system installer. -->
+        <!-- Receives the status of the update's installation from the system installer. -->
         <receiver
             android:name=".update.data.UpdateInstallReceiver"
             android:exported="false" />

@@ -56,7 +56,9 @@ android {
     buildFeatures {
         compose = true
     }
-    // Shared fakes for local and device tests (app/src/testFixtures).
+    // Shared fakes for local and device tests (app/src/testFixtures); incubating in AGP, yet the
+    // only way to share them with device tests.
+    @Suppress("UnstableApiUsage")
     testFixtures {
         enable = true
     }

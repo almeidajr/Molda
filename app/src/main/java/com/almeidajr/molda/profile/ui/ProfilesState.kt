@@ -37,7 +37,7 @@ private val blankInputs = ProfileField.entries.associateWith { "" }
 
 /**
  * The profile editor state that survives process death; [editingId] is null for a new profile.
- * [saved] is what the editor's save did, once it has stored the form, so a restored editor
+ * [saved] is what saving the editor did, once it has stored the form, so a restored editor
  * reports that save again and never stores the form again.
  */
 @Serializable
@@ -102,7 +102,7 @@ data class ProfileListState(
         }
 }
 
-/** The editor's save, in flight or failed; a failure stays until the form changes or saves. */
+/** Saving the editor, in flight or failed; a failure stays until the form changes or saves. */
 enum class ProfileSaving { Running, Failed }
 
 /** One profile editor's form and its save. */
@@ -112,7 +112,7 @@ data class ProfileEditorState(
     val load: LoadResult<Unit> = LoadResult.Loading,
     val errors: Map<ProfileField, ProfileError> = emptyMap(),
     val saving: ProfileSaving? = null,
-    /** What the editor's save stored, until its entry has reacted to it and closed the editor. */
+    /** What saving the editor stored, until its entry has reacted to it and closed the editor. */
     val saved: ProfileSave? = null,
     /**
      * The edited profile, once loading or saving found it deleted, until its entry has reacted to

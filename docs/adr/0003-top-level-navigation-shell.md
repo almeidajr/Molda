@@ -1,6 +1,6 @@
 # Molda gets a top-level navigation shell, replacing launch-into-the-calculator
 
-The MVP design (`docs/ui-ux-design.md`) launched straight into the full-circle skirt calculator, with no home screen and no navigation bar, because the skirt was the only feature. Molda is growing into several pattern drafts (moldes), a shared library of guides (guias), saved projects (projetos) and app-wide measurement profiles, so we replaced that decision with Material 3's conventional navigation. A `NavigationSuiteScaffold` holds four top-level destinations, **Moldes · Projetos · Guias · Perfis**, shown as a bar on compact windows and a rail on wider ones. The app opens on the Moldes catalog. Each destination keeps its own back stack, re-selecting the current destination returns to its root, and Back from another destination's root goes to Moldes. Navigation is a typed Navigation 3 back stack, not screen flags.
+The MVP design (`docs/ui-ux-design.md`) launched straight into the full-circle skirt calculator, with no home screen and no navigation bar, because the skirt was the only feature. Molda is growing into several pattern drafts (moldes), a shared library of guides (guias), saved projects (projetos) and app-wide measurement profiles, so we replaced that decision with Material 3's conventional navigation. A `NavigationSuiteScaffold` holds four top-level destinations, **`Moldes` · `Projetos` · `Guias` · `Perfis`**, shown as a bar on compact windows and a rail on wider ones. The app opens on the `Moldes` catalog. Each destination keeps its own back stack, re-selecting the current destination returns to its root, and Back from another destination's root goes to `Moldes`. Navigation is a typed Navigation 3 back stack, not screen flags.
 
 ## Considered options
 
@@ -12,4 +12,4 @@ The MVP design (`docs/ui-ux-design.md`) launched straight into the full-circle s
 
 - About and the future in-app update check (GitHub Releases) open from a top-app-bar action, not from a fifth destination.
 - The catalog and library list only features that exist; no "coming soon" entries.
-- The fabric-folding guide also opens from the Guias library, with labelled example dimensions instead of a calculation's radii.
+- The fabric-folding guide also opens from the `Guias` library, with labelled example dimensions instead of a calculation's radii.

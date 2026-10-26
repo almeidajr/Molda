@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 /**
  * Checks for an update once when Molda starts and, when one is available, announces it once
  * through [onShowNotice] (message, action label, action): "Atualizar" starts the download, and
- * "Instalar", when it is already downloaded, requests the install on [results]. Placed once,
+ * "Instalar", when it is already downloaded, requests the installation on [results]. Placed once,
  * outside the entries; a failed check, none on a local build, or an up-to-date Molda announces
  * nothing.
  */
@@ -66,8 +66,8 @@ fun StartupUpdateNotice(
 }
 
 /**
- * Requests the install on [results] when the offered update's download finishes while Molda is in
- * the foreground, whichever screen shows; one that finished in the background waits for
+ * Requests the installation on [results] when the offered update's download finishes while Molda
+ * is in the foreground, whichever screen shows; one that finished in the background waits for
  * "Instalar". Placed once, outside the entries.
  */
 @Composable

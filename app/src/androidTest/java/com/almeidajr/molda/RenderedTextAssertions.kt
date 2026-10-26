@@ -48,7 +48,7 @@ private fun assertContrast(context: String, contrast: Float, minimum: Float) {
     assertTrue(contrast >= minimum, "$context contrast=$contrast")
 }
 
-/** The node's laid-out bounds in root pixels, whether or not it is scrolled into view. */
+/** The node's laid-out bounds in root pixels, whether it is scrolled into view. */
 internal fun SemanticsNodeInteraction.layoutBounds(): Rect =
     fetchSemanticsNode().layoutInfo.coordinates.let {
         Rect(it.positionInRoot(), it.size.toSize())

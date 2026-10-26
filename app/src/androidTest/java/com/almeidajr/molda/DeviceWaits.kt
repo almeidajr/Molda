@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
@@ -147,7 +146,6 @@ internal fun AndroidComposeTestRule<*, *>.awaitActivityFinishing() =
  * Waits until the licences list has rows. AboutLibraries parses its metadata on
  * `Dispatchers.IO`, which Compose cannot see, so the list can still be empty once Compose is idle.
  */
-@OptIn(ExperimentalTestApi::class)
 internal fun AndroidComposeTestRule<*, *>.awaitLicencesLoaded() = waitUntilAtLeastOneExists(
     hasScrollAction() and SemanticsMatcher("has rows") {
         val rows = it.config.getOrNull(SemanticsProperties.CollectionInfo)?.rowCount ?: 0
@@ -167,7 +165,6 @@ internal val isLoadingIndicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.I
  * the indicator into one node. A playing drawing keeps Compose busy, so tests turn
  * `mainClock.autoAdvance` off while one plays; each check then advances one frame itself.
  */
-@OptIn(ExperimentalTestApi::class)
 internal fun AndroidComposeTestRule<*, *>.awaitRiveFrame(
     description: String,
     isExpected: (ImageBitmap) -> Boolean = { it.isNotBlank() },

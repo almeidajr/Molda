@@ -98,8 +98,8 @@ private fun dirtyEditor(saved: List<String>): Pair<String, EditorKind>? =
     EditorKind.entries.find { it.name == saved.getOrNull(1) }?.let { saved.first() to it }
 
 /**
- * The app's [EditorStatusHolder]. Retained across configuration changes, so a hidden editor's
- * save or load still counts; editors out of composition cannot report again until they return.
+ * The app's [EditorStatusHolder]. Retained across configuration changes, so saving or loading
+ * a hidden editor still counts; editors out of composition cannot report again until they return.
  */
 @Composable
 fun rememberEditorStatusHolder(): EditorStatusHolder {
