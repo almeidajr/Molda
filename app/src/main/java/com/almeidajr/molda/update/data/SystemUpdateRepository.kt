@@ -17,6 +17,7 @@ import com.almeidajr.molda.update.domain.UpdateRepository
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
+import kotlin.io.path.deleteIfExists
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +44,7 @@ import kotlinx.coroutines.withContext
  */
 internal fun verifyApk(apk: File, digest: String?): Boolean {
     val isVerified = apk.exists() && digest == "sha256:${apk.sha256()}"
-    if (!isVerified) apk.delete()
+    if (!isVerified) apk.toPath().deleteIfExists()
     return isVerified
 }
 
@@ -103,7 +104,7 @@ internal class SystemUpdateRepository(
 
     override suspend fun startDownload(update: Update) = withContext(ioDispatcher) {
         rows(update).forEach { downloads.remove(it.id) }
-        apkFile(update).delete()
+        apkFile(update).toPath().deleteIfExists()
         downloads.enqueue(
             DownloadManager.Request(update.apk.downloadUrl.toUri())
                 .setTitle(update.apk.name)
