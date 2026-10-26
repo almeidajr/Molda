@@ -6,6 +6,7 @@ import android.provider.Settings
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.Intents.intending
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
@@ -60,7 +61,7 @@ class UpdateInstallPermissionTest {
         composeRule.openAbout()
 
         // When
-        composeRule.onNodeWithText("Instalar").performClick()
+        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
 
         // Then
         composeRule.onNodeWithText(EXPLANATION).assertIsDisplayed()
@@ -76,7 +77,7 @@ class UpdateInstallPermissionTest {
         composeRule.openAbout()
 
         // When
-        composeRule.onNodeWithText("Instalar").performClick()
+        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
 
         // Then
         composeRule.runOnIdle { assertEquals(listOf(Beta2), updates.installed) }
@@ -94,7 +95,7 @@ class UpdateInstallPermissionTest {
         composeRule.launchApp(updates = updates)
         composeRule.dismissSnackbar()
         composeRule.openAbout()
-        composeRule.onNodeWithText("Instalar").performClick()
+        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
         composeRule.onNodeWithText(EXPLANATION).assertIsDisplayed()
         updates.canInstall = true
 

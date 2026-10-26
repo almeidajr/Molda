@@ -13,6 +13,7 @@ import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -101,7 +102,7 @@ class AboutTest {
         composeRule.openAbout()
 
         // When
-        composeRule.onNodeWithText("Licenças de código aberto").performClick()
+        composeRule.onNodeWithText("Licenças de código aberto").performScrollTo().performClick()
 
         // Then
         composeRule.screenTitle("Licenças de código aberto").assertIsDisplayed()

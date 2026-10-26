@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.createLaunchLaterComposeRule
@@ -49,9 +50,15 @@ class AboutUpdateTest {
         openAboutPastTheStartupNotice()
 
         // Then
-        composeRule.onNodeWithText("Versão 0.3.0-beta.2 disponível").assertIsDisplayed()
-        composeRule.onNodeWithText("Ver a página da versão").assertHasClickAction()
-        composeRule.onNodeWithText("Verificar atualizações").assertHasClickAction()
+        composeRule.onNodeWithText(
+            "Versão 0.3.0-beta.2 disponível",
+        ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Ver a página da versão",
+        ).performScrollTo().assertHasClickAction()
+        composeRule.onNodeWithText(
+            "Verificar atualizações",
+        ).performScrollTo().assertHasClickAction()
     }
 
     @Test
@@ -63,7 +70,7 @@ class AboutUpdateTest {
         composeRule.openAbout()
 
         // Then
-        composeRule.onNodeWithText("O Molda está atualizado").assertIsDisplayed()
+        composeRule.onNodeWithText("O Molda está atualizado").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Ver a página da versão").assertDoesNotExist()
     }
 
@@ -73,14 +80,18 @@ class AboutUpdateTest {
         val updates = FakeUpdateRepository(UpdateCheck.Failed)
         composeRule.launchApp(updates = updates)
         composeRule.openAbout()
-        composeRule.onNodeWithText("Não foi possível verificar atualizações").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Não foi possível verificar atualizações",
+        ).performScrollTo().assertIsDisplayed()
         updates.result = UpdateCheck.Available(Beta2)
 
         // When
-        composeRule.onNodeWithText("Verificar atualizações").performClick()
+        composeRule.onNodeWithText("Verificar atualizações").performScrollTo().performClick()
 
         // Then
-        composeRule.onNodeWithText("Versão 0.3.0-beta.2 disponível").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Versão 0.3.0-beta.2 disponível",
+        ).performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -94,8 +105,10 @@ class AboutUpdateTest {
         composeRule.openAbout()
 
         // Then
-        composeRule.onNodeWithText("Verificando atualizações…").assertIsDisplayed()
-        composeRule.onNodeWithText("Verificar atualizações").assertIsNotEnabled()
+        composeRule.onNodeWithText(
+            "Verificando atualizações…",
+        ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Verificar atualizações").performScrollTo().assertIsNotEnabled()
     }
 
     @Test
@@ -119,10 +132,10 @@ class AboutUpdateTest {
         openAboutPastTheStartupNotice()
 
         // When
-        composeRule.onNodeWithText("Atualizar").performClick()
+        composeRule.onNodeWithText("Atualizar").performScrollTo().performClick()
 
         // Then
-        composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
+        composeRule.onNodeWithText("Baixando a atualização…").performScrollTo().assertIsDisplayed()
         assertEquals(UpdateDownload.Downloading(progress = null), updates.download)
     }
 
@@ -140,8 +153,10 @@ class AboutUpdateTest {
         composeRule.openAbout()
 
         // Then
-        composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
-        composeRule.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo(0.4f, 0f..1f)))
+        composeRule.onNodeWithText("Baixando a atualização…").performScrollTo().assertIsDisplayed()
+        composeRule.onNode(
+            hasProgressBarRangeInfo(ProgressBarRangeInfo(0.4f, 0f..1f)),
+        ).performScrollTo()
             .assertIsDisplayed()
         composeRule.onNodeWithText("Atualizar").assertDoesNotExist()
     }
@@ -156,13 +171,13 @@ class AboutUpdateTest {
         composeRule.launchApp(updates = updates)
         // No startup notice announces an update already downloading.
         composeRule.openAbout()
-        composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
+        composeRule.onNodeWithText("Baixando a atualização…").performScrollTo().assertIsDisplayed()
 
         // When
         composeRule.runOnIdle { updates.download = UpdateDownload.Downloaded }
 
         // Then
-        composeRule.onNodeWithText("Instalar").assertHasClickAction()
+        composeRule.onNodeWithText("Instalar").performScrollTo().assertHasClickAction()
         composeRule.runOnIdle { assertEquals(listOf(Beta2), updates.installed) }
     }
 
@@ -172,11 +187,11 @@ class AboutUpdateTest {
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
         composeRule.launchApp(updates = updates)
         openAboutPastTheStartupNotice()
-        composeRule.onNodeWithText("Instalar").assertIsDisplayed()
+        composeRule.onNodeWithText("Instalar").performScrollTo().assertIsDisplayed()
         composeRule.runOnIdle { assertEquals(emptyList(), updates.installed) }
 
         // When
-        composeRule.onNodeWithText("Instalar").performClick()
+        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
 
         // Then
         composeRule.runOnIdle { assertEquals(listOf(Beta2), updates.installed) }
@@ -188,14 +203,16 @@ class AboutUpdateTest {
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Failed)
         composeRule.launchApp(updates = updates)
         openAboutPastTheStartupNotice()
-        composeRule.onNodeWithText("O download falhou").assertIsDisplayed()
-        composeRule.onNodeWithText("Confira a conexão e tente de novo.").assertIsDisplayed()
+        composeRule.onNodeWithText("O download falhou").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Confira a conexão e tente de novo.",
+        ).performScrollTo().assertIsDisplayed()
 
         // When
-        composeRule.onNodeWithText("Tentar novamente").performClick()
+        composeRule.onNodeWithText("Tentar novamente").performScrollTo().performClick()
 
         // Then
-        composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
+        composeRule.onNodeWithText("Baixando a atualização…").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -207,14 +224,16 @@ class AboutUpdateTest {
         )
         composeRule.launchApp(updates = updates)
         openAboutPastTheStartupNotice()
-        composeRule.onNodeWithText("O arquivo baixado não confere com o publicado.")
+        composeRule.onNodeWithText(
+            "O arquivo baixado não confere com o publicado.",
+        ).performScrollTo()
             .assertIsDisplayed()
 
         // When
-        composeRule.onNodeWithText("Tentar novamente").performClick()
+        composeRule.onNodeWithText("Tentar novamente").performScrollTo().performClick()
 
         // Then
-        composeRule.onNodeWithText("Baixando a atualização…").assertIsDisplayed()
+        composeRule.onNodeWithText("Baixando a atualização…").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -224,7 +243,7 @@ class AboutUpdateTest {
         launchWithUnsavedProfileThenOpenAbout(updates)
 
         // When
-        composeRule.onNodeWithText("Instalar").performClick()
+        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
 
         // Then
         composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
@@ -236,7 +255,7 @@ class AboutUpdateTest {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
         launchWithUnsavedProfileThenOpenAbout(updates)
-        composeRule.onNodeWithText("Instalar").performClick()
+        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
 
         // When
         composeRule.clickInDialog("Descartar")
@@ -250,7 +269,7 @@ class AboutUpdateTest {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
         launchWithUnsavedProfileThenOpenAbout(updates)
-        composeRule.onNodeWithText("Instalar").performClick()
+        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
 
         // When
         composeRule.clickInDialog("Continuar editando")
