@@ -21,9 +21,9 @@ class MainActivityLauncher internal constructor() : ExternalResource() {
     // Held here: the monitor keeps its callbacks weakly. Replacing the content right after
     // onCreate, before the window attaches, composes only the test's content.
     private val showContent = ActivityLifecycleCallback { activity, stage ->
-        val shown = content
-        if (stage == Stage.CREATED && activity is MainActivity && shown != null) {
-            activity.setContent(content = shown)
+        if (stage == Stage.CREATED && activity is MainActivity) {
+            content?.let { activity.setContent(content = it) }
+            KeyboardAnimations.observe(activity.window.decorView)
         }
     }
 

@@ -21,7 +21,6 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -247,7 +246,7 @@ class FabricFoldingLayoutTest {
                 composeRule.onNodeWithText(field.labelText).performScrollTo()
                     .performTextReplacement(value)
             }
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
         composeRule.onNodeWithText("Guia de dobra do tecido")
             .performScrollTo().assertHeightIsAtLeast(48.dp).performClick()

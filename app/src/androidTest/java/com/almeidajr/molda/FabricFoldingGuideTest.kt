@@ -35,7 +35,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.rive.Result
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
@@ -133,7 +132,7 @@ class FabricFoldingGuideTest {
         composeRule.pressBack()
         composeRule.onNodeWithText(SkirtDraftField.Waist.labelText).performScrollTo()
             .performTextReplacement("90")
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
 
         // When
@@ -513,7 +512,7 @@ class FabricFoldingGuideTest {
             composeRule.onNodeWithText(field.labelText).performScrollTo()
                 .performTextReplacement(value)
         }
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
     }
 

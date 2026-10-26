@@ -2,6 +2,9 @@
 package com.almeidajr.molda
 
 import android.animation.ValueAnimator
+import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsAnimation
 import android.view.WindowManager
 import android.view.inspector.WindowInspector
 import androidx.compose.ui.graphics.ImageBitmap
@@ -23,6 +26,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.FileInputStream
+import java.util.WeakHashMap
 import kotlin.time.Duration.Companion.seconds
 import org.junit.rules.ExternalResource
 
@@ -32,19 +36,32 @@ import org.junit.rules.ExternalResource
  */
 internal val DeviceWaitTimeout = 10.seconds
 
-/** Waits for the soft keyboard, whose insets can arrive after Compose has become idle. */
+/**
+ * Waits until the soft keyboard has finished opening. Its insets report it visible as soon as it
+ * starts to open and can arrive after Compose has become idle.
+ */
 internal fun AndroidComposeTestRule<*, *>.awaitKeyboardVisible() =
-    waitUntil("keyboard visible", DeviceWaitTimeout.inWholeMilliseconds) { isKeyboardVisible() }
+    waitUntil("keyboard visible", DeviceWaitTimeout.inWholeMilliseconds) {
+        isKeyboardSettled(isVisible = true)
+    }
 
-/** Waits for the soft keyboard to close, which can resize the window after Compose is idle. */
+/**
+ * Waits until the soft keyboard has finished closing, which can resize the window after Compose is
+ * idle.
+ */
 internal fun AndroidComposeTestRule<*, *>.awaitKeyboardHidden() =
-    waitUntil("keyboard hidden", DeviceWaitTimeout.inWholeMilliseconds) { !isKeyboardVisible() }
+    waitUntil("keyboard hidden", DeviceWaitTimeout.inWholeMilliseconds) {
+        isKeyboardSettled(isVisible = false)
+    }
 
-/** Whether the activity window currently shows the soft keyboard. */
-private fun AndroidComposeTestRule<*, *>.isKeyboardVisible(): Boolean = runOnUiThread {
-    ViewCompat.getRootWindowInsets(activity.window.decorView)
-        ?.isVisible(WindowInsetsCompat.Type.ime()) == true
-}
+/** Whether the activity window shows the keyboard as [isVisible] says and no longer animates it. */
+private fun AndroidComposeTestRule<*, *>.isKeyboardSettled(isVisible: Boolean): Boolean =
+    runOnUiThread {
+        val decorView = activity.window.decorView
+        val isShown = ViewCompat.getRootWindowInsets(decorView)
+            ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+        isShown == isVisible && !KeyboardAnimations.isRunning(decorView)
+    }
 
 /**
  * Closes the soft keyboard and waits until the window no longer shows it. Call it after typing and
@@ -52,8 +69,51 @@ private fun AndroidComposeTestRule<*, *>.isKeyboardVisible(): Boolean = runOnUiT
  * frame by frame, which can clip the button between scrolling to it and tapping it.
  */
 internal fun AndroidComposeTestRule<*, *>.closeKeyboard() {
+    // The system drops a hide that arrives while the keyboard is opening and opens it anyway, so a
+    // keyboard that typing just opened must finish opening first.
+    waitUntil("keyboard animation finished", DeviceWaitTimeout.inWholeMilliseconds) {
+        runOnUiThread { !KeyboardAnimations.isRunning(activity.window.decorView) }
+    }
     closeSoftKeyboard()
     awaitKeyboardHidden()
+}
+
+/**
+ * The keyboard animations running in each window [observe] watches, which insets alone cannot tell:
+ * they report the keyboard's end state as soon as it starts to open or close.
+ */
+internal object KeyboardAnimations {
+    private val running = WeakHashMap<View, MutableSet<WindowInsetsAnimation>>()
+
+    /**
+     * Watches the keyboard animations of the window [decorView] roots, passing every animation on
+     * to the views below it.
+     */
+    fun observe(decorView: View) {
+        val animations = mutableSetOf<WindowInsetsAnimation>()
+        running[decorView] = animations
+        decorView.setWindowInsetsAnimationCallback(
+            object : WindowInsetsAnimation.Callback(DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
+                override fun onPrepare(animation: WindowInsetsAnimation) {
+                    if (animation.typeMask and WindowInsets.Type.ime() != 0) animations += animation
+                }
+
+                override fun onProgress(
+                    insets: WindowInsets,
+                    runningAnimations: List<WindowInsetsAnimation>,
+                ): WindowInsets = insets
+
+                override fun onEnd(animation: WindowInsetsAnimation) {
+                    animations -= animation
+                }
+            },
+        )
+    }
+
+    /** Whether a keyboard animation runs in the observed window that [decorView] roots. */
+    fun isRunning(decorView: View): Boolean =
+        checkNotNull(running[decorView]) { "Keyboard animations are not observed in this window" }
+            .isNotEmpty()
 }
 
 /**

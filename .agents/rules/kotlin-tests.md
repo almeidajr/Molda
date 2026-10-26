@@ -191,10 +191,13 @@ state, so no wait covers it: dirty a form through a non-text control instead.
 Leave touch mode only through `KeyboardModeRule`, never with a Tab, Enter or
 arrow key: touch mode is global, Compose test clicks do not restore it, and
 every later test would run as a keyboard user, whose returning window focus
-raises the keyboard on a text field. An opening keyboard also shrinks `imePadding` layouts frame by frame after
-`awaitKeyboardVisible` returns, which can clip a button between scrolling to it
-and tapping it. Close the keyboard first with `closeKeyboard` when the test does
-not need it open.
+raises the keyboard on a text field. An opening keyboard also shrinks
+`imePadding` layouts frame by frame, which can clip a button between scrolling
+to it and tapping it, so `awaitKeyboardVisible` and `awaitKeyboardHidden` return
+only once the keyboard animation has finished. Close the keyboard first with
+`closeKeyboard`, never Espresso's `closeSoftKeyboard` alone, when the test does
+not need it open: the system drops a hide that arrives while the keyboard is
+still opening, so `closeKeyboard` lets it finish opening first.
 
 ## UI behavior
 

@@ -28,7 +28,6 @@ import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -111,7 +110,7 @@ class NavigationShellTest {
         // Given
         composeRule.openSkirtCalculator()
         waistField().performTextReplacement("80")
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
 
         // When
         listOf("Perfis", "Guias", "Projetos", "Moldes").forEach {
@@ -178,7 +177,7 @@ class NavigationShellTest {
         // Given
         composeRule.openSkirtCalculator()
         waistField().performTextReplacement("80")
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
 
