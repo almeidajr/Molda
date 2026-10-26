@@ -67,3 +67,7 @@ _Avoid_: Beta build
 **Beta build**:
 A version of Molda distributed to known testers before the release it leads up to, so they can use it and report what they observe.
 _Avoid_: Release, trial build
+
+**Update (atualização)**:
+A beta build or release newer than the installed version that the person is offered. Someone on a beta build is offered newer beta builds and releases; someone on a release is offered only newer releases.
+_Avoid_: Upgrade, new version

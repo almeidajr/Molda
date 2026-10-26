@@ -31,6 +31,7 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -95,6 +96,14 @@ internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchPr
 /** Replaces the text of the field labelled [label]. */
 internal fun SemanticsNodeInteractionsProvider.edit(label: String, value: String) {
     onNodeWithText(label).performScrollTo().performTextReplacement(value)
+}
+
+/** Leaves a new profile's editor open in Perfis, unsaved, with "Rascunho" typed as its name. */
+internal fun AndroidComposeTestRule<*, *>.leaveUnsavedNewProfile() {
+    selectDestination("Perfis")
+    click("Novo perfil")
+    edit("Nome ou apelido", "Rascunho")
+    closeKeyboard()
 }
 
 /** Fills the open profile editor's name, waist and, through the calendar, date. */

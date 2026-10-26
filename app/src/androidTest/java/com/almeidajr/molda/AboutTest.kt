@@ -13,6 +13,7 @@ import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -53,7 +54,7 @@ class AboutTest {
             composeRule.selectDestination(destination)
 
             // When
-            aboutAction()
+            composeRule.aboutAction()
                 .assertHasClickAction()
                 .assertWidthIsAtLeast(48.dp)
                 .assertHeightIsAtLeast(48.dp)
@@ -62,7 +63,7 @@ class AboutTest {
             // Then
             composeRule.screenTitle("Sobre o Molda").assertIsDisplayed()
             // Pushed screens carry an up arrow, not the About action.
-            aboutAction().assertDoesNotExist()
+            composeRule.aboutAction().assertDoesNotExist()
             // Profile management's FAB belongs to its own screens.
             composeRule.onNodeWithContentDescription("Novo perfil").assertDoesNotExist()
             composeRule.pressBack()
@@ -78,7 +79,7 @@ class AboutTest {
         val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName
 
         // When
-        aboutAction().performClick()
+        composeRule.openAbout()
 
         // Then
         composeRule.onNode(hasText("Molda") and isHeading()).assertIsDisplayed()
@@ -92,16 +93,16 @@ class AboutTest {
         composeRule.openSkirtCalculator()
 
         // Then
-        aboutAction().assertDoesNotExist()
+        composeRule.aboutAction().assertDoesNotExist()
     }
 
     @Test
     fun licencesRow_opensOpenSourceLicences_andUpReturnsToAbout() {
         // Given
-        aboutAction().performClick()
+        composeRule.openAbout()
 
         // When
-        composeRule.onNodeWithText("Licenças de código aberto").performClick()
+        composeRule.onNodeWithText("Licenças de código aberto").performScrollTo().performClick()
 
         // Then
         composeRule.screenTitle("Licenças de código aberto").assertIsDisplayed()
@@ -114,11 +115,4 @@ class AboutTest {
         ).performClick()
         composeRule.screenTitle("Sobre o Molda").assertIsDisplayed()
     }
-
-    private fun aboutAction() = composeRule.onNode(
-        SemanticsMatcher.expectValue(
-            SemanticsProperties.ContentDescription,
-            listOf("Sobre o Molda"),
-        ),
-    )
 }

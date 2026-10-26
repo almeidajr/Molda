@@ -8,9 +8,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import com.almeidajr.molda.IsolatedStorage
 import com.almeidajr.molda.click
+import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.di.RepositoryModule
 import com.almeidajr.molda.dialogTextField
@@ -126,13 +126,13 @@ class ProjectJourneyTest {
     private fun editField(field: SkirtDraftField, text: String) {
         composeRule.onNodeWithText(field.labelText).performScrollTo().performTextReplacement(text)
         // The keyboard resizes the screen as it opens; let it settle before the next tap.
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
     }
 
     private fun confirmDialog(label: String) {
         composeRule.onNode(hasText(label) and hasAnyAncestor(isDialog())).performClick()
         // The name field's keyboard may outlive the dialog and cover the next target.
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
     }
 }
 

@@ -149,6 +149,12 @@ dependencies {
     // coroutines-test.
     implementation(platform(libs.kotlinx.coroutines.bom))
     implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization)
+    // Raises the OkHttp that Retrofit pulls in; the app builds the client itself.
+    implementation(libs.okhttp)
+    implementation(libs.semver)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
@@ -165,6 +171,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
+    testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.androidx.lifecycle.viewmodel.testing)
     // Local Compose tests on Robolectric, for effects that need a composition but no device.
     testImplementation(platform(libs.androidx.compose.bom))
@@ -176,6 +183,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.idling.concurrent)
+    androidTestImplementation(libs.androidx.espresso.intents)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.kotlin.test)
     androidTestImplementation(libs.kotlinx.coroutines.test)

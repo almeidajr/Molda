@@ -6,7 +6,9 @@ import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.FakeProjectRepository
+import com.almeidajr.molda.testing.FakeUpdateRepository
 import com.almeidajr.molda.testing.October13Clock
+import com.almeidajr.molda.update.domain.UpdateRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent
@@ -14,9 +16,10 @@ import dagger.hilt.testing.TestInstallIn
 import java.time.Clock
 
 /**
- * The repositories and clock the app runs on in a device test: empty fakes and 13/10/2026 until
- * [launchApp] seeds them. Starting the app freezes them, so a fake assigned too late fails the test
- * instead of being silently ignored. [MainActivityLauncher] resets them before each test.
+ * The repositories and clock the app runs on in a device test: empty fakes, Molda up to date and
+ * 13/10/2026 until [launchApp] seeds them. Starting the app freezes them, so a fake assigned too
+ * late fails the test instead of being silently ignored. [MainActivityLauncher] resets them
+ * before each test.
  */
 internal object TestBindings {
     private var isFrozen = false
@@ -28,6 +31,12 @@ internal object TestBindings {
         }
 
     var projects: ProjectRepository = FakeProjectRepository()
+        set(value) {
+            checkNotFrozen()
+            field = value
+        }
+
+    var updates: UpdateRepository = FakeUpdateRepository()
         set(value) {
             checkNotFrozen()
             field = value
@@ -49,6 +58,7 @@ internal object TestBindings {
         isFrozen = false
         profiles = FakeProfileRepository()
         projects = FakeProjectRepository()
+        updates = FakeUpdateRepository()
         clock = October13Clock
     }
 
@@ -68,6 +78,9 @@ internal object TestBindingsModule {
 
     @Provides
     fun projectRepository(): ProjectRepository = TestBindings.projects
+
+    @Provides
+    fun updateRepository(): UpdateRepository = TestBindings.updates
 
     @Provides
     fun clock(): Clock = TestBindings.clock

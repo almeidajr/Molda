@@ -23,7 +23,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
@@ -402,7 +401,7 @@ class FabricFoldingRenderingTest {
             composeRule.onNodeWithText(field.labelText).performScrollTo()
                 .performTextReplacement(value)
         }
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
         composeRule.openGuideFromResults()
         if (advanceToMarking) {

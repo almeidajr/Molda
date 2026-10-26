@@ -4,8 +4,10 @@ import android.animation.ValueAnimator
 import android.view.KeyEvent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.assertCountEquals
@@ -32,16 +34,17 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.domain.ProjectRepository
 import com.almeidajr.molda.ui.theme.MoldaTheme
+import com.almeidajr.molda.update.domain.UpdateRepository
 import java.time.Clock
 
 /** Wraps the app's route, for example in a theme or a configuration override. */
 internal typealias RouteFrame = @Composable (route: @Composable () -> Unit) -> Unit
 
 /**
- * Seeds the app's [profiles], [projects] and [clock], then starts it showing the route inside
- * [frame] (the theme by default), at [size] when given. A null [frame] keeps the app's own content,
- * which alone reads the installed version name. Once launched, the bindings cannot change, and
- * [recreate] shows the same content again.
+ * Seeds the app's [profiles], [projects], [clock] and [updates], then starts it showing the route
+ * inside [frame] (the theme by default), at [size] when given. A null [frame] keeps the app's own
+ * content, which alone reads the installed version name. Once launched, the bindings cannot
+ * change, and [recreate] shows the same content again.
  */
 internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchApp(
     profiles: ProfileRepository = TestBindings.profiles,
@@ -49,10 +52,12 @@ internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchAp
     clock: Clock = TestBindings.clock,
     size: DpSize? = null,
     frame: RouteFrame? = DefaultFrame,
+    updates: UpdateRepository = TestBindings.updates,
 ) {
     require(frame != null || size == null) { "The app's own content takes no size" }
     TestBindings.profiles = profiles
     TestBindings.projects = projects
+    TestBindings.updates = updates
     TestBindings.clock = clock
     activityRule.launch(frame?.let { routeContent(size, it) })
 }
@@ -148,6 +153,28 @@ internal fun SemanticsNodeInteractionsProvider.dialogTextField(): SemanticsNodeI
  */
 internal fun SemanticsNodeInteractionsProvider.assertNoTextFieldFocused() {
     onAllNodes(hasSetTextAction() and isFocused()).assertCountEquals(0)
+}
+
+/** The snackbar shown, the only node a screen reader can dismiss. */
+internal fun SemanticsNodeInteractionsProvider.snackbar(): SemanticsNodeInteraction =
+    onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.Dismiss))
+
+/** Dismisses the snackbar shown, as a screen reader does. */
+internal fun SemanticsNodeInteractionsProvider.dismissSnackbar() {
+    snackbar().performSemanticsAction(SemanticsActions.Dismiss)
+}
+
+/** The root top app bar's About action. */
+internal fun SemanticsNodeInteractionsProvider.aboutAction(): SemanticsNodeInteraction = onNode(
+    SemanticsMatcher.expectValue(
+        SemanticsProperties.ContentDescription,
+        listOf("Sobre o Molda"),
+    ),
+)
+
+/** Opens About from a root screen. */
+internal fun SemanticsNodeInteractionsProvider.openAbout() {
+    aboutAction().performClick()
 }
 
 /** The top app bar heading reading [title]. */

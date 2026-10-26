@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brazilian Portuguese (pt-rBR): Lint's spellchecker otherwise assumes English. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt-rBR">
+    <string name="update_checking">Verificando atualizações…</string>
+    <string name="update_available">Versão %1$s disponível</string>
+    <string name="update_up_to_date">O Molda está atualizado</string>
+    <string name="update_failed">Não foi possível verificar atualizações</string>
+    <string name="update_failed_hint">Confira a conexão e tente de novo.</string>
+    <string name="update_release_page">Ver a página da versão</string>
+    <string name="update_check">Verificar atualizações</string>
+    <string name="update_download">Atualizar</string>
+    <string name="update_downloading">Baixando a atualização…</string>
+    <string name="update_install">Instalar</string>
+    <string name="update_download_failed">O download falhou</string>
+    <string name="update_verification_failed_hint">O arquivo baixado não confere com o publicado.</string>
+    <string name="update_retry">Tentar novamente</string>
+    <string name="update_permission_title">Permita instalar a atualização</string>
+    <string name="update_permission_body">Para instalar a atualização, permita que o Molda instale apps nas configurações.</string>
+</resources>

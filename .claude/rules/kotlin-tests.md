@@ -107,10 +107,10 @@ ViewModels from the test's bindings exactly as in production
   rule, `@get:Rule(order = 0)`, and `createLaunchLaterComposeRule()` the second,
   with every other rule ordered after them: the activity injects in `onCreate`.
 - No class binds or uninstalls modules. `TestBindingsModule` gives every device
-  test's app the repositories and clock held by `TestBindings`: empty fakes and
-  13/10/2026 unless the test seeds others. One call seeds them and starts the
-  app: `launchApp(profiles, projects, clock, size, frame)`, every argument
-  optional. Keep a reference typed as the fake when the test sets a gate or
+  test's app the repositories and clock held by `TestBindings`: empty fakes, Molda up to date
+  and 13/10/2026 unless the test seeds others. One call seeds them and starts
+  the app: `launchApp(profiles, projects, clock, size, frame, updates)`, every
+  argument optional. Keep a reference typed as the fake when the test sets a gate or
   reads `current`. Starting the app freezes the holder, so assigning a fake
   afterwards throws.
 - `launchApp` shows the route inside `frame` (the theme by default) and at
@@ -191,10 +191,13 @@ state, so no wait covers it: dirty a form through a non-text control instead.
 Leave touch mode only through `KeyboardModeRule`, never with a Tab, Enter or
 arrow key: touch mode is global, Compose test clicks do not restore it, and
 every later test would run as a keyboard user, whose returning window focus
-raises the keyboard on a text field. An opening keyboard also shrinks `imePadding` layouts frame by frame after
-`awaitKeyboardVisible` returns, which can clip a button between scrolling to it
-and tapping it. Close the keyboard first with `closeKeyboard` when the test does
-not need it open.
+raises the keyboard on a text field. An opening keyboard also shrinks
+`imePadding` layouts frame by frame, which can clip a button between scrolling
+to it and tapping it, so `awaitKeyboardVisible` and `awaitKeyboardHidden` return
+only once the keyboard animation has finished. Close the keyboard first with
+`closeKeyboard`, never Espresso's `closeSoftKeyboard` alone, when the test does
+not need it open: the system drops a hide that arrives while the keyboard is
+still opening, so `closeKeyboard` lets it finish opening first.
 
 ## UI behavior
 

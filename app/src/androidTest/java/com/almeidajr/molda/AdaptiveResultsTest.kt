@@ -26,7 +26,6 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.window.layout.FoldingFeature
 import androidx.window.testing.layout.FoldingFeature
@@ -323,7 +322,7 @@ class AdaptiveResultsTest {
                 field.labelText,
             ).performScrollTo().performTextReplacement(value)
         }
-        closeSoftKeyboard()
+        composeRule.closeKeyboard()
         composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
     }
 

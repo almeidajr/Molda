@@ -5,4 +5,4 @@ Pushing a `v*.*.*` tag makes `.github/workflows/release.yml` build a release APK
 ## Consequences
 
 - The workflow cannot check release gates. People must not push a plain tag until the gates in `docs/roadmap.md` pass.
-- If Molda is later published on Google Play under the same application ID, Play App Signing must use this key, or existing testers cannot update in place.
+- Molda will not be published on Google Play. Installed builds update themselves from these GitHub Releases ([ADR-0007](0007-self-updates-from-github-releases.md)), which relies on this key never changing.

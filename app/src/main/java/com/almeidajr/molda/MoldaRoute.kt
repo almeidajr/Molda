@@ -1,6 +1,7 @@
 package com.almeidajr.molda
 
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +38,12 @@ import com.almeidajr.molda.ui.navigation.TopLevelBackStacks
 import com.almeidajr.molda.ui.navigation.rememberEditorStatusHolder
 import com.almeidajr.molda.ui.navigation.rememberNavigator
 import com.almeidajr.molda.ui.navigation.rememberTopLevelBackStacks
+import com.almeidajr.molda.update.domain.Update
+import com.almeidajr.molda.update.navigation.INSTALL_UPDATE_RESULT_KEY
+import com.almeidajr.molda.update.ui.InstallWhenDownloaded
+import com.almeidajr.molda.update.ui.StartupUpdateNotice
+import com.almeidajr.molda.update.ui.UpdateStatus
+import com.almeidajr.molda.update.ui.updateSection
 import kotlinx.coroutines.launch
 
 /**
@@ -57,14 +64,18 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
-    // One callback for every section; launched here, so it outlives the entry that asked.
-    val showSnackbar: (Int) -> Unit = { message ->
+    // One host for every message; launched here, so it outlives the entry that asked.
+    val showMessage: (String, String?, () -> Unit) -> Unit = { message, action, onAction ->
         scope.launch {
             // The latest outcome replaces the shown one instead of queuing behind it.
             snackbar.currentSnackbarData?.dismiss()
-            snackbar.showSnackbar(resources.getString(message))
+            val result = snackbar.showSnackbar(message, action, withDismissAction = action != null)
+            if (result == SnackbarResult.ActionPerformed) onAction()
         }
     }
+    val showSnackbar: (
+        Int,
+    ) -> Unit = { message -> showMessage(resources.getString(message), null) {} }
     // The holder forgets an editor's report once its key leaves the back stacks.
     LaunchedEffect(navigator, editors) {
         snapshotFlow { navigator.state.allKeys }.collect { editors.retainOnly(it) }
@@ -72,6 +83,9 @@ fun MoldaRoute(modifier: Modifier = Modifier, versionName: String = "") {
     val app = MoldaApp(navigator, editors)
     // Outside any entry, so the bus is passed rather than read from LocalResultEventBus.
     ResultEffect<AfterDiscard>(DISCARD_RESULT_KEY, resultBus) { app.discard(it) }
+    ResultEffect<Update>(INSTALL_UPDATE_RESULT_KEY, resultBus) { app.installUpdate(it) }
+    StartupUpdateNotice(resultBus, onShowNotice = showMessage)
+    InstallWhenDownloaded(resultBus)
     CompositionLocalProvider(LocalEditorStatusHolder provides editors) {
         MoldaShell(
             navigator,
@@ -106,6 +120,13 @@ private fun EditorReport?.editorStatus(): EditorStatus = when (this) {
  */
 private class MoldaApp(private val navigator: Navigator, private val editors: EditorStatusHolder) {
     private val stacks get() = navigator.state
+
+    /**
+     * Installs the downloaded [update], asking first when any editor has unsaved changes: every
+     * request on [INSTALL_UPDATE_RESULT_KEY] comes here.
+     */
+    fun installUpdate(update: Update) =
+        perform(installUpdate(update, editors.dirtyEditors().values))
 
     fun select(destination: Destination) = perform(
         selectDestination(
@@ -152,7 +173,8 @@ private class MoldaApp(private val navigator: Navigator, private val editors: Ed
             onCancelEditor = { perform(cancelProfileEditor(status(stacks.current))) },
             onShowSnackbar = onShowSnackbar,
         )
-        aboutSection(navigator, versionName)
+        aboutSection(navigator, versionName, updateStatus = { UpdateStatus() })
+        updateSection(navigator)
         overlaySection(
             navigator,
             onCreateProfile = { perform(requestPickerEditor(it, status(stacks.current))) },

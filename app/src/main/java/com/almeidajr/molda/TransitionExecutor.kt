@@ -6,6 +6,7 @@ import com.almeidajr.molda.profile.navigation.openProfileEditor
 import com.almeidajr.molda.project.navigation.closeProjectEditor
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
 import com.almeidajr.molda.ui.navigation.Navigator
+import com.almeidajr.molda.update.navigation.InstallUpdateKey
 
 /**
  * Carries out [transition], decided in MoldaTransitions.kt, on the top-level back stacks. An
@@ -35,5 +36,7 @@ internal fun Navigator.carryOut(transition: Transition) {
             openProfileEditor(transition.profile, transition.discardsDraft)
 
         is Transition.OpenPickerEditor -> openPickerEditor(transition.resultKey)
+
+        is Transition.InstallUpdate -> push(InstallUpdateKey(transition.update))
     }
 }

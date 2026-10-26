@@ -6,6 +6,7 @@ import com.almeidajr.molda.profile.navigation.isProfileEditor
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
 import com.almeidajr.molda.ui.navigation.EditorKind
+import com.almeidajr.molda.update.domain.Update
 import kotlinx.serialization.Serializable
 
 /** What confirming the discard of a dirty editor does next. */
@@ -30,6 +31,10 @@ internal sealed interface AfterDiscard {
     /** Re-selecting Projetos over a dirty project editor: back to its root. */
     @Serializable
     data object ShowProjects : AfterDiscard
+
+    /** Installing [update], which restarts Molda, over unsaved changes in an [editor]. */
+    @Serializable
+    data class InstallUpdate(val update: Update, val editor: EditorKind) : AfterDiscard
 }
 
 /** Asks to discard the dirty editor, then does [afterDiscard]. */
@@ -46,6 +51,8 @@ internal val AfterDiscard.discardedEditor: EditorKind
         -> EditorKind.Profile
 
         AfterDiscard.CloseProjectEditor, AfterDiscard.ShowProjects -> EditorKind.Project
+
+        is AfterDiscard.InstallUpdate -> editor
     }
 
 /**
@@ -88,6 +95,9 @@ internal sealed interface Transition {
      * open for that picker.
      */
     data class OpenPickerEditor(val resultKey: String) : Transition
+
+    /** Installs [update] through its install entry, which asks for the permission if needed. */
+    data class InstallUpdate(val update: Update) : Transition
 }
 
 /** Selecting [root] while [selected] shows [stack]. */
@@ -180,6 +190,16 @@ internal fun closeProjectEditor(status: EditorStatus): Transition = when (status
     EditorStatus.None, is EditorStatus.Profile -> Transition.CloseProjectEditor
 }
 
+/**
+ * Installing [update], which restarts Molda: asks first when any editor, shown or not, has
+ * [dirtyEditors] (their kinds), naming the first.
+ */
+internal fun installUpdate(update: Update, dirtyEditors: Collection<EditorKind>): Transition =
+    dirtyEditors.firstOrNull()?.let {
+        Transition.AskToDiscard(AfterDiscard.InstallUpdate(update, it))
+    }
+        ?: Transition.InstallUpdate(update)
+
 /** What confirming the discard does: the request that asked, now dropping the draft. */
 internal fun AfterDiscard.transition(): Transition = when (this) {
     AfterDiscard.CloseEditor -> Transition.FinishProfileEditor
@@ -188,6 +208,7 @@ internal fun AfterDiscard.transition(): Transition = when (this) {
     AfterDiscard.CalculateOwn -> Transition.ShowCalculator
     AfterDiscard.CloseProjectEditor -> Transition.CloseProjectEditor
     AfterDiscard.ShowProjects -> Transition.Select(ProjectsKey)
+    is AfterDiscard.InstallUpdate -> Transition.InstallUpdate(update)
 }
 
 /**

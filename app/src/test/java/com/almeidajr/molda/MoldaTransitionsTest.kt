@@ -20,6 +20,7 @@ import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.navigation.MOLDES_PROFILE_RESULT_KEY
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
+import com.almeidajr.molda.testing.Beta2
 import com.almeidajr.molda.ui.navigation.EditorKind
 import kotlin.test.assertEquals
 import org.junit.Test
@@ -31,6 +32,7 @@ class MoldaTransitionsTest {
         SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
         source = null,
     )
+    private val update = Beta2
     private val projectEditor =
         listOf(ProjectsKey, ProjectKey(project), ProjectEditorKey(project, snapshot))
     private val profileEditor = listOf(ProfileManagementKey, ProfileEditorKey(EditedProfile.New))
@@ -327,6 +329,7 @@ class MoldaTransitionsTest {
                 Transition.ShowCalculator,
                 Transition.CloseProjectEditor,
                 Transition.Select(ProjectsKey),
+                Transition.InstallUpdate(update),
             ),
             listOf(
                 AfterDiscard.CloseEditor,
@@ -335,6 +338,7 @@ class MoldaTransitionsTest {
                 AfterDiscard.CalculateOwn,
                 AfterDiscard.CloseProjectEditor,
                 AfterDiscard.ShowProjects,
+                AfterDiscard.InstallUpdate(update, EditorKind.Profile),
             ).map { it.transition() },
         )
     }
@@ -350,6 +354,7 @@ class MoldaTransitionsTest {
                 EditorKind.Profile,
                 EditorKind.Project,
                 EditorKind.Project,
+                EditorKind.Project,
             ),
             listOf(
                 AfterDiscard.CloseEditor,
@@ -358,7 +363,23 @@ class MoldaTransitionsTest {
                 AfterDiscard.CalculateOwn,
                 AfterDiscard.CloseProjectEditor,
                 AfterDiscard.ShowProjects,
+                AfterDiscard.InstallUpdate(update, EditorKind.Project),
             ).map { it.discardedEditor },
+        )
+    }
+
+    @Test
+    fun installUpdate_withNoUnsavedChanges_installsDirectly() {
+        // When/Then
+        assertEquals(Transition.InstallUpdate(update), installUpdate(update, emptyList()))
+    }
+
+    @Test
+    fun installUpdate_withAnEditorHoldingUnsavedChanges_asksToDiscardThem() {
+        // When/Then
+        assertEquals(
+            Transition.AskToDiscard(AfterDiscard.InstallUpdate(update, EditorKind.Project)),
+            installUpdate(update, listOf(EditorKind.Project)),
         )
     }
 }
