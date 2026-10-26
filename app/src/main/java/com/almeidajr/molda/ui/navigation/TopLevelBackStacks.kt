@@ -49,7 +49,7 @@ class TopLevelBackStacks internal constructor(
                 stack,
                 listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
-                    rememberViewModelStoreNavEntryDecorator<NavKey>(),
+                    rememberViewModelStoreNavEntryDecorator(),
                     rememberResultEventBusNavEntryDecorator(resultBus),
                 ),
                 entryProvider,

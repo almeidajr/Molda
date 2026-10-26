@@ -26,7 +26,7 @@ import com.almeidajr.molda.ui.navigation.Navigator
 
 /**
  * The skirt calculator on Moldes, which starts empty, with its folding guide, and the example
- * guide Guias opens; [onSaveProject] saves the calculated state as a project, and
+ * guide `Guias` opens; [onSaveProject] saves the calculated state as a project, and
  * [onCalculateOwn] leaves the example guide for the calculator.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)

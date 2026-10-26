@@ -23,7 +23,7 @@ class PackageCycleTest {
             .mapValues { (_, targets) -> targets.flatten().toSet() }
 
         // Then
-        assertEquals(emptyList<List<String>>(), cycles(dependencies), "Package cycles found.")
+        assertEquals(emptyList(), cycles(dependencies), "Package cycles found.")
     }
 
     private companion object {

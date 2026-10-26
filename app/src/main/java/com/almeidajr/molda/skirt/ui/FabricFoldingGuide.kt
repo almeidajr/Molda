@@ -41,7 +41,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import app.rive.Fit
 import app.rive.RenderBackend
 import app.rive.Result
@@ -114,7 +113,7 @@ internal fun <T> GuideFrame(
     val playingState = stringResource(R.string.guide_playing)
     val pausedState = stringResource(R.string.guide_paused)
     val pauseLabel = stringResource(if (paused) R.string.guide_resume else R.string.guide_pause)
-    // One modifier chain whether or not it pauses, so the drawing keeps its loaded state.
+    // One modifier chain, pausable or not, so the drawing keeps its loaded state.
     val pauseButton = if (isPausable) {
         Modifier.clip(shape)
             .semantics { stateDescription = if (paused) pausedState else playingState }
@@ -318,7 +317,7 @@ private fun stepLead(step: FoldingStep): Int = when (step) {
 private fun MarkingContext(radii: SkirtRadii) {
     val text: (Int) -> String = LocalResources.current::getString
     val card = cuttingCard(radii, text)
-    // The four radii read as one key: closer together than the paragraphs around them.
+    // The four radii read as one key: closer together than the surrounding paragraphs.
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         card.flatMap { it.entries }.sortedBy { it.line.number }.forEach { entry ->
             Text("${entry.line.number}. ${entry.label}: ${entry.value}")

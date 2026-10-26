@@ -77,7 +77,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.click("Calcular")
 
         // When
@@ -98,7 +98,7 @@ class EditProjectTest {
         projects.commandGate = gate
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.click("Calcular")
         composeRule.click("Salvar")
         composeRule.recreate()
@@ -120,7 +120,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.click("Calcular")
         projects.failsCommands = true
 
@@ -141,7 +141,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.click("Calcular")
         projects.commandFailure = NoLongerExistsException("Deleted meanwhile")
 
@@ -159,7 +159,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.click("Calcular")
 
         // When
@@ -196,7 +196,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.click("Calcular")
 
         // When: deleted elsewhere while the editor has unsaved changes.
@@ -214,7 +214,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
 
         // When
         composeRule.pressBack()
@@ -230,7 +230,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.onNodeWithContentDescription("Voltar").performClick()
 
         // When
@@ -246,7 +246,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.onNodeWithContentDescription("Voltar").performClick()
 
         // When
@@ -335,7 +335,7 @@ class EditProjectTest {
 
         // When
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.selectDestination("Moldes")
 
         // Then
@@ -440,7 +440,7 @@ class EditProjectTest {
         // Given
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
 
         // When
         composeRule.recreate()
@@ -459,14 +459,14 @@ class EditProjectTest {
     private fun openDiscardDialogAfterRecreation() {
         launch()
         openEditor()
-        editEase("4")
+        editEaseToFour()
         composeRule.onNodeWithContentDescription("Voltar").performClick()
         composeRule.recreate()
     }
 
-    private fun editEase(text: String) {
+    private fun editEaseToFour() {
         composeRule.onNodeWithText(SkirtDraftField.Ease.labelText).performScrollTo()
-            .performTextReplacement(text)
+            .performTextReplacement("4")
         // The keyboard resizes the screen as it opens; let it settle before the next tap.
         composeRule.closeKeyboard()
     }

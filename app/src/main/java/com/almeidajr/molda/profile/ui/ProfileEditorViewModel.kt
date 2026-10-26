@@ -37,7 +37,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel(assistedFactory = ProfileEditorViewModel.Factory::class)
 internal class ProfileEditorViewModel @AssistedInject constructor(
     private val repository: ProfileRepository,
-    savedState: SavedStateHandle,
+    // Read by the saved delegate below, which the IDE's unused check misses.
+    @Suppress("unused") savedState: SavedStateHandle,
     private val clock: Clock,
     // The edited profile, not its ProfileId: Dagger cannot pass a value class to an assisted
     // constructor.

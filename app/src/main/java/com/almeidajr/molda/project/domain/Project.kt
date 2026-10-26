@@ -42,6 +42,8 @@ data class SkirtSnapshot(
     val radii: SkirtRadii,
     val source: MeasurementSource?,
 ) {
+    // The only kind until Molda drafts another pattern.
+    @Suppress("SameReturnValue")
     val kind: PatternDraftKind get() = PatternDraftKind.FullCircleSkirt
 }
 

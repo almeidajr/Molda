@@ -10,7 +10,7 @@ import androidx.room3.Query
 import androidx.room3.Update
 import kotlinx.coroutines.flow.Flow
 
-/** A full-circle skirt project: its snapshot in typed columns, lengths in centimetres. */
+/** A full-circle skirt project, with the snapshot in typed columns and lengths in centimetres. */
 @Entity(tableName = "projects")
 internal data class ProjectEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

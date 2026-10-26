@@ -30,19 +30,19 @@ are not wearable skirt recommendations. Enter each case in the working
 calculator and open **Guia de dobra do tecido** beside the results. Use the
 displayed dimensions for marking; never trace or measure the screen drawing.
 
-| Case | Waist | Ease | Finished length | Waist seam allowance | Hem allowance | Paper square |
-| --- | --- | --- | --- | --- | --- | --- |
-| A: baseline | 60 | 2 | 10 | 1 | 2 | 50 × 50 |
-| B: longer | 60 | 2 | 20 | 1 | 2 | 70 × 70 |
-| C: coincident lines | 60 | 2 | 10 | 0 | 0 | 45 × 45 |
+| Case                | Waist | Ease | Finished length | Waist seam allowance | Hem allowance | Paper square |
+|---------------------|-------|------|-----------------|----------------------|---------------|--------------|
+| A: baseline         | 60    | 2    | 10              | 1                    | 2             | 50 × 50      |
+| B: longer           | 60    | 2    | 20              | 1                    | 2             | 70 × 70      |
+| C: coincident lines | 60    | 2    | 10              | 0                    | 0             | 45 × 45      |
 
 Independent observer reference, rounded to two decimals:
 
 | Case | Waist stitching radius | Waist cutting radius | Finished hem radius | Hem cutting radius | Unfolded outside / hole diameter |
-| --- | --- | --- | --- | --- | --- |
-| A | 9.87 | 8.87 | 19.87 | 21.87 | 43.74 / 17.74 |
-| B | 9.87 | 8.87 | 29.87 | 31.87 | 63.74 / 17.74 |
-| C | 9.87 | 9.87 | 19.87 | 19.87 | 39.74 / 19.74 |
+|------|------------------------|----------------------|---------------------|--------------------|----------------------------------|
+| A    | 9.87                   | 8.87                 | 19.87               | 21.87              | 43.74 / 17.74                    |
+| B    | 9.87                   | 8.87                 | 29.87               | 31.87              | 63.74 / 17.74                    |
+| C    | 9.87                   | 9.87                 | 19.87               | 19.87              | 39.74 / 19.74                    |
 
 The waist stitching circumference is 62 cm in every case; subtracting a 1 cm
 waist seam allowance moves the cutting line inward, while adding 2 cm hem
@@ -67,7 +67,7 @@ written instructions without playback as well as a pass using animation.
 2. **First fold:** left selvage moves onto right selvage. Two layers remain;
    the left edge is closed and the right edges are aligned selvages.
 3. **Second fold:** top raw end moves onto bottom raw end. Four layers remain;
-   closed folds meet at the upper-left corner, with raw ends below and selvages
+   closed folds meet in the upper-left corner, with raw ends below and selvages
    right. Before marking, ask the participant to identify that origin unaided.
 4. **Mark:** participant measures all four arcs from that same closed-fold
    corner, distinguishes cutting lines from stitching/finished-hem references,

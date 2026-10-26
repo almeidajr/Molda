@@ -55,7 +55,7 @@ class FakeProfileRepository(profiles: List<MeasurementProfile> = emptyList()) : 
 
     override suspend fun delete(id: ProfileId) = command { remove(id) }
 
-    /** Removes the profile [id] at once, as a delete elsewhere does, bypassing every gate. */
+    /** Removes the profile [id] at once, as a deletion elsewhere does, bypassing every gate. */
     fun forget(id: ProfileId) = remove(id)
 
     private fun remove(id: ProfileId) {

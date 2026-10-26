@@ -11,8 +11,8 @@ behind every result, and keeps measurements for the people you sew for.
 
 The app is in Brazilian Portuguese and uses centimetres.
 
-| Moldes | Saia godê | Guia de dobra | Perfis |
-| --- | --- | --- | --- |
+| Moldes                                                                                                     | Saia godê                                                                                                                                       | Guia de dobra                                                                                                                                                           | Perfis                                                                                                                     |
+|------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | <img src="docs/images/catalog.png" width="200" alt="Moldes catalog listing the full-circle skirt pattern"> | <img src="docs/images/calculator.png" width="200" alt="Full-circle skirt calculator showing the four radii and line diagram for a 70 cm waist"> | <img src="docs/images/guide.png" width="200" alt="Fabric-folding guide step 4 of 6, marking the four radii on folded fabric, with the values listed below the drawing"> | <img src="docs/images/profiles.png" width="200" alt="Perfis list with three measurement profiles: Ana, Beatriz and Carla"> |
 
 ## Features

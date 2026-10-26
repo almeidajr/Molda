@@ -11,7 +11,7 @@ import com.almeidajr.molda.ui.navigation.CatalogScreen
 import com.almeidajr.molda.ui.navigation.CatalogSelection
 
 /**
- * The Guias root: the library of guides, of which fabric folding is the first. Beside the guides,
+ * The `Guias` root: the library of guides, of which fabric folding is the first. Beside the guides,
  * [fabricFoldingSelection] marks whether its entry is the one shown.
  */
 @Composable

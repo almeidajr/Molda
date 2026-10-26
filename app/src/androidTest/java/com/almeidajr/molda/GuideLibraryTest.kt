@@ -29,7 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Guias: the library of guides and the fabric-folding guide opened from it or from a result. */
+/** `Guias`: the library of guides and the fabric-folding guide opened from it or from a result. */
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
 class GuideLibraryTest {

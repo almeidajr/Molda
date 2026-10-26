@@ -82,8 +82,8 @@ enum class UpdateInstall {
 
 /**
  * The [offered][UpdateRepository.offered] update each time its download finishes while followed,
- * so the install can start; a download found already finished, after Molda was in the background
- * or restarted, never counts, so Molda never restarts without the person's choice.
+ * so the installation can start; a download found already finished, after Molda was in the
+ * background or restarted, never counts, so Molda never restarts without the person's choice.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 fun UpdateRepository.finishedDownloads(): Flow<Update> = offered

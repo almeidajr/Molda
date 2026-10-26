@@ -66,7 +66,7 @@ class ProfileNavigatorTest {
         val perfis = navigator.stacks[1]
         assertEquals(2, perfis.size)
         assertEquals(existing, assertIs<ProfileEditorKey>(perfis.last()).profile)
-        assertNotEquals<NavKey>(open, perfis.last())
+        assertNotEquals(open, perfis.last())
     }
 
     @Test
@@ -123,7 +123,7 @@ class ProfileNavigatorTest {
         val moldes = navigator.stacks[0]
         assertEquals(3, moldes.size)
         assertEquals("picker", assertIs<PickerProfileEditorKey>(moldes.last()).resultKey)
-        assertNotEquals<NavKey>(pickerEditor, moldes.last())
+        assertNotEquals(pickerEditor, moldes.last())
     }
 
     @Test

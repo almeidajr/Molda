@@ -39,6 +39,8 @@ internal fun GuideLoadingIndicator(isLoading: Boolean, modifier: Modifier = Modi
         if (!isStillLoading) return@LaunchedEffect
         isShown = true
         delay(IndicatorMinDuration)
+        // The IDE takes the delegate for the value checked above, not the latest isLoading.
+        @Suppress("KotlinConstantConditions")
         snapshotFlow { isStillLoading }.first { !it }
         isShown = false
     }

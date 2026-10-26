@@ -98,7 +98,7 @@ class AdaptiveResultsTest {
             assertDiagramInCard(card, layout.isDiagramBeside, context)
             openGuide()
             assertGuideBarWhole(context)
-            // The instructions still have room to scroll to their end, the details disclosure.
+            // The instructions still have room to scroll to their end, the "Detalhes" disclosure.
             composeRule.onNodeWithText("Detalhes").performScrollTo().fullyVisibleBounds(context)
             // Saved state would otherwise reopen the player under the next size.
             composeRule.onNodeWithContentDescription("Fechar guia").performClick()
@@ -114,7 +114,7 @@ class AdaptiveResultsTest {
         val title = composeRule.onNodeWithText("Saia godê inteira").assertTextFits("title")
             .fullyVisibleBounds("title")
         val up = composeRule.onNodeWithContentDescription("Voltar").fullyVisibleBounds("up")
-        // One pixel of slack for dp-to-pixel rounding.
+        // One pixel of tolerance for dp-to-pixel rounding.
         assertTrue(up.right <= title.left + 1f, "app bar title $title overlaps up arrow $up")
         calculateReferenceCase()
         REFERENCE_RADII.forEach { radius ->

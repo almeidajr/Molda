@@ -1,5 +1,6 @@
 package com.almeidajr.molda.update.data
 
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -124,6 +125,8 @@ internal class SystemUpdateRepository(
         return UpdateInstall.Started
     }
 
+    // Molda updates itself from GitHub Releases, outside Google Play (docs/adr/0007).
+    @SuppressLint("RequestInstallPackagesPolicy")
     private fun commitSession(update: Update) {
         val apk = apkFile(update)
         val installer = context.packageManager.packageInstaller

@@ -21,9 +21,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.almeidajr.molda.R
 
 /**
- * The install [viewModel] runs: opens Molda's own "install unknown apps" setting when it needs the
- * permission, explains once, with a retry, when the person returns without allowing it, and
- * [onClose]s once the install started or the explanation is dismissed. Shows nothing otherwise.
+ * The installation [viewModel] runs: opens Molda's own "install unknown apps" setting when it
+ * needs the permission, explains once, with a retry, when the person returns without allowing it,
+ * and [onClose]s once the installation started or the explanation is dismissed. Shows nothing
+ * otherwise.
  */
 @Composable
 internal fun UpdateInstall(viewModel: UpdateInstallViewModel, onClose: () -> Unit) {

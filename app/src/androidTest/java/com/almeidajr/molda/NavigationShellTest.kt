@@ -41,7 +41,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** The navigation suite: Moldes, Projetos, Guias and Perfis, each with its own back stack. */
+/**
+ * The navigation suite: `Moldes`, `Projetos`, `Guias` and `Perfis`, each with its own back stack.
+ */
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
 class NavigationShellTest {

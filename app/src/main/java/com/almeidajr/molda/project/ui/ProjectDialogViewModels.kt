@@ -49,6 +49,7 @@ sealed interface ProjectCommandState<out T : Any> {
     val error: Int? get() = (this as? Failed)?.message
 
     /** The outcome awaiting its entry's reaction, held only while [Done]. */
+    @Suppress("SameReturnValue") // Done overrides it.
     val outcome: T? get() = null
 
     /** [Deleted] while its entry has yet to react to it, null otherwise. */

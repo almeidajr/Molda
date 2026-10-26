@@ -21,7 +21,7 @@ class CuttingCardTest {
     @Test
     fun cuttingCard_referenceRadii_groupsNumberedStyledRadii() {
         // When
-        val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0), text)
+        val card = cuttingCard(radiiFor(2.0, 1.0, 2.0), text)
 
         // Then
         assertEquals(listOf("Linhas de referência", "Linhas de corte"), card.map { it.title })
@@ -43,7 +43,7 @@ class CuttingCardTest {
     @Test
     fun cuttingCard_zeroWaistAllowance_flagsOnlyWaistLinesAsCoincident() {
         // When
-        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 2.0), text)
+        val card = cuttingCard(radiiFor(0.0, 0.0, 2.0), text)
 
         // Then
         assertEquals(
@@ -55,7 +55,7 @@ class CuttingCardTest {
     @Test
     fun cuttingCard_zeroHemAllowance_flagsOnlyHemLinesAsCoincident() {
         // When
-        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 1.0, 0.0), text)
+        val card = cuttingCard(radiiFor(0.0, 1.0, 0.0), text)
 
         // Then
         assertEquals(
@@ -75,7 +75,7 @@ class CuttingCardTest {
     @Test
     fun diagramDescription_referenceCard_keysEveryLineAndStatesLimitsWithoutRadii() {
         // Given
-        val card = cuttingCard(radiiFor(80.0, 2.0, 60.0, 1.0, 2.0), text)
+        val card = cuttingCard(radiiFor(2.0, 1.0, 2.0), text)
 
         // When
         val description = diagramDescription(card, "Margens dadas.", emptyList(), text)
@@ -99,7 +99,7 @@ class CuttingCardTest {
     @Test
     fun coincidenceNotes_zeroAllowances_noteEachCoincidentPairOnce() {
         // Given
-        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 0.0), text)
+        val card = cuttingCard(radiiFor(0.0, 0.0, 0.0), text)
 
         // When/Then
         assertEquals(
@@ -114,7 +114,7 @@ class CuttingCardTest {
     @Test
     fun diagramDescription_zeroAllowances_includesCoincidenceNotes() {
         // Given
-        val card = cuttingCard(radiiFor(80.0, 0.0, 60.0, 0.0, 0.0), text)
+        val card = cuttingCard(radiiFor(0.0, 0.0, 0.0), text)
 
         // When
         val description = diagramDescription(card, "Margens.", coincidenceNotes(card, text), text)
@@ -155,15 +155,13 @@ class CuttingCardTest {
         Length(hemAllowance),
     )
 
+    /** The radii of an 80 cm waist and 60 cm finished length with the given allowances. */
     private fun radiiFor(
-        waist: Double,
         ease: Double,
-        finishedLength: Double,
         waistSeamAllowance: Double,
         hemAllowance: Double,
     ): SkirtRadii = (
-        calculateSkirtRadii(
-            draft(waist, ease, finishedLength, waistSeamAllowance, hemAllowance),
-        ) as SkirtCalculation.Success
+        calculateSkirtRadii(draft(80.0, ease, 60.0, waistSeamAllowance, hemAllowance))
+            as SkirtCalculation.Success
         ).radii
 }

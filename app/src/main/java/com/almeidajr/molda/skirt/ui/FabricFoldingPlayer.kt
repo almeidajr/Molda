@@ -40,7 +40,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -65,7 +64,7 @@ private val PinnedDrawingMinHeight = 560.dp
 // Above this text scale the step position moves above the buttons so nothing truncates.
 private const val STACKED_STEP_BAR_FONT_SCALE = 1.3f
 
-/** The example draft of a guide opened from Guias, as its label lists it. */
+/** The example draft of a guide opened from `Guias`, as its label lists it. */
 private val ExampleSkirtDraft = SkirtDraft(
     waist = Length(80.0),
     ease = Length(2.0),
@@ -78,7 +77,7 @@ private val ExampleSkirtDraft = SkirtDraft(
 internal fun exampleCentimetres(length: Length): String =
     formatDecimal(length.centimetres).removeSuffix(",00")
 
-/** The radii a guide opened from Guias shows. */
+/** The radii a guide opened from `Guias` shows. */
 internal val ExampleSkirtRadii: SkirtRadii =
     when (val result = calculateSkirtRadii(ExampleSkirtDraft)) {
         is SkirtCalculation.Success -> result.radii

@@ -101,7 +101,7 @@ class FabricFoldingRenderingTest {
                 },
                 "$description must remain still while paused",
             )
-            // A tap reaches the frame through the drawn drawing and continues it, shown on the
+            // A tap reaches the frame through the drawing on top and continues it, shown on the
             // next frame: the clock is manual while the drawing plays.
             frame.performClick()
             composeRule.mainClock.advanceTimeByFrame()

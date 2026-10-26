@@ -48,8 +48,17 @@ Dependabot opens weekly Gradle and Actions updates; review and merge manually.
 Coordinate AGP, Gradle, Kotlin, JDK, and Detekt upgrades and run both CI jobs.
 Keep the wrapper distribution checksum updated when upgrading Gradle.
 
-Keep IDE state, SDK paths, build output, credentials, and signing keys out of Git.
+Keep IDE state, SDK paths, build output, credentials, and signing keys out of Git;
+only the shared inspection profile, scopes and project dictionary under `.idea/`
+are committed.
 Git normalizes source files to LF and Windows batch files to CRLF.
+
+Android Studio inspections the build cannot run count toward zero warnings too,
+and are checked by hand rather than in CI. Enable Portuguese under
+**Settings › Editor › Natural Languages** (keep English as American English),
+then run **Code › Inspect Code** on the shared `Owned` scope, which leaves out
+vendored agent skills and Gradle's generated wrapper files. Add words neither
+language knows to the project dictionary.
 Describe validation in PRs; include screenshots for UI changes, and follow
 [ACCESSIBILITY.md](ACCESSIBILITY.md#contributor-expectations).
 
@@ -149,7 +158,7 @@ release notes and compatibility, use `pre-commit autoupdate --freeze`, and verif
 each resulting SHA against its release (`git ls-remote <repo> refs/tags/<tag>
 refs/tags/<tag>^{}`; annotated tags use the peeled commit). Keep release comments.
 Update the CLI version together in this document, `.pre-commit-config.yaml`, and
-Quality's install command. Update both exact commitlint package versions together
+Quality's installation command. Update both exact commitlint package versions together
 in `.pre-commit-config.yaml` and the PR workflow. Reinstall the CLI with uv,
 verify accepted/rejected messages on Windows and Linux, run all-file hygiene,
 and the existing Gradle/device checks. Review changes

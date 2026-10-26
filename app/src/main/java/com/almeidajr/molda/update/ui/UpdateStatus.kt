@@ -28,7 +28,7 @@ import com.almeidajr.molda.update.navigation.INSTALL_UPDATE_RESULT_KEY
 
 /**
  * The update on offer and its download, both followed by the hosting entry's own
- * [UpdateCheckViewModel]. "Instalar" requests the install from the app on
+ * [UpdateCheckViewModel]. "Instalar" requests the installation from the app on
  * [INSTALL_UPDATE_RESULT_KEY].
  */
 @Composable

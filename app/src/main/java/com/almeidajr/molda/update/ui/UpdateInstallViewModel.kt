@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** Where one install of a downloaded update stands. */
+/** Where one installation of a downloaded update stands. */
 internal enum class UpdateInstallState {
     Installing,
 
@@ -26,7 +26,7 @@ internal enum class UpdateInstallState {
     /** Molda may not install apps: Molda's setting should open. */
     NeedsPermission,
 
-    /** Molda's setting is open; the install continues when the person returns. */
+    /** Molda's setting is open; the installation continues when the person returns. */
     WaitingForPermission,
 
     /** The person returned without allowing it: explained, with a retry. */
@@ -36,12 +36,13 @@ internal enum class UpdateInstallState {
 /**
  * Installs [update] as soon as its entry opens, waiting on the "install unknown apps" permission
  * when Molda lacks it. That the setting was opened is saved, so returning from it continues the
- * install even after process death, and explains instead of opening it again.
+ * installation even after process death, and explains instead of opening it again.
  */
 @HiltViewModel(assistedFactory = UpdateInstallViewModel.Factory::class)
 internal class UpdateInstallViewModel @AssistedInject constructor(
     private val repository: UpdateRepository,
-    savedState: SavedStateHandle,
+    // Read by the saved delegate below, which the IDE's unused check misses.
+    @Suppress("unused") savedState: SavedStateHandle,
     @Assisted private val update: Update,
 ) : ViewModel() {
     private var hasOpenedSetting by savedState.saved { false }
@@ -65,7 +66,7 @@ internal class UpdateInstallViewModel @AssistedInject constructor(
         mutableState.value = UpdateInstallState.WaitingForPermission
     }
 
-    /** The person returned from Molda's setting: continues the install, or explains once. */
+    /** The person returned from Molda's setting: continues the installation, or explains once. */
     fun onSettingClosed() {
         if (mutableState.value != UpdateInstallState.WaitingForPermission) return
         install(whenNotAllowed = UpdateInstallState.Refused)

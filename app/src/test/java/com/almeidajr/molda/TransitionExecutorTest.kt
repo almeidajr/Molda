@@ -258,7 +258,7 @@ class TransitionExecutorTest {
         val perfis = navigator.state.current.toList()
         assertEquals(2, perfis.size)
         assertEquals(existing, assertIs<ProfileEditorKey>(perfis.last()).profile)
-        assertNotEquals<NavKey>(open, perfis.last())
+        assertNotEquals(open, perfis.last())
     }
 
     @Test

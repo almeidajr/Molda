@@ -38,11 +38,11 @@ accessibility and human-feedback verification.
 
 - Following [ADR 0003](adr/0003-top-level-navigation-shell.md), the app opens
   on the Moldes catalog inside a navigation suite with four destinations,
-  Moldes · Projetos · Guias · Perfis: a navigation bar under 600dp, a rail from
+  `Moldes` · `Projetos` · `Guias` · `Perfis`: a navigation bar under 600dp, a rail from
   600dp. "Saia godê inteira" in the catalog opens the calculator under a top app
   bar with that title and an up arrow back to the catalog. Perfis is profile
   management as its own destination; Projetos shows an empty state that defines
-  a project; Guias lists guides. Each destination keeps its own back stack:
+  a project; `Guias` lists guides. Each destination keeps its own back stack:
   switching keeps a typed draft, re-selecting the current destination returns
   to its root, Back at another destination's root goes to Moldes, and Back at
   the Moldes root leaves the app. Place "Usar perfil" and the waist's source
@@ -173,7 +173,7 @@ accessibility and human-feedback verification.
 - The guide player keeps the drawing pinned while the step's instructions
   scroll (in short windows the drawing scrolls with them) and has a fixed bar:
   "Anterior", "Etapa n de 6", and "Próximo", which becomes "Concluir" on the last
-  step. Close, "Concluir" and Back return to the results. Its still frame stays
+  step. Close, "Concluir" and Back return to the results. The guide's still frame stays
   white in dark mode because the Rive artboards paint white; this is a known gap.
 - Before calculation, the wide-window results pane says
   "Preencha as medidas e toque em Calcular." Input changes remove results;
