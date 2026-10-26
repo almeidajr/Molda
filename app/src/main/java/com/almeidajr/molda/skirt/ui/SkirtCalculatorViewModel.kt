@@ -77,8 +77,7 @@ private fun DraftValues.hasSameValues(other: DraftValues): Boolean = source == o
  */
 @HiltViewModel(assistedFactory = SkirtCalculatorViewModel.Factory::class)
 class SkirtCalculatorViewModel @AssistedInject constructor(
-    // Read by the saved delegate below, which the IDE's unused check misses.
-    @Suppress("unused") savedState: SavedStateHandle,
+    savedState: SavedStateHandle,
     @Assisted startingDraft: SkirtDraft?,
     @Assisted startingSource: MeasurementSource?,
 ) : ViewModel() {

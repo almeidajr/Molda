@@ -41,8 +41,7 @@ internal enum class UpdateInstallState {
 @HiltViewModel(assistedFactory = UpdateInstallViewModel.Factory::class)
 internal class UpdateInstallViewModel @AssistedInject constructor(
     private val repository: UpdateRepository,
-    // Read by the saved delegate below, which the IDE's unused check misses.
-    @Suppress("unused") savedState: SavedStateHandle,
+    savedState: SavedStateHandle,
     @Assisted private val update: Update,
 ) : ViewModel() {
     private var hasOpenedSetting by savedState.saved { false }

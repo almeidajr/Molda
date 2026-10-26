@@ -78,7 +78,7 @@ For practical feedback, ask the participant to draft from the results, compare w
 - Calculation friction and profile reuse have not been validated as valuable user problems.
 - One participant provides an initial signal, not evidence for the entire audience.
 - Circular reference geometry has not been checked through a practical drafting session; construction and fitting remain the sewist's responsibility.
-- Requiring API 36 may exclude the available participant or other intended users.
+- Requiring API 36 might exclude the available participant or other intended users.
 - Local-only profiles may be lost when app data is cleared or a device is replaced. The experience must communicate this limitation.
 
 ## Next gate

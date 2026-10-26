@@ -56,7 +56,7 @@ Room and Rive. With Android SDK platform 37.2 and JDK 25:
 ```
 
 [CONTRIBUTING.md](CONTRIBUTING.md) covers setup, checks, commit conventions and
-releases. Product and design rationale live in [docs](docs/), domain terms in
+releases. Product and design rationale live in [docs](docs), domain terms in
 [GLOSSARY.md](GLOSSARY.md), and specifications in
 [GitHub Issues](https://github.com/almeidajr/Molda/issues).
 

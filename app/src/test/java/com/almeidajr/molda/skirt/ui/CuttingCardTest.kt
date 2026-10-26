@@ -126,7 +126,7 @@ class CuttingCardTest {
     @Test
     fun measurementSummary_draft_labelsEachValueWithoutRepeatingTheUnit() {
         // Given
-        val draft = draft(80.0, 2.0, 60.5, 1.0, 0.0)
+        val draft = SkirtDraft(Length(80.0), Length(2.0), Length(60.5), Length(1.0), Length(0.0))
 
         // When/Then
         assertEquals(
@@ -141,27 +141,21 @@ class CuttingCardTest {
         )
     }
 
-    private fun draft(
-        waist: Double,
-        ease: Double,
-        finishedLength: Double,
-        waistSeamAllowance: Double,
-        hemAllowance: Double,
-    ) = SkirtDraft(
-        Length(waist),
-        Length(ease),
-        Length(finishedLength),
-        Length(waistSeamAllowance),
-        Length(hemAllowance),
-    )
-
     /** The radii of an 80 cm waist and 60 cm finished length with the given allowances. */
     private fun radiiFor(
         ease: Double,
         waistSeamAllowance: Double,
         hemAllowance: Double,
     ): SkirtRadii = (
-        calculateSkirtRadii(draft(80.0, ease, 60.0, waistSeamAllowance, hemAllowance))
+        calculateSkirtRadii(
+            SkirtDraft(
+                Length(80.0),
+                Length(ease),
+                Length(60.0),
+                Length(waistSeamAllowance),
+                Length(hemAllowance),
+            ),
+        )
             as SkirtCalculation.Success
         ).radii
 }
