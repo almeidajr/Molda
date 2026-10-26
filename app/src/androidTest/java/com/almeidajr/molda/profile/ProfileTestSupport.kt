@@ -21,6 +21,7 @@ import com.almeidajr.molda.MainActivity
 import com.almeidajr.molda.MainActivityLauncher
 import com.almeidajr.molda.RouteFrame
 import com.almeidajr.molda.TestBindings
+import com.almeidajr.molda.awaitActivityFocus
 import com.almeidajr.molda.click
 import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.dialogTextField
@@ -122,6 +123,9 @@ internal fun AndroidComposeTestRule<*, *>.pickDate(date: LocalDate) {
     openCalendar()
     onNodeWithText(calendarDay(date), ignoreCase = true).performClick()
     click("Confirmar data")
+    // The closing calendar keeps input focus for a moment, and a text field tapped meanwhile can
+    // miss its keyboard.
+    awaitActivityFocus()
 }
 
 /** The calendar's label for [date]'s day. */
