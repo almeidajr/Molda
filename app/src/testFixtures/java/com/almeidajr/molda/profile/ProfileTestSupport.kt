@@ -92,10 +92,7 @@ fun SemanticsNodeInteractionsProvider.edit(label: String, value: String) {
     onNodeWithText(label).performScrollTo().performTextReplacement(value)
 }
 
-/**
- * Fills the open profile editor's name, waist and, through the calendar, date. Device tests use
- * `fillProfileOnDevice`, which keeps the keyboard out of the calendar's way.
- */
+/** Fills the open profile editor's name, waist and, through the calendar, date. */
 fun AndroidComposeTestRule<*, *>.fillProfile(
     name: String,
     waist: String = "80",
