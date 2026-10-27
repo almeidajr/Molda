@@ -15,7 +15,6 @@ import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -39,19 +38,12 @@ class GuideLibraryTest {
     @get:Rule(order = 1)
     val composeRule = createLaunchLaterComposeRule()
 
-    @get:Rule(order = 2)
-    val animatorScale = AnimatorDurationScaleRule(composeRule)
-
     private val guideTitle = "Guia de dobra do tecido"
     private val foldingSteps = 6
     private val markingStep = 3
 
     @Before
-    fun showApp() {
-        // The guide's drawings hold still, so Compose goes idle.
-        animatorScale.set(0f)
-        composeRule.launchApp()
-    }
+    fun showApp() = composeRule.launchApp()
 
     @Test
     fun guias_listsFabricFoldingGuide_whichOpensOnExampleDimensionsLabeledOnEveryStep() {
@@ -95,7 +87,6 @@ class GuideLibraryTest {
         // Given
         composeRule.openSkirtCalculator()
         waistField().performTextReplacement("90")
-        composeRule.closeKeyboard()
         composeRule.selectDestination("Guias")
         guideEntry().performClick()
 
@@ -112,15 +103,11 @@ class GuideLibraryTest {
     fun resultGuide_opensOnMoldesWithCalculatedRadiiUnlabeled_andBackReturnsToResults() {
         // Given
         composeRule.openSkirtCalculator()
-        SkirtDraftField.entries.zip(listOf("100", "0", "50", "1", "1")).forEach { (field, value) ->
-            composeRule.onNodeWithText(field.labelText).performScrollTo()
-                .performTextReplacement(value)
-        }
-        composeRule.closeKeyboard()
-        composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
+        composeRule.fillSkirtDraft(listOf("100", "0", "50", "1", "1"))
+        composeRule.click("Calcular")
 
         // When
-        composeRule.onNodeWithText(guideTitle).performScrollTo().performClick()
+        composeRule.click(guideTitle)
         repeat(markingStep) { composeRule.onNodeWithText("Próximo").performClick() }
 
         // Then
