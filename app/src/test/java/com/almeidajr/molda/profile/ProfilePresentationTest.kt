@@ -52,7 +52,7 @@ class ProfilePresentationTest {
     }
 
     @Test
-    fun newProfileEditor_explainsDateAndNotes() {
+    fun profileEditor_forANewProfile_explainsDateAndNotes() {
         // Given
         composeRule.launchProfiles()
 
@@ -69,7 +69,7 @@ class ProfilePresentationTest {
     }
 
     @Test
-    fun largeText_keepsProfileRowsAndActionsReachable() {
+    fun profiles_atDoubleFontScale_keepRowsAndActionsReachable() {
         // Given
         val name = "Ana Maria da Silva — medidas conferidas para a saia"
         val notes = "Conferida antes do corte"

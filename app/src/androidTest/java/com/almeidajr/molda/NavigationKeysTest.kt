@@ -47,7 +47,7 @@ class NavigationKeysTest {
     }
 
     @Test
-    fun newProfileByKeyboard_opensEditorWithoutFocusingAField() {
+    fun newProfile_byKeyboard_opensTheEditorWithoutFocusingAField() {
         // Given
         composeRule.selectDestination("Perfis")
         // Out of touch mode, buttons join keyboard focus traversal.

@@ -64,7 +64,10 @@ in one line.
 
 Name classes `<Subject>Test`. Name methods `subject_condition_outcome` with
 underscores, for example `readValue_whenSensorIsOffline_returnsLastKnownReading`;
-no backtick names, so Gradle `--tests` filters stay simple. Group tests by
+no backtick names, so Gradle `--tests` filters stay simple. Detekt
+(`FunctionNaming/tests`) rejects a test-source function name with underscores
+but fewer than three segments; it cannot tell tests from helpers, so it lets
+through a name without underscores. Name a real condition, not filler. Group tests by
 cohesive subject; one class per production class is not required.
 
 Mark the phases with `// Given`, `// When` and `// Then` comments:

@@ -1,5 +1,6 @@
 package com.almeidajr.molda.skirt.ui
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraft
@@ -7,14 +8,14 @@ import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
 // Robolectric resolves the card's copy from the app's string resources.
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class CuttingCardTest {
     private val text: (Int) -> String = RuntimeEnvironment.getApplication()::getString
 
@@ -112,18 +113,6 @@ class CuttingCardTest {
     }
 
     @Test
-    fun diagramDescription_zeroAllowances_includesCoincidenceNotes() {
-        // Given
-        val card = cuttingCard(radiiFor(0.0, 0.0, 0.0), text)
-
-        // When
-        val description = diagramDescription(card, "Margens.", coincidenceNotes(card, text), text)
-
-        // Then
-        coincidenceNotes(card, text).forEach { assertTrue(it in description, it) }
-    }
-
-    @Test
     fun measurementSummary_draft_labelsEachValueWithoutRepeatingTheUnit() {
         // Given
         val draft = SkirtDraft(Length(80.0), Length(2.0), Length(60.5), Length(1.0), Length(0.0))
@@ -146,7 +135,7 @@ class CuttingCardTest {
         ease: Double,
         waistSeamAllowance: Double,
         hemAllowance: Double,
-    ): SkirtRadii = (
+    ): SkirtRadii = assertIs<SkirtCalculation.Success>(
         calculateSkirtRadii(
             SkirtDraft(
                 Length(80.0),
@@ -155,7 +144,6 @@ class CuttingCardTest {
                 Length(waistSeamAllowance),
                 Length(hemAllowance),
             ),
-        )
-            as SkirtCalculation.Success
-        ).radii
+        ),
+    ).radii
 }

@@ -374,7 +374,7 @@ class MeasurementProfilesTest {
     }
 
     @Test
-    fun pickProfile_keepsOtherCalculatorFields() {
+    fun pickProfile_withOtherFieldsFilled_keepsThem() {
         // Given
         composeRule.launchCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
         val otherFields = mapOf(
@@ -412,7 +412,7 @@ class MeasurementProfilesTest {
     }
 
     @Test
-    fun pickerCancel_keepsManualDraft() {
+    fun cancelPicker_overAManualWaist_keepsTheManualDraft() {
         // Given
         composeRule.launchCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
         composeRule.edit(WAIST_LABEL, "91,5")
@@ -479,7 +479,7 @@ class MeasurementProfilesTest {
     }
 
     @Test
-    fun resizeToNarrow_showsDirtyEditorAlone() {
+    fun resize_toNarrowWithADirtyEditor_showsTheEditorAlone() {
         // Given
         composeRule.launchApp(frame = profileFrame(width = WIDE_WIDTH))
         composeRule.showProfiles()

@@ -94,7 +94,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun rename_storesTheNameAndListsItAsTheLatestChange() = runTest {
+    fun rename_olderProject_storesTheNameAndListsItAsTheLatestChange() = runTest {
         // Given
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
@@ -115,7 +115,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun update_replacesTheSnapshotInPlaceAsTheLatestChange() = runTest {
+    fun update_olderProject_replacesTheSnapshotInPlaceAsTheLatestChange() = runTest {
         // Given
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to
@@ -136,7 +136,7 @@ class ProjectStorageTest {
     }
 
     @Test
-    fun delete_removesOnlyThatProject() = runTest {
+    fun delete_oneOfTwoProjects_removesOnlyThatProject() = runTest {
         // Given
         val (first, second) = withProjects(context, databaseName) { storage ->
             storage.create(ProjectName("Saia de Ana"), fromProfile, january).getOrThrow() to

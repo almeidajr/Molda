@@ -3,6 +3,7 @@ package com.almeidajr.molda.update.ui
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.ViewModelScenario
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.testing.Beta2
 import com.almeidajr.molda.testing.FakeUpdateRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
@@ -13,10 +14,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 // Robolectric supplies the real Bundle that saved state is parceled through.
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class UpdateInstallViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()

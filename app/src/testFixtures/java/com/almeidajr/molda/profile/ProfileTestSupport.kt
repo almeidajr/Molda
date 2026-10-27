@@ -45,6 +45,12 @@ fun profile(
     ProfileMeasurements(ProfileName(name), Length(waist), date, notes),
 )
 
+/** Ana, stored first with an 80 cm waist. */
+val Ana = profile(1, "Ana")
+
+/** Bia, stored second with a 95 cm waist. */
+val Bia = profile(2, "Bia", waist = 95.0)
+
 /**
  * The profile tests' frame: the theme given, with [fontScale], forced to [width] dp when given.
  */

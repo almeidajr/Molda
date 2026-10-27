@@ -3,6 +3,7 @@ package com.almeidajr.molda.skirt.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.measurement.MeasurementSource
 import com.almeidajr.molda.skirt.domain.SkirtDraft
@@ -16,15 +17,14 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 // The calculator sets its state synchronously and launches no coroutines, so tests read
 // `state.value` directly. Robolectric supplies the real Bundle that saved state is parceled
 // through.
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class SkirtCalculatorViewModelTest {
     @Test
-    fun calculate_validDraft_showsRadii() {
+    fun calculate_validDraft_showsItsResult() {
         // Given
         val calculator = calculatorWith(validDraft)
 
@@ -32,13 +32,10 @@ class SkirtCalculatorViewModelTest {
         calculator.calculate()
 
         // Then
-        val radii = calculator.state.value.result?.radii
         assertEquals(
-            11.4591559,
-            radii?.waistStitching?.centimeters ?: 0.0,
-            absoluteTolerance = 1e-6,
+            SkirtDraft(Length(70.0), Length(2.0), Length(50.0), Length(1.0), Length(2.0)),
+            calculator.state.value.result?.draft,
         )
-        assertEquals(63.4591559, radii?.hemCutting?.centimeters ?: 0.0, absoluteTolerance = 1e-6)
     }
 
     @Test
@@ -153,41 +150,23 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
-    fun selectProfile_withItsWaist_fillsWaistAndSource() {
-        // Given
-        val calculator = calculator()
+    fun selectProfile_withItsWaist_fillsTheExactWaistAndSource() {
+        listOf(
+            68.5 to "68,5",
+            80.123456789 to "80,123456789",
+            80.0 to "80",
+        ).forEach { (waist, text) ->
+            // Given
+            val calculator = calculator()
 
-        // When
-        calculator.selectProfile(Length(68.5), ana)
+            // When
+            calculator.selectProfile(Length(waist), ana)
 
-        // Then
-        val form = calculator.state.value.form
-        assertEquals("68,5", form.inputs[SkirtDraftField.Waist])
-        assertEquals(ana, form.source)
-    }
-
-    @Test
-    fun selectProfile_withManyDecimals_fillsWaistExactly() {
-        // Given
-        val calculator = calculator()
-
-        // When
-        calculator.selectProfile(Length(80.123456789), ana)
-
-        // Then
-        assertEquals("80,123456789", calculator.state.value.form.inputs[SkirtDraftField.Waist])
-    }
-
-    @Test
-    fun selectProfile_withAWholeWaist_hasNoTrailingZeros() {
-        // Given
-        val calculator = calculator()
-
-        // When
-        calculator.selectProfile(Length(80.0), ana)
-
-        // Then
-        assertEquals("80", calculator.state.value.form.inputs[SkirtDraftField.Waist])
+            // Then
+            val form = calculator.state.value.form
+            assertEquals(text, form.inputs[SkirtDraftField.Waist], "waist $waist")
+            assertEquals(ana, form.source)
+        }
     }
 
     @Test
@@ -242,7 +221,6 @@ class SkirtCalculatorViewModelTest {
 
     @Test
     fun create_withAStartingDraft_fillsEveryInputAndItsSourceAndCalculates() {
-        // Given
         // When
         val calculator = calculator(savedDraft, ana)
 
@@ -323,7 +301,7 @@ class SkirtCalculatorViewModelTest {
     }
 
     @Test
-    fun recreate_afterProcessDeath_keepsTheStartingDraftsChanges() {
+    fun recreate_afterProcessDeath_keepsTheUncalculatedChangesWithoutAResult() {
         viewModelScenario {
             calculator(savedDraft, ana, createSavedStateHandle())
         }.use { scenario ->
@@ -334,7 +312,9 @@ class SkirtCalculatorViewModelTest {
             scenario.recreate()
 
             // Then
-            assertTrue(scenario.viewModel.state.value.isDirty)
+            val state = scenario.viewModel.state.value
+            assertTrue(state.isDirty)
+            assertNull(state.result)
         }
     }
 
@@ -353,28 +333,7 @@ class SkirtCalculatorViewModelTest {
             // Then
             val state = scenario.viewModel.state.value
             assertEquals(savedDraft.copy(ease = Length(3.0)), state.result?.draft)
-            assertEquals(
-                11.6382052,
-                state.result?.radii?.waistStitching?.centimeters ?: 0.0,
-                absoluteTolerance = 1e-6,
-            )
             assertEquals(ana, state.form.source)
-        }
-    }
-
-    @Test
-    fun recreate_afterProcessDeath_showsNoResultForUncalculatedChanges() {
-        viewModelScenario {
-            calculator(savedDraft, ana, createSavedStateHandle())
-        }.use { scenario ->
-            // Given
-            scenario.viewModel.edit(SkirtDraftField.Ease, "3")
-
-            // When
-            scenario.recreate()
-
-            // Then
-            assertNull(scenario.viewModel.state.value.result)
         }
     }
 

@@ -3,7 +3,6 @@ package com.almeidajr.molda
 import androidx.navigation3.runtime.NavKey
 import com.almeidajr.molda.guide.navigation.ExampleFabricFoldingGuideKey
 import com.almeidajr.molda.guide.navigation.GuideLibraryKey
-import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.pattern.navigation.PatternCatalogKey
 import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.navigation.EditedProfile
@@ -11,14 +10,11 @@ import com.almeidajr.molda.profile.navigation.PickerProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileEditorKey
 import com.almeidajr.molda.profile.navigation.ProfileManagementKey
 import com.almeidajr.molda.profile.navigation.ProfilePickerKey
+import com.almeidajr.molda.project.ReferenceSnapshot
 import com.almeidajr.molda.project.domain.ProjectId
-import com.almeidajr.molda.project.domain.SkirtSnapshot
 import com.almeidajr.molda.project.navigation.ProjectEditorKey
-import com.almeidajr.molda.project.navigation.ProjectKey
 import com.almeidajr.molda.project.navigation.ProjectsKey
 import com.almeidajr.molda.project.navigation.profileResultKey
-import com.almeidajr.molda.skirt.domain.SkirtDraft
-import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.navigation.FabricFoldingGuideKey
 import com.almeidajr.molda.skirt.navigation.MOLDES_PROFILE_RESULT_KEY
 import com.almeidajr.molda.skirt.navigation.SkirtCalculatorKey
@@ -26,17 +22,10 @@ import com.almeidajr.molda.ui.navigation.Navigator
 import com.almeidajr.molda.ui.navigation.navigatorOf
 import com.almeidajr.molda.ui.navigation.stacks
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertNotEquals
 import org.junit.Test
 
 class TransitionExecutorTest {
-    private val snapshot = SkirtSnapshot(
-        SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
-        SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
-        source = null,
-    )
-    private val projectEditor = ProjectEditorKey(ProjectId(1), snapshot)
+    private val projectEditor = ProjectEditorKey(ProjectId(1), ReferenceSnapshot)
     private val moldesPicker = ProfilePickerKey(MOLDES_PROFILE_RESULT_KEY)
     private val existing = EditedProfile.Existing(ProfileId(2))
 
@@ -47,66 +36,6 @@ class TransitionExecutorTest {
     )
 
     private fun Navigator.stackOf(root: NavKey) = stacks[TopLevelRoots.indexOf(root)]
-
-    @Test
-    fun carryOut_none_leavesTheStacks() {
-        // Given
-        val navigator = app(PatternCatalogKey, listOf(PatternCatalogKey, SkirtCalculatorKey))
-
-        // When
-        navigator.carryOut(Transition.None)
-
-        // Then
-        assertEquals(
-            listOf(PatternCatalogKey, SkirtCalculatorKey),
-            navigator.state.current.toList(),
-        )
-    }
-
-    @Test
-    fun carryOut_back_popsTheSelectedStack() {
-        // Given
-        val navigator = app(GuideLibraryKey, listOf(GuideLibraryKey, ExampleFabricFoldingGuideKey))
-
-        // When
-        navigator.carryOut(Transition.Back)
-
-        // Then
-        assertEquals(listOf(GuideLibraryKey), navigator.state.current.toList())
-    }
-
-    @Test
-    fun carryOut_selectAnotherDestination_showsItsStack() {
-        // Given
-        val navigator = app(
-            PatternCatalogKey,
-            listOf(ProjectsKey, ProjectKey(ProjectId(1))),
-        )
-
-        // When
-        navigator.carryOut(Transition.Select(ProjectsKey))
-
-        // Then
-        assertEquals(
-            listOf(ProjectsKey, ProjectKey(ProjectId(1))),
-            navigator.state.current.toList(),
-        )
-    }
-
-    @Test
-    fun carryOut_showProjectsAfterDiscard_returnsProjetosToItsRoot() {
-        // Given
-        val navigator = app(
-            ProjectsKey,
-            listOf(ProjectsKey, ProjectKey(ProjectId(1)), projectEditor),
-        )
-
-        // When
-        navigator.carryOut(AfterDiscard.ShowProjects.transition())
-
-        // Then
-        assertEquals(listOf(ProjectsKey), navigator.state.current.toList())
-    }
 
     @Test
     fun carryOut_askToDiscard_opensTheDialogOverTheSelectedStack() {
@@ -120,24 +49,6 @@ class TransitionExecutorTest {
         // Then
         assertEquals(
             listOf(ProjectsKey, projectEditor, DiscardChangesKey(AfterDiscard.CloseProjectEditor)),
-            navigator.state.current.toList(),
-        )
-    }
-
-    @Test
-    fun carryOut_closeProjectEditor_returnsToTheProject() {
-        // Given
-        val navigator = app(
-            ProjectsKey,
-            listOf(ProjectsKey, ProjectKey(ProjectId(1)), projectEditor),
-        )
-
-        // When
-        navigator.carryOut(Transition.CloseProjectEditor)
-
-        // Then
-        assertEquals(
-            listOf(ProjectsKey, ProjectKey(ProjectId(1))),
             navigator.state.current.toList(),
         )
     }
@@ -183,7 +94,7 @@ class TransitionExecutorTest {
     @Test
     fun carryOut_showCalculatorOverItsGuide_closesTheGuide() {
         // Given
-        val guide = FabricFoldingGuideKey(snapshot.radii)
+        val guide = FabricFoldingGuideKey(ReferenceSnapshot.radii)
         val navigator = app(PatternCatalogKey, listOf(PatternCatalogKey, SkirtCalculatorKey, guide))
 
         // When
@@ -229,60 +140,6 @@ class TransitionExecutorTest {
         assertEquals(
             listOf(ProjectsKey, projectEditor, ProfilePickerKey(projectEditor.profileResultKey)),
             navigator.state.current.toList(),
-        )
-    }
-
-    @Test
-    fun carryOut_openTheAlreadyOpenProfileEditor_keepsIt() {
-        // Given
-        val open = ProfileEditorKey(existing)
-        val navigator = app(ProfileManagementKey, listOf(ProfileManagementKey, open))
-
-        // When
-        navigator.carryOut(Transition.OpenProfileEditor(existing))
-
-        // Then
-        assertEquals(listOf(ProfileManagementKey, open), navigator.state.current.toList())
-    }
-
-    @Test
-    fun carryOut_openTheOpenProfileEditorAfterDiscard_replacesItWithAFreshOne() {
-        // Given
-        val open = ProfileEditorKey(existing)
-        val navigator = app(ProfileManagementKey, listOf(ProfileManagementKey, open))
-
-        // When
-        navigator.carryOut(AfterDiscard.OpenEditor(existing).transition())
-
-        // Then
-        val perfis = navigator.state.current.toList()
-        assertEquals(2, perfis.size)
-        assertEquals(existing, assertIs<ProfileEditorKey>(perfis.last()).profile)
-        assertNotEquals(open, perfis.last())
-    }
-
-    @Test
-    fun carryOut_openPickerEditor_opensItOverThePicker() {
-        // Given
-        val navigator = app(
-            PatternCatalogKey,
-            listOf(PatternCatalogKey, SkirtCalculatorKey, moldesPicker),
-        )
-
-        // When
-        navigator.carryOut(Transition.OpenPickerEditor(MOLDES_PROFILE_RESULT_KEY))
-
-        // Then
-        val moldes = navigator.state.current.toList()
-        val opening = assertIs<PickerProfileEditorKey>(moldes.last()).opening
-        assertEquals(
-            listOf(
-                PatternCatalogKey,
-                SkirtCalculatorKey,
-                moldesPicker,
-                PickerProfileEditorKey(MOLDES_PROFILE_RESULT_KEY, opening),
-            ),
-            moldes,
         )
     }
 

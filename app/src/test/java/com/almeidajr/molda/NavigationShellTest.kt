@@ -105,7 +105,7 @@ class NavigationShellTest {
     }
 
     @Test
-    fun switchingDestinations_keepsCalculatorDraft() {
+    fun selectDestination_awayAndBack_keepsTheCalculatorDraft() {
         // Given
         composeRule.openSkirtCalculator()
         waistField().performTextReplacement("80")
@@ -136,7 +136,7 @@ class NavigationShellTest {
     }
 
     @Test
-    fun recreation_keepsSelectedDestinationAndEachStack() {
+    fun recreate_withStacksOnTwoDestinations_keepsTheSelectionAndEachStack() {
         // Given
         composeRule.openSkirtCalculator()
         waistField().performTextReplacement("80")
@@ -155,7 +155,7 @@ class NavigationShellTest {
     }
 
     @Test
-    fun navigationSuite_isBarOnCompactAndRailOnWide() {
+    fun navigationSuite_byWindowWidth_isBarOnCompactAndRailOnWide() {
         listOf(DpSize(400.dp, 800.dp) to false, DpSize(1000.dp, 800.dp) to true)
             .forEach { (size, isRail) ->
                 // When
@@ -203,7 +203,7 @@ class NavigationShellTest {
     }
 
     @Test
-    fun selectingDestination_focusesItsTitle() {
+    fun selectDestination_eachDestination_focusesItsTitle() {
         listOf(
             "Projetos" to "Projetos",
             "Guias" to "Guias",
@@ -219,7 +219,7 @@ class NavigationShellTest {
     }
 
     @Test
-    fun returningToOpenProfileEditor_focusesItsHeadingNotAField() {
+    fun selectDestination_backToAnOpenProfileEditor_focusesItsHeadingNotAField() {
         // Given
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()

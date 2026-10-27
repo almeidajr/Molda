@@ -1,6 +1,7 @@
 package com.almeidajr.molda.project.ui
 
 import com.almeidajr.molda.R
+import com.almeidajr.molda.project.ReferenceSnapshot
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.project.navigation.DeleteProjectKey
 import com.almeidajr.molda.project.navigation.RenameProjectKey
@@ -9,13 +10,14 @@ import com.almeidajr.molda.testing.FakeProjectRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import com.almeidajr.molda.testing.October18Clock
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
-/** The save, rename and delete dialogs' ViewModels, each running its own storage command. */
+/**
+ * The save, rename and delete dialogs' ViewModels, each running its own storage command; the
+ * command's own rules are in [ProjectCommandTest].
+ */
 class ProjectDialogViewModelsTest {
     private val storage = FakeProjectRepository(listOf(saved))
 
@@ -25,13 +27,13 @@ class ProjectDialogViewModelsTest {
     @Test
     fun defaultName_fromProfile_offersKindProfileAndToday() = runTest {
         // When/Then
-        assertEquals("Saia godê · Ana · 18/10/2026", saveViewModel().defaultName("Saia godê"))
+        assertEquals("Saia godê · Ana · 18/10/2026", save().defaultName("Saia godê"))
     }
 
     @Test
     fun save_withName_storesTheSnapshotUnderThatNameAndHoldsItsId() = runTest {
         // Given
-        val dialog = saveViewModel()
+        val dialog = save()
 
         // When
         dialog.save(ProjectName("Saia da formatura"))
@@ -39,7 +41,7 @@ class ProjectDialogViewModelsTest {
         // Then
         val created = storage.current.single { it.id != saved.id }
         assertEquals(ProjectName("Saia da formatura"), created.name)
-        assertEquals(fromProfile, created.snapshot)
+        assertEquals(ReferenceSnapshot, created.snapshot)
         assertEquals(October18Clock.instant(), created.createdAt)
         assertEquals(ProjectCommandState.Done(created.id), dialog.state.value)
     }
@@ -48,7 +50,7 @@ class ProjectDialogViewModelsTest {
     fun save_whenStorageFails_showsTheFailureAndStoresNothing() = runTest {
         // Given
         storage.failsCommands = true
-        val dialog = saveViewModel()
+        val dialog = save()
 
         // When
         dialog.save(ProjectName("Saia da formatura"))
@@ -59,69 +61,9 @@ class ProjectDialogViewModelsTest {
     }
 
     @Test
-    fun save_duringTheStorageCall_isBusyAndIgnoresAnotherSave() = runTest {
+    fun rename_storedProject_storesTheNameAndIsDone() = runTest {
         // Given
-        val gate = CompletableDeferred<Unit>()
-        storage.commandGate = gate
-        val dialog = saveViewModel()
-        dialog.save(ProjectName("Saia"))
-
-        // When
-        dialog.save(ProjectName("Saia"))
-
-        // Then
-        assertEquals(ProjectCommandState.Running, dialog.state.value)
-        gate.complete(Unit)
-        assertEquals(2, storage.current.size)
-    }
-
-    @Test
-    fun save_afterSaving_storesNoOtherProject() = runTest {
-        // Given
-        val dialog = saveViewModel()
-        dialog.save(ProjectName("Saia"))
-
-        // When
-        dialog.save(ProjectName("Saia"))
-
-        // Then
-        assertEquals(2, storage.current.size)
-    }
-
-    @Test
-    fun save_afterTheOutcomeIsAcknowledged_storesNoOtherProject() = runTest {
-        // Given
-        val dialog = saveViewModel()
-        dialog.save(ProjectName("Saia"))
-        dialog.acknowledge()
-
-        // When
-        dialog.save(ProjectName("Saia"))
-
-        // Then
-        assertEquals(ProjectCommandState.Spent, dialog.state.value)
-        assertEquals(2, storage.current.size)
-    }
-
-    @Test
-    fun save_afterAFailure_runsAgain() = runTest {
-        // Given
-        storage.failsCommands = true
-        val dialog = saveViewModel()
-        dialog.save(ProjectName("Saia"))
-        storage.failsCommands = false
-
-        // When
-        dialog.save(ProjectName("Saia"))
-
-        // Then
-        assertEquals(2, storage.current.size)
-    }
-
-    @Test
-    fun rename_storesTheNameAndIsDone() = runTest {
-        // Given
-        val dialog = RenameProjectViewModel(storage, October18Clock, RenameProjectKey(saved.id))
+        val dialog = rename()
 
         // When
         dialog.rename(ProjectName("Saia da formatura"))
@@ -143,7 +85,7 @@ class ProjectDialogViewModelsTest {
     fun rename_whenStorageFails_keepsTheProjectAndShowsTheFailure() = runTest {
         // Given
         storage.failsCommands = true
-        val dialog = RenameProjectViewModel(storage, October18Clock, RenameProjectKey(saved.id))
+        val dialog = rename()
 
         // When
         dialog.rename(ProjectName("Saia da formatura"))
@@ -157,58 +99,9 @@ class ProjectDialogViewModelsTest {
     }
 
     @Test
-    fun rename_ofProjectDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
+    fun delete_storedProject_removesItAndIsDone() = runTest {
         // Given
-        val dialog = RenameProjectViewModel(storage, October18Clock, RenameProjectKey(saved.id))
-        storage.delete(saved.id).getOrThrow()
-
-        // When
-        dialog.rename(ProjectName("Saia da formatura"))
-
-        // Then
-        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
-        assertNull(dialog.state.value.error)
-    }
-
-    @Test
-    fun rename_duringTheStorageCall_isBusyAndIgnoresAnotherRename() = runTest {
-        // Given
-        val gate = CompletableDeferred<Unit>()
-        storage.commandGate = gate
-        val dialog = RenameProjectViewModel(storage, October18Clock, RenameProjectKey(saved.id))
-        dialog.rename(ProjectName("Saia da formatura"))
-
-        // When
-        dialog.rename(ProjectName("Saia do casamento"))
-
-        // Then
-        assertEquals(ProjectCommandState.Running, dialog.state.value)
-        gate.complete(Unit)
-        assertEquals(ProjectName("Saia da formatura"), storage.current.single().name)
-    }
-
-    @Test
-    fun delete_duringTheStorageCall_isBusyAndIgnoresAnotherDelete() = runTest {
-        // Given
-        val gate = CompletableDeferred<Unit>()
-        storage.commandGate = gate
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
-        dialog.delete()
-
-        // When
-        dialog.delete()
-
-        // Then
-        assertEquals(ProjectCommandState.Running, dialog.state.value)
-        gate.complete(Unit)
-        // A second delete would fail on the project the first removed.
-        assertEquals(ProjectCommandState.Done(Unit), dialog.state.value)
-    }
-
-    @Test
-    fun delete_removesTheProjectAndIsDone() = runTest {
-        // Given
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+        val dialog = delete()
 
         // When
         dialog.delete()
@@ -219,99 +112,10 @@ class ProjectDialogViewModelsTest {
     }
 
     @Test
-    fun delete_ofProjectDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
-        // Given
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
-        storage.delete(saved.id).getOrThrow()
-
-        // When
-        dialog.delete()
-
-        // Then
-        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
-        assertNull(dialog.state.value.error)
-    }
-
-    @Test
-    fun markProjectGone_withNoDeleteRunning_reportsItDeleted() = runTest {
-        // Given
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
-
-        // When
-        dialog.markProjectGone()
-
-        // Then
-        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
-    }
-
-    @Test
-    fun markProjectGone_afterAFailedDelete_reportsItDeleted() = runTest {
-        // Given
-        storage.failsCommands = true
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
-        dialog.delete()
-
-        // When
-        dialog.markProjectGone()
-
-        // Then
-        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
-    }
-
-    @Test
-    fun markProjectGone_duringItsOwnDelete_leavesTheOutcomeToTheDelete() = runTest {
-        // Given
-        val gate = CompletableDeferred<Unit>()
-        storage.commandGate = gate
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
-        dialog.delete()
-
-        // When
-        dialog.markProjectGone()
-
-        // Then
-        assertEquals(ProjectCommandState.Running, dialog.state.value)
-        gate.complete(Unit)
-        assertEquals(ProjectCommandState.Done(Unit), dialog.state.value)
-    }
-
-    @Test
-    fun markProjectGone_duringADeleteThatThenFails_reportsItDeleted() = runTest {
-        // Given
-        val gate = CompletableDeferred<Unit>()
-        storage.commandGate = gate
-        storage.failsCommands = true
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
-        dialog.delete()
-        dialog.markProjectGone()
-
-        // When
-        gate.complete(Unit)
-
-        // Then
-        assertEquals(ProjectCommandState.Deleted, dialog.state.value)
-        assertNull(dialog.state.value.error)
-    }
-
-    @Test
-    fun acknowledge_afterTheProjectWasFoundDeleted_spendsTheCommand() = runTest {
-        // Given
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
-        storage.delete(saved.id).getOrThrow()
-        dialog.delete()
-
-        // When
-        dialog.acknowledge()
-
-        // Then
-        assertEquals(ProjectCommandState.Spent, dialog.state.value)
-    }
-
-    @Test
     fun delete_whenStorageFails_keepsTheProjectAndShowsTheFailure() = runTest {
         // Given
         storage.failsCommands = true
-        val dialog = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
+        val dialog = delete()
 
         // When
         dialog.delete()
@@ -324,6 +128,11 @@ class ProjectDialogViewModelsTest {
         assertEquals(listOf(saved), storage.current)
     }
 
-    private fun saveViewModel() =
-        SaveProjectViewModel(storage, October18Clock, SaveProjectKey(fromProfile))
+    private fun save() =
+        SaveProjectViewModel(storage, October18Clock, SaveProjectKey(ReferenceSnapshot))
+
+    private fun rename() =
+        RenameProjectViewModel(storage, October18Clock, RenameProjectKey(saved.id))
+
+    private fun delete() = DeleteProjectViewModel(storage, DeleteProjectKey(saved.id))
 }

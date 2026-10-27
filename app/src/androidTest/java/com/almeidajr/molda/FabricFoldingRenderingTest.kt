@@ -219,7 +219,7 @@ class FabricFoldingRenderingTest {
     }
 
     @Test
-    fun cuttingAndUnfoldingPixels_preserveCurrentRadiiAndCoincidentAllowances() {
+    fun cuttingAndUnfoldingDrawings_forEachDraft_preserveRadiiAndCoincidentAllowances() {
         listOf(
             SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)) to
                 listOf(0.173892, 0.160568, 0.973352, 1.0),
