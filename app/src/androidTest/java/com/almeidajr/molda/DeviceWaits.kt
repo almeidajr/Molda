@@ -17,6 +17,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -179,10 +180,17 @@ internal fun AndroidComposeTestRule<*, *>.awaitRiveFrame(
         isLoadingIndicator and hasAnyAncestor(hasContentDescription(description)),
         useUnmergedTree = true,
     )
+    // Until Rive draws the step's first frame, its surface can still show the previous step.
+    val loading = onNode(
+        hasContentDescription(description) and hasStateDescription(
+            activity.getString(R.string.guide_drawing_loading),
+        ),
+        useUnmergedTree = true,
+    )
     waitUntil("$description rendered as expected", timeout) {
         if (!mainClock.autoAdvance) mainClock.advanceTimeByFrame()
         // The indicator can appear after the first check, so it is part of every frame's check.
-        val isCovered = indicator.isDisplayed()
+        val isCovered = indicator.isDisplayed() || loading.isDisplayed()
         frame = onNodeWithContentDescription(description, useUnmergedTree = true).captureToImage()
             .takeIf { !isCovered && isExpected(it) }
         frame != null

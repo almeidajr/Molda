@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -106,13 +107,15 @@ internal fun <T> GuideFrame(
     onTogglePause: () -> Unit,
     drawing: @Composable (file: T, isPlaying: Boolean, onLoaded: (DrawingLoad) -> Unit) -> Unit,
 ) {
-    var load by remember { mutableStateOf<DrawingLoad?>(null) }
+    // Each step's drawing loads on its own surface: until it draws, the frame offers no pause.
+    var load by remember(progress.step) { mutableStateOf<DrawingLoad?>(null) }
     val isPausable = isPausable(motionEnabled, load, isFileLoaded = file is Result.Success)
     val paused = progress.isPaused
     val shape = MaterialTheme.shapes.large
     val playingState = stringResource(R.string.guide_playing)
     val pausedState = stringResource(R.string.guide_paused)
     val pauseLabel = stringResource(if (paused) R.string.guide_resume else R.string.guide_pause)
+    val loadingState = stringResource(R.string.guide_drawing_loading)
     // One modifier chain, pausable or not, so the drawing keeps its loaded state.
     val pauseButton = if (isPausable) {
         Modifier.clip(shape)
@@ -144,11 +147,14 @@ internal fun <T> GuideFrame(
                             Box(
                                 Modifier.fillMaxWidth().aspectRatio(1f).semantics {
                                     contentDescription = description
+                                    if (load == null) stateDescription = loadingState
                                 },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 if (file is Result.Success) {
-                                    drawing(file.value, isPlaying) { load = it }
+                                    key(progress.step) {
+                                        drawing(file.value, isPlaying) { load = it }
+                                    }
                                 }
                                 GuideLoadingIndicator(load == null, Modifier.matchParentSize())
                             }
@@ -197,9 +203,12 @@ private fun GuideDrawing(
     val artboard = rememberArtboardResult(file, step.artboard)
     val instance = if (artboard is Result.Success) rememberViewModelInstanceResult(file) else null
     var ready by remember(instance, radii) { mutableStateOf(false) }
+    // Drawn once Rive shows the first frame, not when the bindings are set: until then the
+    // surface is blank.
+    var isDrawn by remember { mutableStateOf(false) }
     val load = when {
         artboard is Result.Error || instance is Result.Error -> DrawingLoad.Failed
-        ready -> DrawingLoad.Drawn
+        isDrawn -> DrawingLoad.Drawn
         else -> null
     }
     LaunchedEffect(load) { load?.let(onLoaded) }
@@ -230,6 +239,8 @@ private fun GuideDrawing(
                     // The frame around the drawing takes the tap that pauses it.
                     pointerInputMode = RivePointerInputMode.Observe,
                     modifier = Modifier.fillMaxSize(),
+                    // Rive calls this once per surface, after a real frame reaches it.
+                    onBitmapAvailable = { isDrawn = true },
                 )
             }
         }

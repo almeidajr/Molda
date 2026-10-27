@@ -104,6 +104,7 @@
     <string name="guide_pause">Pausar animação</string>
     <string name="guide_playing">Reproduzindo</string>
     <string name="guide_paused">Pausado</string>
+    <string name="guide_drawing_loading">Carregando</string>
     <string name="guide_drawing_marking">Marcação proporcional em Rive</string>
     <string name="guide_drawing_cutting">Corte proporcional em Rive</string>
     <string name="guide_drawing_unfolding">Círculo desdobrado proporcional em Rive</string>
