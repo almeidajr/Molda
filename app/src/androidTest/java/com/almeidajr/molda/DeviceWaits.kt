@@ -5,8 +5,6 @@ import android.animation.ValueAnimator
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsAnimation
-import android.view.WindowManager
-import android.view.inspector.WindowInspector
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -116,29 +114,6 @@ internal object KeyboardAnimations {
         checkNotNull(running[decorView]) { "Keyboard animations are not observed in this window" }
             .isNotEmpty()
 }
-
-/**
- * Waits until a dialog window holds input focus with the keyboard closed, so a key event
- * such as Back reaches the dialog rather than the window or keyboard behind it.
- */
-internal fun AndroidComposeTestRule<*, *>.awaitDialogFocus() =
-    waitUntil("dialog window focused", DeviceWaitTimeout.inWholeMilliseconds) {
-        runOnUiThread {
-            WindowInspector.getGlobalWindowViews().any {
-                it.hasWindowFocus() &&
-                    ViewCompat.getRootWindowInsets(it)
-                        ?.isVisible(WindowInsetsCompat.Type.ime()) != true &&
-                    (it.layoutParams as? WindowManager.LayoutParams)?.type ==
-                    WindowManager.LayoutParams.TYPE_APPLICATION
-            }
-        }
-    }
-
-/** Waits until the activity window gets input focus back, for example after a dialog closes. */
-internal fun AndroidComposeTestRule<*, *>.awaitActivityFocus() =
-    waitUntil("activity window focused", DeviceWaitTimeout.inWholeMilliseconds) {
-        runOnUiThread { activity.hasWindowFocus() }
-    }
 
 /** Waits for the activity to start finishing, for example after Back leaves the app. */
 internal fun AndroidComposeTestRule<*, *>.awaitActivityFinishing() =
