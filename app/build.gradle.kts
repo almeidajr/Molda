@@ -170,6 +170,7 @@ dependencies {
     testFixturesImplementation(libs.androidx.activity.compose)
     testFixturesImplementation(libs.androidx.espresso.core)
     testFixturesImplementation(libs.hilt.android.testing)
+    testFixturesImplementation(libs.kotlin.test)
     kspTestFixtures(libs.hilt.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)

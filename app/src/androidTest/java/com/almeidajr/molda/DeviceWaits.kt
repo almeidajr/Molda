@@ -6,14 +6,12 @@ import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsAnimation
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.isDisplayed
@@ -130,9 +128,6 @@ internal fun AndroidComposeTestRule<*, *>.awaitLicensesLoaded() = waitUntilAtLea
     },
     DeviceWaitTimeout.inWholeMilliseconds,
 )
-
-/** The drawing frame's loading indicator. */
-internal val isLoadingIndicator = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
 
 /**
  * Waits until the Rive drawing labeled [description] shows a frame that [isExpected] accepts, by
