@@ -9,13 +9,28 @@ paths:
 
 These rules cover every Kotlin test: local JVM tests in `app/src/test` and device
 tests in `app/src/androidTest`. The reasoning behind fakes and idling-aware Room
-is in [ADR 0004](../../docs/adr/0004-fakes-for-screen-tests-and-idling-aware-room-for-journeys.md).
+is in [ADR 0004](../../docs/adr/0004-fakes-for-screen-tests-and-idling-aware-room-for-journeys.md);
+where each test runs is in [ADR 0008](../../docs/adr/0008-one-owner-per-behavior-and-devices-only-where-needed.md).
 
 Write tests for valuable observable behavior, not coverage. Before adding a
 test, identify the regression or incorrect behavior it would catch. Prioritize
 business rules, non-trivial branches, boundaries, error handling, invariants,
 state transitions, and regressions. Trivial getters, constructors, delegation,
 and framework behavior do not need tests merely because code changed.
+
+**One owner per behavior.** Each behavior is asserted by exactly one test, at
+the lowest level that can observe it: a domain rule in a domain test, a
+ViewModel's state in a ViewModel test, a screen's wiring in a screen test.
+Higher levels assert only what the lower ones cannot see, such as that a
+screen shows its ViewModel's outcome, never the rule behind it again. Before
+adding a test, find the behavior's owner; extend that test or replace it rather
+than asserting the behavior a second time.
+
+**Test Molda, not its dependencies.** Do not assert what a dependency already
+guarantees: Material defaults (touch-target size, the contrast of the dynamic
+color scheme, type tokens), Compose and Navigation state restoration, the date
+picker's input validation, Room or framework behavior. Assert what Molda
+decides: the values it passes, the state it saves, the layout it chooses.
 
 **Test at the useful boundary.** Exercise the public API or the user-visible UI.
 Assert returned values, state, visible content, semantics, navigation, or stored
@@ -25,16 +40,25 @@ describe that outcome. Use minimal, relevant arrange data and reuse existing
 helpers.
 
 **Match Molda's stack.** JUnit 4 is the runner in both source sets; do not move
-to JUnit 5. Use `app/src/test` for isolated JVM logic and AndroidJUnit4 in
-`app/src/androidTest` when Android runtime behavior matters, with the Compose
-testing APIs for UI. Keep pure business logic testable without an emulator.
+to JUnit 5. Use `app/src/test` for everything that runs on the JVM, with
+`@RunWith(AndroidJUnit4::class)` on Robolectric when a test needs Android
+resources, a `Bundle` or a composition, and the Compose testing APIs for UI.
+Keep pure business logic testable without Android.
 
-| Test kind                         | Data layer                                                           | Coroutines                      |
-|-----------------------------------|----------------------------------------------------------------------|---------------------------------|
-| Domain and ViewModel (local)      | Shared fakes                                                         | `runTest`, `MainDispatcherRule` |
-| Repository and migration (device) | Real Room                                                            | `runTest`                       |
-| Screen (device)                   | Shared fakes bound through Hilt                                      | None needed                     |
-| Journey, end to end (device)      | Production repositories from `RepositoryModule` on idling-aware Room | None needed                     |
+**Devices run only what needs a device:** the real keyboard (IME) and real key
+events or window focus, native Rive frames, real Room (repository, migration
+and journey tests), hinge and fold posture, and system bars or insets. Every
+other test runs locally on Robolectric. When unsure, write it locally; a test
+moved to `app/src/androidTest` because it cannot pass on Robolectric says why
+in one line.
+
+| Test kind                         | Data layer                                                           | Coroutines                                                |
+|-----------------------------------|----------------------------------------------------------------------|-----------------------------------------------------------|
+| Domain and ViewModel (local)      | Shared fakes                                                         | `runTest` and `MainDispatcherRule` when coroutines launch |
+| Screen (local, Robolectric)       | Shared fakes bound through Hilt                                      | None needed                                               |
+| Repository and migration (device) | Real Room                                                            | `runTest`                                                 |
+| Device-only screen (device)       | Shared fakes bound through Hilt                                      | None needed                                               |
+| Journey, end to end (device)      | Production repositories from `RepositoryModule` on idling-aware Room | None needed                                               |
 
 ## Names and structure
 
@@ -136,10 +160,12 @@ and [Testing flows](https://developer.android.com/kotlin/flow/test).
   (after Now in Android), never with handwritten `setMain`/`resetMain`. It takes
   a `TestDispatcher` and defaults to `UnconfinedTestDispatcher`, so simple state
   assertions need no manual scheduling.
-- Pass a `StandardTestDispatcher` when the test checks ordering or an
-  intermediate state, such as "loading while saving", and advance it explicitly
+- To check an intermediate state, such as "loading while saving", hold the
+  work with the fake's gate (`loadGate`, `commandGate`, `checkGate`): set it,
+  act, assert, then complete it. Pass a `StandardTestDispatcher` only when no
+  gate fits, such as ordering between coroutines, and advance it explicitly
   with `advanceUntilIdle` or `runCurrent`.
-- Device tests do not replace the main dispatcher.
+- Screen tests, local or device, do not replace the main dispatcher.
 - When the test is about resulting state, start a collector in `backgroundScope`
   (so `WhileSubscribed` flows stay active) and assert `StateFlow.value`.
 - When the test is about the sequence of emissions or one-off events, use
@@ -209,7 +235,7 @@ window sizes when the changed behavior depends on them. Screen tests seed data
 through the fake's constructor and assert through the fake's current state, so
 they need no coroutines.
 
-Run the checks relevant to the change using the commands in [README.md](../../README.md).
+Run the checks relevant to the change using the commands in [CONTRIBUTING.md](../../CONTRIBUTING.md#development).
 Device tests require a connected device or emulator. Report checks actually run
 and any meaningful gap; test counts and coverage percentages are not completion
 criteria. Follow [Kotlin style](kotlin-style.md) for test code too.
