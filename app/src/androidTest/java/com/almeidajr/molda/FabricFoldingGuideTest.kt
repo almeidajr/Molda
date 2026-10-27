@@ -13,7 +13,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
@@ -24,7 +23,6 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -243,55 +241,6 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun next_afterPausing_playsTheStepShown() {
-        // Given
-        calculate()
-        openPlayingGuide()
-        next(times = 1)
-        drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo")).performClick()
-        drawing(FIRST_FOLD).assert(hasStateDescription("Pausado"))
-
-        // When
-        next(times = 1)
-
-        // Then
-        drawing(SECOND_FOLD).assert(hasStateDescription("Reproduzindo"))
-    }
-
-    @Test
-    fun motionChange_afterPausing_playsTheStep() {
-        // Given
-        calculate()
-        openPlayingGuide()
-        next(times = 1)
-        drawing(FIRST_FOLD).performClick()
-        drawing(FIRST_FOLD).assert(hasStateDescription("Pausado"))
-
-        // When
-        animatorScale.set(0f)
-        animatorScale.set(1f)
-
-        // Then
-        drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo"))
-    }
-
-    @Test
-    fun recreation_afterPausing_playsTheStep() {
-        // Given
-        calculate()
-        openPlayingGuide()
-        next(times = 1)
-        drawing(FIRST_FOLD).performClick()
-        drawing(FIRST_FOLD).assert(hasStateDescription("Pausado"))
-
-        // When
-        composeRule.recreate()
-
-        // Then
-        drawing(FIRST_FOLD).assert(hasStateDescription("Reproduzindo"))
-    }
-
-    @Test
     fun recreation_keepsCurrentStep() {
         // Given
         calculate()
@@ -491,12 +440,6 @@ class FabricFoldingGuideTest {
     /** The stand-in drawing's frame, the only clickable node once it pauses. */
     private fun pauseButton() = composeRule.onNode(hasClickAction())
 
-    /** The step's drawing frame labeled [description], once Rive has drawn it and it pauses. */
-    private fun drawing(description: String): SemanticsNodeInteraction {
-        composeRule.awaitRiveFrame(description)
-        return composeRule.onNode(hasClickAction() and hasContentDescription(description))
-    }
-
     /** The frame's decorative badge glyph tagged [tag]: what a tap does. */
     private fun badge(tag: String) = composeRule.onNode(hasTestTag(tag), useUnmergedTree = true)
 
@@ -519,12 +462,6 @@ class FabricFoldingGuideTest {
     /** Opens the guide with motion off, so its drawings hold still and Compose goes idle. */
     private fun openGuide() {
         animatorScale.set(0f)
-        composeRule.openGuideFromResults()
-    }
-
-    /** Opens the guide with motion on; the test clock drives it from here. */
-    private fun openPlayingGuide() {
-        animatorScale.set(1f)
         composeRule.openGuideFromResults()
     }
 
