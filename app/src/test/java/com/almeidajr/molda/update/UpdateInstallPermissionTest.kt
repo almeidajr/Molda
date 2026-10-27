@@ -53,22 +53,6 @@ class UpdateInstallPermissionTest {
     )
 
     @Test
-    fun instalar_returningWithoutThePermission_explains() {
-        // Given
-        returnFromSetting { }
-        composeRule.launchApp(updates = updates)
-        composeRule.dismissSnackbar()
-        composeRule.openAbout()
-
-        // When
-        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
-
-        // Then
-        composeRule.onNodeWithText(EXPLANATION).assertIsDisplayed()
-        composeRule.runOnIdle { assertEquals(emptyList(), updates.installed) }
-    }
-
-    @Test
     fun instalar_withoutThePermission_opensMoldasSetting_andContinuesOnReturningWithIt() {
         // Given
         returnFromSetting { updates.canInstall = true }

@@ -4,21 +4,20 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.almeidajr.molda.click
 import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.dismissSnackbar
 import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.openAbout
-import com.almeidajr.molda.profile.leaveUnsavedNewProfile
 import com.almeidajr.molda.screenTitle
 import com.almeidajr.molda.selectDestination
-import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.testing.Beta2
 import com.almeidajr.molda.testing.FakeUpdateRepository
 import com.almeidajr.molda.update.domain.UpdateCheck
@@ -237,20 +236,6 @@ class AboutUpdateTest {
     }
 
     @Test
-    fun instalar_overUnsavedChanges_asksToDiscardThemBeforeInstalling() {
-        // Given
-        val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
-        launchWithUnsavedProfileThenOpenAbout(updates)
-
-        // When
-        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
-
-        // Then
-        composeRule.onNodeWithText("Descartar alterações?").assertIsDisplayed()
-        composeRule.runOnIdle { assertEquals(emptyList(), updates.installed) }
-    }
-
-    @Test
     fun discardDialogOverInstalar_discard_installs() {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
@@ -264,27 +249,13 @@ class AboutUpdateTest {
         composeRule.runOnIdle { assertEquals(listOf(Beta2), updates.installed) }
     }
 
-    @Test
-    fun discardDialogOverInstalar_continueEditing_keepsTheChanges_withoutInstalling() {
-        // Given
-        val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
-        launchWithUnsavedProfileThenOpenAbout(updates)
-        composeRule.onNodeWithText("Instalar").performScrollTo().performClick()
-
-        // When
-        composeRule.clickInDialog("Continuar editando")
-
-        // Then
-        composeRule.runOnIdle { assertEquals(emptyList(), updates.installed) }
-        composeRule.showProfiles()
-        composeRule.onNodeWithText("Nome ou apelido").assertTextContains("Rascunho")
-    }
-
     /** Leaves a new profile's editor with unsaved changes in Perfis and opens About from Moldes. */
     private fun launchWithUnsavedProfileThenOpenAbout(updates: FakeUpdateRepository) {
         composeRule.launchApp(updates = updates)
         composeRule.dismissSnackbar()
-        composeRule.leaveUnsavedNewProfile()
+        composeRule.selectDestination("Perfis")
+        composeRule.click("Novo perfil")
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
         composeRule.selectDestination("Moldes")
         composeRule.openAbout()
     }

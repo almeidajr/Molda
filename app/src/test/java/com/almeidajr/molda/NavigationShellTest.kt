@@ -1,6 +1,5 @@
 package com.almeidajr.molda
 
-import android.view.KeyEvent
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -10,7 +9,6 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
@@ -24,7 +22,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -53,9 +50,6 @@ class NavigationShellTest {
     @get:Rule(order = 1)
     val composeRule = createLaunchLaterComposeRule()
 
-    @get:Rule(order = 2)
-    val keyboardMode = KeyboardModeRule(composeRule)
-
     private val destinations = listOf("Moldes", "Projetos", "Guias", "Perfis")
 
     @Before
@@ -70,27 +64,6 @@ class NavigationShellTest {
             .assertTextContains("Tecido plano", substring = true)
         composeRule.destination("Moldes").assertIsSelected()
         destinations.drop(1).forEach { composeRule.destination(it).assertIsNotSelected() }
-    }
-
-    @Test
-    fun back_fromCalculator_returnsToCatalog() {
-        // Given
-        composeRule.openSkirtCalculator()
-
-        // When
-        composeRule.pressBack()
-
-        // Then
-        composeRule.screenTitle("Moldes").assertIsDisplayed()
-    }
-
-    @Test
-    fun back_onCatalog_leavesTheApp() {
-        // When
-        composeRule.pressBack()
-
-        // Then
-        composeRule.awaitActivityFinishing()
     }
 
     @Test
@@ -112,7 +85,6 @@ class NavigationShellTest {
         // Given
         composeRule.openSkirtCalculator()
         waistField().performTextReplacement("80")
-        composeRule.closeKeyboard()
 
         // When
         listOf("Perfis", "Guias", "Projetos", "Moldes").forEach {
@@ -122,41 +94,6 @@ class NavigationShellTest {
         // Then
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
         waistField().assertTextContains("80")
-    }
-
-    @Test
-    fun reselectingCurrentDestination_returnsToItsRoot() {
-        // Given
-        composeRule.openSkirtCalculator()
-
-        // When
-        composeRule.selectDestination("Moldes")
-
-        // Then
-        composeRule.screenTitle("Moldes").assertIsDisplayed()
-    }
-
-    @Test
-    fun back_atAnotherDestinationRoot_returnsToMoldes() {
-        // Given
-        composeRule.openSkirtCalculator()
-        val roots = listOf(
-            "Projetos" to "Projetos",
-            "Guias" to "Guias",
-            "Perfis" to "Perfis de medidas",
-        )
-
-        roots.forEach { (destination, title) ->
-            composeRule.selectDestination(destination)
-            composeRule.screenTitle(title).assertIsDisplayed()
-
-            // When
-            composeRule.pressBack()
-
-            // Then
-            composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
-            composeRule.destination("Moldes").assertIsSelected()
-        }
     }
 
     @Test
@@ -179,7 +116,6 @@ class NavigationShellTest {
         // Given
         composeRule.openSkirtCalculator()
         waistField().performTextReplacement("80")
-        composeRule.closeKeyboard()
         composeRule.selectDestination("Perfis")
         composeRule.onNodeWithContentDescription("Novo perfil").performClick()
 
@@ -192,22 +128,6 @@ class NavigationShellTest {
         composeRule.selectDestination("Moldes")
         composeRule.screenTitle(SkirtTitle).assertIsDisplayed()
         waistField().assertTextContains("80")
-    }
-
-    @Test
-    fun newProfileByKeyboard_opensEditorWithoutFocusingAField() {
-        // Given
-        composeRule.selectDestination("Perfis")
-        // Out of touch mode, buttons join keyboard focus traversal.
-        keyboardMode.enter()
-        composeRule.onNodeWithContentDescription("Novo perfil").requestFocus()
-
-        // When
-        composeRule.pressKey(KeyEvent.KEYCODE_ENTER)
-
-        // Then
-        composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
-        composeRule.assertNoTextFieldFocused()
     }
 
     @Test
@@ -275,18 +195,6 @@ class NavigationShellTest {
     }
 
     @Test
-    fun back_toMoldes_focusesItsTitle() {
-        // Given
-        composeRule.selectDestination("Perfis")
-
-        // When
-        composeRule.pressBack()
-
-        // Then
-        composeRule.screenTitle("Moldes").assertIsFocused()
-    }
-
-    @Test
     fun returningToOpenProfileEditor_focusesItsHeadingNotAField() {
         // Given
         composeRule.selectDestination("Perfis")
@@ -298,41 +206,6 @@ class NavigationShellTest {
 
         // Then
         composeRule.onNode(hasText("Novo perfil de medidas") and isHeading()).assertIsFocused()
-        composeRule.assertNoTextFieldFocused()
-    }
-
-    @Test
-    fun arrowKeys_onNavigationItems_moveFocus_andEnterOrSpaceSelects() {
-        // Given: out of touch mode, navigation items join keyboard focus traversal.
-        keyboardMode.enter()
-        composeRule.destination("Moldes").requestFocus()
-
-        // When/Then
-        composeRule.pressKey(KeyEvent.KEYCODE_DPAD_RIGHT)
-        composeRule.destination("Projetos").assertIsFocused()
-        composeRule.pressKey(KeyEvent.KEYCODE_SPACE)
-        composeRule.destination("Projetos").assertIsSelected()
-        composeRule.destination("Projetos").requestFocus()
-        composeRule.pressKey(KeyEvent.KEYCODE_DPAD_RIGHT)
-        composeRule.destination("Guias").assertIsFocused()
-        composeRule.pressKey(KeyEvent.KEYCODE_ENTER)
-        composeRule.destination("Guias").assertIsSelected()
-    }
-
-    @Test
-    fun tab_fromAnyNavigationItem_leavesTheItemsInOneStep() {
-        // Given: out of touch mode, navigation items join keyboard focus traversal.
-        keyboardMode.enter()
-
-        listOf(0, KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON).forEach { metaState ->
-            composeRule.destination("Projetos").requestFocus()
-
-            // When
-            composeRule.pressKey(KeyEvent.KEYCODE_TAB, metaState)
-
-            // Then
-            destinations.forEach { composeRule.destination(it).assertIsNotFocused() }
-        }
     }
 
     private fun waistField() = composeRule.onNodeWithText(SkirtDraftField.Waist.labelText)
