@@ -57,7 +57,9 @@ class StartupNoticeTest {
 
     @Test
     fun startupNotice_withoutAnUpdate_announcesNothing() = runTest {
-        // When/Then
-        assertNull(FakeUpdateRepository(UpdateCheck.UpToDate).startupNotice())
+        listOf(UpdateCheck.UpToDate, UpdateCheck.Failed, UpdateCheck.NotChecked).forEach { check ->
+            // When/Then
+            assertNull(FakeUpdateRepository(check).startupNotice(), "$check")
+        }
     }
 }

@@ -56,8 +56,8 @@ android {
     buildFeatures {
         compose = true
     }
-    // Shared fakes for local and device tests (app/src/testFixtures); incubating in AGP, yet the
-    // only way to share them with device tests.
+    // Shared fakes and app harness for local and device tests (app/src/testFixtures); incubating
+    // in AGP, yet the only way to share them with device tests.
     @Suppress("UnstableApiUsage")
     testFixtures {
         enable = true
@@ -164,9 +164,12 @@ dependencies {
     implementation(libs.aboutlibraries.compose.m3)
     ksp(libs.androidx.room3.compiler)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
-    // The Compose compiler plugin also compiles test fixtures and fails without the runtime.
-    testFixturesCompileOnly(platform(libs.androidx.compose.bom))
-    testFixturesCompileOnly(libs.androidx.compose.runtime)
+    // The harness that starts the app, shared by local and device screen tests.
+    testFixturesImplementation(platform(libs.androidx.compose.bom))
+    testFixturesImplementation(libs.androidx.compose.ui.test.junit4)
+    testFixturesImplementation(libs.androidx.activity.compose)
+    testFixturesImplementation(libs.hilt.android.testing)
+    kspTestFixtures(libs.hilt.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.konsist)
@@ -181,6 +184,8 @@ dependencies {
     // Raises the Espresso that ui-test pulls in; 3.5's idling looks up an InputManager API that
     // Robolectric's newer SDKs no longer have.
     testImplementation(libs.androidx.espresso.core)
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.compiler)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

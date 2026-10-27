@@ -16,12 +16,12 @@ import dagger.hilt.testing.TestInstallIn
 import java.time.Clock
 
 /**
- * The repositories and clock the app runs on in a device test: empty fakes, Molda up to date and
- * 13/10/2026 until [launchApp] seeds them. Starting the app freezes them, so a fake assigned too
- * late fails the test instead of being silently ignored. [MainActivityLauncher] resets them
+ * The repositories and clock the app runs on in a test that starts it: empty fakes, Molda up to
+ * date and 13/10/2026 until [launchApp] seeds them. Starting the app freezes them, so a fake
+ * assigned too late fails the test instead of being silently ignored. [AppLauncher] resets them
  * before each test.
  */
-internal object TestBindings {
+object TestBindings {
     private var isFrozen = false
 
     var profiles: ProfileRepository = FakeProfileRepository()
@@ -66,13 +66,13 @@ internal object TestBindings {
         check(!isFrozen) { "The app has started: seed the bindings through launchApp" }
 }
 
-/** Gives every device test's app the repositories and clock held by [TestBindings]. */
+/** Gives the app of every test that starts it the repositories and clock held by [TestBindings]. */
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
     replaces = [RepositoryModule::class, ClockModule::class],
 )
-internal object TestBindingsModule {
+object TestBindingsModule {
     @Provides
     fun profileRepository(): ProfileRepository = TestBindings.profiles
 

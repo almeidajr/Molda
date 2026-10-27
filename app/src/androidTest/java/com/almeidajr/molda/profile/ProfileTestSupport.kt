@@ -1,6 +1,7 @@
 package com.almeidajr.molda.profile
 
 import android.text.format.DateFormat
+import androidx.activity.ComponentActivity
 import androidx.compose.material3.R
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -17,8 +18,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
-import com.almeidajr.molda.MainActivity
-import com.almeidajr.molda.MainActivityLauncher
+import com.almeidajr.molda.AppLauncher
 import com.almeidajr.molda.RouteFrame
 import com.almeidajr.molda.TestBindings
 import com.almeidajr.molda.awaitActivityFocus
@@ -79,7 +79,7 @@ internal fun profileFrame(
 }
 
 /** Launches the app on [profiles] in [profileFrame] and opens the skirt calculator. */
-internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchCalculator(
+internal fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.launchCalculator(
     profiles: ProfileRepository = TestBindings.profiles,
 ) {
     launchApp(profiles = profiles, frame = profileFrame())
@@ -87,7 +87,7 @@ internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchCa
 }
 
 /** Launches the app on [profiles] in [profileFrame] and selects Perfis. */
-internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchProfiles(
+internal fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.launchProfiles(
     profiles: ProfileRepository = TestBindings.profiles,
 ) {
     launchApp(profiles = profiles, frame = profileFrame())

@@ -14,6 +14,9 @@ complexity:
   # Mirror SonarCloud's S1192: a literal repeated 3 or more times becomes a constant.
   StringLiteralDuplication:
     active: true
+  # Detekt's defaults exempt test sources; the shared test fixtures are test sources too.
+  TooManyFunctions:
+    excludes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
   LongParameterList:
     ignoreDefaultParameters: true
     # Hoisted Compose state passes values in and one lambda per event out.
@@ -24,6 +27,7 @@ style:
   MaxLineLength:
     maxLineLength: 100
   MagicNumber:
+    excludes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
     ignorePropertyDeclaration: true
     # An enum entry names the values it declares, like a constant does.
     ignoreEnums: true
