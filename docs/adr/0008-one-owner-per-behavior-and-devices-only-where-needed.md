@@ -14,7 +14,7 @@ By October 2026, Molda had 275 device tests. They took about 14 minutes locally 
   - hinge and fold posture
   - system bars and insets
 
-  Every other screen test runs locally on Robolectric, with the same Hilt bindings and fakes, in a Hilt test activity that shows `MoldaRoute`. `MainActivity` calls `Rive.init`, which loads native code Robolectric cannot run; the test activity skips that call, so a local test that reaches the guide fails loudly and belongs on a device.
+  Every other screen test runs locally on Robolectric, with the same Hilt bindings and fakes, in a Hilt test activity that shows `MoldaRoute`. `MainActivity` calls `Rive.init`, which loads native code Robolectric cannot run; the test activity skips that call, so a local test that reaches the guide sees its written fallback instead of the drawing, and only native Rive frames need a device.
 
 ## Considered options
 
