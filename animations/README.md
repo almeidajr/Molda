@@ -48,13 +48,14 @@ The generated `build/animations.riv` is copied to the app's raw resource named
 `fabric_folding.riv`. Keep that bundled offline asset synchronized with source.
 This project contains no scripts and requires no signing or account upload.
 
-The Android calculator UI tests render the real asset and check radius locations
-in captured pixels for normal, longer-skirt, and zero-allowance calculations.
-The motion-enabled Android regression samples every step through more than two
-complete cycles from entry and rejects a blank fabric viewport. It also checks
-that a tap on the drawing pauses and continues it, while retaining the existing reduced-motion and calculated
-geometry checks. Its frame clock is controlled explicitly because looping motion
-never becomes idle. Sewing validation remains the separate release gate.
+The Android device test `FabricFoldingFileTest` checks the bundled asset against
+what the app binds: every step's artboard and the view-model properties above,
+by name and type. It then binds and renders each artboard offscreen into a
+bitmap on Rive's own clock, in light and dark palettes: radius locations for
+normal, longer-skirt, and zero-allowance calculations, fabric on an unpainted
+frame, a still completed pose with `play=false`, and with `play=true` frames
+that keep moving past two cycles without going blank. Sewing validation remains
+the separate release gate.
 
 ## Preparation and folding
 
@@ -120,7 +121,7 @@ rive . --screenshot=build/open-half.png --artboard=Unfolding --data=play=true --
 rive . --screenshot=build/open-end.png --artboard=Unfolding --data=play=true --advance=185
 ```
 
-Android rendered-pixel checks cover both artboards at normal and longer lengths
+Android offscreen-render checks cover both artboards at normal and longer lengths
 and zero allowances, checking all unfolded quadrants, the waist cutout and the
 retained fabric. UI tests cover the complete calculator flow, step navigation,
 autoplay and tap-to-pause, construction warnings and stale results. The layout test exercises light/dark themes, heading semantics, wrapped text,
