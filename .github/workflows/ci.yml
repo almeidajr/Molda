@@ -104,7 +104,9 @@ jobs:
           # (AOSP bug 327666562), killing the test process. AOSP has fixed it; API 37 runs clean.
           api-level: '37.0'
           arch: x86_64
-          target: google_apis
+          # The Automated Test Device image drops apps tests never use: on #222's experiment it ran
+          # the suite about 30% faster than google_apis, with every test passing in 3 of 3 runs.
+          target: google_atd
           profile: pixel_9
           ram-size: 4096M
           disable-animations: false
