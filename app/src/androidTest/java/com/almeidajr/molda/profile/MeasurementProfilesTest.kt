@@ -1,5 +1,6 @@
 package com.almeidajr.molda.profile
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -8,6 +9,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
 import com.almeidajr.molda.awaitDialogFocus
 import com.almeidajr.molda.awaitKeyboardVisible
 import com.almeidajr.molda.click
@@ -469,6 +472,7 @@ class MeasurementProfilesTest {
         // Given
         composeRule.launchCalculator()
         composeRule.edit(WAIST_LABEL, "95")
+        composeRule.closeKeyboard()
         composeRule.click("Usar perfil")
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova no seletor")
@@ -609,6 +613,7 @@ class MeasurementProfilesTest {
         // Given
         composeRule.launchCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
         composeRule.edit(WAIST_LABEL, "91,5")
+        composeRule.closeKeyboard()
         composeRule.click("Usar perfil")
 
         // When
@@ -621,21 +626,24 @@ class MeasurementProfilesTest {
 
     @Test
     fun largeText_withKeyboardOpen_saveStillWorks() {
-        // Given
-        val storage = FakeProfileRepository()
+        // Given: a saved profile, since the calendar a new one needs leaves the keyboard unable to
+        // open for a while after it closes on a slow emulator.
+        val storage = FakeProfileRepository(listOf(profile(1, "Ana")))
         composeRule.launchApp(profiles = storage, frame = profileFrame(fontScale = 2f))
         composeRule.showProfiles()
-        composeRule.click("Novo perfil")
-        composeRule.fillProfile("Ana")
+        // At this size a tap on the row's center lands on the Novo perfil button above it.
+        composeRule.onNodeWithText("Ana").performScrollTo()
+            .performSemanticsAction(SemanticsActions.OnClick)
         composeRule.onNodeWithText("Observações (opcional)").performScrollTo().performClick()
+            .performTextInput("Cós")
         composeRule.awaitKeyboardVisible()
 
         // When
-        composeRule.click("Salvar perfil")
+        composeRule.click("Salvar alterações")
 
         // Then
         composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
-        assertEquals(1, storage.current.size)
+        assertEquals("Cós", storage.current.single().measurements.notes)
     }
 
     @Test
