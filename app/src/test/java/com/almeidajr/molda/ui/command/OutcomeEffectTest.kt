@@ -4,14 +4,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class OutcomeEffectTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -27,7 +27,7 @@ class OutcomeEffectTest {
     }
 
     @Test
-    fun outcome_reactsOnceThenAcknowledges() {
+    fun outcomeEffect_onANewOutcome_reactsOnceThenAcknowledges() {
         // Given
         composeRule.setContent { OutcomeEffect(outcome, ::acknowledge) { reactions += it } }
 

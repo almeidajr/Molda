@@ -1,6 +1,7 @@
 package com.almeidajr.molda.data
 
 import androidx.sqlite.SQLiteException
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.domain.NoLongerExistsException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -8,10 +9,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 // Robolectric supplies the Android SQLException behind androidx.sqlite's SQLiteException.
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class ResultOfTest {
     @Test
     fun resultOf_whenBlockSucceeds_returnsItsValue() = runTest {
@@ -20,51 +20,20 @@ class ResultOfTest {
     }
 
     @Test
-    fun resultOf_whenRowNoLongerExists_returnsTheFailure() = runTest {
-        // Given
-        val failure = NoLongerExistsException("Profile no longer exists")
-
-        // When
-        val result = resultOf<Int> { throw failure }
-
-        // Then
-        assertEquals(Result.failure(failure), result)
-    }
-
-    @Test
-    fun resultOf_whenStateIsInvalid_returnsTheFailure() = runTest {
-        // Given
-        val failure = IllegalStateException("Stored pattern draft kind is not the snapshot's")
-
-        // When
-        val result = resultOf<Int> { throw failure }
-
-        // Then
-        assertEquals(Result.failure(failure), result)
-    }
-
-    @Test
-    fun resultOf_whenDatabaseFails_returnsTheFailure() = runTest {
-        // Given
-        val failure = SQLiteException("disk I/O error")
-
-        // When
-        val result = resultOf<Int> { throw failure }
-
-        // Then
-        assertEquals(Result.failure(failure), result)
-    }
-
-    @Test
-    fun resultOf_whenValidationFails_returnsTheFailure() = runTest {
-        // Given
-        val failure = IllegalArgumentException("Project identity must be positive: 0")
-
-        // When
-        val result = resultOf<Int> { throw failure }
-
-        // Then
-        assertEquals(Result.failure(failure), result)
+    fun resultOf_whenStorageFails_returnsTheFailure() = runTest {
+        listOf(
+            NoLongerExistsException("Profile no longer exists"),
+            IllegalStateException("Stored pattern draft kind is not the snapshot's"),
+            SQLiteException("disk I/O error"),
+            IllegalArgumentException("Project identity must be positive: 0"),
+        ).forEach { failure ->
+            // When/Then
+            assertEquals(
+                Result.failure(failure),
+                resultOf<Int> { throw failure },
+                failure::class.simpleName,
+            )
+        }
     }
 
     @Test

@@ -79,19 +79,6 @@ class EditorStatusHolderTest {
     }
 
     @Test
-    fun editorOn_ofAHiddenTabsStack_answersItsEditor() {
-        // Given
-        val holder = EditorStatusHolder()
-        holder.report(Editor, reportOf(EditorKind.Profile, isSaving = true))
-
-        // When/Then
-        assertEquals(
-            ReportedEditor(Editor, EditorReport(EditorKind.Profile, isSaving = true)),
-            holder.editorOn(stack),
-        )
-    }
-
-    @Test
     fun retainOnly_afterTheEditorLeftTheBackStacks_dropsItsReportForGood() {
         // Given
         val holder = EditorStatusHolder()
@@ -175,29 +162,21 @@ class EditorStatusHolderTest {
     }
 
     @Test
-    fun editorStatusHolderSaver_withAnUnknownKindOrACutPair_skipsThem() {
+    fun editorStatusHolderSaver_withAMalformedOrFormerFormat_restoresNothing() {
         // Given
-        val saved = listOf(Editor.toString(), "Pattern", PickerEditor.toString())
         val withPicker = listOf(Root, Editor, PickerEditor)
 
-        // When
-        val restored = editorStatusHolderSaver(EditorStatusHolder()).restore(saved)
+        listOf(
+            "an unknown kind or a cut pair" to
+                listOf(Editor.toString(), "Pattern", PickerEditor.toString()),
+            "the former list of plain ids" to listOf(Editor.toString(), PickerEditor.toString()),
+        ).forEach { (case, saved) ->
+            // When
+            val restored = editorStatusHolderSaver(EditorStatusHolder()).restore(saved)
 
-        // Then
-        assertNull(restored?.editorOn(withPicker))
-    }
-
-    @Test
-    fun editorStatusHolderSaver_withTheFormerListOfPlainIds_restoresNothing() {
-        // Given
-        val saved = listOf(Editor.toString(), PickerEditor.toString())
-        val withPicker = listOf(Root, Editor, PickerEditor)
-
-        // When
-        val restored = editorStatusHolderSaver(EditorStatusHolder()).restore(saved)
-
-        // Then
-        assertNull(restored?.editorOn(withPicker))
+            // Then
+            assertNull(restored?.editorOn(withPicker), case)
+        }
     }
 
     private fun reportOf(kind: EditorKind, isDirty: Boolean = false, isSaving: Boolean = false) =

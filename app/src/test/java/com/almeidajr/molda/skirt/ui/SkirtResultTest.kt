@@ -1,5 +1,6 @@
 package com.almeidajr.molda.skirt.ui
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.skirt.domain.SkirtCalculation
 import com.almeidajr.molda.skirt.domain.SkirtDraftField
 import com.almeidajr.molda.skirt.domain.calculateSkirt
@@ -8,11 +9,10 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
 // Robolectric resolves the result's copy from the app's string resources.
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class SkirtResultTest {
     private val text: (Int) -> String = RuntimeEnvironment.getApplication()::getString
 

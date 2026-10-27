@@ -58,7 +58,7 @@ class ProjectJourneyTest {
     fun removeIsolatedStorage() = storage.remove(composeRule.activityRule.scenario)
 
     @Test
-    fun calculateSaveEditCopyAndDelete_keepsProjetosInStep() = runTest {
+    fun projetos_throughCalculateSaveEditCopyAndDelete_stayInStep() = runTest {
         // Given
         composeRule.launchApp(
             profiles = RepositoryModule.profileRepository(storage.database),

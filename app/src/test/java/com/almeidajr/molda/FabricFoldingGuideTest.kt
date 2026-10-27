@@ -35,7 +35,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun previous_returnsToTheEarlierStep() {
+    fun previous_onTheSecondFold_returnsToTheFirst() {
         // Given
         next(times = 2)
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
@@ -48,7 +48,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun cuttingStep_warnsWhichLinesStayUncut() {
+    fun guide_atTheCuttingStep_warnsWhichLinesStayUncut() {
         // When
         next(times = 4)
 
@@ -69,7 +69,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun unfoldingStep_warnsItIsNoCompletePattern() {
+    fun guide_atTheUnfoldingStep_warnsItIsNoCompletePattern() {
         // When
         next(times = 5)
 
@@ -99,7 +99,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun recreation_keepsCurrentStep() {
+    fun recreate_onTheSecondFold_keepsTheStep() {
         // Given
         next(times = 2)
 

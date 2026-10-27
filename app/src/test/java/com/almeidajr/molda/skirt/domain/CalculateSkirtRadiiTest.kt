@@ -2,6 +2,7 @@ package com.almeidajr.molda.skirt.domain
 
 import com.almeidajr.molda.measurement.Length
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import org.junit.Test
 
 class CalculateSkirtRadiiTest {
@@ -42,7 +43,7 @@ class CalculateSkirtRadiiTest {
     }
 
     private fun successRadii(draft: SkirtDraft): SkirtRadii =
-        (calculateSkirtRadii(draft) as SkirtCalculation.Success).radii
+        assertIs<SkirtCalculation.Success>(calculateSkirtRadii(draft)).radii
 
     private fun draft(
         waist: Double,
