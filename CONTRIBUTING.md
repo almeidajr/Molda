@@ -15,7 +15,7 @@ Run from the repository root in PowerShell:
 ```
 
 On macOS/Linux use `bash ./gradlew`. Device tests require a running emulator or
-connected device. CI runs quality checks and one API 36 emulator on every PR
+connected device. CI runs quality checks and one API 37 emulator on every PR
 and push to main; reports are retained for seven days. Main protection also requires
 `PR title` and `PR commits`; see [repository governance](#repository-governance).
 
@@ -272,7 +272,7 @@ setting or unavailable feature in the implementation issue instead of treating
 documentation as deployment evidence.
 
 1. Inspect authenticated settings and existing rulesets/branch protection first.
-   Observe successful **Quality**, **Device tests (API 36)**, **PR title**, and
+   Observe successful **Quality**, **Device tests**, **PR title**, and
    **PR commits** check runs, plus the SonarQube Cloud app's **SonarCloud Code
    Analysis**, before registering their exact names. Verify the
    trusted metadata workflow's scoped
