@@ -45,8 +45,8 @@ to JUnit 5. Use `app/src/test` for everything that runs on the JVM, with
 resources, a `Bundle` or a composition, and the Compose testing APIs for UI.
 Keep pure business logic testable without Android.
 
-**Devices run only what needs a device:** the real keyboard (IME) and real key
-events or window focus, native Rive frames, real Room (repository, migration
+**Devices run only what needs a device:** the real keyboard (IME), keyboard
+(non-touch) mode or window focus, native Rive frames, real Room (repository, migration
 and journey tests), hinge and fold posture, and system bars or insets. Every
 other test runs locally on Robolectric. When unsure, write it locally; a test
 moved to `app/src/androidTest` because it cannot pass on Robolectric says why
@@ -191,7 +191,8 @@ on them. Never sleep: Detekt rejects `Thread.sleep`, `SystemClock.sleep` and
    for recomposition, layout and Compose-driven work to go idle. Calls that
    bypass Compose do not wait: real key events, activity recreation and
    `runOnUiThread` act on the UI from before the last action. Use the shared
-   `pressKey`, `pressBack` and `recreate` helpers (`MoldaNavigation.kt`), and
+   `pressKey`, `pressBack` and `recreate` helpers (`MoldaNavigation.kt`), which
+   also work on Robolectric (keys go through Espresso there), and
    use `runOnIdle`, which waits for idle first, to change state on the UI
    thread yourself. Detekt rejects Espresso's `pressBack` in test sources.
 2. **`mainClock` control** for anything Compose drives, such as animations:

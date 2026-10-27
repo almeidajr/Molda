@@ -4,12 +4,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.isDisplayed
-import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.almeidajr.molda.click
 import com.almeidajr.molda.clickInDialog
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.dialogTextField
@@ -35,8 +35,10 @@ import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 
 /** Saving a calculated skirt as a project, from the result to the Projetos list. */
+@RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
 class ProjectSavingTest {
     @get:Rule(order = 0)
@@ -59,13 +61,13 @@ class ProjectSavingTest {
             clock = October18Clock,
         )
         composeRule.showSkirtCalculator()
-        click("Usar perfil")
+        composeRule.click("Usar perfil")
         composeRule.onAllNodes(hasText("Usar perfil: Ana", substring = true))[0].performClick()
         calculate(listOf("2", "60", "1", "2"))
 
         // When
-        click("Salvar projeto")
-        click("Salvar")
+        composeRule.click("Salvar projeto")
+        composeRule.click("Salvar")
 
         // Then
         composeRule.onNodeWithText("Projeto salvo em Projetos.").assertIsDisplayed()
@@ -82,14 +84,14 @@ class ProjectSavingTest {
         showCalculatedHandTypedSkirt(FakeProjectRepository().apply { failsCommands = true })
 
         // When
-        click("Salvar projeto")
-        click("Salvar")
+        composeRule.click("Salvar projeto")
+        composeRule.click("Salvar")
 
         // Then
         composeRule.onNodeWithText("Não foi possível salvar o projeto", substring = true)
             .assertIsDisplayed()
         composeRule.dialogTextField().assertTextContains("Saia godê · 18/10/2026")
-        click("Cancelar")
+        composeRule.click("Cancelar")
         composeRule.onNodeWithText("Raios para o molde").performScrollTo().assertIsDisplayed()
     }
 
@@ -98,7 +100,7 @@ class ProjectSavingTest {
         // Given
         val projects = FakeProjectRepository()
         showCalculatedHandTypedSkirt(projects)
-        click("Salvar projeto")
+        composeRule.click("Salvar projeto")
         composeRule.dialogTextField().performTextReplacement("   ")
 
         // When
@@ -114,7 +116,7 @@ class ProjectSavingTest {
         // Given
         val projects = FakeProjectRepository()
         showCalculatedHandTypedSkirt(projects)
-        click("Salvar projeto")
+        composeRule.click("Salvar projeto")
         composeRule.dialogTextField().performTextReplacement("Saia de verão")
 
         // When
@@ -134,7 +136,7 @@ class ProjectSavingTest {
         val gate = CompletableDeferred<Unit>()
         val projects = FakeProjectRepository().apply { commandGate = gate }
         showCalculatedHandTypedSkirt(projects)
-        click("Salvar projeto")
+        composeRule.click("Salvar projeto")
         composeRule.clickInDialog("Salvar")
         composeRule.recreate()
 
@@ -163,12 +165,6 @@ class ProjectSavingTest {
                 field.labelText,
             ).performScrollTo().performTextReplacement(value)
         }
-        click("Calcular")
-    }
-
-    private fun click(label: String) {
-        val node = composeRule.onNode(hasText(label) and isEnabled())
-        if (!node.isDisplayed()) node.performScrollTo()
-        node.performClick()
+        composeRule.click("Calcular")
     }
 }

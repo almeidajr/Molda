@@ -18,7 +18,7 @@ import java.time.LocalDate
  * 12/10/2026, a 1,5 cm hem allowance and radii that differ from a recalculation so a test can
  * tell stored from recalculated.
  */
-internal fun formaturaProject(savedAt: Instant) = Project(
+fun formaturaProject(savedAt: Instant) = Project(
     ProjectId(1),
     ProjectName("Saia da formatura"),
     SkirtSnapshot(
@@ -34,5 +34,5 @@ internal fun formaturaProject(savedAt: Instant) = Project(
  * Opens the saved project [name] by tapping its name: a short row's center falls on its Ações
  * button.
  */
-internal fun SemanticsNodeInteractionsProvider.clickProject(name: String) =
+fun SemanticsNodeInteractionsProvider.clickProject(name: String) =
     click(name, useUnmergedTree = true)

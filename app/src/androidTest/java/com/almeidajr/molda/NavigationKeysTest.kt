@@ -17,8 +17,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Back and keyboard navigation through the navigation suite. On a device: they send real key
- * events, which Robolectric cannot inject (`Instrumentation.sendKeySync` refuses its main thread).
+ * Keyboard navigation through the navigation suite, and Back leaving the app. On a device: they
+ * need keyboard (non-touch) mode or the activity finishing.
  */
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
@@ -36,18 +36,6 @@ class NavigationKeysTest {
 
     @Before
     fun showApp() = composeRule.launchApp()
-
-    @Test
-    fun back_fromCalculator_returnsToCatalog() {
-        // Given
-        composeRule.openSkirtCalculator()
-
-        // When
-        composeRule.pressBack()
-
-        // Then
-        composeRule.screenTitle("Moldes").assertIsDisplayed()
-    }
 
     @Test
     fun back_onCatalog_leavesTheApp() {
@@ -72,18 +60,6 @@ class NavigationKeysTest {
         // Then
         composeRule.onNodeWithText("Novo perfil de medidas").assertIsDisplayed()
         composeRule.assertNoTextFieldFocused()
-    }
-
-    @Test
-    fun back_toMoldes_focusesItsTitle() {
-        // Given
-        composeRule.selectDestination("Perfis")
-
-        // When
-        composeRule.pressBack()
-
-        // Then
-        composeRule.screenTitle("Moldes").assertIsFocused()
     }
 
     @Test

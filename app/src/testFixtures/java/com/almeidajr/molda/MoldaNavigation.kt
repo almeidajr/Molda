@@ -1,6 +1,7 @@
 package com.almeidajr.molda
 
 import android.animation.ValueAnimator
+import android.os.Build
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
@@ -31,6 +32,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.DpSize
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.EspressoKey
+import androidx.test.espresso.action.ViewActions
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.profile.domain.ProfileRepository
 import com.almeidajr.molda.project.domain.ProjectRepository
@@ -102,6 +107,18 @@ private fun routeContent(size: DpSize?, frame: RouteFrame): @Composable () -> Un
  */
 fun ComposeTestRule.pressKey(keyCode: Int, metaState: Int = 0) {
     waitForIdle()
+    if (Build.FINGERPRINT == "robolectric") {
+        // Robolectric runs the test on the main thread, where sendKeySync refuses to run; Espresso
+        // injects the key into the focused window instead, a dialog's included.
+        val key = EspressoKey.Builder()
+            .withKeyCode(keyCode)
+            .withShiftPressed(metaState and KeyEvent.META_SHIFT_ON != 0)
+            .withCtrlPressed(metaState and KeyEvent.META_CTRL_ON != 0)
+            .withAltPressed(metaState and KeyEvent.META_ALT_ON != 0)
+            .build()
+        onView(isRoot()).perform(ViewActions.pressKey(key))
+        return
+    }
     val instrumentation = InstrumentationRegistry.getInstrumentation()
     listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).forEach { action ->
         instrumentation.sendKeySync(KeyEvent(0, 0, action, keyCode, 0, metaState))

@@ -81,6 +81,30 @@ class NavigationShellTest {
     }
 
     @Test
+    fun back_fromCalculator_returnsToCatalog() {
+        // Given
+        composeRule.openSkirtCalculator()
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.screenTitle("Moldes").assertIsDisplayed()
+    }
+
+    @Test
+    fun back_toMoldes_focusesItsTitle() {
+        // Given
+        composeRule.selectDestination("Perfis")
+
+        // When
+        composeRule.pressBack()
+
+        // Then
+        composeRule.screenTitle("Moldes").assertIsFocused()
+    }
+
+    @Test
     fun switchingDestinations_keepsCalculatorDraft() {
         // Given
         composeRule.openSkirtCalculator()
