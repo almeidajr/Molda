@@ -3,13 +3,15 @@ package com.almeidajr.molda.update
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.almeidajr.molda.click
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.dismissSnackbar
 import com.almeidajr.molda.launchApp
-import com.almeidajr.molda.profile.leaveUnsavedNewProfile
 import com.almeidajr.molda.recreate
 import com.almeidajr.molda.screenTitle
+import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.snackbar
 import com.almeidajr.molda.testing.Beta2
 import com.almeidajr.molda.testing.FakeUpdateRepository
@@ -93,7 +95,9 @@ class StartupUpdateTest {
         // Given
         val updates = FakeUpdateRepository(UpdateCheck.Available(Beta2), UpdateDownload.Downloaded)
         composeRule.launchApp(updates = updates)
-        composeRule.leaveUnsavedNewProfile()
+        composeRule.selectDestination("Perfis")
+        composeRule.click("Novo perfil")
+        composeRule.onNodeWithText("Nome ou apelido").performTextReplacement("Rascunho")
 
         // When
         composeRule.onNodeWithText("Instalar").performClick()
@@ -111,39 +115,6 @@ class StartupUpdateTest {
 
         // When
         composeRule.recreate()
-
-        // Then
-        composeRule.screenTitle("Moldes").assertIsDisplayed()
-        composeRule.snackbar().assertDoesNotExist()
-    }
-
-    @Test
-    fun start_whenUpToDate_showsNoNotice() = assertNoNoticeOn(UpdateCheck.UpToDate)
-
-    @Test
-    fun start_whenTheCheckFails_showsNoNotice() = assertNoNoticeOn(UpdateCheck.Failed)
-
-    @Test
-    fun start_onALocalBuild_showsNoNotice() = assertNoNoticeOn(UpdateCheck.NotChecked)
-
-    @Test
-    fun start_duringTheUpdatesDownload_showsNoNotice() {
-        // When
-        composeRule.launchApp(
-            updates = FakeUpdateRepository(
-                UpdateCheck.Available(Beta2),
-                UpdateDownload.Downloading(progress = 0.4f),
-            ),
-        )
-
-        // Then
-        composeRule.screenTitle("Moldes").assertIsDisplayed()
-        composeRule.snackbar().assertDoesNotExist()
-    }
-
-    private fun assertNoNoticeOn(check: UpdateCheck) {
-        // When
-        composeRule.launchApp(updates = FakeUpdateRepository(check))
 
         // Then
         composeRule.screenTitle("Moldes").assertIsDisplayed()

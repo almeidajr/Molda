@@ -2,6 +2,7 @@ package com.almeidajr.molda
 
 import android.animation.ValueAnimator
 import android.view.KeyEvent
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -38,7 +39,7 @@ import com.almeidajr.molda.update.domain.UpdateRepository
 import java.time.Clock
 
 /** Wraps the app's route, for example in a theme or a configuration override. */
-internal typealias RouteFrame = @Composable (route: @Composable () -> Unit) -> Unit
+typealias RouteFrame = @Composable (route: @Composable () -> Unit) -> Unit
 
 /**
  * Seeds the app's [profiles], [projects], [clock] and [updates], then starts it showing the route
@@ -46,7 +47,7 @@ internal typealias RouteFrame = @Composable (route: @Composable () -> Unit) -> U
  * content, which alone reads the installed version name. Once launched, the bindings cannot
  * change, and [recreate] shows the same content again.
  */
-internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchApp(
+fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.launchApp(
     profiles: ProfileRepository = TestBindings.profiles,
     projects: ProjectRepository = TestBindings.projects,
     clock: Clock = TestBindings.clock,
@@ -66,7 +67,7 @@ internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchAp
  * Shows the route inside [frame] (the theme by default), at [size] when given, from now on:
  * recreated activities show it too.
  */
-internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.showRoute(
+fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.showRoute(
     size: DpSize? = null,
     frame: RouteFrame = DefaultFrame,
 ) = activityRule.show(routeContent(size, frame))
@@ -76,7 +77,7 @@ internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.showRout
  * showed. Recreation bypasses Compose's synchronization: started right after an action, it saves
  * the state from before that action took effect.
  */
-internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.recreate() {
+fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.recreate() {
     waitForIdle()
     activityRule.scenario.recreate()
 }
@@ -99,7 +100,7 @@ private fun routeContent(size: DpSize?, frame: RouteFrame): @Composable () -> Un
  * pressed in touch mode leaves it for every later test too: send those keys only after
  * [KeyboardModeRule.enter].
  */
-internal fun ComposeTestRule.pressKey(keyCode: Int, metaState: Int = 0) {
+fun ComposeTestRule.pressKey(keyCode: Int, metaState: Int = 0) {
     waitForIdle()
     val instrumentation = InstrumentationRegistry.getInstrumentation()
     listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).forEach { action ->
@@ -108,15 +109,14 @@ internal fun ComposeTestRule.pressKey(keyCode: Int, metaState: Int = 0) {
 }
 
 /** Sends a real Back key to the focused window once Compose is idle. */
-internal fun ComposeTestRule.pressBack() = pressKey(KeyEvent.KEYCODE_BACK)
+fun ComposeTestRule.pressBack() = pressKey(KeyEvent.KEYCODE_BACK)
 
 /** The navigation suite item labeled [label]: Moldes, Projetos, Guias or Perfis. */
-internal fun SemanticsNodeInteractionsProvider.destination(
-    label: String,
-): SemanticsNodeInteraction = onNode(hasText(label) and isSelectable())
+fun SemanticsNodeInteractionsProvider.destination(label: String): SemanticsNodeInteraction =
+    onNode(hasText(label) and isSelectable())
 
 /** Selects the top-level destination labeled [label]. */
-internal fun SemanticsNodeInteractionsProvider.selectDestination(label: String) {
+fun SemanticsNodeInteractionsProvider.selectDestination(label: String) {
     destination(label).performClick()
 }
 
@@ -124,10 +124,7 @@ internal fun SemanticsNodeInteractionsProvider.selectDestination(label: String) 
  * Clicks the node whose text or content description is [label], scrolling to it when hidden. Pass
  * [useUnmergedTree] to tap the label itself rather than the merged node around it.
  */
-internal fun SemanticsNodeInteractionsProvider.click(
-    label: String,
-    useUnmergedTree: Boolean = false,
-) {
+fun SemanticsNodeInteractionsProvider.click(label: String, useUnmergedTree: Boolean = false) {
     val node = onNode(hasText(label) or hasContentDescription(label), useUnmergedTree)
     if (!node.isDisplayed()) node.performScrollTo()
     node.performClick()
@@ -137,13 +134,13 @@ internal fun SemanticsNodeInteractionsProvider.click(
  * Clicks the enabled node labeled [label] in the open dialog. A semantics click needs no window
  * focus, unlike a touch on a dialog still attaching.
  */
-internal fun SemanticsNodeInteractionsProvider.clickInDialog(label: String) {
+fun SemanticsNodeInteractionsProvider.clickInDialog(label: String) {
     onNode(hasText(label) and hasAnyAncestor(isDialog()) and isEnabled())
         .performSemanticsAction(SemanticsActions.OnClick)
 }
 
 /** The text field of the open dialog, such as a project's name or the calendar's typed date. */
-internal fun SemanticsNodeInteractionsProvider.dialogTextField(): SemanticsNodeInteraction =
+fun SemanticsNodeInteractionsProvider.dialogTextField(): SemanticsNodeInteraction =
     onNode(hasSetTextAction() and hasAnyAncestor(isDialog()))
 
 /**
@@ -151,21 +148,21 @@ internal fun SemanticsNodeInteractionsProvider.dialogTextField(): SemanticsNodeI
  * a Compose field opens it only while focused. Reading the keyboard's insets instead would race the
  * IME window, which shows after Compose is idle.
  */
-internal fun SemanticsNodeInteractionsProvider.assertNoTextFieldFocused() {
+fun SemanticsNodeInteractionsProvider.assertNoTextFieldFocused() {
     onAllNodes(hasSetTextAction() and isFocused()).assertCountEquals(0)
 }
 
 /** The snackbar shown, the only node a screen reader can dismiss. */
-internal fun SemanticsNodeInteractionsProvider.snackbar(): SemanticsNodeInteraction =
+fun SemanticsNodeInteractionsProvider.snackbar(): SemanticsNodeInteraction =
     onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.Dismiss))
 
 /** Dismisses the snackbar shown, as a screen reader does. */
-internal fun SemanticsNodeInteractionsProvider.dismissSnackbar() {
+fun SemanticsNodeInteractionsProvider.dismissSnackbar() {
     snackbar().performSemanticsAction(SemanticsActions.Dismiss)
 }
 
 /** The root top app bar's About action. */
-internal fun SemanticsNodeInteractionsProvider.aboutAction(): SemanticsNodeInteraction = onNode(
+fun SemanticsNodeInteractionsProvider.aboutAction(): SemanticsNodeInteraction = onNode(
     SemanticsMatcher.expectValue(
         SemanticsProperties.ContentDescription,
         listOf("Sobre o Molda"),
@@ -173,17 +170,16 @@ internal fun SemanticsNodeInteractionsProvider.aboutAction(): SemanticsNodeInter
 )
 
 /** Opens About from a root screen. */
-internal fun SemanticsNodeInteractionsProvider.openAbout() {
+fun SemanticsNodeInteractionsProvider.openAbout() {
     aboutAction().performClick()
 }
 
 /** The top app bar heading reading [title]. */
-internal fun SemanticsNodeInteractionsProvider.screenTitle(
-    title: String,
-): SemanticsNodeInteraction = onNode(hasText(title) and isHeading())
+fun SemanticsNodeInteractionsProvider.screenTitle(title: String): SemanticsNodeInteraction =
+    onNode(hasText(title) and isHeading())
 
 /** Opens the full-circle skirt calculator from the Moldes catalog the app starts on. */
-internal fun SemanticsNodeInteractionsProvider.openSkirtCalculator() {
+fun SemanticsNodeInteractionsProvider.openSkirtCalculator() {
     onNode(hasText(SkirtTitle) and !isHeading()).performClick()
     screenTitle(SkirtTitle).assertExists()
 }
@@ -191,7 +187,7 @@ internal fun SemanticsNodeInteractionsProvider.openSkirtCalculator() {
 /**
  * Shows the skirt calculator: selects Moldes when needed, then opens the skirt from the catalog.
  */
-internal fun SemanticsNodeInteractionsProvider.showSkirtCalculator() {
+fun SemanticsNodeInteractionsProvider.showSkirtCalculator() {
     showDestination("Moldes")
     if (onNode(hasText(SkirtTitle) and isHeading()).isNotDisplayed()) openSkirtCalculator()
 }
@@ -200,7 +196,7 @@ internal fun SemanticsNodeInteractionsProvider.showSkirtCalculator() {
  * Opens the fabric-folding guide from the skirt's results. With motion on a playing drawing keeps
  * Compose busy, so the test clock drives the guide from here: each wait for a drawing advances it.
  */
-internal fun AndroidComposeTestRule<*, *>.openGuideFromResults() {
+fun AndroidComposeTestRule<*, *>.openGuideFromResults() {
     val entry = onNodeWithText("Guia de dobra do tecido").performScrollTo()
     if (ValueAnimator.areAnimatorsEnabled()) mainClock.autoAdvance = false
     entry.performClick()
@@ -209,7 +205,7 @@ internal fun AndroidComposeTestRule<*, *>.openGuideFromResults() {
 }
 
 /** Shows Perfis, keeping any open editor: re-selecting it would return to its root. */
-internal fun SemanticsNodeInteractionsProvider.showProfiles() = showDestination("Perfis")
+fun SemanticsNodeInteractionsProvider.showProfiles() = showDestination("Perfis")
 
 private fun SemanticsNodeInteractionsProvider.showDestination(label: String) {
     if (onNode(hasText(label) and isSelectable() and isSelected()).isNotDisplayed()) {
@@ -218,7 +214,7 @@ private fun SemanticsNodeInteractionsProvider.showDestination(label: String) {
 }
 
 /** The skirt's catalog entry and calculator title as the app renders it. */
-internal val SkirtTitle: String
+val SkirtTitle: String
     get() = InstrumentationRegistry.getInstrumentation().targetContext.getString(
         R.string.skirt_title,
     )

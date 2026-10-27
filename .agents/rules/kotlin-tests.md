@@ -120,26 +120,33 @@ failure-path tests. A mocked database or serializer does not verify that
 integration; Room behavior is covered by the repository and migration tests on
 real Room.
 
-## Hilt device tests
+## Hilt tests that start the app
 
-Every device test that launches `MainActivity` is a Hilt Android test:
-`MoldaTestRunner` starts Hilt's test application, and the app builds its
-ViewModels from the test's bindings exactly as in production
+Every test that starts the app, local or device, is a Hilt test: it runs on
+Hilt's test application (`MoldaTestRunner` on a device, `robolectric.properties`
+locally), and the app builds its ViewModels from the test's bindings exactly as
+in production
 ([ADR 0006](../../docs/adr/0006-entry-scoped-viewmodels-results-and-dialogs.md)).
+The harness lives in `app/src/testFixtures` (`AppLauncher`, `TestBindings`,
+`MoldaNavigation.kt`) and is the same in both source sets, so a test moves
+between them unchanged. Only the activity differs: devices start `MainActivity`;
+local tests start the debug-only `HiltTestActivity`, because `MainActivity`
+calls `Rive.init`, which loads native code Robolectric cannot run.
 
 - Annotate the class `@HiltAndroidTest`, make `HiltAndroidRule(this)` the first
   rule, `@get:Rule(order = 0)`, and `createLaunchLaterComposeRule()` the second,
   with every other rule ordered after them: the activity injects in `onCreate`.
-- No class binds or uninstalls modules. `TestBindingsModule` gives every device
-  test's app the repositories and clock held by `TestBindings`: empty fakes, Molda up to date
+  Local tests also take `@RunWith(AndroidJUnit4::class)`.
+- No class binds or uninstalls modules. `TestBindingsModule` gives every
+  started app the repositories and clock held by `TestBindings`: empty fakes, Molda up to date
   and 13/10/2026 unless the test seeds others. One call seeds them and starts
   the app: `launchApp(profiles, projects, clock, size, frame, updates)`, every
   argument optional. Keep a reference typed as the fake when the test sets a gate or
   reads `current`. Starting the app freezes the holder, so assigning a fake
   afterward throws.
 - `launchApp` shows the route inside `frame` (the theme by default) and at
-  `size` when given; `frame = null` keeps the app's own content, which alone
-  shows the installed version. `showRoute` changes the frame later, and
+  `size` when given; `frame = null` keeps the activity's own content, which on
+  a device alone shows the installed version. `showRoute` changes the frame later, and
   `recreate()` shows the same content again, so a test never shows it again
   after recreating. Content set with `activity.setContent` directly is not shown
   again after recreating; use `showRoute`.
