@@ -286,7 +286,7 @@ class FabricFoldingRenderingTest {
                 fail(
                     "$description: fabric must remain visible throughout playback " +
                         "at ${elapsed}ms (${image.width}x${image.height}); " +
-                        "most frequent colours: " +
+                        "most frequent colors: " +
                         frame.toList().groupingBy { Integer.toHexString(it) }.eachCount()
                             .entries.sortedByDescending { it.value }.take(6),
                 )
@@ -367,7 +367,7 @@ class FabricFoldingRenderingTest {
 
     private fun ImageBitmap.pixels(): IntArray = IntArray(width * height).also { readPixels(it) }
 
-    /** The colours the drawing binds under [isDarkTheme], as [MoldaTheme] resolves them. */
+    /** The colors the drawing binds under [isDarkTheme], as [MoldaTheme] resolves them. */
     private fun drawingColors(
         isDarkTheme: Boolean = composeRule.activity.resources.configuration.isNightModeActive,
     ): DrawingColors = DrawingColors(moldaColorScheme(composeRule.activity, isDarkTheme))

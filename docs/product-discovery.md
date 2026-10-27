@@ -6,7 +6,7 @@ Status: discovery confirmed by the product owner on 2026-10-12; specification pu
 
 Help sewists who already draft on paper turn body measurements into clear, checkable drafting dimensions, and reuse measurements for people they sew for.
 
-The first MVP delivers this through a full-circle skirt calculator and saved measurement profiles, in Brazilian Portuguese and centimetres. It assists an existing drafting workflow rather than promising a complete pattern or guaranteed fit.
+The first MVP delivers this through a full-circle skirt calculator and saved measurement profiles, in Brazilian Portuguese and centimeters. It assists an existing drafting workflow rather than promising a complete pattern or guaranteed fit.
 
 ## User problems and evidence
 
@@ -21,7 +21,7 @@ The first MVP delivers this through a full-circle skirt calculator and saved mea
 - Initial problem hypothesis: repeated arithmetic and uncertainty about measurements or allowances interrupt drafting. This has not yet been observed in a user session.
 - Product promise: explained calculations that sewists transfer to paper, with inputs, assumptions, formulas, and results.
 - First workflow: a full-circle skirt (saia godê inteira), made in woven fabric with a waistband and closure. Its waist opening uses waist circumference plus explicitly entered waist ease.
-- Initial language and units: Brazilian Portuguese and centimetres.
+- Initial language and units: Brazilian Portuguese and centimeters.
 - Saved measurement profiles are required in the MVP. Users can keep multiple profiles for themselves or people they sew for, identified by a name or nickname.
 - Initial profile contents: name/nickname, waist circumference, measurement date, and optional notes. Profiles support editing and deletion.
 - Profiles work offline and are stored only on the device. No login, cloud sync, backup, or export is included in the MVP; users must understand that clearing app data or replacing the device may lose their profiles.
@@ -31,11 +31,11 @@ The first MVP delivers this through a full-circle skirt calculator and saved mea
 - Results: waist stitching-line radius, finished hem radius, waist cutting radius, and hem cutting radius. Reference dimensions and cutting dimensions must be clearly distinguished.
 - Circular geometry: for waist W, ease E, finished skirt length L, waist seam allowance S, and hem allowance H, use r = (W + E) / (2π); finished hem radius = r + L; waist cutting radius = r - S; hem cutting radius = r + L + H. These are circular reference dimensions, not a complete cutting pattern.
 - The sewist handles panel layout, closure seam allowances, and waistband drafting. Fabric-yardage calculations are deferred. Show these boundaries beside results.
-- Include a labelled diagram distinguishing stitching and cutting lines, and brief guidance for measuring waist circumference at the intended waistband position.
+- Include a labeled diagram distinguishing stitching and cutting lines, and brief guidance for measuring waist circumference at the intended waistband position.
 - Profiles are optional: users can enter a waist measurement directly without creating one.
 - Accept pt-BR decimal commas. Waist and finished length must be positive; ease and allowances can be zero but cannot be negative. Require explicit values for ease and allowances, with no hidden assumptions.
 - Reject a waist seam allowance that leaves a zero or negative waist cutting radius. Invalid inputs produce clear errors rather than usable-looking results.
-- Calculate with unrounded values and display radii to two decimal places in centimetres.
+- Calculate with unrounded values and display radii to two decimal places in centimeters.
 - Keep the repository's minimum Android API at 36. Compatibility with the available reviewer's phone has not been confirmed.
 - Validation: gather feedback on a working MVP from the available Brazilian, pt-BR-speaking sewist. Ask her to draft from the results, compare with her usual calculation, and explain anything unclear. Success includes correct use and perceived usefulness; numerical agreement alone does not establish usefulness or fit.
 - Demand validation is deferred until MVP feedback; no user workflow has been observed yet.
@@ -51,7 +51,7 @@ The first MVP delivers this through a full-circle skirt calculator and saved mea
 ## Initial requirements and MVP scope
 
 1. Calculate full-circle skirt dimensions from direct input or a selected profile's waist measurement.
-2. Explain the inputs, construction assumptions, formulas, and four radius results in pt-BR, with a labelled diagram.
+2. Explain the inputs, construction assumptions, formulas, and four radius results in pt-BR, with a labeled diagram.
 3. Keep body measurements separate from garment choices and cutting allowances.
 4. Create, select, edit, and delete multiple measurement profiles. Profile fields are name/nickname, waist circumference, measurement date, and optional notes.
 5. Persist profiles locally across closing and reopening the app. Calculations and profile operations work offline.
@@ -83,7 +83,7 @@ For practical feedback, ask the participant to draft from the results, compare w
 
 ## Next gate
 
-The product owner has confirmed the shared vision, initial requirements, and MVP scope. The implementation specification is published as [GitHub issue #13](https://github.com/almeidajr/Molda/issues/13), labelled `ready-for-agent`, with owner-confirmed testing boundaries. This discovery document records the product rationale; the issue is the specification. Publishing the specification does not start implementation.
+The product owner has confirmed the shared vision, initial requirements, and MVP scope. The implementation specification is published as [GitHub issue #13](https://github.com/almeidajr/Molda/issues/13), labeled `ready-for-agent`, with owner-confirmed testing boundaries. This discovery document records the product rationale; the issue is the specification. Publishing the specification does not start implementation.
 
 ## Research references
 

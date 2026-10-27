@@ -20,8 +20,8 @@ barrier, and the limitations we know about.
 - **Other input:** every action works with Switch Access, a keyboard or a mouse,
   with visible focus and no gesture-only actions.
 - **Text and display:** text scales to 200% without clipping or overlap; light,
-  dark and dynamic colour schemes meet contrast thresholds; meaning never relies
-  on colour alone.
+  dark and dynamic color schemes meet contrast thresholds; meaning never relies
+  on color alone.
 - **Motion:** the folding guide's animation can be paused and follows Android's
   *Remove animations* setting.
 - **Diagrams:** every number and line in a drawing is also given in text.
@@ -75,14 +75,14 @@ who triages reports, tracks known barriers and keeps this document current.
 - **Android:** 16 (API 36) or newer, on phones, tablets and foldables, compact
   and wide windows.
 - **Assistive technology and settings:** TalkBack, Switch Access, hardware
-  keyboard and mouse, font size up to 200%, light/dark theme and dynamic colour,
+  keyboard and mouse, font size up to 200%, light/dark theme and dynamic color,
   *Remove animations*.
 - **Tested so far:** automated Compose device tests and checks on an Android 16
   emulator. No assistive-technology user has tested Molda yet.
 
 ## Known limitations
 
-- The app is only in Brazilian Portuguese and uses centimetres only.
+- The app is only in Brazilian Portuguese and uses centimeters only.
 - The line numbers inside the folding-guide drawing are drawn shapes, not text,
   so they don't grow with the system font size. The written instructions under
   the drawing carry every number as scalable text.

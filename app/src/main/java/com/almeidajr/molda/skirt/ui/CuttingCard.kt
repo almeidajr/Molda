@@ -54,7 +54,7 @@ fun cuttingCard(radii: SkirtRadii, text: (Int) -> String): List<CuttingCardGroup
         CuttingCardEntry(
             line,
             text(line.label),
-            formatCentimetres(radius),
+            formatCentimeters(radius),
             partner.takeIf { coincides },
         )
     return listOf(
@@ -76,7 +76,7 @@ fun cuttingCard(radii: SkirtRadii, text: (Int) -> String): List<CuttingCardGroup
 }
 
 /** Two pt-BR decimals and "cm" joined by a non-breaking space, e.g. "13,05 cm". */
-fun formatCentimetres(length: Length): String = "${formatDecimal(length.centimetres)} cm"
+fun formatCentimeters(length: Length): String = "${formatDecimal(length.centimeters)} cm"
 
 /** Two pt-BR decimals without grouping, e.g. "80,00". */
 fun formatDecimal(value: Double): String = String.format(PtBr, "%.2f", value)
@@ -128,5 +128,5 @@ internal val PtBr = Locale.forLanguageTag("pt-BR")
  */
 fun measurementSummary(draft: SkirtDraft, text: (Int) -> String): List<String> =
     SkirtDraftField.entries.map { field ->
-        "${text(field.summaryLabel)}: ${formatDecimal(draft.lengthOf(field).centimetres)}"
+        "${text(field.summaryLabel)}: ${formatDecimal(draft.lengthOf(field).centimeters)}"
     }

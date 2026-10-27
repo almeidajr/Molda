@@ -70,7 +70,7 @@ class LoadResultTest {
     }
 
     @Test
-    fun asLoadResult_whenFlowIsCancelled_rethrowsTheCancellation() = runTest {
+    fun asLoadResult_whenFlowIsCanceled_rethrowsTheCancellation() = runTest {
         // When/Then
         assertFailsWith<CancellationException> {
             failing(CancellationException("Left the screen"))

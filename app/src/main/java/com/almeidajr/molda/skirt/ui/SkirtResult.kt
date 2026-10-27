@@ -45,19 +45,19 @@ private fun formulas(draft: SkirtDraft, radii: SkirtRadii, text: (Int) -> String
             R.string.skirt_formula_waist_stitching_values,
             lengthText(draft.waist),
             lengthText(draft.ease),
-            formatCentimetres(radii.waistStitching),
+            formatCentimeters(radii.waistStitching),
         ),
-        line(R.string.skirt_formula_finished_hem, length, formatCentimetres(radii.finishedHem)),
+        line(R.string.skirt_formula_finished_hem, length, formatCentimeters(radii.finishedHem)),
         line(
             R.string.skirt_formula_waist_cutting,
             lengthText(draft.waistSeamAllowance),
-            formatCentimetres(radii.waistCutting),
+            formatCentimeters(radii.waistCutting),
         ),
         line(
             R.string.skirt_formula_hem_cutting,
             length,
             lengthText(draft.hemAllowance),
-            formatCentimetres(radii.hemCutting),
+            formatCentimeters(radii.hemCutting),
         ),
         text(R.string.skirt_formulas_rounding),
     )

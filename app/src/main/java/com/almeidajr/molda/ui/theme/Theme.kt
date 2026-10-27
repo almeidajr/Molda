@@ -25,7 +25,7 @@ fun MoldaTheme(isDarkTheme: Boolean = isSystemInDarkTheme(), content: @Composabl
 @Composable
 private fun SystemBarIcons(isDarkTheme: Boolean) {
     val window = LocalActivity.current?.window ?: return
-    // WindowCompat.enableEdgeToEdge leaves the system bar icon colours to the app.
+    // WindowCompat.enableEdgeToEdge leaves the system bar icon colors to the app.
     SideEffect {
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = !isDarkTheme
@@ -34,6 +34,6 @@ private fun SystemBarIcons(isDarkTheme: Boolean) {
     }
 }
 
-/** The scheme [MoldaTheme] applies; device tests use it to know the guide's bound colours. */
+/** The scheme [MoldaTheme] applies; device tests use it to know the guide's bound colors. */
 internal fun moldaColorScheme(context: Context, isDarkTheme: Boolean): ColorScheme =
     if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)

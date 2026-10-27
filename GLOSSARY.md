@@ -40,7 +40,7 @@ A named collection of body measurements for one person, recorded on a measuremen
 _Avoid_: User account, client account
 
 **Length**:
-A finite, non-negative distance in centimetres, used for both body measurements and drafting assumptions.
+A finite, non-negative distance in centimeters, used for both body measurements and drafting assumptions.
 
 **Drafting assumption**:
 A value the sewist chooses rather than measures on the body, such as waist ease, seam and hem allowances, or finished skirt length.

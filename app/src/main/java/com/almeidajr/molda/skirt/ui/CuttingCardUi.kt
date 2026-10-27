@@ -156,7 +156,7 @@ private fun LineKey(entry: CuttingCardEntry, ink: Color) {
                 pathEffect = linePathEffect(entry.line.style),
             )
         }
-        // Card ink, not onSurfaceVariant: the label is quieter through type, not off-role colour.
+        // Card ink, not onSurfaceVariant: the label is quieter through type, not off-role color.
         Text(entry.label, style = MaterialTheme.typography.bodyLarge, color = ink)
     }
 }

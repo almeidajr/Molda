@@ -94,7 +94,7 @@ internal fun AndroidComposeTestRule<MainActivityLauncher, MainActivity>.launchPr
     showProfiles()
 }
 
-/** Replaces the text of the field labelled [label]. */
+/** Replaces the text of the field labeled [label]. */
 internal fun SemanticsNodeInteractionsProvider.edit(label: String, value: String) {
     onNodeWithText(label).performScrollTo().performTextReplacement(value)
 }

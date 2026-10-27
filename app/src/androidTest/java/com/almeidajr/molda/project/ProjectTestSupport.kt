@@ -31,7 +31,7 @@ internal fun formaturaProject(savedAt: Instant) = Project(
 )
 
 /**
- * Opens the saved project [name] by tapping its name: a short row's centre falls on its Ações
+ * Opens the saved project [name] by tapping its name: a short row's center falls on its Ações
  * button.
  */
 internal fun SemanticsNodeInteractionsProvider.clickProject(name: String) =

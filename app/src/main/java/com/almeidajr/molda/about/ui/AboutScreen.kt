@@ -31,13 +31,13 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 
 /**
  * About Molda: what it does, the installed [versionName] with [content] below it (the update
- * status), and the open-source licences row.
+ * status), and the open-source licenses row.
  */
 @Composable
 fun AboutScreen(
     versionName: String,
     onUp: () -> Unit,
-    onOpenLicences: () -> Unit,
+    onOpenLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit = {},
 ) {
@@ -70,7 +70,7 @@ fun AboutScreen(
                 ) { Text(stringResource(R.string.about_version)) }
                 content()
                 ListItem(
-                    onClick = onOpenLicences,
+                    onClick = onOpenLicenses,
                     modifier = Modifier.heightIn(min = 56.dp),
                     leadingContent = {
                         Icon(painterResource(R.drawable.ic_license), contentDescription = null)
@@ -81,18 +81,18 @@ fun AboutScreen(
                             contentDescription = null,
                         )
                     },
-                ) { Text(stringResource(R.string.about_licences)) }
+                ) { Text(stringResource(R.string.about_licenses)) }
             }
         }
     }
 }
 
-/** The open-source licences of the libraries Molda ships, collected at build time. */
+/** The open-source licenses of the libraries Molda ships, collected at build time. */
 @Composable
-fun LicencesScreen(onUp: () -> Unit, modifier: Modifier = Modifier) {
+fun LicensesScreen(onUp: () -> Unit, modifier: Modifier = Modifier) {
     val libraries by produceLibraries(R.raw.aboutlibraries)
     Column(modifier.fillMaxSize()) {
-        MoldaTopAppBar(stringResource(R.string.about_licences), onUp = onUp)
+        MoldaTopAppBar(stringResource(R.string.about_licenses), onUp = onUp)
         LibrariesContainer(libraries, Modifier.fillMaxSize())
     }
 }

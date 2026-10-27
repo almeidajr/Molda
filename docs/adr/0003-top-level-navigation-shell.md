@@ -12,4 +12,4 @@ The MVP design (`docs/ui-ux-design.md`) launched straight into the full-circle s
 
 - About and the future in-app update check (GitHub Releases) open from a top-app-bar action, not from a fifth destination.
 - The catalog and library list only features that exist; no "coming soon" entries.
-- The fabric-folding guide also opens from the `Guias` library, with labelled example dimensions instead of a calculation's radii.
+- The fabric-folding guide also opens from the `Guias` library, with labeled example dimensions instead of a calculation's radii.

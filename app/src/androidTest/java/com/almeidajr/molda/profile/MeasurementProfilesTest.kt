@@ -595,7 +595,7 @@ class MeasurementProfilesTest {
     }
 
     @Test
-    fun copiedSource_afterRecreation_staysLabelled() {
+    fun copiedSource_afterRecreation_staysLabeled() {
         // Given
         composeRule.launchCalculator(FakeProfileRepository(listOf(profile(1, "Ana"))))
         pick("Usar perfil: Ana — 80 cm — 12/10/2026")

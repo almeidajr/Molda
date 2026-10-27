@@ -109,15 +109,15 @@ private fun SkirtSnapshot.toEntity(name: ProjectName, savedAt: Instant) = Projec
 )
 
 private fun SkirtSnapshot.toColumns() = SkirtColumns(
-    waist = draft.waist.centimetres,
-    ease = draft.ease.centimetres,
-    finishedLength = draft.finishedLength.centimetres,
-    waistSeamAllowance = draft.waistSeamAllowance.centimetres,
-    hemAllowance = draft.hemAllowance.centimetres,
-    waistStitchingRadius = radii.waistStitching.centimetres,
-    finishedHemRadius = radii.finishedHem.centimetres,
-    waistCuttingRadius = radii.waistCutting.centimetres,
-    hemCuttingRadius = radii.hemCutting.centimetres,
+    waist = draft.waist.centimeters,
+    ease = draft.ease.centimeters,
+    finishedLength = draft.finishedLength.centimeters,
+    waistSeamAllowance = draft.waistSeamAllowance.centimeters,
+    hemAllowance = draft.hemAllowance.centimeters,
+    waistStitchingRadius = radii.waistStitching.centimeters,
+    finishedHemRadius = radii.finishedHem.centimeters,
+    waistCuttingRadius = radii.waistCutting.centimeters,
+    hemCuttingRadius = radii.hemCutting.centimeters,
     profileName = source?.profileName,
     measurementDate = source?.measurementDate?.toString(),
 )

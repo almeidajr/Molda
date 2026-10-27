@@ -209,7 +209,7 @@ class FabricFoldingLayoutTest {
     }
 
     /**
-     * The supporting detail starts collapsed under a labelled 48dp disclosure, then reads to the
+     * The supporting detail starts collapsed under a labeled 48dp disclosure, then reads to the
      * end.
      */
     private fun readDetails(isMarkingOrLater: Boolean) {

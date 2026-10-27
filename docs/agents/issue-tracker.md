@@ -24,7 +24,7 @@ When it says "fetch the relevant ticket", read the GitHub issue.
 
 ## Wayfinding operations
 
-A map is one issue labelled `wayfinder:map`. Child tickets use
+A map is one issue labeled `wayfinder:map`. Child tickets use
 `wayfinder:<type>` labels: research, prototype, grilling, or task.
 
 Link children using native GitHub sub-issues where available.

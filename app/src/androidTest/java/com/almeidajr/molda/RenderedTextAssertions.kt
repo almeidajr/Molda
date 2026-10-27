@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.toSize
 import java.util.Locale
 import kotlin.test.assertTrue
 
-/** Text colour against the rendered pixel behind the text's top-left corner, at least 4.5:1. */
+/** Text color against the rendered pixel behind the text's top-left corner, at least 4.5:1. */
 internal fun SemanticsNodeInteraction.assertReadableTextContrast(context: String) {
     val layouts = mutableListOf<TextLayoutResult>()
     performSemanticsAction(SemanticsActions.GetTextLayoutResult) { assertTrue(it(layouts)) }
@@ -73,7 +73,7 @@ internal fun SemanticsNodeInteraction.fullyVisibleBounds(context: String): Rect 
 internal fun SemanticsNodeInteraction.assertSurfaceStandsOut(context: String) {
     val pixels = captureToImage().toPixelMap()
     val fill = pixels[pixels.width - 4, pixels.height / 2]
-    // Tonal neighbours sit near 1.1:1; equal tones, the regression, measure exactly 1.
+    // Tonal neighbors sit near 1.1:1; equal tones, the regression, measure exactly 1.
     assertContrast(context, contrastRatio(fill, pixels[0, 0]), minimum = 1.05f)
 }
 

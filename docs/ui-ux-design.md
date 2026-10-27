@@ -31,7 +31,7 @@ accessibility and human-feedback verification.
   results, profile editing/deletion, accessibility, and adaptive layouts.
 - Use Material Design 3's standard visual system without custom branding.
   Keep the experience calm and precise; visual hierarchy and motion serve the task.
-- Retain the established audience, Brazilian Portuguese, centimetres, explicit
+- Retain the established audience, Brazilian Portuguese, centimeters, explicit
   drafting assumptions, optional profiles, and offline device-local storage.
 
 ## Confirmed screen structure and calculation flow
@@ -52,7 +52,7 @@ accessibility and human-feedback verification.
   ease and allowances still require explicit values, including zero.
 - End the form with a full-width "Calcular". After a successful calculation,
   hide the keyboard and bring the whole cutting card into view on the same
-  screen. The card presents all four labelled radii once, distinguishes
+  screen. The card presents all four labeled radii once, distinguishes
   stitching/reference dimensions from cutting dimensions, and pairs each value
   with its diagram number and line style. The drafting diagram sits on the
   same card, after the radii or beside them when both fit. "Guide de dobra
@@ -153,14 +153,14 @@ accessibility and human-feedback verification.
   Back applies to the active editor rather than removing a visible list pane.
 - Dismissing the profile picker leaves the calculation untouched. "Novo perfil"
   in the picker opens the editor on the Moldes stack; saving returns to the
-  calculator with the new profile selected, and cancelling (after the
+  calculator with the new profile selected, and canceling (after the
   unsaved-change confirmation when needed) returns to the picker.
 
 ## Confirmed result details and edge cases
 
-- Use two clearly labelled groups on the cutting card: "Linhas de referência"
+- Use two clearly labeled groups on the cutting card: "Linhas de referência"
   (waist stitching radius and finished hem radius) and "Linhas de corte" (waist
-  and hem cutting radii). Keep all four values equally readable, in centimetres
+  and hem cutting radii). Keep all four values equally readable, in centimeters
   with two decimal places, each shown and announced once. The diagram follows
   on the card under "Diagrama das linhas"; the radius rows serve as its key.
   Then include one action row with the guide entry and "Editar medidas", a

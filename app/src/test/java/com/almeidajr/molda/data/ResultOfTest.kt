@@ -76,7 +76,7 @@ class ResultOfTest {
     }
 
     @Test
-    fun resultOf_whenBlockIsCancelled_rethrowsTheCancellation() = runTest {
+    fun resultOf_whenBlockIsCanceled_rethrowsTheCancellation() = runTest {
         // When/Then
         assertFailsWith<CancellationException> {
             resultOf { throw CancellationException("Left the screen") }

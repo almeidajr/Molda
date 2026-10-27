@@ -74,8 +74,8 @@ private val ExampleSkirtDraft = SkirtDraft(
 )
 
 /** An example measurement as the example label lists it: "80", or "1,50" when not whole. */
-internal fun exampleCentimetres(length: Length): String =
-    formatDecimal(length.centimetres).removeSuffix(",00")
+internal fun exampleCentimeters(length: Length): String =
+    formatDecimal(length.centimeters).removeSuffix(",00")
 
 /** The radii a guide opened from `Guias` shows. */
 internal val ExampleSkirtRadii: SkirtRadii =
@@ -208,11 +208,11 @@ private fun ExampleLabel(onCalculateOwn: () -> Unit) {
                 Text(
                     stringResource(
                         R.string.guide_example_inputs,
-                        exampleCentimetres(ExampleSkirtDraft.waist),
-                        exampleCentimetres(ExampleSkirtDraft.ease),
-                        exampleCentimetres(ExampleSkirtDraft.finishedLength),
-                        exampleCentimetres(ExampleSkirtDraft.waistSeamAllowance),
-                        exampleCentimetres(ExampleSkirtDraft.hemAllowance),
+                        exampleCentimeters(ExampleSkirtDraft.waist),
+                        exampleCentimeters(ExampleSkirtDraft.ease),
+                        exampleCentimeters(ExampleSkirtDraft.finishedLength),
+                        exampleCentimeters(ExampleSkirtDraft.waistSeamAllowance),
+                        exampleCentimeters(ExampleSkirtDraft.hemAllowance),
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

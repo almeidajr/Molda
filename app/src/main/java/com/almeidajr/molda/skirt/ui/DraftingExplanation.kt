@@ -74,7 +74,7 @@ internal fun DraftingFigure(
     }
 }
 
-/** A labelled show/hide toggle that starts collapsed and exposes its state. */
+/** A labeled show/hide toggle that starts collapsed and exposes its state. */
 @Composable
 internal fun Disclosure(label: String, content: @Composable () -> Unit) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
@@ -127,7 +127,7 @@ private fun SkirtDiagram(entries: List<CuttingCardEntry>) {
             val radius = extent * diagramFraction(entry)
             val label = textMeasurer.measure(entry.line.number.toString(), labelStyle)
             val labelCenter = center + Offset(radius * cos(angle), radius * sin(angle))
-            // A paper-coloured disc keeps the number legible where it crosses its line.
+            // A paper-colored disc keeps the number legible where it crosses its line.
             drawCircle(
                 paper,
                 maxOf(label.size.width, label.size.height) / 2f + 2.dp.toPx(),

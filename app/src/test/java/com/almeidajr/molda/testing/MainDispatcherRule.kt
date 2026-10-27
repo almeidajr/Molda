@@ -10,7 +10,7 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 
 /**
- * Replaces [Dispatchers.Main] with [testDispatcher] for each test and always resets it afterwards.
+ * Replaces [Dispatchers.Main] with [testDispatcher] for each test and always resets it afterward.
  *
  * The default [UnconfinedTestDispatcher] runs `viewModelScope` work eagerly, so state has settled
  * before the assertions; pass a `StandardTestDispatcher` to check ordering or intermediate state.

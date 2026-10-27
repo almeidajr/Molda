@@ -23,12 +23,12 @@ class CalculateSkirtTest {
         )
         assertEquals(
             13.0507053335354,
-            success.radii.waistStitching.centimetres,
+            success.radii.waistStitching.centimeters,
             absoluteTolerance = 1e-12,
         )
         assertEquals(
             75.0507053335354,
-            success.radii.hemCutting.centimetres,
+            success.radii.hemCutting.centimeters,
             absoluteTolerance = 1e-12,
         )
     }

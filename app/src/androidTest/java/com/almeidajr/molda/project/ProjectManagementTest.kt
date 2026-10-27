@@ -256,7 +256,7 @@ class ProjectManagementTest {
     }
 
     @Test
-    fun delete_cancelled_keepsTheProject() {
+    fun delete_canceled_keepsTheProject() {
         // Given
         val projects = FakeProjectRepository(listOf(saiaAntiga))
         showProjetos(projects)

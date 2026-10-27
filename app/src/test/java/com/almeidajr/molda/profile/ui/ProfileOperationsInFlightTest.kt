@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /** What each profile ViewModel shows and blocks while its own command is still running. */
-// Robolectric supplies the real Bundle that the editor's saved state is parcelled through.
+// Robolectric supplies the real Bundle that the editor's saved state is parceled through.
 @RunWith(RobolectricTestRunner::class)
 class ProfileOperationsInFlightTest {
     private val storage = FakeProfileRepository(listOf(ana, bia))

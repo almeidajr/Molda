@@ -25,7 +25,7 @@ Automated UI checks and rendered geometry do not replace this physical trial.
 
 ## Calculator cases
 
-All inputs and radii are centimetres. These deliberately short practice pieces
+All inputs and radii are centimeters. These deliberately short practice pieces
 are not wearable skirt recommendations. Enter each case in the working
 calculator and open **Guia de dobra do tecido** beside the results. Use the
 displayed dimensions for marking; never trace or measure the screen drawing.

@@ -9,7 +9,7 @@ Molda is an Android app for sewists who draft patterns on paper. It turns body
 measurements into clear, checkable drafting dimensions, shows the formulas
 behind every result, and keeps measurements for the people you sew for.
 
-The app is in Brazilian Portuguese and uses centimetres.
+The app is in Brazilian Portuguese and uses centimeters.
 
 | Moldes                                                                                                     | Saia godê                                                                                                                                       | Guia de dobra                                                                                                                                                           | Perfis                                                                                                                     |
 |------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|

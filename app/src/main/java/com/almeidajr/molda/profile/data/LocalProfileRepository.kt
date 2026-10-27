@@ -47,7 +47,7 @@ private fun ProfileEntity.toProfile() = MeasurementProfile(
 private fun ProfileMeasurements.toEntity(id: Long = 0) = ProfileEntity(
     id = id,
     name = name.text,
-    waist = waist.centimetres,
+    waist = waist.centimeters,
     measurementDate = measurementDate.toString(),
     notes = notes,
 )

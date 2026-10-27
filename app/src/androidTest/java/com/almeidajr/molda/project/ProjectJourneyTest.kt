@@ -137,4 +137,4 @@ class ProjectJourneyTest {
 }
 
 private fun Project.namesAndEase(): Pair<String, Double> =
-    name.text to snapshot.draft.ease.centimetres
+    name.text to snapshot.draft.ease.centimeters

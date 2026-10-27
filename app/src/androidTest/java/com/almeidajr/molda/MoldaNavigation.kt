@@ -110,12 +110,12 @@ internal fun ComposeTestRule.pressKey(keyCode: Int, metaState: Int = 0) {
 /** Sends a real Back key to the focused window once Compose is idle. */
 internal fun ComposeTestRule.pressBack() = pressKey(KeyEvent.KEYCODE_BACK)
 
-/** The navigation suite item labelled [label]: Moldes, Projetos, Guias or Perfis. */
+/** The navigation suite item labeled [label]: Moldes, Projetos, Guias or Perfis. */
 internal fun SemanticsNodeInteractionsProvider.destination(
     label: String,
 ): SemanticsNodeInteraction = onNode(hasText(label) and isSelectable())
 
-/** Selects the top-level destination labelled [label]. */
+/** Selects the top-level destination labeled [label]. */
 internal fun SemanticsNodeInteractionsProvider.selectDestination(label: String) {
     destination(label).performClick()
 }
@@ -134,7 +134,7 @@ internal fun SemanticsNodeInteractionsProvider.click(
 }
 
 /**
- * Clicks the enabled node labelled [label] in the open dialog. A semantics click needs no window
+ * Clicks the enabled node labeled [label] in the open dialog. A semantics click needs no window
  * focus, unlike a touch on a dialog still attaching.
  */
 internal fun SemanticsNodeInteractionsProvider.clickInDialog(label: String) {

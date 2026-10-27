@@ -8,17 +8,17 @@ diameter is 800. The common origin is (24, 24) in a 448 × 448 artboard; Android
 uses contain fitting. Normalize the unrounded Double ratios before converting
 to Float. Do not enlarge allowance spacing.
 
-The same view model has four colour properties: `ink`, `fabric`, `fabricFold` and
+The same view model has four color properties: `ink`, `fabric`, `fabricFold` and
 `accent`. No artboard paints a background, so the host's surface shows through.
 Android binds them from the theme (onSecondaryContainer, secondaryContainer,
 tertiaryContainer and tertiary); the authored defaults are Molda's light fallback
 palette. The CLI capture renders transparency on a dark backdrop, so preview against
 a surface by adding a temporary background shape to a scratch copy, and set dark
-colours with `--data=ink=FFF2DBF3 --data=fabric=FF514154` and so on.
+colors with `--data=ink=FFF2DBF3 --data=fabric=FF514154` and so on.
 
 Lines follow the cutting card's key: 1 solid (waist stitching), 2 dashed (waist
 cutting), 3 dotted (finished hem), 4 dash-dot (hem cutting). Each line's number
-sits on a fabric-coloured disc at an arc end, placed by multiply converters on the
+sits on a fabric-colored disc at an arc end, placed by multiply converters on the
 bound diameter. Numerals are stroked paths, since text would need an embedded font.
 
 The default `play=false` state shows the completed diagram without motion.
@@ -64,7 +64,7 @@ while `play=true` loops its 120-frame demonstration, eased in and out, with a
 one-second completed hold and a smooth reverse. Each step plays as soon as its
 drawing appears, on opening and on every step change; a tap on the drawing
 pauses on the current frame to study it, and another continues from there. The preparation
-animation grows the lengthwise grain arrow from its centre. The folding animations
+animation grows the lengthwise grain arrow from its center. The folding animations
 pivot a half about the crease by mirroring its horizontal/vertical scale; the layer
 being folded is drawn in `fabricFold`. Pausing on Android changes playback
 without recreating the viewport. Written instructions remain available

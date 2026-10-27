@@ -156,7 +156,7 @@ private fun ShellContent(
     }
 }
 
-/** One item per destination; a filled glyph, label colour and selected state mark the current. */
+/** One item per destination; a filled glyph, label color and selected state mark the current. */
 @Composable
 private fun NavigationItems(
     navigator: Navigator,

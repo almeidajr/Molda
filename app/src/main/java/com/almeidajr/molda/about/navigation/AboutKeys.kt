@@ -7,6 +7,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data object AboutKey : NavKey
 
-/** The open-source licences, opened from About. */
+/** The open-source licenses, opened from About. */
 @Serializable
-internal data object LicencesKey : NavKey
+internal data object LicensesKey : NavKey
