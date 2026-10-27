@@ -363,9 +363,10 @@ class SkirtCalculatorTest {
     @Test
     fun imeNext_onEachField_focusesTheNextField() {
         SkirtDraftField.entries.zipWithNext().forEach { (field, next) ->
-            // When
-            composeRule.onNodeWithText(field.labelText).performScrollTo().performClick()
-                .performImeAction()
+            // When: the keyboard opening after the action would hide the next field for a frame.
+            val input = composeRule.onNodeWithText(field.labelText).performScrollTo().performClick()
+            composeRule.awaitKeyboardVisible()
+            input.performImeAction()
 
             // Then
             composeRule.onNodeWithText(next.labelText).assertIsFocused().assertIsDisplayed()

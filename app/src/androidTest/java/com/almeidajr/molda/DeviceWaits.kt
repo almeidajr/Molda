@@ -26,6 +26,7 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.FileInputStream
 import java.util.WeakHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 import org.junit.rules.ExternalResource
 
@@ -221,16 +222,22 @@ class AnimatorDurationScaleRule internal constructor(
     }
 
     fun set(scale: Float) {
-        shell("settings put global animator_duration_scale $scale")
-        awaitScale(scale)
-    }
-
-    // The app process learns of a settings change asynchronously.
-    private fun awaitScale(scale: Float) = composeRule.waitUntil(
-        "animator duration scale $scale",
-        DeviceWaitTimeout.inWholeMilliseconds,
-    ) {
-        ValueAnimator.getDurationScale() == scale
+        // The app process learns of the change asynchronously, and ValueAnimator updates its scale
+        // before calling the listeners. This one, registered after the app's, runs once they have.
+        val isApplied = AtomicBoolean(ValueAnimator.getDurationScale() == scale)
+        val listener = ValueAnimator.DurationScaleChangeListener {
+            if (it == scale) isApplied.set(true)
+        }
+        ValueAnimator.registerDurationScaleChangeListener(listener)
+        try {
+            shell("settings put global animator_duration_scale $scale")
+            composeRule.waitUntil(
+                "animator duration scale $scale",
+                DeviceWaitTimeout.inWholeMilliseconds,
+            ) { isApplied.get() }
+        } finally {
+            ValueAnimator.unregisterDurationScaleChangeListener(listener)
+        }
     }
 
     private fun shell(command: String): String =
