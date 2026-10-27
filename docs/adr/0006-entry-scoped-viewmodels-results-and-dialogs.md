@@ -1,5 +1,7 @@
 # Entries own their ViewModels, return results to the entry that asked, and show dialogs as entries
 
+> Screen tests that start the app run on Robolectric with the same Hilt bindings, and on a device only when they need one, since [ADR-0008](0008-one-owner-per-behavior-and-devices-only-where-needed.md).
+
 > Supersedes the three planned steps in the consequences of [ADR-0005](0005-navigation-architecture.md) and the way [ADR-0004](0004-fakes-for-screen-tests-and-idling-aware-room-for-journeys.md) gives screen tests their fakes.
 
 **Status:** accepted and built: steps 1 and 2 (#139, #140), the editor-status holder (#155), Hilt test bindings for device tests (#154), the ViewModel-store entry decorator with guide keys that carry their radii (#156), and the calculators (#157), the project ViewModels (#158) and the profile ViewModels (#159) owned by their entries.
