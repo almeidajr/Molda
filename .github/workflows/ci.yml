@@ -37,10 +37,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
+          # Lets setup-gradle save and restore the configuration cache, which can hold secrets.
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      # Robolectric fetches its Android jars into ~/.m2, which setup-gradle does not cache.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
       - name: Check formatting, analysis, tests, and debug build
         run: bash ./gradlew spotlessCheck :app:detektMain :app:detektTest :app:lintDebug :app:testDebugUnitTest :app:assembleDebug --continue
       - name: Upload reports
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: quality-reports
@@ -55,20 +62,42 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+      # A pull request that touches only docs or agent files skips the emulator; the job still
+      # succeeds, so the required check passes. Pushes to main always run.
+      - name: Check for app changes
+        id: changes
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          not_app='^(docs/|animations/|\.agents/|\.claude/|\.impeccable/|\.github/ISSUE_TEMPLATE/|[^/]+\.md$)'
+          if git diff --name-only "$BASE_SHA" HEAD | grep -qvE "$not_app"; then
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "app=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        if: steps.changes.outputs.app != 'false'
         with:
           distribution: temurin
           java-version: '25'
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        if: steps.changes.outputs.app != 'false'
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        if: steps.changes.outputs.app != 'false'
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
+          # Lets setup-gradle save and restore the configuration cache, which can hold secrets.
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
       - name: Enable KVM access
+        if: steps.changes.outputs.app != 'false'
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Run Compose smoke test
+      - name: Run device tests
+        if: steps.changes.outputs.app != 'false'
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           # API 36's newest image (rev 7) crashes now and then in libhwui's AnimatorManager::pushStaging
@@ -81,9 +110,12 @@ jobs:
           disable-animations: false
           script: bash ./gradlew :app:connectedDebugAndroidTest
       - name: Upload device test reports
-        if: always()
+        if: ${{ !cancelled() && steps.changes.outputs.app != 'false' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: device-test-reports
-          path: app/build/reports/androidTests/
+          # The XML results carry per-test times.
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
           retention-days: 7
