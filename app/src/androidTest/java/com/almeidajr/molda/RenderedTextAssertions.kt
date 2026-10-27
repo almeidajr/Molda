@@ -10,7 +10,6 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.toSize
 import java.util.Locale
 import kotlin.test.assertTrue
@@ -75,19 +74,4 @@ internal fun SemanticsNodeInteraction.assertSurfaceStandsOut(context: String) {
     val fill = pixels[pixels.width - 4, pixels.height / 2]
     // Tonal neighbors sit near 1.1:1; equal tones, the regression, measure exactly 1.
     assertContrast(context, contrastRatio(fill, pixels[0, 0]), minimum = 1.05f)
-}
-
-/**
- * Every layer of the node's own layout is at least [minimum] tall. A Material button pads a
- * 40dp container out to a 48dp touch target, so its bounds pass while it still draws at 40dp.
- */
-internal fun SemanticsNodeInteraction.assertDrawnHeightIsAtLeast(
-    minimum: Dp,
-): SemanticsNodeInteraction {
-    val layout = fetchSemanticsNode().layoutInfo
-    val drawn = layout.getModifierInfo().filter { it.coordinates.isAttached }
-        .minOf { it.coordinates.size.height }
-    val required = with(layout.density) { minimum.roundToPx() }
-    assertTrue(drawn >= required, "drawn height $drawn px < $required px")
-    return this
 }

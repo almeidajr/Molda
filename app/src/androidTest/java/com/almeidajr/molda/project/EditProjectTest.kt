@@ -26,7 +26,7 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.profile.fillProfile
+import com.almeidajr.molda.profile.fillProfileOnDevice
 import com.almeidajr.molda.project.domain.ProjectId
 import com.almeidajr.molda.project.domain.ProjectName
 import com.almeidajr.molda.recreate
@@ -366,7 +366,7 @@ class EditProjectTest {
         openEditor()
         composeRule.click("Usar perfil")
         composeRule.click("Novo perfil")
-        composeRule.fillProfile("Clara", waist = "95")
+        composeRule.fillProfileOnDevice("Clara", waist = "95")
 
         // When
         saveProfile()
@@ -387,7 +387,7 @@ class EditProjectTest {
         composeRule.click("Novo perfil")
         composeRule.showSkirtCalculator()
         composeRule.selectDestination("Projetos")
-        composeRule.fillProfile("Clara", waist = "95")
+        composeRule.fillProfileOnDevice("Clara", waist = "95")
 
         // When
         saveProfile()

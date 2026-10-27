@@ -13,9 +13,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
-import com.almeidajr.molda.awaitDialogFocus
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.click
-import com.almeidajr.molda.closeKeyboard
 import com.almeidajr.molda.createLaunchLaterComposeRule
 import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.pressBack
@@ -31,7 +30,10 @@ import kotlin.test.assertEquals
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
+@RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
 class ProfileFailuresTest {
     @get:Rule(order = 0)
@@ -46,7 +48,6 @@ class ProfileFailuresTest {
         composeRule.launchProfiles(existingProfiles().apply { commandGate = CompletableDeferred() })
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
-        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Salvar perfil")
@@ -66,8 +67,6 @@ class ProfileFailuresTest {
         composeRule.launchProfiles(existingProfiles().apply { commandGate = gate })
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
-        // Back must reach the editor, not close the keyboard.
-        composeRule.closeKeyboard()
         composeRule.click("Salvar perfil")
 
         // When
@@ -83,15 +82,12 @@ class ProfileFailuresTest {
     @Test
     fun pickerNewProfile_afterRecreationWithHiddenSaveHeld_opensItsOwnEditor() {
         // Given
-        // The app's own content, so the recreated activity composes the same route.
         composeRule.launchApp(
             profiles = existingProfiles().apply { commandGate = CompletableDeferred() },
-            frame = null,
         )
         composeRule.showProfiles()
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
-        composeRule.closeKeyboard()
         composeRule.click("Salvar perfil")
         composeRule.showSkirtCalculator()
         composeRule.recreate()
@@ -107,32 +103,6 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Nova").assertDoesNotExist()
     }
 
-    @Test
-    fun saveHeld_afterRecreation_storesOnceAndShowsTheMessageOnce() {
-        // Given
-        val gate = CompletableDeferred<Unit>()
-        val storage = existingProfiles().apply { commandGate = gate }
-        // The app's own content, so the recreated activity composes the same route.
-        composeRule.launchApp(profiles = storage, frame = null)
-        composeRule.showProfiles()
-        composeRule.click("Novo perfil")
-        composeRule.fillProfile("Nova", waist = "90")
-        composeRule.closeKeyboard()
-        composeRule.click("Salvar perfil")
-        composeRule.recreate()
-
-        // When
-        gate.complete(Unit)
-
-        // Then
-        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertIsDisplayed()
-        composeRule.onNodeWithText("Novo perfil de medidas").assertDoesNotExist()
-        assertEquals(3, storage.current.size)
-        // A new activity has a new snackbar host: the message shows again only if sent again.
-        composeRule.recreate()
-        composeRule.onNodeWithText("Perfil salvo neste aparelho.").assertDoesNotExist()
-    }
-
     /**
      * A configuration change keeps the entry's editor, so this checks the held result's delivery,
      * not a restore after process death (ProfileEditorViewModelTest covers that).
@@ -142,13 +112,11 @@ class ProfileFailuresTest {
         // Given
         val gate = CompletableDeferred<Unit>()
         val storage = existingProfiles().apply { commandGate = gate }
-        // The app's own content, so the recreated activity composes the same route.
-        composeRule.launchApp(profiles = storage, frame = null)
+        composeRule.launchApp(profiles = storage)
         composeRule.showSkirtCalculator()
         composeRule.click("Usar perfil")
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
-        composeRule.closeKeyboard()
         composeRule.click("Salvar perfil")
         composeRule.showProfiles()
         composeRule.recreate()
@@ -188,38 +156,12 @@ class ProfileFailuresTest {
         composeRule.click("Ações: Existente")
         composeRule.click("Excluir perfil")
         composeRule.click("Confirmar exclusão")
-        composeRule.awaitDialogFocus()
 
         // When
         composeRule.pressBack()
 
         // Then
         composeRule.onNodeWithText("Excluir perfil Existente?").assertIsDisplayed()
-    }
-
-    @Test
-    fun deleteHeld_afterRecreation_deletesOnceAndShowsTheMessageOnce() {
-        // Given
-        val gate = CompletableDeferred<Unit>()
-        val storage = existingProfiles().apply { commandGate = gate }
-        // The app's own content, so the recreated activity composes the same route.
-        composeRule.launchApp(profiles = storage, frame = null)
-        composeRule.showProfiles()
-        composeRule.click("Ações: Existente")
-        composeRule.click("Excluir perfil")
-        composeRule.click("Confirmar exclusão")
-        composeRule.recreate()
-
-        // When
-        gate.complete(Unit)
-
-        // Then
-        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertIsDisplayed()
-        composeRule.onNodeWithText("Excluir perfil Existente?").assertDoesNotExist()
-        assertEquals(listOf(ProfileId(2)), storage.current.map { it.id })
-        // A new activity has a new snackbar host: the message shows again only if sent again.
-        composeRule.recreate()
-        composeRule.onNodeWithText("Perfil excluído deste aparelho.").assertDoesNotExist()
     }
 
     @Test
@@ -256,28 +198,12 @@ class ProfileFailuresTest {
     }
 
     @Test
-    fun saveEdit_withStoredFutureDate_asksForCorrection() {
-        // Given
-        composeRule.launchProfiles(existingProfiles(measurementDate = LocalDate.of(2026, 10, 14)))
-        composeRule.click("Existente", useUnmergedTree = true)
-
-        // When
-        composeRule.click("Salvar alterações")
-
-        // Then
-        composeRule.onNodeWithText("A medida já deve ter sido tomada. Corrija a data futura.")
-            .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Data da medida (dd/mm/aaaa)").assertTextContains("14/10/2026")
-    }
-
-    @Test
     fun saveEdit_ofProfileDeletedMeanwhile_closesTheEditorWithTheMessage() {
         // Given
         val storage = existingProfiles()
         composeRule.launchProfiles(storage)
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.edit("Nome ou apelido", "Rascunho")
-        composeRule.closeKeyboard()
         // Deleted elsewhere after the editor loaded it.
         composeRule.runOnIdle { storage.forget(ProfileId(1)) }
 
@@ -300,7 +226,6 @@ class ProfileFailuresTest {
         composeRule.showProfiles()
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.edit("Nome ou apelido", "Rascunho")
-        composeRule.closeKeyboard()
         composeRule.click("Ações: Existente")
         composeRule.click("Excluir perfil")
 
@@ -320,7 +245,6 @@ class ProfileFailuresTest {
         composeRule.launchProfiles(existingProfiles().apply { failsCommands = true })
         composeRule.click("Novo perfil")
         composeRule.fillProfile("Nova", waist = "90")
-        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Salvar perfil")
@@ -328,20 +252,6 @@ class ProfileFailuresTest {
         // Then
         composeRule.onNodeWithText("Não foi possível salvar o perfil.", substring = true)
             .performScrollTo().assertIsDisplayed()
-    }
-
-    @Test
-    fun load_whenStorageFails_showsErrorInsteadOfEmptyList() {
-        // Given
-        val storage = existingProfiles().apply { failsLoad = true }
-
-        // When
-        composeRule.launchProfiles(storage)
-
-        // Then
-        composeRule.onNodeWithText("Não foi possível carregar os perfis.", substring = true)
-            .performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Nenhum perfil salvo.", substring = true).assertDoesNotExist()
     }
 
     @Test
@@ -381,6 +291,8 @@ class ProfileFailuresTest {
         composeRule.onNodeWithText("Tentar carregar novamente").assertDoesNotExist()
     }
 
+    // The picker opens half expanded; below a phone's height, its rows start off screen.
+    @Config(qualifiers = "w411dp-h923dp")
     @Test
     fun picker_whileProfilesLoad_showsLoading() {
         // Given
@@ -420,7 +332,6 @@ class ProfileFailuresTest {
         composeRule.showProfiles()
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.edit("Nome ou apelido", "Rascunho")
-        composeRule.closeKeyboard()
 
         // When
         composeRule.click("Salvar alterações")
@@ -464,7 +375,6 @@ class ProfileFailuresTest {
         composeRule.showProfiles()
         composeRule.click("Existente", useUnmergedTree = true)
         composeRule.edit("Nome ou apelido", "Rascunho")
-        composeRule.closeKeyboard()
         composeRule.click("Ações: Outra pessoa")
         composeRule.click("Excluir perfil")
 

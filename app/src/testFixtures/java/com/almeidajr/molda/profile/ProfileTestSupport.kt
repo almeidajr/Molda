@@ -1,8 +1,6 @@
 package com.almeidajr.molda.profile
 
-import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.R
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.test.DeviceConfigurationOverride
@@ -17,14 +15,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.test.platform.app.InstrumentationRegistry
 import com.almeidajr.molda.AppLauncher
 import com.almeidajr.molda.RouteFrame
 import com.almeidajr.molda.TestBindings
-import com.almeidajr.molda.awaitActivityFocus
 import com.almeidajr.molda.click
-import com.almeidajr.molda.closeKeyboard
-import com.almeidajr.molda.dialogTextField
 import com.almeidajr.molda.launchApp
 import com.almeidajr.molda.measurement.Length
 import com.almeidajr.molda.profile.domain.MeasurementProfile
@@ -32,7 +26,6 @@ import com.almeidajr.molda.profile.domain.ProfileId
 import com.almeidajr.molda.profile.domain.ProfileMeasurements
 import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.domain.ProfileRepository
-import com.almeidajr.molda.selectDestination
 import com.almeidajr.molda.showProfiles
 import com.almeidajr.molda.showSkirtCalculator
 import com.almeidajr.molda.ui.theme.MoldaTheme
@@ -41,7 +34,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 /** A stored profile measured on 12/10/2026 unless [date] says otherwise. */
-internal fun profile(
+fun profile(
     id: Long,
     name: String,
     waist: Double = 80.0,
@@ -55,7 +48,7 @@ internal fun profile(
 /**
  * The profile tests' frame: the theme given, with [fontScale], forced to [width] dp when given.
  */
-internal fun profileFrame(
+fun profileFrame(
     fontScale: Float = 1f,
     width: Int? = null,
     isDarkTheme: Boolean = false,
@@ -79,7 +72,7 @@ internal fun profileFrame(
 }
 
 /** Launches the app on [profiles] in [profileFrame] and opens the skirt calculator. */
-internal fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.launchCalculator(
+fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.launchCalculator(
     profiles: ProfileRepository = TestBindings.profiles,
 ) {
     launchApp(profiles = profiles, frame = profileFrame())
@@ -87,7 +80,7 @@ internal fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.l
 }
 
 /** Launches the app on [profiles] in [profileFrame] and selects Perfis. */
-internal fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.launchProfiles(
+fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.launchProfiles(
     profiles: ProfileRepository = TestBindings.profiles,
 ) {
     launchApp(profiles = profiles, frame = profileFrame())
@@ -95,20 +88,15 @@ internal fun <A : ComponentActivity> AndroidComposeTestRule<AppLauncher<A>, A>.l
 }
 
 /** Replaces the text of the field labeled [label]. */
-internal fun SemanticsNodeInteractionsProvider.edit(label: String, value: String) {
+fun SemanticsNodeInteractionsProvider.edit(label: String, value: String) {
     onNodeWithText(label).performScrollTo().performTextReplacement(value)
 }
 
-/** Leaves a new profile's editor open in Perfis, unsaved, with "Rascunho" typed as its name. */
-internal fun AndroidComposeTestRule<*, *>.leaveUnsavedNewProfile() {
-    selectDestination("Perfis")
-    click("Novo perfil")
-    edit("Nome ou apelido", "Rascunho")
-    closeKeyboard()
-}
-
-/** Fills the open profile editor's name, waist and, through the calendar, date. */
-internal fun AndroidComposeTestRule<*, *>.fillProfile(
+/**
+ * Fills the open profile editor's name, waist and, through the calendar, date. Device tests use
+ * `fillProfileOnDevice`, which keeps the keyboard out of the calendar's way.
+ */
+fun AndroidComposeTestRule<*, *>.fillProfile(
     name: String,
     waist: String = "80",
     date: LocalDate = LocalDate.of(2026, 10, 12),
@@ -119,43 +107,20 @@ internal fun AndroidComposeTestRule<*, *>.fillProfile(
 }
 
 /** Picks [date] in the calendar, which must open on its month, and confirms it. */
-internal fun AndroidComposeTestRule<*, *>.pickDate(date: LocalDate) {
+fun AndroidComposeTestRule<*, *>.pickDate(date: LocalDate) {
     openCalendar()
     onNodeWithText(calendarDay(date), ignoreCase = true).performClick()
     click("Confirmar data")
-    // The closing calendar keeps input focus for a moment, and a text field tapped meanwhile can
-    // miss its keyboard.
-    awaitActivityFocus()
 }
 
 /** The calendar's label for [date]'s day. */
-internal fun AndroidComposeTestRule<*, *>.calendarDay(date: LocalDate): String = date.format(
+fun AndroidComposeTestRule<*, *>.calendarDay(date: LocalDate): String = date.format(
     DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
         .withLocale(activity.resources.configuration.locales[0]),
 )
 
-/**
- * Opens the calendar from the date field, with the keyboard closed: a keyboard still opening from
- * typing in the editor can take the tap on the calendar button.
- */
-internal fun AndroidComposeTestRule<*, *>.openCalendar() {
-    closeKeyboard()
+/** Opens the calendar from the date field. */
+fun SemanticsNodeInteractionsProvider.openCalendar() {
     onNodeWithText("Data da medida (dd/mm/aaaa)").performScrollTo()
     onNodeWithContentDescription("Escolher data no calendário").performClick()
-}
-
-/**
- * Opens the calendar in its text input mode and types [value] (dd/mm/yyyy) in the device's order.
- */
-// Material 3 exposes the localized mode toggle label only as a private resource.
-@Suppress("PrivateResource")
-internal fun AndroidComposeTestRule<*, *>.typeInCalendar(value: String) {
-    openCalendar()
-    val context = InstrumentationRegistry.getInstrumentation().targetContext
-    onNodeWithContentDescription(context.getString(R.string.m3c_date_picker_switch_to_input_mode))
-        .performClick()
-    val (day, month, year) = value.split('/')
-    val parts = mapOf('d' to day, 'M' to month, 'y' to year)
-    val input = DateFormat.getDateFormatOrder(context).joinToString("") { parts.getValue(it) }
-    dialogTextField().performTextReplacement(input)
 }

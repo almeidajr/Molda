@@ -45,6 +45,7 @@ class ProfileEditorViewModelTest {
         val state = editor.state.value
         assertNull(state.editingId)
         assertEquals("", state.inputs[ProfileField.Name])
+        assertEquals("", state.inputs[ProfileField.Date])
         assertTrue(state.canSave)
     }
 
