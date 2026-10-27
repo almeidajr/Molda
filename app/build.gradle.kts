@@ -184,6 +184,7 @@ dependencies {
     // Raises the Espresso that ui-test pulls in; 3.5's idling looks up an InputManager API that
     // Robolectric's newer SDKs no longer have.
     testImplementation(libs.androidx.espresso.core)
+    testImplementation(libs.androidx.espresso.intents)
     testImplementation(libs.hilt.android.testing)
     kspTest(libs.hilt.compiler)
     androidTestImplementation(platform(libs.androidx.compose.bom))
