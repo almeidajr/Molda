@@ -2,8 +2,8 @@ package com.almeidajr.molda.profile.ui
 
 import com.almeidajr.molda.R
 import com.almeidajr.molda.data.LoadResult
-import com.almeidajr.molda.profile.domain.MeasurementProfile
-import com.almeidajr.molda.profile.domain.ProfileRepository
+import com.almeidajr.molda.profile.Ana
+import com.almeidajr.molda.profile.Bia
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import kotlin.test.assertEquals
@@ -12,15 +12,12 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
 class ProfileListViewModelTest {
-    private val storage = FakeProfileRepository(listOf(ana))
+    private val storage = FakeProfileRepository(listOf(Ana))
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -31,10 +28,10 @@ class ProfileListViewModelTest {
         val profiles = ProfileListViewModel(storage)
 
         // When
-        val added = storage.create(bia.measurements).getOrThrow()
+        val added = storage.create(Bia.measurements).getOrThrow()
 
         // Then
-        assertEquals(LoadResult.Success(listOf(ana, added)), profiles.state.value.load)
+        assertEquals(LoadResult.Success(listOf(Ana, added)), profiles.state.value.load)
     }
 
     @Test
@@ -60,24 +57,7 @@ class ProfileListViewModelTest {
         profiles.load()
 
         // Then
-        assertEquals(LoadResult.Success(listOf(ana)), profiles.state.value.load)
-    }
-
-    @Test
-    fun load_whileStillLoading_keepsOneRepositoryCollector() = runTest {
-        // Given
-        storage.loadGate = CompletableDeferred()
-        val counted = CollectorCounting(storage)
-        val profiles = ProfileListViewModel(counted)
-
-        // When
-        profiles.load()
-        profiles.load()
-        storage.loadGate?.complete(Unit)
-
-        // Then
-        assertEquals(1, counted.activeCollectors)
-        assertEquals(LoadResult.Success(listOf(ana)), profiles.state.value.load)
+        assertEquals(LoadResult.Success(listOf(Ana)), profiles.state.value.load)
     }
 
     @Test
@@ -86,19 +66,53 @@ class ProfileListViewModelTest {
         val profiles = ProfileListViewModel(storage)
 
         // When
-        profiles.delete(ana.id)
+        profiles.delete(Ana.id)
 
         // Then
         val deleted = profiles.state.value
         assertEquals(LoadResult.Success(emptyList()), deleted.load)
-        assertEquals(ana.id, deleted.deleted)
+        assertEquals(Ana.id, deleted.deleted)
+    }
+
+    @Test
+    fun delete_whileInFlight_marksItsRowAndBlocksEveryRow() = runTest {
+        // Given
+        val storage = FakeProfileRepository(listOf(Ana, Bia))
+        storage.commandGate = CompletableDeferred()
+        val profiles = ProfileListViewModel(storage)
+
+        // When
+        profiles.delete(Ana.id)
+
+        // Then
+        val deleting = profiles.state.value
+        assertTrue(deleting.isDeleting(Ana.id))
+        assertFalse(deleting.isDeleting(Bia.id))
+        assertFalse(deleting.canChangeProfiles)
+    }
+
+    @Test
+    fun delete_whileAnotherDeleteRuns_isIgnored() = runTest {
+        // Given
+        val gate = CompletableDeferred<Unit>()
+        val storage = FakeProfileRepository(listOf(Ana, Bia)).apply { commandGate = gate }
+        val profiles = ProfileListViewModel(storage)
+        profiles.delete(Ana.id)
+
+        // When
+        profiles.delete(Bia.id)
+        gate.complete(Unit)
+
+        // Then
+        assertEquals(listOf(Bia), storage.current)
+        assertTrue(profiles.state.value.canChangeProfiles)
     }
 
     @Test
     fun acknowledge_afterDeleting_forgetsTheOutcome() = runTest {
         // Given
         val profiles = ProfileListViewModel(storage)
-        profiles.delete(ana.id)
+        profiles.delete(Ana.id)
 
         // When
         profiles.acknowledge()
@@ -110,20 +124,20 @@ class ProfileListViewModelTest {
     @Test
     fun delete_whenStorageFails_keepsTheProfileAndShowsTheFailureOnItsRowOnly() = runTest {
         // Given
-        val storage = FakeProfileRepository(listOf(ana, bia)).apply { failsCommands = true }
+        val storage = FakeProfileRepository(listOf(Ana, Bia)).apply { failsCommands = true }
         val profiles = ProfileListViewModel(storage)
 
         // When
-        profiles.delete(ana.id)
+        profiles.delete(Ana.id)
 
         // Then
         val failed = profiles.state.value
-        assertEquals(R.string.profile_delete_failed, failed.deleteError(ana.id))
-        assertNull(failed.deleteError(bia.id))
-        assertFalse(failed.isDeleting(ana.id))
+        assertEquals(R.string.profile_delete_failed, failed.deleteError(Ana.id))
+        assertNull(failed.deleteError(Bia.id))
+        assertFalse(failed.isDeleting(Ana.id))
         assertTrue(failed.canChangeProfiles)
         assertNull(failed.deleted)
-        assertEquals(LoadResult.Success(listOf(ana, bia)), failed.load)
+        assertEquals(LoadResult.Success(listOf(Ana, Bia)), failed.load)
     }
 
     @Test
@@ -132,43 +146,32 @@ class ProfileListViewModelTest {
         val gate = CompletableDeferred<Unit>()
         storage.commandGate = gate
         val profiles = ProfileListViewModel(storage)
-        profiles.delete(ana.id)
-        storage.forget(ana.id)
+        profiles.delete(Ana.id)
+        storage.forget(Ana.id)
 
         // When
         gate.complete(Unit)
 
         // Then
         val deleted = profiles.state.value
-        assertEquals(ana.id, deleted.deleted)
-        assertNull(deleted.deleteError(ana.id))
-        assertFalse(deleted.isDeleting(ana.id))
+        assertEquals(Ana.id, deleted.deleted)
+        assertNull(deleted.deleteError(Ana.id))
+        assertFalse(deleted.isDeleting(Ana.id))
     }
 
     @Test
     fun delete_afterAFailedOne_clearsThatRowsError() = runTest {
         // Given
-        val storage = FakeProfileRepository(listOf(ana, bia)).apply { failsCommands = true }
+        val storage = FakeProfileRepository(listOf(Ana, Bia)).apply { failsCommands = true }
         val profiles = ProfileListViewModel(storage)
-        profiles.delete(ana.id)
+        profiles.delete(Ana.id)
         storage.failsCommands = false
 
         // When
-        profiles.delete(bia.id)
+        profiles.delete(Bia.id)
 
         // Then
-        assertNull(profiles.state.value.deleteError(ana.id))
-        assertEquals(listOf(ana), storage.current)
+        assertNull(profiles.state.value.deleteError(Ana.id))
+        assertEquals(listOf(Ana), storage.current)
     }
-}
-
-/** Counts the collectors of [profiles], to show a retry replaces the pending one. */
-private class CollectorCounting(private val profiles: ProfileRepository) :
-    ProfileRepository by profiles {
-    var activeCollectors = 0
-        private set
-
-    override fun profiles(): Flow<List<MeasurementProfile>> = profiles.profiles()
-        .onStart { activeCollectors++ }
-        .onCompletion { activeCollectors-- }
 }

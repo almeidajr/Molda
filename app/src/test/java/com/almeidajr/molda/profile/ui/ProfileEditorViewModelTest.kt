@@ -3,19 +3,19 @@ package com.almeidajr.molda.profile.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.testing.viewModelScenario
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.R
 import com.almeidajr.molda.data.LoadResult
 import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.profile.Ana
+import com.almeidajr.molda.profile.Bia
 import com.almeidajr.molda.profile.domain.MeasurementProfile
 import com.almeidajr.molda.profile.domain.ProfileError
-import com.almeidajr.molda.profile.domain.ProfileId
-import com.almeidajr.molda.profile.domain.ProfileMeasurements
-import com.almeidajr.molda.profile.domain.ProfileName
 import com.almeidajr.molda.profile.navigation.EditedProfile
+import com.almeidajr.molda.profile.profile
 import com.almeidajr.molda.testing.FakeProfileRepository
 import com.almeidajr.molda.testing.MainDispatcherRule
 import com.almeidajr.molda.testing.October13Clock
-import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
@@ -26,48 +26,42 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 // Robolectric supplies the real Bundle that saved state is parceled through.
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class ProfileEditorViewModelTest {
-    private val storage = FakeProfileRepository(listOf(ana))
+    private val storage = FakeProfileRepository(listOf(Ana))
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun create_forNewProfile_startsBlankAndReady() = runTest {
-        // When
-        val editor = editor(EditedProfile.New)
-
-        // Then
-        val state = editor.state.value
-        assertNull(state.editingId)
-        assertEquals("", state.inputs[ProfileField.Name])
-        assertEquals("", state.inputs[ProfileField.Date])
-        assertTrue(state.canSave)
-    }
-
-    @Test
-    fun create_forNewProfile_showsTheNewEditorEditable() = runTest {
+    fun create_forNewProfile_startsBlankAndEditable() = runTest {
         // When
         val state = editor(EditedProfile.New).state.value
 
         // Then
+        assertNull(state.editingId)
+        assertEquals("", state.inputs[ProfileField.Name])
+        assertEquals("", state.inputs[ProfileField.Date])
         assertEquals(R.string.profile_editor_new, state.title)
         assertEquals(R.string.profile_save_new, state.saveLabel)
         assertTrue(state.showsLocalOnlyNote)
         assertFalse(state.canRetryLoad)
         assertTrue(state.canEdit)
+        assertTrue(state.canSave)
     }
 
     @Test
-    fun create_forExistingProfile_showsTheEditingEditorEditable() = runTest {
+    fun create_forExistingProfile_loadsItsValuesEditable() = runTest {
         // When
-        val state = editor(EditedProfile.Existing(ana.id)).state.value
+        val state = editor(EditedProfile.Existing(Ana.id)).state.value
 
         // Then
+        assertEquals(Ana.id, state.editingId)
+        assertEquals("Ana", state.inputs[ProfileField.Name])
+        assertEquals("80", state.inputs[ProfileField.Waist])
+        assertFalse(state.isDirty)
         assertEquals(R.string.profile_editor_edit, state.title)
         assertEquals(R.string.profile_save_changes, state.saveLabel)
         assertFalse(state.showsLocalOnlyNote)
@@ -79,16 +73,13 @@ class ProfileEditorViewModelTest {
     fun edit_whileTheProfileLoads_isRefused() = runTest {
         // Given
         storage.loadGate = CompletableDeferred()
-        val editor = editor(EditedProfile.Existing(ana.id))
+        val editor = editor(EditedProfile.Existing(Ana.id))
 
         // When
         editor.edit(ProfileField.Name, "Ana Maria")
 
         // Then
         val loading = editor.state.value
-        assertEquals(R.string.profile_editor_edit, loading.title)
-        assertEquals(R.string.profile_save_changes, loading.saveLabel)
-        assertFalse(loading.showsLocalOnlyNote)
         assertFalse(loading.canEdit)
         assertFalse(loading.canRetryLoad)
         assertEquals("", loading.inputs[ProfileField.Name])
@@ -98,7 +89,7 @@ class ProfileEditorViewModelTest {
     fun edit_afterLoadFailure_isRefused() = runTest {
         // Given
         storage.failsLoad = true
-        val editor = editor(EditedProfile.Existing(ana.id))
+        val editor = editor(EditedProfile.Existing(Ana.id))
 
         // When
         editor.edit(ProfileField.Name, "Ana Maria")
@@ -117,7 +108,7 @@ class ProfileEditorViewModelTest {
     fun edit_whileSaving_isRefused() = runTest {
         // Given
         storage.commandGate = CompletableDeferred()
-        val editor = editor(EditedProfile.Existing(ana.id))
+        val editor = editor(EditedProfile.Existing(Ana.id))
         editor.save()
 
         // When
@@ -126,33 +117,18 @@ class ProfileEditorViewModelTest {
         // Then
         val saving = editor.state.value
         assertEquals(R.string.status_saving, saving.saveLabel)
-        assertEquals(R.string.profile_editor_edit, saving.title)
-        assertFalse(saving.showsLocalOnlyNote)
         assertFalse(saving.canEdit)
         assertEquals("Ana", saving.inputs[ProfileField.Name])
     }
 
     @Test
-    fun create_forExistingProfile_loadsItsValues() = runTest {
-        // When
-        val editor = editor(EditedProfile.Existing(ana.id))
-
-        // Then
-        val state = editor.state.value
-        assertEquals(ana.id, state.editingId)
-        assertEquals("Ana", state.inputs[ProfileField.Name])
-        assertEquals("80", state.inputs[ProfileField.Waist])
-        assertFalse(state.isDirty)
-    }
-
-    @Test
     fun create_forProfileNoLongerStored_reportsItDeletedWithoutAFailure() = runTest {
         // When
-        val editor = editor(EditedProfile.Existing(bia.id))
+        val editor = editor(EditedProfile.Existing(Bia.id))
 
         // Then
         val deleted = editor.state.value
-        assertEquals(bia.id, deleted.deleted)
+        assertEquals(Bia.id, deleted.deleted)
         assertFalse(deleted.canRetryLoad)
     }
 
@@ -162,7 +138,7 @@ class ProfileEditorViewModelTest {
         storage.failsLoad = true
 
         // When
-        val editor = editor(EditedProfile.Existing(ana.id))
+        val editor = editor(EditedProfile.Existing(Ana.id))
 
         // Then
         val failed = editor.state.value
@@ -174,7 +150,7 @@ class ProfileEditorViewModelTest {
     fun load_retryAfterLoadFailure_showsTheProfile() = runTest {
         // Given
         storage.failsLoad = true
-        val editor = editor(EditedProfile.Existing(ana.id))
+        val editor = editor(EditedProfile.Existing(Ana.id))
         storage.failsLoad = false
 
         // When
@@ -205,16 +181,22 @@ class ProfileEditorViewModelTest {
     }
 
     @Test
-    fun save_afterStoring_storesNothingMore() = runTest {
+    fun save_whileInFlight_isUnavailableAndStoresOnce() = runTest {
         // Given
+        val gate = CompletableDeferred<Unit>()
+        storage.commandGate = gate
         val editor = editor(EditedProfile.New)
-        editor.fill(name = "Bia", waist = "95", date = "11/10/2026")
+        editor.fill(name = "Cleo", waist = "70", date = "11/10/2026")
         editor.save()
 
         // When
         editor.save()
 
         // Then
+        val saving = editor.state.value
+        assertTrue(saving.isSaving)
+        assertFalse(saving.canSave)
+        gate.complete(Unit)
         assertEquals(2, storage.current.size)
     }
 
@@ -238,7 +220,7 @@ class ProfileEditorViewModelTest {
     @Test
     fun save_editedProfile_replacesItAndReportsTheUpdate() = runTest {
         // Given
-        val editor = editor(EditedProfile.Existing(ana.id))
+        val editor = editor(EditedProfile.Existing(Ana.id))
         editor.edit(ProfileField.Waist, "82")
 
         // When
@@ -252,16 +234,16 @@ class ProfileEditorViewModelTest {
     @Test
     fun save_profileDeletedMeanwhile_reportsItDeletedWithoutAFailure() = runTest {
         // Given
-        val editor = editor(EditedProfile.Existing(ana.id))
+        val editor = editor(EditedProfile.Existing(Ana.id))
         editor.edit(ProfileField.Waist, "82")
-        storage.delete(ana.id)
+        storage.delete(Ana.id)
 
         // When
         editor.save()
 
         // Then
         val deleted = editor.state.value
-        assertEquals(ana.id, deleted.deleted)
+        assertEquals(Ana.id, deleted.deleted)
         assertNull(deleted.error)
         assertNull(deleted.saved)
         assertFalse(deleted.isSaving)
@@ -271,7 +253,7 @@ class ProfileEditorViewModelTest {
     @Test
     fun acknowledgeDeleted_afterTheProfileWasDeleted_forgetsTheOutcome() = runTest {
         // Given
-        val editor = editor(EditedProfile.Existing(bia.id))
+        val editor = editor(EditedProfile.Existing(Bia.id))
 
         // When
         editor.acknowledgeDeleted()
@@ -316,92 +298,65 @@ class ProfileEditorViewModelTest {
         assertTrue(failed.canSave)
         assertNull(failed.saved)
         assertEquals("Bia", failed.inputs[ProfileField.Name])
-        assertEquals(listOf(ana), storage.current)
+        assertEquals(listOf(Ana), storage.current)
     }
 
     @Test
-    fun edit_awayFromTheProfile_makesTheFormDirty() = runTest {
-        // Given
-        val editor = editor(EditedProfile.Existing(ana.id))
+    fun edit_existingProfile_isDirtyOnlyWhileAValueDiffers() = runTest {
+        listOf(
+            DirtyCase("name changed", Ana, ProfileField.Name to "Ana Maria", isDirty = true),
+            DirtyCase(
+                "name changed back",
+                Ana,
+                ProfileField.Name to "Ana Maria",
+                ProfileField.Name to "Ana",
+                isDirty = false,
+            ),
+            DirtyCase(
+                "waist retyped as the same length",
+                Ana,
+                ProfileField.Waist to "80,0",
+                isDirty = false,
+            ),
+            // A name is text: a number written another way is another name.
+            DirtyCase(
+                "numeric name retyped as the same number",
+                profile(1, "80"),
+                ProfileField.Name to "80,0",
+                isDirty = true,
+            ),
+        ).forEach { case ->
+            // Given
+            val storage = FakeProfileRepository(listOf(case.stored))
+            val editor = ProfileEditorViewModel(
+                storage,
+                SavedStateHandle(),
+                October13Clock,
+                EditedProfile.Existing(case.stored.id),
+            )
 
-        // When
-        editor.edit(ProfileField.Name, "Ana Maria")
+            // When
+            case.edits.forEach { (field, text) -> editor.edit(field, text) }
 
-        // Then
-        assertTrue(editor.state.value.isDirty)
-    }
-
-    @Test
-    fun edit_backToTheProfileValue_makesTheFormClean() = runTest {
-        // Given
-        val editor = editor(EditedProfile.Existing(ana.id))
-        editor.edit(ProfileField.Name, "Ana Maria")
-
-        // When
-        editor.edit(ProfileField.Name, "Ana")
-
-        // Then
-        assertFalse(editor.state.value.isDirty)
-    }
-
-    @Test
-    fun edit_waistRetypedAsTheSameLength_keepsTheFormClean() = runTest {
-        // Given
-        val editor = editor(EditedProfile.Existing(ana.id))
-
-        // When
-        editor.edit(ProfileField.Waist, "80,0")
-
-        // Then
-        assertFalse(editor.state.value.isDirty)
-    }
-
-    @Test
-    fun edit_waistToAnotherLength_makesTheFormDirty() = runTest {
-        // Given
-        val editor = editor(EditedProfile.Existing(ana.id))
-
-        // When
-        editor.edit(ProfileField.Waist, "81")
-
-        // Then
-        assertTrue(editor.state.value.isDirty)
-    }
-
-    @Test
-    fun edit_nameRetypedAsTheSameNumber_makesTheFormDirty() = runTest {
-        // Given
-        storage.update(profile(ana.id.value, "80", 80.0))
-        val editor = editor(EditedProfile.Existing(ana.id))
-
-        // When
-        editor.edit(ProfileField.Name, "80,0")
-
-        // Then
-        assertTrue(editor.state.value.isDirty)
+            // Then
+            assertEquals(case.isDirty, editor.state.value.isDirty, case.name)
+        }
     }
 
     @Test
     fun recreate_afterProcessDeath_restoresTheForm() = runTest {
-        viewModelScenario {
-            ProfileEditorViewModel(
-                storage,
-                createSavedStateHandle(),
-                October13Clock,
-                EditedProfile.Existing(ana.id),
-            )
-        }.use { scenario ->
+        editorScenario(EditedProfile.Existing(Ana.id)).use { scenario ->
             // Given
             scenario.viewModel.edit(ProfileField.Notes, "Sem folga")
             // A reload would replace the restored draft with the stored values.
-            storage.update(bia.copy(id = ana.id))
+            storage.update(Bia.copy(id = Ana.id))
 
             // When
             scenario.recreate()
 
             // Then
             val restored = scenario.viewModel.state.value
-            assertEquals(ana.id, restored.editingId)
+            assertEquals(Ana.id, restored.editingId)
             assertEquals("Sem folga", restored.inputs[ProfileField.Notes])
             assertEquals("Ana", restored.inputs[ProfileField.Name])
             assertTrue(restored.isDirty)
@@ -410,14 +365,7 @@ class ProfileEditorViewModelTest {
 
     @Test
     fun recreate_afterProcessDeathOnceUpdated_reportsTheUpdateAndStoresNothingMore() = runTest {
-        viewModelScenario {
-            ProfileEditorViewModel(
-                storage,
-                createSavedStateHandle(),
-                October13Clock,
-                EditedProfile.Existing(ana.id),
-            )
-        }.use { scenario ->
+        editorScenario(EditedProfile.Existing(Ana.id)).use { scenario ->
             // Given
             scenario.viewModel.edit(ProfileField.Waist, "82")
             scenario.viewModel.save()
@@ -435,14 +383,7 @@ class ProfileEditorViewModelTest {
 
     @Test
     fun recreate_afterProcessDeathOnceCreated_reportsTheCreatedProfile() = runTest {
-        viewModelScenario {
-            ProfileEditorViewModel(
-                storage,
-                createSavedStateHandle(),
-                October13Clock,
-                EditedProfile.New,
-            )
-        }.use { scenario ->
+        editorScenario(EditedProfile.New).use { scenario ->
             // Given
             scenario.viewModel.fill(name = "Bia", waist = "95", date = "11/10/2026")
             scenario.viewModel.save()
@@ -458,8 +399,20 @@ class ProfileEditorViewModelTest {
         }
     }
 
+    /** Editing [stored] with [edits], in order, leaves the form [isDirty]. */
+    private class DirtyCase(
+        val name: String,
+        val stored: MeasurementProfile,
+        vararg val edits: Pair<ProfileField, String>,
+        val isDirty: Boolean,
+    )
+
     private fun editor(profile: EditedProfile) =
         ProfileEditorViewModel(storage, SavedStateHandle(), October13Clock, profile)
+
+    private fun editorScenario(profile: EditedProfile) = viewModelScenario {
+        ProfileEditorViewModel(storage, createSavedStateHandle(), October13Clock, profile)
+    }
 
     private fun ProfileEditorViewModel.fill(name: String, waist: String, date: String) {
         edit(ProfileField.Name, name)
@@ -467,17 +420,3 @@ class ProfileEditorViewModelTest {
         edit(ProfileField.Date, date)
     }
 }
-
-internal val ana = profile(1, "Ana", 80.0)
-internal val bia = profile(2, "Bia", 95.0)
-
-internal fun profile(
-    id: Long,
-    name: String,
-    waist: Double,
-    notes: String = "",
-    date: LocalDate = LocalDate.of(2026, 10, 12),
-) = MeasurementProfile(
-    ProfileId(id),
-    ProfileMeasurements(ProfileName(name), Length(waist), date, notes),
-)

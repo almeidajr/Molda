@@ -39,7 +39,7 @@ class MoldaDatabaseMigrationTest {
     }
 
     @Test
-    fun version1WithProfiles_opensKeepingProfilesAndNoProjects() = runTest {
+    fun migrate_fromVersion1WithProfiles_keepsProfilesAndHasNoProjects() = runTest {
         // Given
         helper.createDatabase(1).apply {
             execSQL(

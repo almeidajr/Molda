@@ -6,6 +6,7 @@ import com.almeidajr.molda.skirt.domain.SkirtDraft
 import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.skirt.domain.calculateSkirtRadii
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import org.junit.Test
 
@@ -22,7 +23,7 @@ class MarkingDiametersTest {
         assertEquals(139.113f, diameters.getValue("waistStitching"), absoluteTolerance = 0.001f)
         assertEquals(128.454f, diameters.getValue("waistCutting"), absoluteTolerance = 0.001f)
         assertEquals(778.681f, diameters.getValue("finishedHem"), absoluteTolerance = 0.001f)
-        assertEquals(800f, diameters.getValue("hemCutting"))
+        assertEquals(800f, diameters.getValue("hemCutting"), absoluteTolerance = 0.001f)
     }
 
     @Test
@@ -32,9 +33,13 @@ class MarkingDiametersTest {
 
         // Then
         assertEquals(142.922f, diameters.getValue("waistStitching"), absoluteTolerance = 0.001f)
-        assertEquals(diameters.getValue("waistStitching"), diameters.getValue("waistCutting"))
-        assertEquals(800f, diameters.getValue("finishedHem"))
-        assertEquals(800f, diameters.getValue("hemCutting"))
+        assertEquals(
+            diameters.getValue("waistStitching"),
+            diameters.getValue("waistCutting"),
+            absoluteTolerance = 0.001f,
+        )
+        assertEquals(800f, diameters.getValue("finishedHem"), absoluteTolerance = 0.001f)
+        assertEquals(800f, diameters.getValue("hemCutting"), absoluteTolerance = 0.001f)
     }
 
     @Test
@@ -52,7 +57,7 @@ class MarkingDiametersTest {
 
         // Then
         assertTrue(diameters.values.all { it.isFinite() }, "$diameters")
-        assertEquals(800f, diameters.getValue("hemCutting"))
+        assertEquals(800f, diameters.getValue("hemCutting"), absoluteTolerance = 0.001f)
     }
 
     private fun radii(waistSeamAllowance: Double, hemAllowance: Double): SkirtRadii {
@@ -63,6 +68,6 @@ class MarkingDiametersTest {
             waistSeamAllowance = Length(waistSeamAllowance),
             hemAllowance = Length(hemAllowance),
         )
-        return (calculateSkirtRadii(draft) as SkirtCalculation.Success).radii
+        return assertIs<SkirtCalculation.Success>(calculateSkirtRadii(draft)).radii
     }
 }

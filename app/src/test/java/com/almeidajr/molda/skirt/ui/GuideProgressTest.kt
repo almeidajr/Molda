@@ -1,6 +1,7 @@
 package com.almeidajr.molda.skirt.ui
 
 import androidx.compose.runtime.saveable.SaverScope
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.almeidajr.molda.R
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -8,11 +9,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
 // Robolectric resolves the step bar's copy from the app's string resources.
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class GuideProgressTest {
     private val text: (Int) -> String = RuntimeEnvironment.getApplication()::getString
 
@@ -94,7 +94,7 @@ class GuideProgressTest {
     }
 
     @Test
-    fun isPausable_onlyWithMotionADrawnDrawingAndALoadedFile() {
+    fun isPausable_byMotionDrawingAndFile_needsAllThree() {
         // When/Then
         assertTrue(isPausable(motionEnabled = true, DrawingLoad.Drawn, isFileLoaded = true))
         assertFalse(isPausable(motionEnabled = false, DrawingLoad.Drawn, isFileLoaded = true))

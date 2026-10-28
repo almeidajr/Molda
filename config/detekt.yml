@@ -4,6 +4,15 @@ config:
 naming:
   FunctionNaming:
     ignoreAnnotated: ['Composable']
+  # Test names read subject_condition_outcome; see .agents/rules/kotlin-tests.md. Detekt cannot
+  # tell @Test functions from helpers, so a name without underscores, as a helper's, still passes.
+  FunctionNaming/tests:
+    active: true
+    includes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**']
+    # Not the default instance's test exclusions.
+    excludes: []
+    ignoreAnnotated: ['Composable']
+    functionPattern: '[a-z][a-zA-Z0-9]*(_[a-z][a-zA-Z0-9]*){2,}|[a-z][a-zA-Z0-9]*'
 
 complexity:
   # Mirror SonarCloud's S3776 locally; Sonar allows composables a higher limit, so leave them to it.

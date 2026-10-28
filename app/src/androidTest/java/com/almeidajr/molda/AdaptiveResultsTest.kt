@@ -54,7 +54,7 @@ class AdaptiveResultsTest {
     private var isLaunched = false
 
     @Test
-    fun tabletopHinge_keepsCuttingCardAndGuideBarAboveFold() {
+    fun results_onATabletopHinge_keepCuttingCardAndGuideBarAboveTheFold() {
         // Given
         showCalculator(size = null)
         val hinge = publishHinge(FoldingFeature.Orientation.HORIZONTAL)
@@ -98,7 +98,7 @@ class AdaptiveResultsTest {
     }
 
     @Test
-    fun flatVerticalHinge_guidePlayerSpansFullWidth() {
+    fun guidePlayer_onAFlatVerticalHinge_spansTheFullWidth() {
         // Given: whether the calculator behind it has one column or two, a flat fold splits
         // neither.
         showCalculator(size = null)
@@ -121,7 +121,7 @@ class AdaptiveResultsTest {
     }
 
     @Test
-    fun halfOpenedVerticalHinge_keepsSinglePaneExampleGuideOnOneSide() {
+    fun exampleGuide_onAHalfOpenedVerticalHinge_staysOnOneSide() {
         // Given: too narrow for the library beside the guide, so the example guide is a single
         // pane.
         showCalculator(DpSize(700.dp, 800.dp))
@@ -136,7 +136,7 @@ class AdaptiveResultsTest {
     }
 
     @Test
-    fun flatVerticalHinge_singlePaneExampleGuideSpansFullWidth() {
+    fun exampleGuide_onAFlatVerticalHinge_spansTheFullWidth() {
         // Given
         showCalculator(DpSize(700.dp, 800.dp))
         composeRule.selectDestination("Guias")

@@ -34,7 +34,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** The guide for keyboard users: leaving touch mode needs a device. */
+/**
+ * The guide where it needs a device: keyboard users, since leaving touch mode needs one, and the
+ * drawing's native Rive frames on screen. [FabricFoldingFileTest] owns what the drawings show.
+ */
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
 class FabricFoldingGuideTest {
@@ -51,16 +54,22 @@ class FabricFoldingGuideTest {
     val animatorScale = AnimatorDurationScaleRule(composeRule)
 
     @Test
+    fun guide_withMotionOff_drawsEachStepsDrawingOnScreen() {
+        // Given
+        openGuideWithMotionOff()
+        composeRule.awaitRiveFrame("Dobra do tecido em Rive: etapa 1")
+
+        // When
+        composeRule.onNodeWithText("Próximo").performClick()
+
+        // Then
+        composeRule.awaitRiveFrame("Dobra do tecido em Rive: etapa 2")
+    }
+
+    @Test
     fun back_closesPlayer_returningKeyboardFocusToEntry_withResultsUnchanged() {
         // Given
-        composeRule.launchApp()
-        composeRule.openSkirtCalculator()
-        composeRule.fillSkirtDraft()
-        composeRule.closeKeyboard()
-        composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
-        // With motion off the guide's drawings hold still, so Compose goes idle.
-        animatorScale.set(0f)
-        composeRule.openGuideFromResults()
+        openGuideWithMotionOff()
         composeRule.onNodeWithText("Próximo").performClick()
         composeRule.onNodeWithText("Etapa 2 de 6").assertIsDisplayed()
         // Keyboard users are the ones who need focus back.
@@ -113,5 +122,17 @@ class FabricFoldingGuideTest {
 
         // Then
         frame.assert(hasStateDescription("Reproduzindo"))
+    }
+
+    /** Opens the guide on the reference results with motion off, so Compose goes idle. */
+    private fun openGuideWithMotionOff() {
+        composeRule.launchApp()
+        composeRule.openSkirtCalculator()
+        composeRule.fillSkirtDraft()
+        composeRule.closeKeyboard()
+        composeRule.onNodeWithText("Calcular").performScrollTo().performClick()
+        // With motion off the guide's drawings hold still.
+        animatorScale.set(0f)
+        composeRule.openGuideFromResults()
     }
 }

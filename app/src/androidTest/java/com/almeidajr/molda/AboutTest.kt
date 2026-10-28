@@ -26,7 +26,7 @@ class AboutTest {
     val composeRule = createLaunchLaterComposeRule()
 
     @Test
-    fun about_showsAppNameAndInstalledVersion() {
+    fun about_onAnInstalledApp_showsItsNameAndVersion() {
         // Given
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName

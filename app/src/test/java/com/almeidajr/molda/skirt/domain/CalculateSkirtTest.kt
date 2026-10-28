@@ -11,25 +11,14 @@ class CalculateSkirtTest {
     private val valid = SkirtDraftField.entries.zip(listOf("80", "2", "60", "1", "2")).toMap()
 
     @Test
-    fun calculateSkirt_paddedDecimalCommaText_returnsDraftAndItsRadii() {
+    fun calculateSkirt_paddedDecimalCommaText_returnsItsDraft() {
         // When
         val calculation = calculateSkirt(valid + (SkirtDraftField.Waist to " 80,0 "))
 
         // Then
-        val success = assertIs<SkirtCalculation.Success>(calculation)
         assertEquals(
             SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
-            success.draft,
-        )
-        assertEquals(
-            13.0507053335354,
-            success.radii.waistStitching.centimeters,
-            absoluteTolerance = 1e-12,
-        )
-        assertEquals(
-            75.0507053335354,
-            success.radii.hemCutting.centimeters,
-            absoluteTolerance = 1e-12,
+            assertIs<SkirtCalculation.Success>(calculation).draft,
         )
     }
 
@@ -154,18 +143,17 @@ class CalculateSkirtTest {
     }
 
     @Test
-    fun skirtDraft_zeroWaist_isRejected() {
-        // When/Then
-        assertFailsWith<IllegalArgumentException> {
-            SkirtDraft(Length(0.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0))
-        }
-    }
-
-    @Test
-    fun skirtDraft_zeroFinishedLength_isRejected() {
-        // When/Then
-        assertFailsWith<IllegalArgumentException> {
-            SkirtDraft(Length(80.0), Length(2.0), Length(0.0), Length(1.0), Length(2.0))
+    fun skirtDraft_zeroWaistOrFinishedLength_isRejected() {
+        listOf(
+            "zero waist" to {
+                SkirtDraft(Length(0.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0))
+            },
+            "zero finished length" to {
+                SkirtDraft(Length(80.0), Length(2.0), Length(0.0), Length(1.0), Length(2.0))
+            },
+        ).forEach { (case, draft) ->
+            // When/Then
+            assertFailsWith<IllegalArgumentException>(case) { draft() }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.almeidajr.molda
 
+import android.animation.ValueAnimator
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -11,6 +12,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.util.reflector.Direct
+import org.robolectric.util.reflector.ForType
+import org.robolectric.util.reflector.Reflector.reflector
+import org.robolectric.util.reflector.Static
 
 /**
  * The guide player's step flow, opened from the skirt's results. Without Rive's native code the
@@ -35,7 +40,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun previous_returnsToTheEarlierStep() {
+    fun previous_onTheSecondFold_returnsToTheFirst() {
         // Given
         next(times = 2)
         composeRule.onNodeWithText("Segunda dobra").assertIsDisplayed()
@@ -48,7 +53,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun cuttingStep_warnsWhichLinesStayUncut() {
+    fun guide_atTheCuttingStep_warnsWhichLinesStayUncut() {
         // When
         next(times = 4)
 
@@ -69,7 +74,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun unfoldingStep_warnsItIsNoCompletePattern() {
+    fun guide_atTheUnfoldingStep_warnsItIsNoCompletePattern() {
         // When
         next(times = 5)
 
@@ -99,7 +104,7 @@ class FabricFoldingGuideTest {
     }
 
     @Test
-    fun recreation_keepsCurrentStep() {
+    fun recreate_onTheSecondFold_keepsTheStep() {
         // Given
         next(times = 2)
 
@@ -111,6 +116,43 @@ class FabricFoldingGuideTest {
         composeRule.onNodeWithText("Etapa 3 de 6").assertIsDisplayed()
     }
 
+    @Test
+    fun systemAnimations_switchedOffThenOnWhileOpen_showThenHideTheMotionOffNote() {
+        // Given
+        composeRule.onNodeWithText(MOTION_OFF_NOTE).assertDoesNotExist()
+
+        // When
+        setAnimatorDurationScale(0f)
+
+        // Then
+        composeRule.onNodeWithText(MOTION_OFF_NOTE).performScrollTo().assertIsDisplayed()
+
+        // When
+        setAnimatorDurationScale(1f)
+
+        // Then
+        composeRule.onNodeWithText(MOTION_OFF_NOTE).assertDoesNotExist()
+    }
+
+    /**
+     * Changes the system animator scale as a settings change does, through the framework's own
+     * setter, which also tells every registered listener; Robolectric's shadow of it only sets the
+     * scale. Robolectric's resetter restores 1 after each test.
+     */
+    private fun setAnimatorDurationScale(scale: Float) {
+        composeRule.runOnIdle {
+            reflector(FrameworkValueAnimator::class.java).setDurationScale(scale)
+        }
+    }
+
+    /** `ValueAnimator`'s hidden test API, called past Robolectric's shadow. */
+    @ForType(ValueAnimator::class)
+    private interface FrameworkValueAnimator {
+        @Static
+        @Direct
+        fun setDurationScale(scale: Float)
+    }
+
     private fun next(times: Int) = repeat(times) {
         composeRule.onNodeWithText("Próximo").performClick()
     }
@@ -118,5 +160,10 @@ class FabricFoldingGuideTest {
     /** Opens the current step's collapsed "Detalhes" disclosure. */
     private fun expandDetails() {
         composeRule.onNodeWithText("Detalhes").performScrollTo().performClick()
+    }
+
+    private companion object {
+        const val MOTION_OFF_NOTE =
+            "Movimento desativado no sistema. O desenho mostra o resultado da etapa."
     }
 }

@@ -32,16 +32,16 @@ class OpenedProjectViewModelTest {
     fun state_whenTheProjectChanges_showsItsLatestVersion() = runTest {
         // Given
         val opened = openedViewModel()
+        val renamedAt = October18Clock.instant()
 
         // When
-        storage.rename(saved.id, ProjectName("Saia nova"), October18Clock.instant()).getOrThrow()
+        storage.rename(saved.id, ProjectName("Saia nova"), renamedAt).getOrThrow()
 
         // Then
         assertEquals(
-            LoadResult.Success(storage.current.single()),
+            LoadResult.Success(saved.copy(name = ProjectName("Saia nova"), updatedAt = renamedAt)),
             opened.state.value,
         )
-        assertEquals(ProjectName("Saia nova"), storage.current.single().name)
     }
 
     @Test

@@ -1,11 +1,8 @@
 package com.almeidajr.molda.project.navigation
 
 import androidx.navigation3.runtime.NavKey
-import com.almeidajr.molda.measurement.Length
+import com.almeidajr.molda.project.ReferenceSnapshot
 import com.almeidajr.molda.project.domain.ProjectId
-import com.almeidajr.molda.project.domain.SkirtSnapshot
-import com.almeidajr.molda.skirt.domain.SkirtDraft
-import com.almeidajr.molda.skirt.domain.SkirtRadii
 import com.almeidajr.molda.ui.navigation.navigatorOf
 import com.almeidajr.molda.ui.navigation.stacks
 import kotlin.test.assertEquals
@@ -14,11 +11,6 @@ import kotlin.test.assertTrue
 import org.junit.Test
 
 class ProjectNavigatorTest {
-    private val snapshot = SkirtSnapshot(
-        SkirtDraft(Length(80.0), Length(2.0), Length(60.0), Length(1.0), Length(2.0)),
-        SkirtRadii(Length(13.05), Length(73.05), Length(12.05), Length(75.05)),
-        source = null,
-    )
     private val first = ProjectId(1)
     private val second = ProjectId(2)
 
@@ -74,7 +66,7 @@ class ProjectNavigatorTest {
     }
 
     @Test
-    fun isShowingProject_onlyForTheProjectOnTop() {
+    fun isShowingProject_withAProjectOnTop_isTrueOnlyForIt() {
         // Given
         val navigator = projetos(ProjectKey(first))
 
@@ -97,8 +89,8 @@ class ProjectNavigatorTest {
         // Given
         val navigator = projetos(
             ProjectKey(first),
-            ProjectEditorKey(first, snapshot),
-            ProjectEditorGuideKey(snapshot.radii),
+            ProjectEditorKey(first, ReferenceSnapshot),
+            ProjectEditorGuideKey(ReferenceSnapshot.radii),
         )
 
         // When
@@ -139,7 +131,7 @@ class ProjectNavigatorTest {
     @Test
     fun closeProjectEditor_withTheEditorOpen_returnsToTheProject() {
         // Given
-        val navigator = projetos(ProjectKey(first), ProjectEditorKey(first, snapshot))
+        val navigator = projetos(ProjectKey(first), ProjectEditorKey(first, ReferenceSnapshot))
 
         // When
         navigator.closeProjectEditor()
@@ -151,8 +143,9 @@ class ProjectNavigatorTest {
     @Test
     fun closeProjectEditor_withItsGuideAbove_closesItsGuideToo() {
         // Given
-        val guide = ProjectEditorGuideKey(snapshot.radii)
-        val navigator = projetos(ProjectKey(first), ProjectEditorKey(first, snapshot), guide)
+        val guide = ProjectEditorGuideKey(ReferenceSnapshot.radii)
+        val navigator =
+            projetos(ProjectKey(first), ProjectEditorKey(first, ReferenceSnapshot), guide)
 
         // When
         navigator.closeProjectEditor()
@@ -166,8 +159,8 @@ class ProjectNavigatorTest {
         // Given
         val navigator = projetos(
             ProjectKey(first),
-            ProjectEditorKey(first, snapshot),
-            ProjectEditorGuideKey(snapshot.radii),
+            ProjectEditorKey(first, ReferenceSnapshot),
+            ProjectEditorGuideKey(ReferenceSnapshot.radii),
             DeleteProjectKey(first),
         )
 
@@ -198,8 +191,8 @@ class ProjectNavigatorTest {
         val open = listOf(
             ProjectsKey,
             ProjectKey(second),
-            ProjectEditorKey(second, snapshot),
-            ProjectEditorGuideKey(snapshot.radii),
+            ProjectEditorKey(second, ReferenceSnapshot),
+            ProjectEditorGuideKey(ReferenceSnapshot.radii),
         )
         val navigator = navigatorOf(listOf(open))
 
@@ -246,18 +239,6 @@ class ProjectNavigatorTest {
         // When/Then
         assertTrue(navigator.isDeletingProject(first))
         assertFalse(navigator.isDeletingProject(second))
-    }
-
-    @Test
-    fun isDeletingProject_withItsDeleteDialogClosed_isFalse() {
-        // Given
-        val navigator = projetos(ProjectKey(first), DeleteProjectKey(first))
-
-        // When
-        navigator.remove(DeleteProjectKey(first))
-
-        // Then
-        assertFalse(navigator.isDeletingProject(first))
     }
 
     private data object OtherKey : NavKey

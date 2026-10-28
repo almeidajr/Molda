@@ -36,7 +36,7 @@ class ProfileNavigatorTest {
         // Then
         val (moldes, perfis) = navigator.stacks
         assertEquals(listOf(SkirtCalculatorKey), moldes)
-        assertEquals(existing, (perfis.last() as ProfileEditorKey).profile)
+        assertEquals(existing, assertIs<ProfileEditorKey>(perfis.last()).profile)
         assertEquals(2, perfis.size)
     }
 
@@ -81,11 +81,11 @@ class ProfileNavigatorTest {
         // Then
         val perfis = navigator.stacks[1]
         assertEquals(2, perfis.size)
-        assertEquals(EditedProfile.New, (perfis.last() as ProfileEditorKey).profile)
+        assertEquals(EditedProfile.New, assertIs<ProfileEditorKey>(perfis.last()).profile)
     }
 
     @Test
-    fun openProfileEditor_leavesThePickersEditorOpen() {
+    fun openProfileEditor_withAPickerEditorOpen_leavesItOpen() {
         // Given
         val navigator = app(moldes = listOf(SkirtCalculatorKey, picker, pickerEditor))
 
@@ -107,7 +107,7 @@ class ProfileNavigatorTest {
         // Then
         val moldes = navigator.stacks[0]
         assertEquals(listOf(SkirtCalculatorKey, picker), moldes.take(2))
-        assertEquals("picker", (moldes.last() as PickerProfileEditorKey).resultKey)
+        assertEquals("picker", assertIs<PickerProfileEditorKey>(moldes.last()).resultKey)
         assertEquals(3, moldes.size)
     }
 
@@ -142,7 +142,7 @@ class ProfileNavigatorTest {
     }
 
     @Test
-    fun closePickerEditor_closesTheEditorAndItsPicker() {
+    fun closePickerEditor_overItsPicker_closesBoth() {
         // Given
         val navigator = app(moldes = listOf(SkirtCalculatorKey, picker, pickerEditor))
 
@@ -154,7 +154,7 @@ class ProfileNavigatorTest {
     }
 
     @Test
-    fun closePickerEditor_keepsAnotherCalculatorsPicker() {
+    fun closePickerEditor_withAnotherPickerOpen_keepsThatPicker() {
         // Given
         val other = ProfilePickerKey("other")
         val navigator = app(

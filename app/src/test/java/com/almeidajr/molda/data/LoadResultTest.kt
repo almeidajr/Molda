@@ -1,7 +1,5 @@
 package com.almeidajr.molda.data
 
-import androidx.sqlite.SQLiteException
-import com.almeidajr.molda.domain.NoLongerExistsException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
@@ -10,11 +8,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-// Robolectric supplies the Android SQLException behind androidx.sqlite's SQLiteException.
-@RunWith(RobolectricTestRunner::class)
+/** Which failures count as expected storage failures is [ResultOfTest]'s to check. */
 class LoadResultTest {
     @Test
     fun asLoadResult_whenFlowEmits_startsLoadingThenSucceedsWithEachValue() = runTest {
@@ -26,34 +21,7 @@ class LoadResultTest {
     }
 
     @Test
-    fun asLoadResult_whenDatabaseFails_endsWithTheError() = runTest {
-        // Given
-        val failure = SQLiteException("disk I/O error")
-
-        // When/Then
-        assertEquals(listOf(LoadResult.Loading, LoadResult.Error(failure)), failing(failure))
-    }
-
-    @Test
-    fun asLoadResult_whenValidationFails_endsWithTheError() = runTest {
-        // Given
-        val failure = IllegalArgumentException("Waist must be positive: 0.0")
-
-        // When/Then
-        assertEquals(listOf(LoadResult.Loading, LoadResult.Error(failure)), failing(failure))
-    }
-
-    @Test
-    fun asLoadResult_whenRowNoLongerExists_endsWithTheError() = runTest {
-        // Given
-        val failure = NoLongerExistsException("Profile no longer exists")
-
-        // When/Then
-        assertEquals(listOf(LoadResult.Loading, LoadResult.Error(failure)), failing(failure))
-    }
-
-    @Test
-    fun asLoadResult_whenStateIsInvalid_endsWithTheError() = runTest {
+    fun asLoadResult_whenStorageFails_endsWithTheError() = runTest {
         // Given
         val failure = IllegalStateException("Stored pattern draft kind is not the snapshot's")
 

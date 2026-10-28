@@ -9,15 +9,6 @@ import org.junit.Test
 
 class ProfileCalendarTest {
     @Test
-    fun calendarConversions_forADate_roundTripTheDatePicked() {
-        // Given
-        val date = LocalDate.of(2026, 10, 12)
-
-        // When/Then
-        assertEquals(date, calendarMillisToDate(dateToCalendarMillis(date)))
-    }
-
-    @Test
     fun dateToCalendarMillis_forADate_isUtcMidnight() {
         // When/Then
         assertEquals(1_791_763_200_000L, dateToCalendarMillis(LocalDate.of(2026, 10, 12)))

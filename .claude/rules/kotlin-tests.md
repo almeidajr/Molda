@@ -64,7 +64,10 @@ in one line.
 
 Name classes `<Subject>Test`. Name methods `subject_condition_outcome` with
 underscores, for example `readValue_whenSensorIsOffline_returnsLastKnownReading`;
-no backtick names, so Gradle `--tests` filters stay simple. Group tests by
+no backtick names, so Gradle `--tests` filters stay simple. Detekt
+(`FunctionNaming/tests`) rejects a test-source function name with underscores
+but fewer than three segments; it cannot tell tests from helpers, so it lets
+through a name without underscores. Name a real condition, not filler. Group tests by
 cohesive subject; one class per production class is not required.
 
 Mark the phases with `// Given`, `// When` and `// Then` comments:
@@ -197,7 +200,10 @@ on them. Never sleep: Detekt rejects `Thread.sleep`, `SystemClock.sleep` and
    thread yourself. Detekt rejects Espresso's `pressBack` in test sources.
 2. **`mainClock` control** for anything Compose drives, such as animations:
    `mainClock.autoAdvance = false`, `advanceTimeBy`, `advanceTimeUntil`. Prefer
-   virtual time to `waitUntil`.
+   virtual time to `waitUntil`. While a native Rive drawing plays, advance one
+   frame at a time: `advanceTimeBy` runs its frames back to back, and the burst
+   of Rive draws can reach the emulator's screen as one blank frame, which no
+   device shows.
 3. **An idling resource** for background work in tests that run the real stack.
    Journey tests open Room with a query dispatcher on an Espresso-tracked
    executor, so Compose waits for database work by itself.
