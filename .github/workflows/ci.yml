@@ -109,7 +109,10 @@ jobs:
           target: google_atd
           profile: pixel_9
           ram-size: 4096M
-          disable-animations: false
+          # Off in CI for speed (about 1m50s per run in #222's experiment, all tests passing either
+          # way); the local pre-PR run keeps animations on as the realistic check. Tests that need
+          # motion set the scale themselves (AnimatorDurationScaleRule).
+          disable-animations: true
           script: bash ./gradlew :app:connectedDebugAndroidTest
       - name: Upload device test reports
         if: ${{ !cancelled() && steps.changes.outputs.app != 'false' }}
