@@ -38,7 +38,7 @@ When adding or changing tests, read and follow [Kotlin tests](.agents/rules/kotl
 
 ## Commit & Pull Request Guidelines
 
-Before opening a PR or pushing to one, build and run every test locally: the full validation in `CLAUDE.md`, then `.\gradlew.bat :app:connectedDebugAndroidTest`. If no device is connected, start the API 37 emulator CI matches (`emulator -list-avds`, e.g. `Molda_API_37`); never leave device tests for CI to catch. Report any failure, including a suspected flake, instead of opening the PR.
+Before opening a PR or pushing to one, build and run every test locally: the full validation in `CLAUDE.md`, then `.\gradlew.bat :app:connectedDebugAndroidTest`. If no device is connected, start the API 37 ATD emulator CI matches (`emulator -list-avds`, e.g. `Molda_API_37`, on the `google_atd` image), with system animations on: CI turns them off for speed, so this run is the realistic one. Never leave device tests for CI to catch. Report any failure, including a suspected flake, instead of opening the PR.
 
 Use Conventional Commit subjects for every new commit and PR title, such as `test(ui): check greeting on launch`. Scope is optional with no allowlist; use `!` and explain impact/migration for breaking PRs. Keep changes focused. Before creating commits, opening PRs, rebasing published history, or pushing, read [CONTRIBUTING.md](CONTRIBUTING.md) for types, examples, validation, and workflow guidance. Commit or push only when the user explicitly requests it.
 
